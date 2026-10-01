@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.history
 
+import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -23,6 +24,8 @@ data class HistoryUiState(
     val sections: List<TimelineSection> = emptyList(),
     val selected: RecordRef? = null,
     val detail: RecordDetail? = null,
+    val attachments: List<Attachment> = emptyList(),
+    val attachFailedCount: Int = 0,
 ) {
     val isEmpty: Boolean get() = !isLoading && sections.isEmpty()
     val isFiltered: Boolean get() = filter != HistoryFilter.All || keyword.isNotBlank()

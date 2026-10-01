@@ -32,4 +32,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideHistoryDao(database: ChageunDatabase) = database.historyDao()
+
+    @Provides
+    fun provideAttachmentDao(database: ChageunDatabase) = database.attachmentDao()
 }

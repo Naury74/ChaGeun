@@ -57,17 +57,23 @@ class HistoryScreenTest {
         ),
     )
 
-    private fun show(
-        state: HistoryUiState,
-        onAdd: () -> Unit = {
-        },
-        onDelete: (RecordRef) -> Unit = {},
-    ) = composeRule.setContent {
-        ChageunTheme {
-            HistoryScreen(state, isTwoPane = false, onKeywordChanged = {
-            }, onFilterSelected = {}, onSelect = {}, onDelete = onDelete, onAdd = onAdd)
+    private fun show(state: HistoryUiState, onAdd: () -> Unit = {}, onDelete: (RecordRef) -> Unit = {}) =
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = onDelete,
+                    onAdd = onAdd,
+                    onAttach = { _, _ -> },
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
         }
-    }
 
     @Test
     fun emptyState_offersFirstRecord() {

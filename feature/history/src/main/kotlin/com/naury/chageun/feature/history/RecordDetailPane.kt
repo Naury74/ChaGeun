@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
@@ -43,6 +44,7 @@ import com.naury.chageun.feature.history.form.labelRes
 @Composable
 internal fun RecordDetailPane(
     detail: RecordDetail,
+    attachments: AttachmentsState,
     onBack: (() -> Unit)?,
     onDelete: (RecordRef) -> Unit,
     modifier: Modifier = Modifier,
@@ -71,6 +73,15 @@ internal fun RecordDetailPane(
             }
         }
         item(key = "rows") { Column { detailRows(detail).forEach { (label, value) -> DetailRow(label, value) } } }
+        item(key = "attachments") {
+            AttachmentSection(
+                attachments = attachments.items,
+                failedCount = attachments.failedCount,
+                onAttach = { attachments.onAttach(detail.ref, it) },
+                onDelete = attachments.onDelete,
+                onDismissFailure = attachments.onDismissFailure,
+            )
+        }
         item(key = "delete") {
             OutlinedButton(onClick = { isConfirmingDelete = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.history_delete))
@@ -96,6 +107,14 @@ internal fun RecordDetailPane(
         )
     }
 }
+
+internal data class AttachmentsState(
+    val items: List<Attachment>,
+    val failedCount: Int,
+    val onAttach: (RecordRef, List<String>) -> Unit,
+    val onDelete: (String) -> Unit,
+    val onDismissFailure: () -> Unit,
+)
 
 @Composable
 private fun detailTitle(detail: RecordDetail): String = when (detail) {

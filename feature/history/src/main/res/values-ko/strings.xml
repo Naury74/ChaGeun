@@ -78,4 +78,13 @@
     <string name="unit_liter">L</string>
     <string name="unit_won_per_liter">원/L</string>
     <string name="history_detail_kind">종류</string>
+    <string name="attachment_title">사진·영수증</string>
+    <string name="attachment_add">사진 추가 (최대 %1$d장)</string>
+    <string name="attachment_notice">사진은 이 기기에만 저장되고 앱을 삭제하면 함께 사라져요. 저장할 때 위치 정보는 지워져요.</string>
+    <plurals name="attachment_failed">
+        <item quantity="other">사진 %1$d장을 가져오지 못했어요</item>
+    </plurals>
+    <string name="attachment_open">사진 보기</string>
+    <string name="attachment_thumbnail">첨부한 사진</string>
+    <string name="attachment_close">닫기</string>
 </resources>

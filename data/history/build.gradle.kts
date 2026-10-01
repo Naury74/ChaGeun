@@ -11,7 +11,10 @@ android {
 
 dependencies {
     api(projects.core.domain)
+    implementation(projects.core.common)
     implementation(projects.core.database)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.room.ktx)
 
     testImplementation(libs.androidx.room.runtime)

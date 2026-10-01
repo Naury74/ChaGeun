@@ -3,6 +3,8 @@ package com.naury.chageun.feature.history
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.history.AttachmentRepository
+import com.naury.chageun.core.domain.history.DeleteHistoryRecordUseCase
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -14,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -31,7 +34,11 @@ class HistoryViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
     private val historyRepository: HistoryRepository,
+    private val attachmentRepository: AttachmentRepository,
+    private val deleteRecord: DeleteHistoryRecordUseCase,
 ) : ViewModel() {
+
+    private val attachFailedCount = MutableStateFlow(0)
 
     private val filter = savedStateHandle.getStateFlow(KEY_FILTER, HistoryFilter.All.name)
     private val keyword = savedStateHandle.getStateFlow(KEY_KEYWORD, "")
@@ -52,16 +59,28 @@ class HistoryViewModel @Inject constructor(
                 historyRepository.observeTimeline(vehicle.id, timelineQuery).map { items -> activeFilter to items }
             }
             val detail = selected.flatMapLatest { key ->
-                key?.toRecordRef()?.let { historyRepository.observeRecord(vehicle.id, it) } ?: flowOf(null)
+                key?.toRecordRef()?.let { ref ->
+                    combine(
+                        historyRepository.observeRecord(vehicle.id, ref),
+                        attachmentRepository.observe(vehicle.id, ref),
+                    ) { record, attachments -> record to attachments }
+                } ?: flowOf(null to emptyList())
             }
-            combine(timeline, keyword, detail) { (activeFilter, items), text, recordDetail ->
+            combine(timeline, keyword, detail, attachFailedCount) {
+                    (activeFilter, items),
+                    text,
+                    (record, attachments),
+                    failed,
+                ->
                 HistoryUiState(
                     isLoading = false,
                     filter = activeFilter,
                     keyword = text,
                     sections = items.groupIntoMonths(),
-                    selected = recordDetail?.ref,
-                    detail = recordDetail,
+                    selected = record?.ref,
+                    detail = record,
+                    attachments = if (record != null) attachments else emptyList(),
+                    attachFailedCount = failed,
                 )
             }
         }
@@ -83,11 +102,27 @@ class HistoryViewModel @Inject constructor(
 
     fun delete(ref: RecordRef) {
         viewModelScope.launch {
-            val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-            historyRepository.delete(vehicle.id, ref)
+            deleteRecord(vehicleId(), ref)
             if (selected.value == "${ref.type.name}:${ref.id}") select(null)
         }
     }
+
+    fun attach(ref: RecordRef, sourceUris: List<String>) {
+        if (sourceUris.isEmpty()) return
+        viewModelScope.launch {
+            attachFailedCount.value = attachmentRepository.attach(vehicleId(), ref, sourceUris).failed
+        }
+    }
+
+    fun deleteAttachment(attachmentId: String) {
+        viewModelScope.launch { attachmentRepository.delete(vehicleId(), attachmentId) }
+    }
+
+    fun dismissAttachFailure() {
+        attachFailedCount.value = 0
+    }
+
+    private suspend fun vehicleId() = vehicleRepository.observePrimaryVehicle().filterNotNull().first().id
 
     private fun String.toRecordRef(): RecordRef? {
         val type = substringBefore(':').let { name -> TimelineEventType.entries.firstOrNull { it.name == name } }
