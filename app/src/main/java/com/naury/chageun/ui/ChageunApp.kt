@@ -23,6 +23,7 @@ import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.feature.history.HistoryRoute
 import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.feature.manage.record.RecordServiceHost
@@ -83,6 +84,7 @@ private fun DestinationContent(destination: TopLevelDestination, onRecordService
     when (destination) {
         TopLevelDestination.Home -> HomeRoute(onRecordService = onRecordService)
         TopLevelDestination.Manage -> ManageRoute(onRecordService = onRecordService)
+        TopLevelDestination.History -> HistoryRoute(onRecordService = onRecordService)
         else -> PendingDestination(destination)
     }
 }

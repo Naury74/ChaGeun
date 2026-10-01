@@ -1,0 +1,81 @@
+<resources>
+    <string name="history_search_hint">기록 검색</string>
+    <string name="history_filter_all">전체</string>
+    <string name="history_filter_maintenance">정비</string>
+    <string name="history_filter_fuel">주유</string>
+    <string name="history_filter_check">점검</string>
+    <string name="history_filter_other">기타</string>
+    <string name="history_empty">아직 기록이 없어요</string>
+    <string name="history_empty_action">첫 기록 추가</string>
+    <string name="history_empty_filtered">조건에 맞는 기록이 없어요</string>
+    <string name="history_clear_filters">필터 초기화</string>
+    <string name="history_unknown_date">날짜 모름</string>
+    <string name="history_select_record">기록을 선택하면 자세한 내용을 보여드려요</string>
+    <string name="history_back">뒤로</string>
+
+    <string name="history_type_fuel">주유</string>
+    <string name="history_type_inspection">점검</string>
+    <string name="history_type_repair">사고·수리</string>
+    <string name="history_type_note">기타</string>
+    <string name="history_source_user">사용자 입력</string>
+    <string name="history_km">%1$skm</string>
+    <string name="history_won">%1$s원</string>
+    <string name="history_liters">%1$sL</string>
+    <string name="history_unit_price">%1$s원/L</string>
+
+    <string name="history_add">기록 추가</string>
+    <string name="history_add_maintenance">소모품 교체</string>
+    <string name="history_add_fuel">주유</string>
+    <string name="history_add_check">점검·수리·기타</string>
+    <string name="history_pick_item">어떤 항목을 교체했나요?</string>
+
+    <string name="history_detail_date">날짜</string>
+    <string name="history_detail_mileage">주행거리</string>
+    <string name="history_detail_cost">비용</string>
+    <string name="history_detail_shop">정비소</string>
+    <string name="history_detail_station">주유소</string>
+    <string name="history_detail_total">총액</string>
+    <string name="history_detail_volume">주유량</string>
+    <string name="history_detail_unit_price">단가</string>
+    <string name="history_detail_full_tank">가득 주유</string>
+    <string name="history_detail_memo">메모</string>
+    <string name="history_detail_source">출처</string>
+    <string name="history_detail_computed">%1$s (계산값)</string>
+    <string name="history_yes">예</string>
+    <string name="history_no">아니요</string>
+    <string name="history_delete">삭제</string>
+    <string name="history_delete_title">이 기록을 삭제할까요?</string>
+    <string name="history_delete_body">삭제하면 되돌릴 수 없어요. 함께 저장된 주행거리 기록도 삭제돼요.</string>
+    <string name="history_cancel">취소</string>
+
+    <string name="fuel_form_title">주유 기록</string>
+    <string name="fuel_form_hint">총액·주유량·단가 중 두 개를 입력하면 나머지를 계산해요.</string>
+    <string name="fuel_form_total">총액</string>
+    <string name="fuel_form_volume">주유량</string>
+    <string name="fuel_form_unit_price">단가</string>
+    <string name="fuel_form_full_tank">가득 주유했어요</string>
+    <string name="fuel_form_station">주유소 (선택)</string>
+    <string name="fuel_form_calculated">자동 계산: %1$s</string>
+
+    <string name="check_form_title">점검·수리 기록</string>
+    <string name="check_form_kind_inspection">점검</string>
+    <string name="check_form_kind_repair">사고·수리</string>
+    <string name="check_form_kind_note">기타</string>
+    <string name="check_form_subject">제목</string>
+    <string name="check_form_mileage">주행거리 (선택)</string>
+    <string name="check_form_cost">비용 (선택)</string>
+
+    <string name="form_date">날짜</string>
+    <string name="form_mileage">주행거리</string>
+    <string name="form_memo">메모 (선택)</string>
+    <string name="form_save">저장</string>
+    <string name="form_error_required">입력해 주세요</string>
+    <string name="form_error_future_date">미래 날짜는 선택할 수 없어요</string>
+    <string name="form_error_amounts">총액·주유량·단가 중 두 개 이상 입력해 주세요</string>
+    <string name="form_save_failed">저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="unit_km">km</string>
+    <string name="unit_won">원</string>
+    <string name="unit_liter">L</string>
+    <string name="unit_won_per_liter">원/L</string>
+    <string name="history_detail_kind">종류</string>
+</resources>

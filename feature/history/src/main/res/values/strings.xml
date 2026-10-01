@@ -1,0 +1,81 @@
+<resources>
+    <string name="history_search_hint">Search records</string>
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_maintenance">Maintenance</string>
+    <string name="history_filter_fuel">Fuel</string>
+    <string name="history_filter_check">Inspection</string>
+    <string name="history_filter_other">Other</string>
+    <string name="history_empty">No records yet</string>
+    <string name="history_empty_action">Add your first record</string>
+    <string name="history_empty_filtered">No records match</string>
+    <string name="history_clear_filters">Clear filters</string>
+    <string name="history_unknown_date">Date unknown</string>
+    <string name="history_select_record">Select a record to see its details</string>
+    <string name="history_back">Back</string>
+
+    <string name="history_type_fuel">Fuel</string>
+    <string name="history_type_inspection">Inspection</string>
+    <string name="history_type_repair">Repair</string>
+    <string name="history_type_note">Note</string>
+    <string name="history_source_user">Entered by you</string>
+    <string name="history_km">%1$s km</string>
+    <string name="history_won">₩%1$s</string>
+    <string name="history_liters">%1$s L</string>
+    <string name="history_unit_price">₩%1$s/L</string>
+
+    <string name="history_add">Add record</string>
+    <string name="history_add_maintenance">Replacement</string>
+    <string name="history_add_fuel">Fuel</string>
+    <string name="history_add_check">Inspection, repair or note</string>
+    <string name="history_pick_item">Which item did you replace?</string>
+
+    <string name="history_detail_date">Date</string>
+    <string name="history_detail_mileage">Mileage</string>
+    <string name="history_detail_cost">Cost</string>
+    <string name="history_detail_shop">Shop</string>
+    <string name="history_detail_station">Station</string>
+    <string name="history_detail_total">Total</string>
+    <string name="history_detail_volume">Volume</string>
+    <string name="history_detail_unit_price">Unit price</string>
+    <string name="history_detail_full_tank">Full tank</string>
+    <string name="history_detail_memo">Note</string>
+    <string name="history_detail_source">Source</string>
+    <string name="history_detail_computed">%1$s (calculated)</string>
+    <string name="history_yes">Yes</string>
+    <string name="history_no">No</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_delete_title">Delete this record?</string>
+    <string name="history_delete_body">It can\'t be restored. A mileage reading saved with it is removed too.</string>
+    <string name="history_cancel">Cancel</string>
+
+    <string name="fuel_form_title">Fuel record</string>
+    <string name="fuel_form_hint">Enter any two of total, volume and unit price; the third is calculated.</string>
+    <string name="fuel_form_total">Total</string>
+    <string name="fuel_form_volume">Volume</string>
+    <string name="fuel_form_unit_price">Unit price</string>
+    <string name="fuel_form_full_tank">Filled up</string>
+    <string name="fuel_form_station">Station (optional)</string>
+    <string name="fuel_form_calculated">Calculated: %1$s</string>
+
+    <string name="check_form_title">Inspection or repair</string>
+    <string name="check_form_kind_inspection">Inspection</string>
+    <string name="check_form_kind_repair">Repair</string>
+    <string name="check_form_kind_note">Note</string>
+    <string name="check_form_subject">Title</string>
+    <string name="check_form_mileage">Mileage (optional)</string>
+    <string name="check_form_cost">Cost (optional)</string>
+
+    <string name="form_date">Date</string>
+    <string name="form_mileage">Mileage</string>
+    <string name="form_memo">Note (optional)</string>
+    <string name="form_save">Save</string>
+    <string name="form_error_required">Required</string>
+    <string name="form_error_future_date">The date can\'t be in the future</string>
+    <string name="form_error_amounts">Enter at least two of total, volume and unit price</string>
+    <string name="form_save_failed">Couldn\'t save. Please try again.</string>
+    <string name="unit_km">km</string>
+    <string name="unit_won">₩</string>
+    <string name="unit_liter">L</string>
+    <string name="unit_won_per_liter">₩/L</string>
+    <string name="history_detail_kind">Type</string>
+</resources>
