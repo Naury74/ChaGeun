@@ -29,6 +29,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "Chageun"
 include(":app")
+include(":core:common")
+include(":core:database")
 include(":core:designsystem")
 include(":core:domain")
 include(":core:model")
+include(":core:security")
