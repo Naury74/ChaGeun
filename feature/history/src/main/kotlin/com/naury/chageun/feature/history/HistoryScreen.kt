@@ -2,11 +2,8 @@ package com.naury.chageun.feature.history
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,6 +34,8 @@ import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
@@ -48,12 +47,13 @@ fun HistoryRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HistoryV
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    val isTwoPane = isListDetailTwoPane()
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
 
     HistoryScreen(
         uiState = uiState,
-        isTwoPane = isExpanded,
+        isTwoPane = isTwoPane,
         onKeywordChanged = { keyword ->
             val matching = if (keyword.isBlank()) {
                 emptySet()
@@ -129,18 +129,12 @@ fun HistoryScreen(
         }
     }
     when {
-        isTwoPane -> Row(
-            modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.paneGap),
+        isTwoPane -> HingeAwarePanes(
+            weights = listOf(LIST_PANE_WEIGHT, 1f - LIST_PANE_WEIGHT),
+            modifier = modifier.fillMaxSize(),
         ) {
-            timeline(
-                Modifier
-                    .weight(LIST_PANE_WEIGHT)
-                    .fillMaxHeight(),
-            )
-            val detailModifier = Modifier
-                .weight(1f - LIST_PANE_WEIGHT)
-                .fillMaxHeight()
+            timeline(Modifier.fillMaxSize())
+            val detailModifier = Modifier.fillMaxSize()
             if (detail != null) {
                 RecordDetailPane(detail, attachments, onBack = null, onDelete = onDelete, modifier = detailModifier)
             } else {
