@@ -10,6 +10,7 @@ import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleId
@@ -124,6 +125,19 @@ class OfflineFirstMaintenanceRepositoryTest {
         )
 
         assertThat(database.mileageRecordDao().findLatest("v1")).isNull()
+    }
+
+    @Test
+    fun saveRule_updatesExistingRowAndKeepsDisabledRulesObservable() = runTest {
+        database.maintenanceDao().upsertRules(listOf(rule("EngineOil")))
+        val edited = repository.findRule(vehicleId, MaintenanceItem.EngineOil)!!
+            .copy(intervalKm = 7_000, isEnabled = false, source = RuleSource.User)
+
+        repository.saveRule(vehicleId, edited)
+
+        val rules = repository.observeInputs(vehicleId).first().rules
+        assertThat(rules).containsExactly(edited)
+        assertThat(database.maintenanceDao().findRule("v1", "EngineOil")?.id).isEqualTo("rule-EngineOil")
     }
 
     @Test

@@ -26,4 +26,5 @@
     <string name="home_estimated_due">Expected around %1$s</string>
 
     <string name="home_rule_generic">Based on general guidelines</string>
+    <string name="home_record_service">Replaced</string>
 </resources>

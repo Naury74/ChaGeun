@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +32,7 @@ import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.chageun.core.model.Confidence
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.RuleSource
@@ -41,7 +45,13 @@ import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
 
 @Composable
-internal fun ManageDetailPane(detail: ManageDetail, onBack: (() -> Unit)?, modifier: Modifier = Modifier) {
+internal fun ManageDetailPane(
+    detail: ManageDetail,
+    onBack: (() -> Unit)?,
+    onRecordService: (MaintenanceItem) -> Unit,
+    onEditRule: (MaintenanceItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val status = detail.status
     val gutter = ChageunTheme.spacing.gutter
     LazyColumn(
@@ -78,6 +88,22 @@ internal fun ManageDetailPane(detail: ManageDetail, onBack: (() -> Unit)?, modif
                 remainingText(status)
             }
             headline?.let { Text(it, style = NumericTextStyles.Title) }
+        }
+        item(key = "actions") {
+            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                OutlinedButton(
+                    onClick = { onEditRule(status.item) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.rule_edit_action)) }
+                Button(
+                    onClick = { onRecordService(status.item) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.record_action)) }
+            }
         }
         item(key = "basis") { BasisSection(detail) }
         item(key = "history-title") {

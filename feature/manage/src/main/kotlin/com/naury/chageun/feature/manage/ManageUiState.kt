@@ -33,6 +33,7 @@ data class ManageUiState(
     val items: List<MaintenanceStatus> = emptyList(),
     val counts: Map<ManageFilter, Int> = emptyMap(),
     val rules: Map<MaintenanceItem, MaintenanceRule> = emptyMap(),
+    val disabledItems: List<MaintenanceItem> = emptyList(),
     val selectedItem: MaintenanceItem? = null,
     val detail: ManageDetail? = null,
 )

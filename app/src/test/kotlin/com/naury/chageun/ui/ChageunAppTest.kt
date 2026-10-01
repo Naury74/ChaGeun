@@ -24,7 +24,7 @@ class ChageunAppTest {
 
     @Test
     fun showsAllTopLevelDestinations() {
-        composeRule.setContent { ChageunApp(destinationContent = {}) }
+        composeRule.setContent { ChageunApp(destinationContent = { _, _ -> }) }
 
         listOf("Home", "Care", "History", "My car").forEach { navItem(it).assertExists() }
         navItem("Home").assertIsSelected()
@@ -33,7 +33,7 @@ class ChageunAppTest {
     @Test
     fun keepsSelectedDestination_afterRecreation() {
         val restorationTester = StateRestorationTester(composeRule)
-        restorationTester.setContent { ChageunApp(destinationContent = {}) }
+        restorationTester.setContent { ChageunApp(destinationContent = { _, _ -> }) }
 
         navItem("History").performClick()
         restorationTester.emulateSavedInstanceStateRestore()

@@ -88,7 +88,9 @@ class ObserveMaintenanceOverviewUseCaseTest {
             mileageHistory = emptyList(),
         )
 
-        assertThat(overview().statuses.map { it.item }).containsExactly(MaintenanceItem.Battery)
+        val overview = overview()
+        assertThat(overview.statuses.map { it.item }).containsExactly(MaintenanceItem.Battery)
+        assertThat(overview.disabledItems).containsExactly(MaintenanceItem.EngineOil)
     }
 
     @Test

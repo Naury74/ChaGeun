@@ -37,4 +37,10 @@ class DefaultMaintenanceRulesTest {
             assertThat(it.source).isEqualTo(RuleSource.Generic)
         }
     }
+
+    @Test
+    fun genericFor_disablesItemsThatDoNotApplyToFuel() {
+        assertThat(DefaultMaintenanceRules.genericFor(MaintenanceItem.SparkPlug, FuelType.Diesel)?.isEnabled).isFalse()
+        assertThat(DefaultMaintenanceRules.genericFor(MaintenanceItem.SparkPlug, FuelType.Gasoline)?.isEnabled).isTrue()
+    }
 }

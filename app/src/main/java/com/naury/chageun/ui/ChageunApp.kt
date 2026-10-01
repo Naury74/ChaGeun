@@ -10,21 +10,33 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.manage.ManageRoute
+import com.naury.chageun.feature.manage.record.RecordServiceHost
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
 @Composable
-fun ChageunApp(destinationContent: @Composable (TopLevelDestination) -> Unit = { DestinationContent(it) }) {
+fun ChageunApp(
+    destinationContent: @Composable (TopLevelDestination, onRecordService: (MaintenanceItem) -> Unit) -> Unit =
+        { destination, onRecordService -> DestinationContent(destination, onRecordService) },
+) {
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
+    var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
+    val onRecordService: (MaintenanceItem) -> Unit = { recordingItem = it }
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
 
@@ -51,18 +63,26 @@ fun ChageunApp(destinationContent: @Composable (TopLevelDestination) -> Unit = {
             onBack = { backStack.removeLastOrNull() },
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
-                    entry(destination.route) { destinationContent(destination) }
+                    entry(destination.route) { destinationContent(destination, onRecordService) }
                 }
             },
+        )
+    }
+
+    recordingItem?.let { item ->
+        RecordServiceHost(
+            item = item,
+            isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
+            onDismiss = { recordingItem = null },
         )
     }
 }
 
 @Composable
-private fun DestinationContent(destination: TopLevelDestination) {
+private fun DestinationContent(destination: TopLevelDestination, onRecordService: (MaintenanceItem) -> Unit) {
     when (destination) {
-        TopLevelDestination.Home -> HomeRoute()
-        TopLevelDestination.Manage -> ManageRoute()
+        TopLevelDestination.Home -> HomeRoute(onRecordService = onRecordService)
+        TopLevelDestination.Manage -> ManageRoute(onRecordService = onRecordService)
         else -> PendingDestination(destination)
     }
 }

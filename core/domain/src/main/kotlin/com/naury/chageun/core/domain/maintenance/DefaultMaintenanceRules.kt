@@ -41,4 +41,10 @@ object DefaultMaintenanceRules {
         val excluded = NOT_APPLICABLE[fuelType].orEmpty()
         return GENERIC.filterNot { it.item in excluded }
     }
+
+    /** The generic rule for [item]; disabled rather than absent when the item does not apply to the fuel type. */
+    fun genericFor(item: MaintenanceItem, fuelType: FuelType): MaintenanceRule? {
+        val rule = GENERIC.firstOrNull { it.item == item } ?: return null
+        return rule.copy(isEnabled = item !in NOT_APPLICABLE[fuelType].orEmpty())
+    }
 }

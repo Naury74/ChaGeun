@@ -30,7 +30,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
     private val mileageRecordDao get() = database.mileageRecordDao()
 
     override fun observeInputs(vehicleId: VehicleId): Flow<MaintenanceInputs> = combine(
-        maintenanceDao.observeEnabledRules(vehicleId.value),
+        maintenanceDao.observeRules(vehicleId.value),
         maintenanceDao.observeLatestRecords(vehicleId.value),
         mileageRecordDao.observeAll(vehicleId.value),
     ) { rules, latestRecords, mileage ->
@@ -60,6 +60,11 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
 
     override suspend fun findRule(vehicleId: VehicleId, item: MaintenanceItem): MaintenanceRule? =
         maintenanceDao.findRule(vehicleId.value, item.name)?.asExternalModelOrNull()
+
+    override suspend fun saveRule(vehicleId: VehicleId, rule: MaintenanceRule) {
+        val existingId = maintenanceDao.findRule(vehicleId.value, rule.item.name)?.id
+        maintenanceDao.upsertRules(listOf(rule.asEntity(existingId ?: UUID.randomUUID().toString(), vehicleId.value)))
+    }
 
     override suspend fun findLatestService(vehicleId: VehicleId, item: MaintenanceItem): ServiceRecord? =
         maintenanceDao.findLatestRecord(vehicleId.value, item.name)?.asServiceRecord()

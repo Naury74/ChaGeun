@@ -33,4 +33,45 @@
     <string name="manage_value_or">%1$s / %2$s</string>
     <string name="manage_km">%1$skm</string>
     <string name="manage_cost_won">%1$s원</string>
+
+    <string name="record_title">%1$s 교체 기록</string>
+    <string name="record_date">교체한 날</string>
+    <string name="record_mileage">교체 당시 주행거리</string>
+    <string name="record_cost">비용 (선택)</string>
+    <string name="record_cost_hint">모르면 비워두세요. 무상이면 0을 입력해요.</string>
+    <string name="record_shop">정비소 (선택)</string>
+    <string name="record_memo">메모 (선택)</string>
+    <string name="record_save">저장</string>
+    <string name="record_cancel">취소</string>
+    <string name="record_error_required">입력해 주세요</string>
+    <string name="record_error_future_date">미래 날짜는 선택할 수 없어요</string>
+    <string name="record_error_invalid_number">금액을 확인해 주세요</string>
+    <string name="record_save_failed">저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="record_lower_mileage_title">이전 기록보다 낮아요</string>
+    <string name="record_lower_mileage_body">이전 %1$s 교체는 %2$skm였어요. 값을 다시 확인하거나 계기판을 교체했다면 그대로 저장해 주세요.</string>
+    <string name="record_lower_mileage_save">그대로 저장</string>
+    <string name="record_lower_mileage_edit">수정할게요</string>
+    <string name="record_saved_title">%1$s 교체 기록을 저장했어요</string>
+    <string name="record_saved_next_both">다음 기준은 %1$skm 또는 %2$s 중 먼저 도달하는 시점이에요.</string>
+    <string name="record_saved_next_km">다음 기준은 %1$skm예요.</string>
+    <string name="record_saved_next_date">다음 기준은 %1$s예요.</string>
+    <string name="record_done">확인</string>
+    <string name="record_action">교체했어요</string>
+    <string name="record_unit_km">km</string>
+    <string name="record_unit_won">원</string>
+
+    <string name="rule_edit_action">기준 수정</string>
+    <string name="rule_title">%1$s 교체 기준</string>
+    <string name="rule_enabled">이 항목 관리하기</string>
+    <string name="rule_interval_km">거리 주기</string>
+    <string name="rule_interval_months">기간 주기</string>
+    <string name="rule_unit_km">km</string>
+    <string name="rule_unit_months">개월</string>
+    <string name="rule_hint">한쪽을 비우면 다른 기준만 사용해요. 둘 다 있으면 먼저 도달하는 시점을 기준으로 해요.</string>
+    <string name="rule_reset">일반적인 권장 기준으로 되돌리기</string>
+    <string name="rule_error_no_interval">주기를 하나 이상 입력해 주세요</string>
+    <string name="rule_error_non_positive">주기는 0보다 커야 해요</string>
+    <string name="rule_error_unknown">수정할 수 없는 항목이에요</string>
+    <string name="manage_disabled_items">관리하지 않는 항목</string>
+    <string name="manage_disabled_hint">눌러서 다시 관리할 수 있어요</string>
 </resources>

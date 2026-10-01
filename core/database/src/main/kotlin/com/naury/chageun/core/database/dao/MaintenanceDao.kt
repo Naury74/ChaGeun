@@ -13,6 +13,9 @@ interface MaintenanceDao {
     @Query("SELECT * FROM maintenance_rule WHERE vehicle_id = :vehicleId AND is_enabled = 1")
     fun observeEnabledRules(vehicleId: String): Flow<List<MaintenanceRuleEntity>>
 
+    @Query("SELECT * FROM maintenance_rule WHERE vehicle_id = :vehicleId")
+    fun observeRules(vehicleId: String): Flow<List<MaintenanceRuleEntity>>
+
     @Upsert
     suspend fun upsertRules(rules: List<MaintenanceRuleEntity>)
 

@@ -56,6 +56,7 @@ internal fun content(level: VehicleHealthLevel, reasons: List<HealthReason>, var
         overview = MaintenanceOverview(
             statuses = statuses.toList(),
             rules = emptyMap(),
+            disabledItems = emptyList(),
             health = VehicleHealth(level, reasons),
             currentMileage = MileageReading(TODAY, Kilometers(42_180)),
         ),
