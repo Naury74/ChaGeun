@@ -35,7 +35,14 @@ class FakeMaintenanceRepository : MaintenanceRepository {
         inputs.value.lastServices[item]
 
     override suspend fun findCurrentMileage(vehicleId: VehicleId): MileageReading? =
-        inputs.value.mileageHistory.maxByOrNull { it.date }
+        inputs.value.mileageHistory.lastOrNull()
+
+    val mileageCorrections = mutableListOf<MileageReading>()
+
+    override suspend fun addMileageReading(vehicleId: VehicleId, reading: MileageReading, isCorrection: Boolean) {
+        if (isCorrection) mileageCorrections += reading
+        inputs.update { it.copy(mileageHistory = it.mileageHistory + reading) }
+    }
 
     override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean) {
         recordedServices += entry to advancesOdometer

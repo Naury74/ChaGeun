@@ -32,12 +32,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.RecordRef
-import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.formatYearMonth
-import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.timelineTitle
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -151,17 +150,6 @@ private fun TimelineRow(item: TimelineItem, isSelected: Boolean, onClick: () -> 
 }
 
 @Composable
-internal fun timelineTitle(item: TimelineItem): String {
-    val typeLabel = stringResource(item.ref.type.labelRes)
-    val maintenanceItem = item.maintenanceItem
-    return when {
-        maintenanceItem != null -> stringResource(maintenanceItem.labelRes)
-        item.ref.type == TimelineEventType.Fuel -> listOfNotNull(typeLabel, item.title).joinToString(" · ")
-        else -> item.title ?: typeLabel
-    }
-}
-
-@Composable
 private fun EmptyTimeline(isFiltered: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
     Column(
         modifier = Modifier
@@ -181,15 +169,6 @@ private fun EmptyTimeline(isFiltered: Boolean, onAdd: () -> Unit, onClear: () ->
         }
     }
 }
-
-internal val TimelineEventType.labelRes: Int
-    get() = when (this) {
-        TimelineEventType.Maintenance -> R.string.history_filter_maintenance
-        TimelineEventType.Fuel -> R.string.history_type_fuel
-        TimelineEventType.Inspection -> R.string.history_type_inspection
-        TimelineEventType.Repair -> R.string.history_type_repair
-        TimelineEventType.Note -> R.string.history_type_note
-    }
 
 private val HistoryFilter.labelRes: Int
     get() = when (this) {

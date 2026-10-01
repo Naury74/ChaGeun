@@ -13,10 +13,6 @@
     <string name="history_select_record">기록을 선택하면 자세한 내용을 보여드려요</string>
     <string name="history_back">뒤로</string>
 
-    <string name="history_type_fuel">주유</string>
-    <string name="history_type_inspection">점검</string>
-    <string name="history_type_repair">사고·수리</string>
-    <string name="history_type_note">기타</string>
     <string name="history_source_user">사용자 입력</string>
     <string name="history_km">%1$skm</string>
     <string name="history_won">%1$s원</string>

@@ -43,4 +43,9 @@
 
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancel</string>
+    <string name="timeline_type_maintenance">Maintenance</string>
+    <string name="timeline_type_fuel">Fuel</string>
+    <string name="timeline_type_inspection">Inspection</string>
+    <string name="timeline_type_repair">Repair</string>
+    <string name="timeline_type_note">Note</string>
 </resources>

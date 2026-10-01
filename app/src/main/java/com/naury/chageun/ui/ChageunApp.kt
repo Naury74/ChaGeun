@@ -30,16 +30,25 @@ import com.naury.chageun.feature.manage.record.RecordServiceHost
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
+/** Cross-feature actions handled by the app shell so feature modules never depend on each other. */
+data class AppActions(val onRecordService: (MaintenanceItem) -> Unit, val onNavigate: (TopLevelDestination) -> Unit)
+
 @Composable
 fun ChageunApp(
-    destinationContent: @Composable (TopLevelDestination, onRecordService: (MaintenanceItem) -> Unit) -> Unit =
-        { destination, onRecordService -> DestinationContent(destination, onRecordService) },
+    destinationContent: @Composable (TopLevelDestination, AppActions) -> Unit =
+        { destination, actions -> DestinationContent(destination, actions) },
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
-    val onRecordService: (MaintenanceItem) -> Unit = { recordingItem = it }
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
+    val navigateTo: (TopLevelDestination) -> Unit = { destination ->
+        if (destination.route != currentTopLevel) {
+            backStack.clear()
+            backStack.add(destination.route)
+        }
+    }
+    val actions = AppActions(onRecordService = { recordingItem = it }, onNavigate = navigateTo)
 
     NavigationSuiteScaffold(
         layoutType = navigationSuiteTypeFor(windowSizeClass),
@@ -47,12 +56,7 @@ fun ChageunApp(
             TopLevelDestination.entries.forEach { destination ->
                 item(
                     selected = destination.route == currentTopLevel,
-                    onClick = {
-                        if (destination.route != currentTopLevel) {
-                            backStack.clear()
-                            backStack.add(destination.route)
-                        }
-                    },
+                    onClick = { navigateTo(destination) },
                     icon = { Icon(destination.icon, contentDescription = null) },
                     label = { Text(stringResource(destination.labelRes)) },
                 )
@@ -64,7 +68,7 @@ fun ChageunApp(
             onBack = { backStack.removeLastOrNull() },
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
-                    entry(destination.route) { destinationContent(destination, onRecordService) }
+                    entry(destination.route) { destinationContent(destination, actions) }
                 }
             },
         )
@@ -80,11 +84,14 @@ fun ChageunApp(
 }
 
 @Composable
-private fun DestinationContent(destination: TopLevelDestination, onRecordService: (MaintenanceItem) -> Unit) {
+private fun DestinationContent(destination: TopLevelDestination, actions: AppActions) {
     when (destination) {
-        TopLevelDestination.Home -> HomeRoute(onRecordService = onRecordService)
-        TopLevelDestination.Manage -> ManageRoute(onRecordService = onRecordService)
-        TopLevelDestination.History -> HistoryRoute(onRecordService = onRecordService)
+        TopLevelDestination.Home -> HomeRoute(
+            onRecordService = actions.onRecordService,
+            onOpenHistory = { actions.onNavigate(TopLevelDestination.History) },
+        )
+        TopLevelDestination.Manage -> ManageRoute(onRecordService = actions.onRecordService)
+        TopLevelDestination.History -> HistoryRoute(onRecordService = actions.onRecordService)
         else -> PendingDestination(destination)
     }
 }
