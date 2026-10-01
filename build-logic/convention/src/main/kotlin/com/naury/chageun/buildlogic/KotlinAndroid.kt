@@ -35,6 +35,8 @@ internal fun Project.configureKotlinAndroid(commonExtension: CommonExtension) {
     dependencies {
         add("testImplementation", libs.library("junit4"))
         add("testImplementation", libs.library("truth"))
+        // Robolectric 4.17 pulls espresso-core 3.5, which calls InputManager.getInstance() removed in API 36.
+        constraints.add("testImplementation", libs.library("androidx-test-espresso-core"))
     }
 }
 

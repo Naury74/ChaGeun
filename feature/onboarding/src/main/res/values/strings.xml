@@ -29,22 +29,11 @@
     <string name="onboarding_error_year_invalid">Enter a year between 1980 and next year</string>
     <string name="onboarding_error_mileage_invalid">Check the mileage</string>
 
-    <string name="fuel_gasoline">Gasoline</string>
-    <string name="fuel_diesel">Diesel</string>
-    <string name="fuel_lpg">LPG</string>
-    <string name="fuel_hybrid">Hybrid</string>
-    <string name="fuel_plug_in_hybrid">Plug-in hybrid</string>
-    <string name="fuel_electric">Electric</string>
-    <string name="fuel_hydrogen">Hydrogen</string>
-
     <string name="onboarding_confirm">OK</string>
     <string name="onboarding_cancel">Cancel</string>
 
     <string name="onboarding_quick_title">When did you last replace these?</string>
     <string name="onboarding_quick_body">Skip anything you don\'t remember. You can fill it in later.</string>
-    <string name="onboarding_quick_engine_oil">Engine oil</string>
-    <string name="onboarding_quick_tire">Tires</string>
-    <string name="onboarding_quick_battery">Battery</string>
     <string name="onboarding_quick_mode_both">Date and mileage</string>
     <string name="onboarding_quick_mode_date">Date only</string>
     <string name="onboarding_quick_mode_mileage">Mileage only</string>

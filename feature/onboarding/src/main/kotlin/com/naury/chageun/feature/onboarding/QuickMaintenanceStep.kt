@@ -31,11 +31,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.labelRes
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 @Composable
 internal fun QuickMaintenanceStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
@@ -72,7 +72,7 @@ private fun QuickServiceCard(
             modifier = Modifier.padding(ChageunTheme.spacing.md),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         ) {
-            Text(stringResource(item.quickLabelRes), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(item.labelRes), style = MaterialTheme.typography.titleMedium)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
@@ -111,15 +111,13 @@ private fun QuickServiceCard(
 @Composable
 private fun ServiceDateField(date: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
-    val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-
     OutlinedButton(
         onClick = { isPickerOpen = true },
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = ChageunTheme.spacing.minTouchTarget),
     ) {
-        Text(date?.format(formatter) ?: stringResource(R.string.onboarding_quick_pick_date))
+        Text(date?.let { formatDate(it) } ?: stringResource(R.string.onboarding_quick_pick_date))
     }
 
     if (isPickerOpen) {
@@ -161,12 +159,4 @@ private val QuickServiceMode.labelRes: Int
         QuickServiceMode.DateOnly -> R.string.onboarding_quick_mode_date
         QuickServiceMode.MileageOnly -> R.string.onboarding_quick_mode_mileage
         QuickServiceMode.Unknown -> R.string.onboarding_quick_mode_unknown
-    }
-
-private val MaintenanceItem.quickLabelRes: Int
-    get() = when (this) {
-        MaintenanceItem.EngineOil -> R.string.onboarding_quick_engine_oil
-        MaintenanceItem.Tire -> R.string.onboarding_quick_tire
-        MaintenanceItem.Battery -> R.string.onboarding_quick_battery
-        else -> error("$this is not asked during onboarding")
     }
