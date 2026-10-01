@@ -18,6 +18,9 @@ interface MileageRecordDao {
     )
     fun observeSince(vehicleId: String, since: LocalDate): Flow<List<MileageRecordEntity>>
 
+    @Query("SELECT * FROM mileage_record WHERE vehicle_id = :vehicleId ORDER BY recorded_on ASC, created_at ASC")
+    fun observeAll(vehicleId: String): Flow<List<MileageRecordEntity>>
+
     @Query(
         """
         SELECT * FROM mileage_record
