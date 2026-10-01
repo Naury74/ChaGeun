@@ -14,6 +14,7 @@ targetSdk = "36"
 androidxActivity = "1.13.0"
 androidxComposeBom = "2026.09.00"
 androidxCore = "1.19.1"
+androidxDataStore = "1.2.1"
 androidxExifInterface = "1.4.2"
 androidxHilt = "1.4.0"
 androidxLifecycle = "2.11.0"
@@ -36,6 +37,7 @@ androidxTestEspresso = "3.7.0"
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCore" }
+androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "androidxDataStore" }
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "androidxExifInterface" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "androidxComposeBom" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }

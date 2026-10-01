@@ -24,8 +24,10 @@ import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.home.MileageUpdateHost
 import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.feature.manage.record.RecordServiceHost
+import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
 import com.naury.chageun.navigation.AiRoute
+import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
@@ -35,6 +37,7 @@ data class AppActions(
     val onNavigate: (TopLevelDestination) -> Unit,
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
     /** Item opened from a notification, consumed once the Care tab has selected it. */
     val pendingManageItem: MaintenanceItem? = null,
     val onPendingManageItemHandled: () -> Unit = {},
@@ -64,6 +67,7 @@ fun ChageunApp(
         onNavigate = navigateTo,
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
+        onOpenSettings = { backStack.add(SettingsRoute) },
         pendingManageItem = deepLinkItem,
         onPendingManageItemHandled = onDeepLinkHandled,
     )
@@ -93,6 +97,7 @@ fun ChageunApp(
                 TopLevelDestination.entries.forEach { destination ->
                     entry(destination.route) { destinationContent(destination, actions) }
                 }
+                entry(SettingsRoute) { SettingsRoute(onBack = { backStack.removeLastOrNull() }) }
                 entry<AiRoute> { route ->
                     AiHubRoute(
                         focusItem = route.focusItem?.let { name ->
@@ -121,6 +126,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onOpenHistory = { actions.onNavigate(TopLevelDestination.History) },
             onUpdateMileage = actions.onUpdateMileage,
             onAskAi = { actions.onAskAi(null) },
+            onOpenSettings = actions.onOpenSettings,
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,
@@ -129,6 +135,9 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onPendingSelectionHandled = actions.onPendingManageItemHandled,
         )
         TopLevelDestination.History -> HistoryRoute(onRecordService = actions.onRecordService)
-        TopLevelDestination.Vehicle -> VehicleRoute(onUpdateMileage = actions.onUpdateMileage)
+        TopLevelDestination.Vehicle -> VehicleRoute(
+            onUpdateMileage = actions.onUpdateMileage,
+            onOpenSettings = actions.onOpenSettings,
+        )
     }
 }

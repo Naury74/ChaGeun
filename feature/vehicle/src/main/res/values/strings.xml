@@ -33,4 +33,5 @@
     <string name="vehicle_section_sources">Data sources</string>
     <string name="vehicle_sources_manual">Vehicle details and mileage were entered by you. Maintenance timing uses general guidelines unless you changed them.</string>
     <string name="vehicle_sources_auto">Vehicle details come from official vehicle data; mileage and maintenance records are yours.</string>
+    <string name="vehicle_open_settings">Settings</string>
 </resources>

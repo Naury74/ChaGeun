@@ -17,6 +17,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeReminderRepository
+import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import java.time.Clock
 import java.time.Instant
@@ -31,6 +32,7 @@ class EvaluateRemindersUseCaseTest {
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
     private val reminders = FakeReminderRepository()
+    private val settings = FakeSettingsRepository()
     private val notifier = object : ReminderNotifier {
         var enabled = true
         val shown = mutableListOf<MaintenanceStatus>()
@@ -51,6 +53,7 @@ class EvaluateRemindersUseCaseTest {
         ),
         reminders,
         notifier,
+        settings,
     )
 
     private suspend fun givenOilDueSoon() {
@@ -79,6 +82,15 @@ class EvaluateRemindersUseCaseTest {
 
         assertThat(evaluate()).isEqualTo(0)
         assertThat(reminders.states).isEmpty()
+    }
+
+    @Test
+    fun staysSilent_whenUserTurnedRemindersOff() = runTest {
+        givenOilDueSoon()
+        settings.setMaintenanceReminderEnabled(false)
+
+        assertThat(evaluate()).isEqualTo(0)
+        assertThat(notifier.shown).isEmpty()
     }
 
     @Test

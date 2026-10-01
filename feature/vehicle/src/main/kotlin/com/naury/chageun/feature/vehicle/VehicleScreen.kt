@@ -42,12 +42,16 @@ import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 
 @Composable
-fun VehicleRoute(onUpdateMileage: () -> Unit, viewModel: VehicleViewModel = hiltViewModel()) {
+fun VehicleRoute(
+    onUpdateMileage: () -> Unit,
+    onOpenSettings: () -> Unit,
+    viewModel: VehicleViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
         WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND,
     )
-    VehicleScreen(uiState, isTwoPane, onUpdateMileage)
+    VehicleScreen(uiState, isTwoPane, onUpdateMileage, onOpenSettings = onOpenSettings)
 }
 
 @Composable
@@ -56,6 +60,7 @@ fun VehicleScreen(
     isTwoPane: Boolean,
     onUpdateMileage: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenSettings: () -> Unit = {},
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -64,11 +69,15 @@ fun VehicleScreen(
     }
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
-        listOf({ overviewPane(state, onUpdateMileage) }, { recordsPane(state) })
+        listOf({ overviewPane(state, onUpdateMileage) }, {
+            recordsPane(state)
+            settingsEntry(onOpenSettings)
+        })
     } else {
         listOf({
             overviewPane(state, onUpdateMileage)
             recordsPane(state)
+            settingsEntry(onOpenSettings)
         })
     }
     Row(modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(spacing.paneGap)) {
@@ -108,6 +117,14 @@ private fun LazyListScope.recordsPane(state: VehicleUiState.Content) {
     item(key = "official") { OfficialDataSection() }
     item(key = "mileage-title") { SectionTitle(R.string.vehicle_section_mileage) }
     items(state.mileageLog, key = { it.id }) { entry -> MileageRow(entry) }
+}
+
+private fun LazyListScope.settingsEntry(onOpenSettings: () -> Unit) {
+    item(key = "settings") {
+        TextButton(onClick = onOpenSettings, modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) {
+            Text(stringResource(R.string.vehicle_open_settings))
+        }
+    }
 }
 
 @Composable

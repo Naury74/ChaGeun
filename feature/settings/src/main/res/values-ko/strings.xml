@@ -1,0 +1,19 @@
+<resources>
+    <string name="settings_title">설정</string>
+    <string name="settings_back">뒤로</string>
+    <string name="settings_section_theme">테마</string>
+    <string name="settings_theme_system">시스템 설정 따르기</string>
+    <string name="settings_theme_light">라이트</string>
+    <string name="settings_theme_dark">다크</string>
+    <string name="settings_section_notifications">알림</string>
+    <string name="settings_maintenance_reminders">정비 알림</string>
+    <string name="settings_maintenance_reminders_body">교체가 다가오거나 지났을 때 알려드려요. 꺼도 홈의 상태는 계속 갱신돼요.</string>
+    <string name="settings_system_notifications">시스템 설정에서 알림 종류별로 관리</string>
+    <string name="settings_section_sources">데이터 출처</string>
+    <string name="settings_source_user">차량 정보·주행거리·기록: 직접 입력한 값</string>
+    <string name="settings_source_derived">정비 상태·예상 시점: 앱이 계산한 값</string>
+    <string name="settings_source_generic">교체 주기: 직접 바꾸지 않았다면 일반적인 권장 기준 (제조사 공식값 아님)</string>
+    <string name="settings_source_official">공식 검사·리콜 데이터: 아직 연결되지 않음</string>
+    <string name="settings_section_about">앱 정보</string>
+    <string name="settings_version">버전 %1$s</string>
+</resources>

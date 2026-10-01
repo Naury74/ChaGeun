@@ -1,0 +1,16 @@
+package com.naury.chageun.core.testing
+
+import com.naury.chageun.core.domain.settings.SettingsRepository
+import com.naury.chageun.core.model.ThemeMode
+import com.naury.chageun.core.model.UserSettings
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+
+class FakeSettingsRepository : SettingsRepository {
+    override val settings = MutableStateFlow(UserSettings())
+
+    override suspend fun setThemeMode(mode: ThemeMode) = settings.update { it.copy(themeMode = mode) }
+
+    override suspend fun setMaintenanceReminderEnabled(enabled: Boolean) =
+        settings.update { it.copy(isMaintenanceReminderEnabled = enabled) }
+}
