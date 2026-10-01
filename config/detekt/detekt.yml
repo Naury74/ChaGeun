@@ -37,9 +37,19 @@ style:
     excludes: ['**/test/**', '**/androidTest/**', '**/designsystem/**']
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview']
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'android.util.Log'
+        reason: 'Use AppLogger so sensitive values cannot be logged.'
+    excludes: ['**/logging/LogcatAppLogger.kt']
   WildcardImport:
     active: true
     excludeImports: []
+
+exceptions:
+  PrintStackTrace:
+    active: true
 
 potential-bugs:
   ImplicitDefaultLocale:

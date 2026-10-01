@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.chageun.android.application)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.chageun.hilt)
 }
 
 android {
@@ -49,6 +50,7 @@ android {
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
