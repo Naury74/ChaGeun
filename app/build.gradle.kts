@@ -44,7 +44,7 @@ android {
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.compose.material3)
+    implementation(projects.core.designsystem)
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
