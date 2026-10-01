@@ -37,6 +37,7 @@ class ObserveMaintenanceOverviewUseCase @Inject constructor(
 
             MaintenanceOverview(
                 statuses = statuses,
+                rules = inputs.rules.associateBy { it.item },
                 // TODO(CHGN-33): Feed inspection and recall state once official data is connected.
                 health = healthAggregator.aggregate(
                     VehicleHealthInput(statuses, hasActiveSafetyRecall = false, inspection = InspectionState.Unknown),

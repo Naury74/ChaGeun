@@ -1,0 +1,38 @@
+<resources>
+    <string name="manage_filter_all">All</string>
+    <string name="manage_filter_attention">Check now</string>
+    <string name="manage_filter_upcoming">Coming up</string>
+    <string name="manage_filter_with_count">%1$s %2$d</string>
+    <string name="manage_empty_filter">No items in this filter</string>
+    <string name="manage_select_item">Select an item to see why it has this status</string>
+    <string name="manage_back">Back</string>
+
+    <string name="manage_last_service">Last replaced</string>
+    <string name="manage_last_service_none">No record</string>
+    <string name="manage_next_threshold">Next replacement</string>
+    <string name="manage_interval">Replacement interval</string>
+    <plurals name="manage_interval_km_or_months">
+        <item quantity="one">%1$s km or %2$d month, whichever comes first</item>
+        <item quantity="other">%1$s km or %2$d months, whichever comes first</item>
+    </plurals>
+    <string name="manage_interval_km">Every %1$s km</string>
+    <plurals name="manage_interval_months">
+        <item quantity="one">Every month</item>
+        <item quantity="other">Every %1$d months</item>
+    </plurals>
+    <string name="manage_rule_source">Basis</string>
+    <string name="manage_rule_source_generic">General guideline, not a manufacturer value</string>
+    <string name="manage_rule_source_manufacturer">Manufacturer schedule</string>
+    <string name="manage_rule_source_user">Your setting</string>
+    <string name="manage_estimated_due">Expected date</string>
+    <string name="manage_confidence_high">based on your schedule</string>
+    <string name="manage_confidence_medium">based on recent driving</string>
+    <string name="manage_confidence_low">rough estimate from limited records</string>
+    <string name="manage_estimate_with_confidence">%1$s · %2$s</string>
+    <string name="manage_history">Replacement history</string>
+    <string name="manage_history_empty">No replacements recorded yet</string>
+    <string name="manage_unknown_date">Date unknown</string>
+    <string name="manage_value_or">%1$s / %2$s</string>
+    <string name="manage_km">%1$s km</string>
+    <string name="manage_cost_won">₩%1$s</string>
+</resources>

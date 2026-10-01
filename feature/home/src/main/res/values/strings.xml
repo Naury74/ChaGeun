@@ -23,29 +23,7 @@
     <string name="home_section_upcoming">Coming up</string>
     <string name="home_section_missing">Needs details</string>
 
-    <string name="home_state_overdue">Replace now</string>
-    <string name="home_state_due">Due soon</string>
-    <string name="home_state_upcoming">Coming up</string>
-    <string name="home_state_good">Good</string>
-    <string name="home_state_unknown">Needs info</string>
-
-    <string name="home_remaining_km">About %1$s km left</string>
-    <string name="home_overdue_km">%1$s km past due</string>
-    <plurals name="home_remaining_days">
-        <item quantity="one">%1$d day left</item>
-        <item quantity="other">%1$d days left</item>
-    </plurals>
-    <plurals name="home_overdue_days">
-        <item quantity="one">%1$d day past due</item>
-        <item quantity="other">%1$d days past due</item>
-    </plurals>
-    <string name="home_due_today">Due today</string>
     <string name="home_estimated_due">Expected around %1$s</string>
-
-    <string name="home_missing_last_service">No replacement record yet</string>
-    <string name="home_missing_current_mileage">Add your current mileage</string>
-    <string name="home_missing_service_date">Add the replacement date for accuracy</string>
-    <string name="home_missing_service_mileage">Add the mileage at replacement</string>
 
     <string name="home_rule_generic">Based on general guidelines</string>
 </resources>

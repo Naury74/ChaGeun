@@ -6,10 +6,12 @@ import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
+import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceEntry
+import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
@@ -17,6 +19,7 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 internal class OfflineFirstMaintenanceRepository @Inject constructor(
     private val database: ChageunDatabase,
@@ -41,6 +44,19 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
             mileageHistory = mileage.map { it.asExternalModel() },
         )
     }
+
+    override fun observeServiceHistory(vehicleId: VehicleId, item: MaintenanceItem): Flow<List<ServiceHistoryEntry>> =
+        maintenanceDao.observeRecords(vehicleId.value, item.name).map { records ->
+            records.map {
+                ServiceHistoryEntry(
+                    id = it.id,
+                    date = it.serviceDate,
+                    mileage = it.mileageKm?.let(::Kilometers),
+                    costWon = it.costWon,
+                    shopName = it.shopName,
+                )
+            }
+        }
 
     override suspend fun findRule(vehicleId: VehicleId, item: MaintenanceItem): MaintenanceRule? =
         maintenanceDao.findRule(vehicleId.value, item.name)?.asExternalModelOrNull()
