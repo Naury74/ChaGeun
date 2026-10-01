@@ -24,7 +24,7 @@ data class MaintenanceRecordEntity(
     @PrimaryKey val id: String,
     @ColumnInfo(name = "vehicle_id") val vehicleId: String,
     @ColumnInfo(name = "item_type") val itemType: String,
-    @ColumnInfo(name = "service_date") val serviceDate: LocalDate,
+    @ColumnInfo(name = "service_date") val serviceDate: LocalDate?,
     @ColumnInfo(name = "mileage_km") val mileageKm: Long?,
     // Null means "not entered"; 0 is a real free service and must stay distinguishable.
     @ColumnInfo(name = "cost_won") val costWon: Long?,

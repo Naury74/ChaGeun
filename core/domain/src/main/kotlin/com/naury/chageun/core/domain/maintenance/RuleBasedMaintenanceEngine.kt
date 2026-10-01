@@ -22,7 +22,7 @@ class RuleBasedMaintenanceEngine @Inject constructor(private val paceEstimator: 
         if (input.lastService == null) missing += MissingInput.LastService
 
         val distance = evaluateDistance(rule, input.lastService, input.currentMileage(), missing)
-        val date = evaluateDate(rule, input.lastService, input.today)
+        val date = evaluateDate(rule, input.lastService, input.today, missing)
 
         val mostUrgent = listOfNotNull(distance?.state, date?.state).minOrNull()
         val state = when {
@@ -64,9 +64,16 @@ class RuleBasedMaintenanceEngine @Inject constructor(private val paceEstimator: 
         return DistanceEvaluation(due, remaining, stateFor(remaining, thresholds.dueSoonKm, thresholds.upcomingKm))
     }
 
-    private fun evaluateDate(rule: MaintenanceRule, lastService: ServiceRecord?, today: LocalDate): DateEvaluation? {
+    private fun evaluateDate(
+        rule: MaintenanceRule,
+        lastService: ServiceRecord?,
+        today: LocalDate,
+        missing: MutableSet<MissingInput>,
+    ): DateEvaluation? {
         val months = rule.intervalMonths ?: return null
-        val due = lastService?.date?.plusMonths(months) ?: return null
+        if (lastService == null) return null
+        if (lastService.date == null) missing += MissingInput.LastServiceDate
+        val due = lastService.date?.plusMonths(months) ?: return null
         val remaining = ChronoUnit.DAYS.between(today, due)
         val thresholds = rule.thresholds
         return DateEvaluation(due, remaining, stateFor(remaining, thresholds.dueSoonDays, thresholds.upcomingDays))
