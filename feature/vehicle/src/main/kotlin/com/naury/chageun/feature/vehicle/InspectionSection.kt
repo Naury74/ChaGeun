@@ -28,6 +28,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
+import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.ui.formatDate
 import java.time.Instant
 import java.time.LocalDate
@@ -35,8 +36,14 @@ import java.time.ZoneOffset
 import kotlin.math.absoluteValue
 
 @Composable
-internal fun InspectionCard(status: InspectionStatus, onDateSelected: (LocalDate?) -> Unit) {
+internal fun InspectionCard(
+    status: InspectionStatus,
+    currentMileage: Kilometers?,
+    onDateSelected: (LocalDate?) -> Unit,
+    onCompleted: (InspectionCompletion) -> Unit,
+) {
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
+    var isCompleting by rememberSaveable { mutableStateOf(false) }
     val schedule = status.schedule
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium) {
         Column(
@@ -48,8 +55,13 @@ internal fun InspectionCard(status: InspectionStatus, onDateSelected: (LocalDate
             Text(stringResource(R.string.vehicle_inspection_title), style = MaterialTheme.typography.labelLarge)
             if (schedule == null) {
                 Text(stringResource(R.string.vehicle_inspection_empty), style = MaterialTheme.typography.bodyMedium)
-                OutlinedButton(onClick = { isPickerOpen = true }) {
-                    Text(stringResource(R.string.vehicle_inspection_add))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                    OutlinedButton(onClick = { isPickerOpen = true }) {
+                        Text(stringResource(R.string.vehicle_inspection_add))
+                    }
+                    TextButton(onClick = { isCompleting = true }) {
+                        Text(stringResource(R.string.vehicle_inspection_complete))
+                    }
                 }
             } else {
                 Column(Modifier.semantics(mergeDescendants = true) {}) {
@@ -66,6 +78,9 @@ internal fun InspectionCard(status: InspectionStatus, onDateSelected: (LocalDate
                     )
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                    OutlinedButton(onClick = { isCompleting = true }) {
+                        Text(stringResource(R.string.vehicle_inspection_complete))
+                    }
                     TextButton(onClick = { isPickerOpen = true }) {
                         Text(stringResource(R.string.vehicle_inspection_change))
                     }
@@ -75,6 +90,18 @@ internal fun InspectionCard(status: InspectionStatus, onDateSelected: (LocalDate
                 }
             }
         }
+    }
+    if (isCompleting) {
+        CompleteInspectionDialog(
+            today = LocalDate.now(),
+            previousDueDate = schedule?.nextDueDate,
+            currentMileage = currentMileage,
+            onConfirm = {
+                onCompleted(it)
+                isCompleting = false
+            },
+            onDismiss = { isCompleting = false },
+        )
     }
     if (isPickerOpen) {
         InspectionDatePicker(
@@ -90,7 +117,7 @@ internal fun InspectionCard(status: InspectionStatus, onDateSelected: (LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun InspectionDatePicker(initial: LocalDate?, onConfirm: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+internal fun InspectionDatePicker(initial: LocalDate?, onConfirm: (LocalDate) -> Unit, onDismiss: () -> Unit) {
     // DatePicker works in UTC midnight millis.
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),

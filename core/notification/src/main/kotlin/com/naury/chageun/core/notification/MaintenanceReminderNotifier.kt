@@ -59,6 +59,8 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
         manager.notify(INSPECTION_NOTIFICATION_ID, notification)
     }
 
+    override fun cancelInspection() = manager.cancel(INSPECTION_NOTIFICATION_ID)
+
     private fun build(status: MaintenanceStatus) = NotificationCompat.Builder(context, NotificationChannels.MAINTENANCE)
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle(context.getString(status.state.titleRes, context.getString(status.item.labelRes)))
