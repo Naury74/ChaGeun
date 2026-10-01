@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,6 +24,7 @@ import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.icon
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.VehicleHealth
@@ -68,7 +71,11 @@ internal fun VehicleStatusSummary(health: VehicleHealth, goodCount: Int, modifie
 }
 
 @Composable
-internal fun MaintenanceStatusCard(status: MaintenanceStatus, modifier: Modifier = Modifier) {
+internal fun MaintenanceStatusCard(
+    status: MaintenanceStatus,
+    onRecordService: (MaintenanceItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -101,6 +108,12 @@ internal fun MaintenanceStatusCard(status: MaintenanceStatus, modifier: Modifier
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            FilledTonalButton(
+                onClick = { onRecordService(status.item) },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+            ) { Text(stringResource(R.string.home_record_service)) }
         }
     }
 }

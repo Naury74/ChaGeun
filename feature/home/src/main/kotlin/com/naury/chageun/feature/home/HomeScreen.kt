@@ -20,6 +20,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
@@ -27,10 +28,10 @@ import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 
 @Composable
-fun HomeRoute(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
-    HomeScreen(uiState = uiState, paneCount = homePaneCount(windowSizeClass))
+    HomeScreen(uiState = uiState, paneCount = homePaneCount(windowSizeClass), onRecordService = onRecordService)
 }
 
 /** Medium widths keep one pane: next to a rail, two panes would fall below the 360dp minimum detail width. */
@@ -45,29 +46,39 @@ private const val TWO_PANES = 2
 private const val THREE_PANES = 3
 
 @Composable
-fun HomeScreen(uiState: HomeUiState, paneCount: Int, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    uiState: HomeUiState,
+    paneCount: Int,
+    onRecordService: (MaintenanceItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     when (uiState) {
         HomeUiState.Loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        is HomeUiState.Content -> HomeContent(uiState, paneCount, modifier)
+        is HomeUiState.Content -> HomeContent(uiState, paneCount, onRecordService, modifier)
     }
 }
 
 @Composable
-private fun HomeContent(state: HomeUiState.Content, paneCount: Int, modifier: Modifier) {
+private fun HomeContent(
+    state: HomeUiState.Content,
+    paneCount: Int,
+    onRecordService: (MaintenanceItem) -> Unit,
+    modifier: Modifier,
+) {
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = when (paneCount) {
         SINGLE_PANE -> listOf({
             summaryPane(state)
-            attentionPane(state)
+            attentionPane(state, onRecordService)
             missingPane(state)
         })
         2 -> listOf({ summaryPane(state) }, {
-            attentionPane(state)
+            attentionPane(state, onRecordService)
             missingPane(state)
         })
-        else -> listOf({ summaryPane(state) }, { attentionPane(state) }, { missingPane(state) })
+        else -> listOf({ summaryPane(state) }, { attentionPane(state, onRecordService) }, { missingPane(state) })
     }
     Row(
         modifier = modifier.fillMaxSize(),
@@ -97,18 +108,23 @@ private fun LazyListScope.summaryPane(state: HomeUiState.Content) {
     }
 }
 
-private fun LazyListScope.attentionPane(state: HomeUiState.Content) {
-    statusSection("attention", R.string.home_section_attention, state.needsAttention)
-    statusSection("upcoming", R.string.home_section_upcoming, state.upcoming)
+private fun LazyListScope.attentionPane(state: HomeUiState.Content, onRecordService: (MaintenanceItem) -> Unit) {
+    statusSection("attention", R.string.home_section_attention, state.needsAttention, onRecordService)
+    statusSection("upcoming", R.string.home_section_upcoming, state.upcoming, onRecordService)
 }
 
-private fun LazyListScope.statusSection(key: String, titleRes: Int, statuses: List<MaintenanceStatus>) {
+private fun LazyListScope.statusSection(
+    key: String,
+    titleRes: Int,
+    statuses: List<MaintenanceStatus>,
+    onRecordService: (MaintenanceItem) -> Unit,
+) {
     if (statuses.isEmpty()) return
     item(key = "$key-title") {
         SectionTitle(stringResource(titleRes), Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
     }
     items(statuses, key = { "$key-${it.item}" }) { status ->
-        MaintenanceStatusCard(status, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+        MaintenanceStatusCard(status, onRecordService, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
     }
 }
 

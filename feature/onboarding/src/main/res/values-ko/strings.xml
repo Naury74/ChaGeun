@@ -29,8 +29,6 @@
     <string name="onboarding_error_year_invalid">1980년부터 내년 사이로 입력해 주세요</string>
     <string name="onboarding_error_mileage_invalid">주행거리를 확인해 주세요</string>
 
-    <string name="onboarding_confirm">확인</string>
-    <string name="onboarding_cancel">취소</string>
 
     <string name="onboarding_quick_title">최근에 언제 교체했나요?</string>
     <string name="onboarding_quick_body">기억나지 않는 항목은 건너뛰어도 괜찮아요. 나중에 채울 수 있어요.</string>

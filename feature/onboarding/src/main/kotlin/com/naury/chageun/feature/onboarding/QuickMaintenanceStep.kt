@@ -5,37 +5,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
-import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.labelRes
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 @Composable
 internal fun QuickMaintenanceStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
@@ -86,8 +71,9 @@ private fun QuickServiceCard(
                 }
             }
             if (input.needsDate) {
-                ServiceDateField(
+                PastDateField(
                     date = input.date,
+                    placeholder = stringResource(R.string.onboarding_quick_pick_date),
                     onDateSelected = { onAction(OnboardingAction.QuickServiceDateSelected(item, it)) },
                 )
             }
@@ -105,52 +91,6 @@ private fun QuickServiceCard(
             error?.let { ErrorText(it) }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ServiceDateField(date: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
-    var isPickerOpen by rememberSaveable { mutableStateOf(false) }
-    OutlinedButton(
-        onClick = { isPickerOpen = true },
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-    ) {
-        Text(date?.let { formatDate(it) } ?: stringResource(R.string.onboarding_quick_pick_date))
-    }
-
-    if (isPickerOpen) {
-        val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
-            selectableDates = PastDates,
-        )
-        DatePickerDialog(
-            onDismissRequest = { isPickerOpen = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        pickerState.selectedDateMillis?.let { millis ->
-                            onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
-                        }
-                        isPickerOpen = false
-                    },
-                ) { Text(stringResource(R.string.onboarding_confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { isPickerOpen = false }) { Text(stringResource(R.string.onboarding_cancel)) }
-            },
-        ) {
-            DatePicker(state = pickerState)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-private object PastDates : SelectableDates {
-    // DatePicker reports UTC midnight; compare in UTC so today stays selectable in every timezone.
-    override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-        utcTimeMillis <= LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 }
 
 private val QuickServiceMode.labelRes: Int

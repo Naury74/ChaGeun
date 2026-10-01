@@ -40,4 +40,7 @@
         <item quantity="one">%1$d day past due</item>
         <item quantity="other">%1$d days past due</item>
     </plurals>
+
+    <string name="date_picker_confirm">OK</string>
+    <string name="date_picker_cancel">Cancel</string>
 </resources>

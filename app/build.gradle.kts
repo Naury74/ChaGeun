@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
+    implementation(projects.core.model)
     implementation(projects.data.maintenance)
     implementation(projects.data.vehicle)
     implementation(projects.feature.home)

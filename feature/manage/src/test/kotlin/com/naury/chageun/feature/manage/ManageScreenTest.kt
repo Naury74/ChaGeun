@@ -58,10 +58,13 @@ class ManageScreenTest {
         var selected by mutableStateOf<MaintenanceItem?>(null)
         composeRule.setContent {
             ChageunTheme {
-                ManageScreen(stateFor(selected), isTwoPane = false, onFilterSelected = {}, onItemSelected = {
-                    selected =
-                        it
-                })
+                ManageScreen(
+                    uiState = stateFor(selected),
+                    isTwoPane = false,
+                    onFilterSelected = {},
+                    onItemSelected = { selected = it },
+                    onRecordService = {},
+                )
             }
         }
 
@@ -78,7 +81,8 @@ class ManageScreenTest {
     fun twoPane_showsPlaceholderUntilSelection() {
         composeRule.setContent {
             ChageunTheme {
-                ManageScreen(stateFor(null), isTwoPane = true, onFilterSelected = {}, onItemSelected = {})
+                ManageScreen(stateFor(null), isTwoPane = true, onFilterSelected = {
+                }, onItemSelected = {}, onRecordService = {})
             }
         }
 
