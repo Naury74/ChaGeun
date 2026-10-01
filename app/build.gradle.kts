@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.chageun.hilt)
     alias(libs.plugins.aboutlibraries.android)
+    alias(libs.plugins.baselineprofile)
 }
 
 android {
@@ -50,6 +51,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -81,6 +83,8 @@ dependencies {
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
+
+    baselineProfile(projects.benchmark)
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)
