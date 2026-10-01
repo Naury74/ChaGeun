@@ -12,6 +12,7 @@ android {
 dependencies {
     api(projects.core.domain)
     implementation(projects.core.database)
+    implementation(libs.androidx.room.ktx)
 
     testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.androidx.test.core)
