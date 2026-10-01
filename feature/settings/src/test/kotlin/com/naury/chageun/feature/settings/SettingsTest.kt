@@ -11,8 +11,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import kotlinx.coroutines.flow.first
@@ -36,7 +38,7 @@ class SettingsTest {
     @Test
     fun viewModel_persistsThemeAndReminderChoice() = runTest {
         val repository = FakeSettingsRepository()
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = SettingsViewModel(repository, FakeBackupRepository())
 
         viewModel.setThemeMode(ThemeMode.Dark)
         viewModel.setMaintenanceReminderEnabled(false)
@@ -67,5 +69,43 @@ class SettingsTest {
         composeRule.onNode(isToggleable()).performClick()
         composeRule.onNode(isToggleable()).assertIsOff()
         composeRule.onNodeWithText("Version 0.1.0").assertExists()
+    }
+
+    @Test
+    fun deleteAll_showsSummaryFirst_thenDeletesOnConfirm() = runTest {
+        val backup = FakeBackupRepository().apply { summary = LocalDataSummary(1, 12, 3) }
+        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup)
+
+        viewModel.requestDeleteAll()
+        assertThat(viewModel.dataState.value.pendingDeletion?.records).isEqualTo(12)
+        assertThat(backup.deleteCount).isEqualTo(0)
+
+        viewModel.confirmDeleteAll()
+
+        assertThat(backup.deleteCount).isEqualTo(1)
+        assertThat(viewModel.dataState.value.pendingDeletion).isNull()
+    }
+
+    @Test
+    fun export_reportsFailure() = runTest {
+        val backup = FakeBackupRepository().apply { exportSucceeds = false }
+        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup)
+
+        viewModel.export("content://downloads/backup.zip")
+
+        assertThat(backup.exportedTo).containsExactly("content://downloads/backup.zip")
+        assertThat(viewModel.dataState.value.exportResult).isEqualTo(ExportResult.Failure)
+    }
+
+    @Test
+    fun deleteDialog_listsWhatWillBeRemoved() {
+        composeRule.setContent {
+            ChageunTheme {
+                DeleteAllDialog(LocalDataSummary(1, 12, 3), onConfirm = {}, onDismiss = {})
+            }
+        }
+
+        composeRule.onNodeWithText("12 records").assertExists()
+        composeRule.onNodeWithText("3 photos and receipts").assertExists()
     }
 }

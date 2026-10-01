@@ -38,4 +38,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideReminderDao(database: ChageunDatabase) = database.reminderDao()
+
+    @Provides
+    fun provideBackupDao(database: ChageunDatabase) = database.backupDao()
 }

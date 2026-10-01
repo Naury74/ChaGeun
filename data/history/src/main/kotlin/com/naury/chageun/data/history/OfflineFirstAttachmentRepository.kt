@@ -1,10 +1,10 @@
 package com.naury.chageun.data.history
 
-import android.content.Context
 import com.naury.chageun.core.common.dispatcher.ChageunDispatchers
 import com.naury.chageun.core.common.dispatcher.Dispatcher
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
+import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.database.dao.AttachmentDao
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.domain.history.AttachResult
@@ -14,7 +14,6 @@ import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.time.Clock
 import java.util.UUID
@@ -24,24 +23,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-internal class OfflineFirstAttachmentRepository(
+internal class OfflineFirstAttachmentRepository @Inject constructor(
     private val attachmentDao: AttachmentDao,
     private val importer: ImageImporter,
-    private val directory: File,
+    @param:AttachmentDirectory private val directory: File,
     private val clock: Clock,
     private val logger: AppLogger,
-    private val ioDispatcher: CoroutineDispatcher,
+    @param:Dispatcher(ChageunDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : AttachmentRepository {
-
-    @Inject
-    constructor(
-        attachmentDao: AttachmentDao,
-        importer: ImageImporter,
-        @ApplicationContext context: Context,
-        clock: Clock,
-        logger: AppLogger,
-        @Dispatcher(ChageunDispatchers.IO) ioDispatcher: CoroutineDispatcher,
-    ) : this(attachmentDao, importer, File(context.filesDir, DIRECTORY), clock, logger, ioDispatcher)
 
     override fun observe(vehicleId: VehicleId, owner: RecordRef): Flow<List<Attachment>> =
         attachmentDao.observe(vehicleId.value, owner.type.name, owner.id).map { rows ->
@@ -110,7 +99,6 @@ internal class OfflineFirstAttachmentRepository(
     }
 
     private companion object {
-        const val DIRECTORY = "attachments"
         const val MIME_JPEG = "image/jpeg"
     }
 }
