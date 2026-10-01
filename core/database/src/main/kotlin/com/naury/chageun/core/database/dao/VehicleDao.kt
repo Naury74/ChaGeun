@@ -17,6 +17,9 @@ interface VehicleDao {
     @Upsert
     suspend fun upsert(vehicle: VehicleEntity)
 
+    @Query("UPDATE vehicle SET is_primary = 0 WHERE is_primary = 1")
+    suspend fun clearPrimary()
+
     @Query("DELETE FROM vehicle WHERE id = :id")
     suspend fun delete(id: String)
 }
