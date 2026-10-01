@@ -96,6 +96,41 @@ class ChageunDatabaseTest {
     }
 
     @Test
+    fun timeline_mergesRecordTypes_newestFirst_andFilters() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        database.maintenanceDao().insertRecord(service("oil", "EngineOil", LocalDate.of(2026, 3, 10)))
+        database.maintenanceDao().insertRecord(service("tire", "Tire", on = null))
+        database.historyDao().insertFuel(fuel("fuel", LocalDate.of(2026, 8, 3), station = "S-Oil"))
+        database.historyDao().insertCheck(check("repair", "Repair", LocalDate.of(2026, 5, 1), "Bumper"))
+        val all = TimelineEventTypes.ALL
+
+        val timeline = database.historyDao().observeTimeline("vehicle-1", all, "", emptyList()).first()
+        val fuelOnly = database.historyDao().observeTimeline("vehicle-1", listOf("Fuel"), "", emptyList()).first()
+        val byKeyword = database.historyDao().observeTimeline("vehicle-1", all, "oil", emptyList()).first()
+        val byItem = database.historyDao().observeTimeline("vehicle-1", all, "엔진", listOf("EngineOil")).first()
+
+        assertThat(timeline.map { it.id }).containsExactly("fuel", "repair", "oil", "tire").inOrder()
+        assertThat(fuelOnly.map { it.id }).containsExactly("fuel")
+        assertThat(byKeyword.map { it.id }).containsExactly("fuel")
+        assertThat(byItem.map { it.id }).containsExactly("oil")
+    }
+
+    @Test
+    fun deletingRecord_removesOdometerReadingCreatedWithIt() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        database.historyDao().insertFuel(fuel("fuel", LocalDate.of(2026, 8, 3)))
+        database.mileageRecordDao().insert(
+            mileage("m1", 43_000, LocalDate.of(2026, 8, 3)).copy(sourceType = "FUEL", relatedRecordId = "fuel"),
+        )
+        database.mileageRecordDao().insert(mileage("m0", 42_000, LocalDate.of(2026, 7, 1)))
+
+        database.historyDao().deleteFuel("vehicle-1", "fuel")
+        database.historyDao().deleteMileageCreatedBy("vehicle-1", "fuel")
+
+        assertThat(database.mileageRecordDao().findLatest("vehicle-1")?.id).isEqualTo("m0")
+    }
+
+    @Test
     fun deletingVehicle_cascadesToRecords() = runTest {
         database.vehicleDao().upsert(vehicle())
         database.mileageRecordDao().insert(mileage("a", 41_000, LocalDate.of(2026, 9, 1)))

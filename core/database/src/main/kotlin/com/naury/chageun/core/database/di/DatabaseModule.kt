@@ -29,4 +29,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideMaintenanceDao(database: ChageunDatabase) = database.maintenanceDao()
+
+    @Provides
+    fun provideHistoryDao(database: ChageunDatabase) = database.historyDao()
 }

@@ -3,6 +3,8 @@ package com.naury.chageun.core.database
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.database.migration.Migration1To2
+import com.naury.chageun.core.database.migration.Migration2To3
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,7 +48,7 @@ class DatabaseMigrationTest {
             )
         }
 
-        helper.runMigrationsAndValidate(TEST_DB, 2, true, *DatabaseMigrations.ALL.toTypedArray()).use { db ->
+        helper.runMigrationsAndValidate(TEST_DB, 2, true, Migration1To2).use { db ->
             db.query(
                 "SELECT service_date, mileage_km, cost_won FROM maintenance_record WHERE id = 'r1'",
             ).use { cursor ->
@@ -58,6 +60,32 @@ class DatabaseMigrationTest {
             db.execSQL(
                 "INSERT INTO maintenance_record (id, vehicle_id, item_type, service_date, source_type, created_at, " +
                     "updated_at) VALUES ('r2', 'v1', 'Tire', NULL, 'USER', 2, 2)",
+            )
+        }
+    }
+
+    @Test
+    fun migration2To3_keepsExistingRecordsAndAddsHistoryTables() {
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO maintenance_record (id, vehicle_id, item_type, service_date, source_type, created_at, " +
+                    "updated_at) VALUES ('r1', 'v1', 'Tire', NULL, 'USER', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, Migration2To3).use { db ->
+            db.query("SELECT COUNT(*) FROM maintenance_record").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getInt(0)).isEqualTo(1)
+            }
+            db.execSQL(
+                "INSERT INTO fuel_record (id, vehicle_id, fuel_date, mileage_km, total_price_won, volume_ml, " +
+                    "unit_price_won, is_full_tank, created_at, updated_at) VALUES ('f1', 'v1', 20500, 42000, 70000, " +
+                    "41176, 1700, 1, 2, 2)",
             )
         }
     }

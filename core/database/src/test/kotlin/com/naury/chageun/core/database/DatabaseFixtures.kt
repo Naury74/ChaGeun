@@ -1,5 +1,7 @@
 package com.naury.chageun.core.database
 
+import com.naury.chageun.core.database.entity.CheckRecordEntity
+import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
@@ -49,3 +51,36 @@ internal fun service(id: String, item: String, on: LocalDate?, createdAt: Instan
         createdAt = createdAt,
         updatedAt = createdAt,
     )
+
+internal object TimelineEventTypes {
+    val ALL = listOf("Maintenance", "Fuel", "Inspection", "Repair", "Note")
+}
+
+internal fun fuel(id: String, on: LocalDate, station: String? = null) = FuelRecordEntity(
+    id = id,
+    vehicleId = "vehicle-1",
+    fuelDate = on,
+    mileageKm = 43_000,
+    totalPriceWon = 70_000,
+    volumeMl = 41_176,
+    unitPriceWon = 1_700,
+    computedField = "Volume",
+    isFullTank = true,
+    stationName = station,
+    memo = null,
+    createdAt = FIXED_NOW,
+    updatedAt = FIXED_NOW,
+)
+
+internal fun check(id: String, kind: String, on: LocalDate, title: String) = CheckRecordEntity(
+    id = id,
+    vehicleId = "vehicle-1",
+    kind = kind,
+    checkDate = on,
+    title = title,
+    mileageKm = null,
+    costWon = 120_000,
+    memo = null,
+    createdAt = FIXED_NOW,
+    updatedAt = FIXED_NOW,
+)
