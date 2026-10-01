@@ -9,6 +9,7 @@ import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
+import com.naury.chageun.core.database.entity.InspectionScheduleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.backup.ImportPreview
@@ -66,6 +67,15 @@ class RoomBackupRepositoryTest {
             FuelRecordEntity(
                 "f1", "v1", LocalDate.of(2026, 9, 2), 42_100, 70_000, 41_176, 1_700, "Volume", true, "Station", null,
                 now, now,
+            ),
+        )
+        database.inspectionDao().upsert(
+            InspectionScheduleEntity(
+                "v1",
+                LocalDate.of(2027, 3, 10),
+                "User",
+                notifiedStage = "Days30",
+                updatedAt = now,
             ),
         )
         File(attachmentDir, "a1.jpg").writeText("image")
@@ -148,6 +158,9 @@ class RoomBackupRepositoryTest {
         assertThat(vehicle.plateMasked).isEqualTo("123가 **67")
         assertThat(vehicle.plateNumberEncrypted).isNull()
         assertThat(File(attachmentDir, "a1.jpg").readText()).isEqualTo("image")
+        val inspection = database.inspectionDao().find("v1")
+        assertThat(inspection?.nextDueDate).isEqualTo(LocalDate.of(2027, 3, 10))
+        assertThat(inspection?.notifiedStage).isNull()
     }
 
     @Test

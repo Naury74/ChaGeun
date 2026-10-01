@@ -19,6 +19,7 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.testing.FakeHistoryRepository
+import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -67,6 +68,7 @@ class AiHubTest {
                 FakeVehicleRepository(),
                 ObserveMaintenanceOverviewUseCase(
                     maintenance,
+                    FakeInspectionRepository(),
                     RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
                     VehicleHealthAggregator(),
                     clock,

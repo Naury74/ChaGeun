@@ -11,16 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.ThemeMode
+import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.onboarding.OnboardingRoute
 
 @Composable
-fun ChageunRoot(
-    deepLinkItem: MaintenanceItem?,
-    onDeepLinkHandled: () -> Unit,
-    viewModel: AppViewModel = hiltViewModel(),
-) {
+fun ChageunRoot(deepLink: DeepLink?, onDeepLinkHandled: () -> Unit, viewModel: AppViewModel = hiltViewModel()) {
     val entry by viewModel.entry.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val darkTheme = when (themeMode) {
@@ -36,7 +32,7 @@ fun ChageunRoot(
                 // Room answers within a frame; an empty surface avoids flashing onboarding to returning users.
                 AppEntry.Loading -> Box(Modifier.fillMaxSize())
                 AppEntry.Onboarding -> OnboardingRoute()
-                AppEntry.Main -> ChageunApp(deepLinkItem = deepLinkItem, onDeepLinkHandled = onDeepLinkHandled)
+                AppEntry.Main -> ChageunApp(deepLink = deepLink, onDeepLinkHandled = onDeepLinkHandled)
             }
         }
     }

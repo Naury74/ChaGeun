@@ -6,7 +6,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.model.InspectionSchedule
+import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
@@ -73,10 +77,52 @@ class VehicleScreenTest {
     fun largeFont_keepsEveryTextVisible() {
         composeRule.setContent {
             ChageunTheme {
-                VehicleScreen(VehicleUiState.Content(vehicle, log), isTwoPane = false, onUpdateMileage = {})
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(-12)),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                )
             }
         }
 
         composeRule.assertNoClippedText()
     }
+
+    @Test
+    fun inspection_showsDateAndDaysLeft_andCanBeRemoved() {
+        var selected: LocalDate? = LocalDate.MIN
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14)),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                    onInspectionDateSelected = { selected = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("14 days left").assertIsDisplayed()
+        composeRule.onNodeWithText("Date entered by you").assertIsDisplayed()
+        composeRule.onNodeWithText("Remove").performClick()
+
+        assertThat(selected).isNull()
+    }
+
+    @Test
+    fun inspection_withoutDate_offersEntry() {
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(VehicleUiState.Content(vehicle, log), isTwoPane = false, onUpdateMileage = {})
+            }
+        }
+
+        composeRule.onNodeWithText("Enter inspection date").assertIsDisplayed()
+        composeRule.onNodeWithText("days left", substring = true).assertDoesNotExist()
+    }
+
+    private fun dueIn(days: Long): InspectionStatus = InspectionEvaluator.evaluate(
+        InspectionSchedule(LocalDate.of(2026, 10, 1).plusDays(days), InspectionSource.User),
+        LocalDate.of(2026, 10, 1),
+    )
 }

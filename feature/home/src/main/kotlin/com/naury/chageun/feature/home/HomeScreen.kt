@@ -23,6 +23,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.InspectionState
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.VehicleHeroSection
@@ -37,6 +39,7 @@ fun HomeRoute(
     onUpdateMileage: () -> Unit,
     onAskAi: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenInspection: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,6 +53,7 @@ fun HomeRoute(
             onOpenHistory = onOpenHistory,
             onAskAi = onAskAi,
             onOpenSettings = onOpenSettings,
+            onOpenInspection = onOpenInspection,
         ),
     )
 }
@@ -60,6 +64,7 @@ data class HomeActions(
     val onOpenHistory: () -> Unit,
     val onAskAi: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    val onOpenInspection: () -> Unit = {},
 )
 
 /** Medium widths keep one pane: next to a rail, two panes would fall below the 360dp minimum detail width. */
@@ -138,19 +143,43 @@ private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeA
 }
 
 private fun LazyListScope.attentionPane(state: HomeUiState.Content, actions: HomeActions) {
-    statusSection("attention", R.string.home_section_attention, state.needsAttention, actions.onRecordService)
-    statusSection("upcoming", R.string.home_section_upcoming, state.upcoming, actions.onRecordService)
+    val inspection = state.overview.inspection
+    statusSection(
+        "attention",
+        R.string.home_section_attention,
+        state.needsAttention,
+        actions,
+        inspection.takeIf { it.state == InspectionState.Overdue },
+    )
+    statusSection(
+        "upcoming",
+        R.string.home_section_upcoming,
+        state.upcoming,
+        actions,
+        inspection.takeIf { it.state == InspectionState.DueSoon },
+    )
 }
 
 private fun LazyListScope.statusSection(
     key: String,
     titleRes: Int,
     statuses: List<MaintenanceStatus>,
-    onRecordService: (MaintenanceItem) -> Unit,
+    actions: HomeActions,
+    inspection: InspectionStatus?,
 ) {
-    if (statuses.isEmpty()) return
+    if (statuses.isEmpty() && inspection == null) return
+    val onRecordService = actions.onRecordService
     item(key = "$key-title") {
         SectionTitle(stringResource(titleRes), Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+    }
+    if (inspection != null) {
+        item(key = "$key-inspection") {
+            InspectionStatusCard(
+                inspection,
+                actions.onOpenInspection,
+                Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+            )
+        }
     }
     items(statuses, key = { "$key-${it.item}" }) { status ->
         MaintenanceStatusCard(status, onRecordService, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))

@@ -41,4 +41,7 @@ internal object DatabaseModule {
 
     @Provides
     fun provideBackupDao(database: ChageunDatabase) = database.backupDao()
+
+    @Provides
+    fun provideInspectionDao(database: ChageunDatabase) = database.inspectionDao()
 }

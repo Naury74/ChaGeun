@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,13 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.StatusBadge
+import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.icon
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.InspectionState
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.RuleSource
@@ -34,6 +39,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
+import kotlin.math.absoluteValue
 
 @Composable
 internal fun VehicleStatusSummary(health: VehicleHealth, goodCount: Int, modifier: Modifier = Modifier) {
@@ -148,4 +154,58 @@ internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
             .padding(top = ChageunTheme.spacing.xs)
             .semantics { heading() },
     )
+}
+
+/** Inspection has no service to record here; the card opens My car, where the date is managed. */
+@Composable
+internal fun InspectionStatusCard(status: InspectionStatus, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    val schedule = status.schedule ?: return
+    val days = status.daysLeft ?: return
+    val count = days.absoluteValue.toInt()
+    val tone = if (status.state == InspectionState.Overdue) StatusTone.Critical else StatusTone.Upcoming
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onOpen),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier.padding(ChageunTheme.spacing.md),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.home_inspection_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                StatusBadge(
+                    tone = tone,
+                    label = stringResource(
+                        if (tone ==
+                            StatusTone.Critical
+                        ) {
+                            R.string.home_inspection_overdue
+                        } else {
+                            R.string.home_inspection_due_soon
+                        },
+                    ),
+                )
+            }
+            Text(
+                when {
+                    days < 0 -> pluralStringResource(R.plurals.home_inspection_days_overdue, count, count)
+                    days == 0L -> stringResource(R.string.home_inspection_due_today)
+                    else -> pluralStringResource(R.plurals.home_inspection_days_left, count, count)
+                },
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                stringResource(R.string.home_inspection_due_date, formatDate(schedule.nextDueDate)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

@@ -15,6 +15,7 @@ import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -44,6 +45,7 @@ class ManageViewModelTest {
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
             maintenance,
+            FakeInspectionRepository(),
             RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
             VehicleHealthAggregator(),
             clock,

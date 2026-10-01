@@ -33,6 +33,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
@@ -40,6 +41,7 @@ import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
+import java.time.LocalDate
 
 @Composable
 fun VehicleRoute(
@@ -51,7 +53,13 @@ fun VehicleRoute(
     val isTwoPane = currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
         WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND,
     )
-    VehicleScreen(uiState, isTwoPane, onUpdateMileage, onOpenSettings = onOpenSettings)
+    VehicleScreen(
+        uiState,
+        isTwoPane,
+        onUpdateMileage,
+        onOpenSettings = onOpenSettings,
+        onInspectionDateSelected = viewModel::setInspectionDate,
+    )
 }
 
 @Composable
@@ -61,6 +69,7 @@ fun VehicleScreen(
     onUpdateMileage: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenSettings: () -> Unit = {},
+    onInspectionDateSelected: (LocalDate?) -> Unit = {},
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -70,13 +79,13 @@ fun VehicleScreen(
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
         listOf({ overviewPane(state, onUpdateMileage) }, {
-            recordsPane(state)
+            recordsPane(state, onInspectionDateSelected)
             settingsEntry(onOpenSettings)
         })
     } else {
         listOf({
             overviewPane(state, onUpdateMileage)
-            recordsPane(state)
+            recordsPane(state, onInspectionDateSelected)
             settingsEntry(onOpenSettings)
         })
     }
@@ -113,8 +122,8 @@ private fun LazyListScope.overviewPane(state: VehicleUiState.Content, onUpdateMi
     }
 }
 
-private fun LazyListScope.recordsPane(state: VehicleUiState.Content) {
-    item(key = "official") { OfficialDataSection() }
+private fun LazyListScope.recordsPane(state: VehicleUiState.Content, onInspectionDateSelected: (LocalDate?) -> Unit) {
+    item(key = "official") { OfficialDataSection(state.inspection, onInspectionDateSelected) }
     item(key = "mileage-title") { SectionTitle(R.string.vehicle_section_mileage) }
     items(state.mileageLog, key = { it.id }) { entry -> MileageRow(entry) }
 }
@@ -176,9 +185,10 @@ private fun InfoSection(state: VehicleUiState.Content) {
 
 /** Until official data is connected, never imply "no recall"; point to the official services instead. */
 @Composable
-private fun OfficialDataSection() {
+private fun OfficialDataSection(inspection: InspectionStatus, onInspectionDateSelected: (LocalDate?) -> Unit) {
     val uriHandler = LocalUriHandler.current
     Section(R.string.vehicle_section_official) {
+        InspectionCard(inspection, onInspectionDateSelected)
         Surface(color = MaterialTheme.colorScheme.surfaceVariant, shape = MaterialTheme.shapes.medium) {
             Text(
                 stringResource(R.string.vehicle_official_pending),

@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.vehicle
 
 import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.VehicleHealth
@@ -12,8 +13,6 @@ data class VehicleHealthInput(
     val hasActiveSafetyRecall: Boolean,
     val inspection: InspectionState,
 )
-
-enum class InspectionState { Ok, DueSoon, Overdue, Unknown }
 
 /**
  * Derives the overall vehicle status from its most important active finding rather than an average.

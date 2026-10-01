@@ -2,6 +2,7 @@ package com.naury.chageun.core.domain.vehicle
 
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus

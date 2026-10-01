@@ -19,4 +19,15 @@
         <item quantity="one">%1$d day past the interval</item>
         <item quantity="other">%1$d days past the interval</item>
     </plurals>
+    <string name="notification_inspection_due_title">Vehicle inspection is coming up</string>
+    <string name="notification_inspection_overdue_title">Vehicle inspection is past due</string>
+    <string name="notification_inspection_due_today">Due today</string>
+    <plurals name="notification_inspection_days_left">
+        <item quantity="one">Due in %1$d day</item>
+        <item quantity="other">Due in %1$d days</item>
+    </plurals>
+    <plurals name="notification_inspection_overdue_days">
+        <item quantity="one">%1$d day past the deadline</item>
+        <item quantity="other">%1$d days past the deadline</item>
+    </plurals>
 </resources>

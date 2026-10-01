@@ -6,4 +6,5 @@ data class MaintenanceOverview(
     val disabledItems: List<MaintenanceItem>,
     val health: VehicleHealth,
     val currentMileage: MileageReading?,
+    val inspection: InspectionStatus = InspectionStatus.Unknown,
 )

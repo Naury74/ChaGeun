@@ -19,6 +19,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
 import com.naury.chageun.feature.home.HomeRoute
@@ -50,7 +51,7 @@ data class AppActions(
 
 @Composable
 fun ChageunApp(
-    deepLinkItem: MaintenanceItem? = null,
+    deepLink: DeepLink? = null,
     onDeepLinkHandled: () -> Unit = {},
     destinationContent: @Composable (TopLevelDestination, AppActions) -> Unit =
         { destination, actions -> DestinationContent(destination, actions) },
@@ -73,10 +74,19 @@ fun ChageunApp(
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         onOpenSettings = { backStack.add(SettingsRoute) },
-        pendingManageItem = deepLinkItem,
+        pendingManageItem = (deepLink as? DeepLink.Maintenance)?.item,
         onPendingManageItemHandled = onDeepLinkHandled,
     )
-    LaunchedEffect(deepLinkItem) { if (deepLinkItem != null) navigateTo(TopLevelDestination.Manage) }
+    LaunchedEffect(deepLink) {
+        when (deepLink) {
+            is DeepLink.Maintenance -> navigateTo(TopLevelDestination.Manage)
+            DeepLink.Inspection -> {
+                navigateTo(TopLevelDestination.Vehicle)
+                onDeepLinkHandled()
+            }
+            null -> Unit
+        }
+    }
 
     NavigationSuiteScaffold(
         layoutType = navigationSuiteTypeFor(windowSizeClass),
@@ -142,6 +152,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onUpdateMileage = actions.onUpdateMileage,
             onAskAi = { actions.onAskAi(null) },
             onOpenSettings = actions.onOpenSettings,
+            onOpenInspection = { actions.onNavigate(TopLevelDestination.Vehicle) },
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,

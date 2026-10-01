@@ -34,4 +34,22 @@
     <string name="vehicle_sources_manual">Vehicle details and mileage were entered by you. Maintenance timing uses general guidelines unless you changed them.</string>
     <string name="vehicle_sources_auto">Vehicle details come from official vehicle data; mileage and maintenance records are yours.</string>
     <string name="vehicle_open_settings">Settings</string>
+    <string name="vehicle_inspection_title">Next inspection</string>
+    <string name="vehicle_inspection_empty">Enter the date from your inspection notice and we\'ll remind you 30, 7 and 1 day before.</string>
+    <string name="vehicle_inspection_add">Enter inspection date</string>
+    <string name="vehicle_inspection_change">Change</string>
+    <string name="vehicle_inspection_clear">Remove</string>
+    <string name="vehicle_inspection_confirm">Save</string>
+    <string name="vehicle_inspection_cancel">Cancel</string>
+    <string name="vehicle_inspection_due_today">Due today</string>
+    <string name="vehicle_inspection_source_user">Date entered by you</string>
+    <string name="vehicle_inspection_source_official">Official inspection data</string>
+    <plurals name="vehicle_inspection_days_left">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="vehicle_inspection_days_overdue">
+        <item quantity="one">%1$d day overdue</item>
+        <item quantity="other">%1$d days overdue</item>
+    </plurals>
 </resources>

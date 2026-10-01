@@ -97,6 +97,7 @@ internal class RoomBackupRepository @Inject constructor(
                 vehicles = document.vehicles.map { it.toEntity(now) },
                 mileage = document.mileage.map { it.toEntity() },
                 rules = document.maintenanceRules.map { it.toEntity() },
+                inspections = document.inspectionSchedules.map { it.toEntity() },
             )
             backupDao.insertRecords(
                 maintenance = document.maintenanceRecords.map { it.toEntity(now) },
@@ -125,6 +126,7 @@ internal class RoomBackupRepository @Inject constructor(
             fuelRecords = backupDao.fuelRecords().map { it.toDto() },
             checkRecords = backupDao.checkRecords().map { it.toDto() },
             attachments = backupDao.attachments().map { it.toDto() },
+            inspectionSchedules = backupDao.inspectionSchedules().map { it.toDto() },
         )
     }
 

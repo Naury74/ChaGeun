@@ -20,6 +20,7 @@ import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeHistoryRepository
+import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import java.time.Clock
@@ -43,6 +44,7 @@ class BuildAiContextUseCaseTest {
         vehicles,
         ObserveMaintenanceOverviewUseCase(
             maintenance,
+            FakeInspectionRepository(),
             RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
             VehicleHealthAggregator(),
             clock,
