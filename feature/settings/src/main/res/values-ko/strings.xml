@@ -45,4 +45,16 @@
     <string name="settings_delete_body">삭제하면 되돌릴 수 없어요. 보관하려면 먼저 내보내기를 해 주세요. 설정은 유지돼요.</string>
     <string name="settings_delete_confirm">삭제</string>
     <string name="settings_cancel">취소</string>
+    <string name="settings_licenses">오픈소스 라이선스</string>
+    <string name="settings_privacy">개인정보 및 데이터 안내</string>
+    <string name="privacy_stored_title">저장하는 정보</string>
+    <string name="privacy_stored_body">직접 입력한 차량 정보, 주행거리, 정비·주유·점검 기록, 첨부한 사진·영수증, 앱 설정을 저장해요. 모든 정보는 이 기기에만 저장되고 계정은 없어요.</string>
+    <string name="privacy_transfer_title">기기 밖으로 나가는 정보</string>
+    <string name="privacy_transfer_body">자동으로 전송하는 정보는 없어요. 앱에 인터넷 권한이 없어요. 외부 AI에 질문할 때는 보낼 내용을 먼저 확인하고 공유할 앱을 직접 선택해요. 차량번호, 소유자, 위치는 포함하지 않아요.</string>
+    <string name="privacy_security_title">보호 방법</string>
+    <string name="privacy_security_body">차량번호는 Android Keystore의 키로 암호화해 저장하고 화면에는 마스킹해서 보여줘요. 사진을 첨부할 때 위치와 카메라 정보를 지워요. 앱 데이터는 클라우드 백업과 기기 이전에서 제외돼요.</string>
+    <string name="privacy_control_title">내가 할 수 있는 것</string>
+    <string name="privacy_control_body">설정 › 데이터에서 전체 데이터를 ZIP 파일로 내보내거나, 가져오거나, 모두 삭제할 수 있어요. 앱을 삭제해도 모든 데이터가 지워져요.</string>
+    <string name="privacy_disclaimer_title">안내 정보에 대해</string>
+    <string name="privacy_disclaimer_body">정비 주기는 직접 바꾸지 않았다면 제조사 공식값이 아닌 일반적인 권장 기준이에요. 외부 AI의 답변은 틀릴 수 있어요. 안전과 관련된 판단은 차량 취급설명서와 정비 전문가의 안내를 따라 주세요.</string>
 </resources>

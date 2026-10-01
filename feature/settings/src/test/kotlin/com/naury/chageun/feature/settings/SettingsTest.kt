@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
@@ -154,5 +155,55 @@ class SettingsTest {
         composeRule.onNodeWithText("20 records").assertExists()
         composeRule.onNodeWithText("12 records").assertExists()
         composeRule.onNodeWithText("Replace").assertExists()
+    }
+
+    @Test
+    fun licenses_parsesGeneratedMetadata_sortedByName() {
+        val json = """
+            {
+              "libraries": [
+                {"uniqueId": "b:zeta", "artifactVersion": "2.0", "name": "Zeta", "licenses": ["Apache-2.0"]},
+                {"uniqueId": "a:alpha", "artifactVersion": "1.0", "name": "alpha", "licenses": ["Apache-2.0"]}
+              ],
+              "licenses": {
+                "Apache-2.0": {"name": "Apache License 2.0", "hash": "Apache-2.0", "content": "Licensed under..."}
+              }
+            }
+        """.trimIndent()
+
+        val libraries = parseOpenSourceLibraries(json)
+
+        assertThat(libraries.map { it.name }).containsExactly("alpha", "Zeta").inOrder()
+        assertThat(libraries.first().licenses).containsExactly("Apache License 2.0")
+        assertThat(libraries.first().licenseText).isEqualTo("Licensed under...")
+    }
+
+    @Test
+    fun licensesScreen_opensLicenseText_andBackReturnsToList() {
+        var closed = false
+        composeRule.setContent {
+            ChageunTheme {
+                OpenSourceLicensesScreen(
+                    libraries = listOf(OpenSourceLibrary("a:alpha", "Alpha", "1.0", listOf("MIT License"), "MIT text")),
+                    onBack = { closed = true },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("1.0 · MIT License").assertExists()
+        composeRule.onNodeWithText("Alpha").performClick()
+        composeRule.onNodeWithText("MIT text").assertExists()
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        composeRule.onNodeWithText("1.0 · MIT License").assertExists()
+        assertThat(closed).isFalse()
+    }
+
+    @Test
+    fun privacyNotice_statesNothingIsSentAutomatically() {
+        composeRule.setContent { ChageunTheme { PrivacyNoticeScreen(onBack = {}) } }
+
+        composeRule.onNodeWithText("What leaves the device").assertExists()
+        composeRule.onNodeWithText("Nothing is sent automatically", substring = true).assertExists()
     }
 }

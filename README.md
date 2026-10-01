@@ -14,6 +14,7 @@
 | 알림 | WorkManager 기반 로컬 알림, 해당 상세 화면으로 Deep Link |
 | 데이터 출처 | 공식 / 사용자 입력 / 앱 계산을 Badge와 갱신 시각으로 구분 |
 | AI 공유 | Context Preview에서 포함 정보를 확인한 뒤 Sharesheet로 전달, 차량번호·소유주명은 기본 제외 |
+| 데이터 관리 | ZIP 내보내기·가져오기(실패 시 기존 데이터 유지)·전체 삭제, 앱 내 개인정보 안내와 오픈소스 라이선스 고지 |
 | Adaptive UI | Window Size Class 기반 Phone · Fold(Book/Tabletop) · Tablet 1~3 Pane |
 
 ## 기술 스택

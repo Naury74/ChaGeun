@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.chageun.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.chageun.hilt)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 android {
