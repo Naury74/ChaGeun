@@ -36,6 +36,8 @@ internal data class VehicleDto(
     @SerialName("first_registration_date") val firstRegistrationDate: String?,
     @SerialName("plate_masked") val plateMasked: String?,
     @SerialName("registration_mode") val registrationMode: String,
+    @SerialName("is_primary") val isPrimary: Boolean,
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
@@ -45,6 +47,8 @@ internal data class MileageDto(
     @SerialName("mileage_km") val mileageKm: Long,
     @SerialName("recorded_on") val recordedOn: String,
     val source: String,
+    @SerialName("related_record_id") val relatedRecordId: String?,
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
@@ -53,6 +57,10 @@ internal data class RuleDto(
     val item: String,
     @SerialName("interval_km") val intervalKm: Long?,
     @SerialName("interval_months") val intervalMonths: Long?,
+    @SerialName("due_soon_km") val dueSoonKm: Long,
+    @SerialName("due_soon_days") val dueSoonDays: Long,
+    @SerialName("upcoming_km") val upcomingKm: Long,
+    @SerialName("upcoming_days") val upcomingDays: Long,
     val source: String,
     val enabled: Boolean,
 )
@@ -67,6 +75,7 @@ internal data class MaintenanceDto(
     @SerialName("cost_won") val costWon: Long?,
     val shop: String?,
     val memo: String?,
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
@@ -78,9 +87,11 @@ internal data class FuelDto(
     @SerialName("total_won") val totalWon: Long,
     @SerialName("volume_ml") val volumeMl: Long,
     @SerialName("unit_price_won") val unitPriceWon: Long,
+    @SerialName("computed_field") val computedField: String?,
     @SerialName("full_tank") val fullTank: Boolean,
     val station: String?,
     val memo: String?,
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
@@ -93,11 +104,17 @@ internal data class CheckDto(
     @SerialName("mileage_km") val mileageKm: Long?,
     @SerialName("cost_won") val costWon: Long?,
     val memo: String?,
+    @SerialName("created_at") val createdAt: String,
 )
 
 @Serializable
 internal data class AttachmentDto(
+    val id: String,
+    @SerialName("vehicle_id") val vehicleId: String,
     @SerialName("owner_type") val ownerType: String,
     @SerialName("owner_id") val ownerId: String,
     val file: String,
+    val thumbnail: String,
+    @SerialName("size_bytes") val sizeBytes: Long,
+    @SerialName("created_at") val createdAt: String,
 )

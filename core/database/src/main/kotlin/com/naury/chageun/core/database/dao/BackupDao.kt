@@ -1,6 +1,7 @@
 package com.naury.chageun.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
@@ -10,7 +11,8 @@ import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 
-/** Whole-database reads and wipe used by export and "delete all data". */
+/** Whole-database reads, restore and wipe used by export, import and "delete all data". */
+@Suppress("TooManyFunctions")
 @Dao
 interface BackupDao {
     @Query("SELECT * FROM vehicle")
@@ -41,6 +43,22 @@ interface BackupDao {
         """,
     )
     suspend fun recordCount(): Int
+
+    /** Room inserts parameters in order, so parents go before the rows that reference them. */
+    @Insert
+    suspend fun insertVehicleData(
+        vehicles: List<VehicleEntity>,
+        mileage: List<MileageRecordEntity>,
+        rules: List<MaintenanceRuleEntity>,
+    )
+
+    @Insert
+    suspend fun insertRecords(
+        maintenance: List<MaintenanceRecordEntity>,
+        fuel: List<FuelRecordEntity>,
+        checks: List<CheckRecordEntity>,
+        attachments: List<AttachmentEntity>,
+    )
 
     /** Every other table cascades from vehicle. */
     @Query("DELETE FROM vehicle")

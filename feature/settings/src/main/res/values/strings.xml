@@ -21,17 +21,27 @@
     <string name="settings_export_body">Saves your vehicle, records and photos as a ZIP file you choose. The plate number is saved masked.</string>
     <string name="settings_export_done">Export complete</string>
     <string name="settings_export_failed">Couldn\'t export. Try another location.</string>
+    <string name="settings_import">Import data</string>
+    <string name="settings_import_title">Replace data with this backup?</string>
+    <string name="settings_import_incoming">From the backup</string>
+    <string name="settings_import_current">Now on this device</string>
+    <string name="settings_import_body">Everything on this device is replaced with the backup. Plate numbers are restored masked only. Settings are kept.</string>
+    <string name="settings_import_confirm">Replace</string>
+    <string name="settings_import_done">Import complete</string>
+    <string name="settings_import_failed">Couldn\'t import. Your existing data is unchanged.</string>
+    <string name="settings_import_unsupported">This backup is from a different app version and can\'t be imported.</string>
+    <string name="settings_import_invalid">This file isn\'t a ChaGeun backup.</string>
     <string name="settings_delete_all">Delete all data</string>
     <string name="settings_delete_title">Delete all data on this device?</string>
-    <plurals name="settings_delete_vehicles">
+    <plurals name="settings_count_vehicles">
         <item quantity="one">%1$d vehicle</item>
         <item quantity="other">%1$d vehicles</item>
     </plurals>
-    <plurals name="settings_delete_records">
+    <plurals name="settings_count_records">
         <item quantity="one">%1$d record</item>
         <item quantity="other">%1$d records</item>
     </plurals>
-    <plurals name="settings_delete_photos">
+    <plurals name="settings_count_photos">
         <item quantity="one">%1$d photo or receipt</item>
         <item quantity="other">%1$d photos and receipts</item>
     </plurals>

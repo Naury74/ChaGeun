@@ -10,9 +10,11 @@ import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.domain.backup.BackupRepository
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.InputStream
 import java.io.OutputStream
 import java.time.Clock
 import javax.inject.Inject
@@ -61,59 +63,72 @@ internal class RoomBackupRepository @Inject constructor(
         Unit
     }
 
+    override suspend fun previewImport(sourceUri: String): ImportPreview = withContext(ioDispatcher) {
+        val content = runCatching {
+            openInput(sourceUri).use { BackupArchiveReader.read(it) }
+        }.getOrDefault(ArchiveContent.Invalid)
+        when (content) {
+            is ArchiveContent.Valid -> ImportPreview.Ready(content.document.summary(), summary())
+            is ArchiveContent.UnsupportedVersion -> ImportPreview.UnsupportedVersion(content.version)
+            ArchiveContent.Invalid -> ImportPreview.Invalid
+        }
+    }
+
+    override suspend fun import(sourceUri: String): Boolean = withContext(ioDispatcher) {
+        val staging = File(attachmentDirectory.parentFile, STAGING_DIRECTORY).apply { deleteRecursively() }
+        val result = runCatching {
+            val content = openInput(sourceUri).use { BackupArchiveReader.read(it, extractTo = staging) }
+            val document = (content as? ArchiveContent.Valid)?.document ?: return@runCatching false
+            replaceDatabase(document)
+            attachmentDirectory.deleteRecursively()
+            val moved = !staging.exists() || staging.renameTo(attachmentDirectory)
+            if (!moved) staging.copyRecursively(attachmentDirectory, overwrite = true)
+            true
+        }.onFailure { logger.warn("backup_import_failed", LogField.Success(false), error = it) }
+        staging.deleteRecursively()
+        result.getOrDefault(false)
+    }
+
+    private suspend fun replaceDatabase(document: BackupDocument) {
+        val now = clock.instant()
+        database.withTransaction {
+            backupDao.deleteAllVehicles()
+            backupDao.insertVehicleData(
+                vehicles = document.vehicles.map { it.toEntity(now) },
+                mileage = document.mileage.map { it.toEntity() },
+                rules = document.maintenanceRules.map { it.toEntity() },
+            )
+            backupDao.insertRecords(
+                maintenance = document.maintenanceRecords.map { it.toEntity(now) },
+                fuel = document.fuelRecords.map { it.toEntity(now) },
+                checks = document.checkRecords.map { it.toEntity(now) },
+                attachments = document.attachments.map { it.toEntity() },
+            )
+        }
+    }
+
+    private fun openInput(uri: String): InputStream = checkNotNull(context.contentResolver.openInputStream(uri.toUri()))
+
+    private fun BackupDocument.summary() = LocalDataSummary(
+        vehicles = vehicles.size,
+        records = maintenanceRecords.size + fuelRecords.size + checkRecords.size,
+        photos = attachments.size,
+    )
+
     internal suspend fun snapshot(): BackupDocument = database.withTransaction {
         BackupDocument(
             exportedAt = clock.instant().toString(),
-            vehicles = backupDao.vehicles().map {
-                VehicleDto(
-                    id = it.id,
-                    maker = it.maker,
-                    model = it.model,
-                    modelYear = it.modelYear,
-                    trim = it.trim,
-                    fuelType = it.fuelType,
-                    firstRegistrationDate = it.firstRegistrationDate?.toString(),
-                    plateMasked = it.plateMasked,
-                    registrationMode = it.registrationMode,
-                )
-            },
-            mileage = backupDao.mileage().map {
-                MileageDto(it.id, it.vehicleId, it.mileageKm, it.recordedOn.toString(), it.sourceType)
-            },
-            maintenanceRules = backupDao.rules().map {
-                RuleDto(it.vehicleId, it.itemType, it.intervalKm, it.intervalMonths, it.ruleSource, it.isEnabled)
-            },
-            maintenanceRecords = backupDao.maintenanceRecords().map {
-                MaintenanceDto(
-                    it.id,
-                    it.vehicleId,
-                    it.itemType,
-                    it.serviceDate?.toString(),
-                    it.mileageKm,
-                    it.costWon,
-                    it.shopName,
-                    it.memo,
-                )
-            },
-            fuelRecords = backupDao.fuelRecords().map {
-                FuelDto(
-                    it.id, it.vehicleId, it.fuelDate.toString(), it.mileageKm, it.totalPriceWon, it.volumeMl,
-                    it.unitPriceWon, it.isFullTank, it.stationName, it.memo,
-                )
-            },
-            checkRecords = backupDao.checkRecords().map {
-                CheckDto(
-                    it.id,
-                    it.vehicleId,
-                    it.kind,
-                    it.checkDate.toString(),
-                    it.title,
-                    it.mileageKm,
-                    it.costWon,
-                    it.memo,
-                )
-            },
-            attachments = backupDao.attachments().map { AttachmentDto(it.ownerType, it.ownerId, it.fileName) },
+            vehicles = backupDao.vehicles().map { it.toDto() },
+            mileage = backupDao.mileage().map { it.toDto() },
+            maintenanceRules = backupDao.rules().map { it.toDto() },
+            maintenanceRecords = backupDao.maintenanceRecords().map { it.toDto() },
+            fuelRecords = backupDao.fuelRecords().map { it.toDto() },
+            checkRecords = backupDao.checkRecords().map { it.toDto() },
+            attachments = backupDao.attachments().map { it.toDto() },
         )
+    }
+
+    private companion object {
+        const val STAGING_DIRECTORY = "attachments-import"
     }
 }

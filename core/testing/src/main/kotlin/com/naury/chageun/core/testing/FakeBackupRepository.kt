@@ -1,6 +1,7 @@
 package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.backup.BackupRepository
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 
 class FakeBackupRepository : BackupRepository {
@@ -14,6 +15,16 @@ class FakeBackupRepository : BackupRepository {
     override suspend fun export(destinationUri: String): Boolean {
         exportedTo += destinationUri
         return exportSucceeds
+    }
+
+    var importPreview: ImportPreview = ImportPreview.Invalid
+    val importedFrom = mutableListOf<String>()
+
+    override suspend fun previewImport(sourceUri: String) = importPreview
+
+    override suspend fun import(sourceUri: String): Boolean {
+        importedFrom += sourceUri
+        return importPreview is ImportPreview.Ready
     }
 
     override suspend fun deleteAll() {

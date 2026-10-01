@@ -21,15 +21,25 @@
     <string name="settings_export_body">차량 정보·기록·사진을 원하는 위치에 ZIP 파일로 저장해요. 차량번호는 마스킹해서 저장해요.</string>
     <string name="settings_export_done">내보내기를 완료했어요</string>
     <string name="settings_export_failed">내보내지 못했어요. 다른 위치를 선택해 주세요.</string>
+    <string name="settings_import">데이터 가져오기</string>
+    <string name="settings_import_title">백업 데이터로 바꿀까요?</string>
+    <string name="settings_import_incoming">백업 파일</string>
+    <string name="settings_import_current">지금 이 기기</string>
+    <string name="settings_import_body">이 기기의 데이터가 모두 백업 내용으로 바뀌어요. 차량번호는 마스킹된 형태로만 복원돼요. 설정은 유지돼요.</string>
+    <string name="settings_import_confirm">바꾸기</string>
+    <string name="settings_import_done">가져오기를 완료했어요</string>
+    <string name="settings_import_failed">가져오지 못했어요. 기존 데이터는 그대로예요.</string>
+    <string name="settings_import_unsupported">다른 앱 버전에서 만든 백업이라 가져올 수 없어요.</string>
+    <string name="settings_import_invalid">차근 백업 파일이 아니에요.</string>
     <string name="settings_delete_all">모든 데이터 삭제</string>
     <string name="settings_delete_title">이 기기의 데이터를 모두 삭제할까요?</string>
-    <plurals name="settings_delete_vehicles">
+    <plurals name="settings_count_vehicles">
         <item quantity="other">차량 %1$d대</item>
     </plurals>
-    <plurals name="settings_delete_records">
+    <plurals name="settings_count_records">
         <item quantity="other">기록 %1$d건</item>
     </plurals>
-    <plurals name="settings_delete_photos">
+    <plurals name="settings_count_photos">
         <item quantity="other">사진·영수증 %1$d장</item>
     </plurals>
     <string name="settings_delete_body">삭제하면 되돌릴 수 없어요. 보관하려면 먼저 내보내기를 해 주세요. 설정은 유지돼요.</string>

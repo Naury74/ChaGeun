@@ -11,10 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 
 @Composable
-internal fun DataSection(state: DataUiState, onExport: () -> Unit, onRequestDelete: () -> Unit) {
+internal fun DataSection(state: DataUiState, onExport: () -> Unit, onImport: () -> Unit, onRequestDelete: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         Text(
             stringResource(R.string.settings_export_body),
@@ -24,25 +25,14 @@ internal fun DataSection(state: DataUiState, onExport: () -> Unit, onRequestDele
         OutlinedButton(onClick = onExport, enabled = !state.isWorking) {
             Text(stringResource(R.string.settings_export))
         }
-        state.exportResult?.let { result ->
+        OutlinedButton(onClick = onImport, enabled = !state.isWorking) {
+            Text(stringResource(R.string.settings_import))
+        }
+        state.message?.let { message ->
             Text(
-                stringResource(
-                    if (result ==
-                        ExportResult.Success
-                    ) {
-                        R.string.settings_export_done
-                    } else {
-                        R.string.settings_export_failed
-                    },
-                ),
+                stringResource(message.textRes),
                 style = MaterialTheme.typography.bodySmall,
-                color = if (result ==
-                    ExportResult.Success
-                ) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.error
-                },
+                color = if (message.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
             )
         }
         TextButton(onClick = onRequestDelete, enabled = !state.isWorking) {
@@ -58,9 +48,7 @@ internal fun DeleteAllDialog(summary: LocalDataSummary, onConfirm: () -> Unit, o
         title = { Text(stringResource(R.string.settings_delete_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                Text(pluralStringResource(R.plurals.settings_delete_vehicles, summary.vehicles, summary.vehicles))
-                Text(pluralStringResource(R.plurals.settings_delete_records, summary.records, summary.records))
-                Text(pluralStringResource(R.plurals.settings_delete_photos, summary.photos, summary.photos))
+                SummaryLines(summary)
                 Text(stringResource(R.string.settings_delete_body))
             }
         },
@@ -72,3 +60,44 @@ internal fun DeleteAllDialog(summary: LocalDataSummary, onConfirm: () -> Unit, o
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
     )
 }
+
+@Composable
+internal fun ImportDialog(preview: ImportPreview.Ready, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_import_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                Text(stringResource(R.string.settings_import_incoming), style = MaterialTheme.typography.titleSmall)
+                SummaryLines(preview.incoming)
+                Text(stringResource(R.string.settings_import_current), style = MaterialTheme.typography.titleSmall)
+                SummaryLines(preview.current)
+                Text(stringResource(R.string.settings_import_body))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.settings_import_confirm)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
+    )
+}
+
+@Composable
+private fun SummaryLines(summary: LocalDataSummary) {
+    Text(pluralStringResource(R.plurals.settings_count_vehicles, summary.vehicles, summary.vehicles))
+    Text(pluralStringResource(R.plurals.settings_count_records, summary.records, summary.records))
+    Text(pluralStringResource(R.plurals.settings_count_photos, summary.photos, summary.photos))
+}
+
+private val DataMessage.textRes: Int
+    get() = when (this) {
+        DataMessage.ExportDone -> R.string.settings_export_done
+        DataMessage.ExportFailed -> R.string.settings_export_failed
+        DataMessage.ImportDone -> R.string.settings_import_done
+        DataMessage.ImportFailed -> R.string.settings_import_failed
+        DataMessage.ImportUnsupported -> R.string.settings_import_unsupported
+        DataMessage.ImportInvalid -> R.string.settings_import_invalid
+    }
+
+private val DataMessage.isError: Boolean
+    get() = this != DataMessage.ExportDone && this != DataMessage.ImportDone

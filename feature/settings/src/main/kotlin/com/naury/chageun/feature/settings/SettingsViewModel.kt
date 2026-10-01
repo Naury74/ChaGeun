@@ -3,6 +3,7 @@ package com.naury.chageun.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.backup.BackupRepository
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.domain.settings.SettingsRepository
 import com.naury.chageun.core.model.ThemeMode
@@ -17,12 +18,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class ExportResult { Success, Failure }
+enum class DataMessage { ExportDone, ExportFailed, ImportDone, ImportFailed, ImportUnsupported, ImportInvalid }
+
+data class PendingImport(val sourceUri: String, val preview: ImportPreview.Ready)
 
 data class DataUiState(
     /** Non-null while the delete confirmation is shown. */
     val pendingDeletion: LocalDataSummary? = null,
-    val exportResult: ExportResult? = null,
+    val pendingImport: PendingImport? = null,
+    val message: DataMessage? = null,
     val isWorking: Boolean = false,
 )
 
@@ -47,11 +51,50 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun export(destinationUri: String) {
-        _dataState.update { it.copy(isWorking = true, exportResult = null) }
+        _dataState.update { it.copy(isWorking = true, message = null) }
         viewModelScope.launch {
             val succeeded = backupRepository.export(destinationUri)
             _dataState.update {
-                it.copy(isWorking = false, exportResult = if (succeeded) ExportResult.Success else ExportResult.Failure)
+                it.copy(
+                    isWorking = false,
+                    message = if (succeeded) DataMessage.ExportDone else DataMessage.ExportFailed,
+                )
+            }
+        }
+    }
+
+    fun previewImport(sourceUri: String) {
+        _dataState.update { it.copy(isWorking = true, message = null) }
+        viewModelScope.launch {
+            val preview = backupRepository.previewImport(sourceUri)
+            _dataState.update {
+                when (preview) {
+                    is ImportPreview.Ready -> it.copy(
+                        isWorking = false,
+                        pendingImport = PendingImport(sourceUri, preview),
+                    )
+                    is ImportPreview.UnsupportedVersion -> it.copy(
+                        isWorking = false,
+                        message = DataMessage.ImportUnsupported,
+                    )
+                    ImportPreview.Invalid -> it.copy(isWorking = false, message = DataMessage.ImportInvalid)
+                }
+            }
+        }
+    }
+
+    fun cancelImport() = _dataState.update { it.copy(pendingImport = null) }
+
+    fun confirmImport() {
+        val pending = _dataState.value.pendingImport ?: return
+        _dataState.update { it.copy(pendingImport = null, isWorking = true) }
+        viewModelScope.launch {
+            val succeeded = backupRepository.import(pending.sourceUri)
+            _dataState.update {
+                it.copy(
+                    isWorking = false,
+                    message = if (succeeded) DataMessage.ImportDone else DataMessage.ImportFailed,
+                )
             }
         }
     }
