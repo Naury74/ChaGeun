@@ -16,7 +16,7 @@ Status: Accepted
   feature:onboarding · home · manage · history · vehicle · ai · settings
   data:vehicle · maintenance · history · recall · ai
   core:model · domain · common · designsystem · database · network
-  core:notification · analytics · ads · testing
+  core:security · notification · analytics · ads · testing
   ```
 
 - `core:model`, `core:domain`, `core:common`은 Pure Kotlin(JVM) 모듈이다. 정비 Rule Engine과 UseCase는 `core:domain`에 둔다.
@@ -27,7 +27,9 @@ Status: Accepted
 
 - 모듈 단위 빌드 캐시와 병렬 빌드가 가능하고 Rule Engine을 JVM Unit Test로만 검증할 수 있다.
 - 새 모듈은 Convention Plugin 한 줄로 동일한 Kotlin·Compose·Lint·Detekt·Ktlint 설정을 받는다.
-- `core:domain`은 기획 모듈 목록에 없던 추가 모듈로, Rule Engine을 Android 의존성 없이 유지하기 위해 분리했다.
+- 기획 모듈 목록에 없던 추가 모듈:
+  - `core:domain`: Rule Engine을 Android 의존성 없이 유지
+  - `core:security`: 차량번호·VIN 등 필드 암호화를 DB·Network와 분리
 
 ## Alternatives considered
 
