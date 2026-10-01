@@ -36,6 +36,7 @@ fun HomeRoute(
     onOpenHistory: () -> Unit,
     onUpdateMileage: () -> Unit,
     onAskAi: () -> Unit,
+    onOpenSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -48,6 +49,7 @@ fun HomeRoute(
             onUpdateMileage = onUpdateMileage,
             onOpenHistory = onOpenHistory,
             onAskAi = onAskAi,
+            onOpenSettings = onOpenSettings,
         ),
     )
 }
@@ -57,6 +59,7 @@ data class HomeActions(
     val onUpdateMileage: () -> Unit,
     val onOpenHistory: () -> Unit,
     val onAskAi: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
 )
 
 /** Medium widths keep one pane: next to a rail, two panes would fall below the 360dp minimum detail width. */
@@ -118,6 +121,7 @@ private fun HomeContent(state: HomeUiState.Content, paneCount: Int, actions: Hom
 }
 
 private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {
+    item(key = "brand") { BrandAppBar(actions.onOpenSettings) }
     item(key = "hero") { HomeHero(state, actions.onUpdateMileage) }
     item(key = "health") {
         VehicleStatusSummary(

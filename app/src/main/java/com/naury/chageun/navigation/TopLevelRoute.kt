@@ -24,3 +24,6 @@ sealed interface TopLevelRoute : NavKey {
  */
 @Serializable
 data class AiRoute(val focusItem: String? = null) : NavKey
+
+@Serializable
+data object SettingsRoute : NavKey

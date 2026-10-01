@@ -33,4 +33,5 @@
     <string name="vehicle_section_sources">데이터 출처</string>
     <string name="vehicle_sources_manual">차량 정보와 주행거리는 직접 입력한 값이에요. 정비 시점은 직접 바꾸지 않았다면 일반적인 권장 기준으로 계산해요.</string>
     <string name="vehicle_sources_auto">차량 정보는 공식 차량 데이터이고, 주행거리와 정비 기록은 직접 입력한 값이에요.</string>
+    <string name="vehicle_open_settings">설정</string>
 </resources>

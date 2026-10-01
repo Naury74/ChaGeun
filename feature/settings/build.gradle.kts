@@ -10,7 +10,6 @@ android {
 
 dependencies {
     implementation(libs.androidx.compose.material.icons.core)
-    implementation(libs.androidx.material3.adaptive)
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)

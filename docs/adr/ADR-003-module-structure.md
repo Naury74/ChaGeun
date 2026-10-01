@@ -15,7 +15,7 @@ Status: Accepted
   app
   feature:onboarding · home · manage · history · vehicle · ai · settings
   data:vehicle · maintenance · history · recall · ai
-  core:model · domain · common · designsystem · database · network
+  core:model · domain · common · designsystem · ui · database · datastore · network
   core:security · notification · analytics · ads · testing
   ```
 
@@ -30,6 +30,8 @@ Status: Accepted
 - 기획 모듈 목록에 없던 추가 모듈:
   - `core:domain`: Rule Engine을 Android 의존성 없이 유지
   - `core:security`: 차량번호·VIN 등 필드 암호화를 DB·Network와 분리
+  - `core:ui`: Feature 간 직접 참조 없이 도메인 모델 표시 문구와 공용 Composable 공유
+  - `core:datastore`: 테마·알림 같은 사용자 설정을 Room과 분리된 Key-Value로 저장
 
 ## Alternatives considered
 
