@@ -10,12 +10,11 @@ import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -23,10 +22,8 @@ import org.junit.Test
 class ObserveMaintenanceOverviewUseCaseTest {
 
     private val today = LocalDate.of(2026, 10, 1)
-    private val inputs = MutableStateFlow(MaintenanceInputs(emptyList(), emptyMap(), emptyList()))
-    private val repository = object : MaintenanceRepository {
-        override fun observeInputs(vehicleId: VehicleId): Flow<MaintenanceInputs> = inputs
-    }
+    private val repository = FakeMaintenanceRepository()
+    private val inputs = repository.inputs
     private val useCase = ObserveMaintenanceOverviewUseCase(
         repository = repository,
         engine = RuleBasedMaintenanceEngine(DrivingPaceEstimator()),

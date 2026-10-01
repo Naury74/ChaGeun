@@ -31,6 +31,16 @@ interface MileageRecordDao {
     )
     fun observeLatest(vehicleId: String): Flow<MileageRecordEntity?>
 
+    @Query(
+        """
+        SELECT * FROM mileage_record
+        WHERE vehicle_id = :vehicleId
+        ORDER BY recorded_on DESC, created_at DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun findLatest(vehicleId: String): MileageRecordEntity?
+
     @Insert
     suspend fun insert(record: MileageRecordEntity)
 }

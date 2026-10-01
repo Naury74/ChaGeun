@@ -58,6 +58,7 @@ dependencies {
     implementation(projects.data.maintenance)
     implementation(projects.data.vehicle)
     implementation(projects.feature.home)
+    implementation(projects.feature.manage)
     implementation(projects.feature.onboarding)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)

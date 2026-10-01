@@ -18,6 +18,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.naury.chageun.R
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.feature.home.HomeRoute
+import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
@@ -61,6 +62,7 @@ fun ChageunApp(destinationContent: @Composable (TopLevelDestination) -> Unit = {
 private fun DestinationContent(destination: TopLevelDestination) {
     when (destination) {
         TopLevelDestination.Home -> HomeRoute()
+        TopLevelDestination.Manage -> ManageRoute()
         else -> PendingDestination(destination)
     }
 }
