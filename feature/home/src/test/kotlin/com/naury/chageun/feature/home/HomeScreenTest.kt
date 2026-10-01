@@ -11,11 +11,13 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h2000dp")
@@ -104,5 +106,22 @@ class HomeScreenTest {
         composeRule.onNodeWithText("Add your first record").performClick()
 
         assertThat(opened).isTrue()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsEveryTextVisible() {
+        show(
+            content(
+                VehicleHealthLevel.NeedsAttention,
+                listOf(HealthReason.SafetyItemOverdue(MaintenanceItem.Tire)),
+                status(MaintenanceItem.Tire, MaintenanceState.Overdue, remainingKm = -1_200),
+                status(MaintenanceItem.EngineOil, MaintenanceState.Upcoming, remainingKm = 2_400, remainingDays = 40),
+                status(MaintenanceItem.BrakePad, MaintenanceState.Unknown, missing = setOf(MissingInput.LastService)),
+            ),
+        )
+
+        composeRule.assertNoClippedText()
     }
 }

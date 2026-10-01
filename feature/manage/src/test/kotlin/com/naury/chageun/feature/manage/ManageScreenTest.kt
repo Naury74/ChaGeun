@@ -16,12 +16,14 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceHistoryEntry
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h2000dp")
@@ -89,5 +91,30 @@ class ManageScreenTest {
 
         composeRule.onNodeWithText("All 1").assertIsDisplayed()
         composeRule.onNodeWithText("Select an item to see why it has this status").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsListAndDetailTextVisible() {
+        var selected by mutableStateOf<MaintenanceItem?>(null)
+        composeRule.setContent {
+            ChageunTheme {
+                ManageScreen(
+                    uiState = stateFor(selected),
+                    isTwoPane = false,
+                    onFilterSelected = {},
+                    onItemSelected = { selected = it },
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+        composeRule.assertNoClippedText()
+
+        selected = MaintenanceItem.EngineOil
+        composeRule.waitForIdle()
+
+        composeRule.assertNoClippedText()
     }
 }

@@ -22,6 +22,7 @@ import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -31,6 +32,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h3000dp")
@@ -108,5 +110,23 @@ class AiHubTest {
         assertThat(prompt).contains("Vehicle: KG Mobility Torres · 2023 · Gasoline")
         assertThat(prompt).contains("Mileage: 42,180 km")
         assertThat(prompt).endsWith("Question: How is my car?")
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsPreviewAndProvidersVisible() {
+        composeRule.setContent {
+            ChageunTheme {
+                val state = AiHubUiState(question = "How is my car?", options = AiContextOptions(), facts = facts)
+                AiHubScreen(
+                    uiState = state,
+                    promptText = aiPromptText(facts, state.question),
+                    actions = AiHubActions({}, {}, {}, {}, onShare = {}),
+                )
+            }
+        }
+
+        composeRule.assertNoClippedText()
     }
 }

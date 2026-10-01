@@ -13,12 +13,14 @@ import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h3000dp")
@@ -63,5 +65,18 @@ class VehicleScreenTest {
         composeRule.onNodeWithText("Update mileage").performClick()
 
         assertThat(updateRequested).isTrue()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsEveryTextVisible() {
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(VehicleUiState.Content(vehicle, log), isTwoPane = false, onUpdateMileage = {})
+            }
+        }
+
+        composeRule.assertNoClippedText()
     }
 }

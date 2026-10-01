@@ -62,7 +62,8 @@ fun VehicleHeroSection(
             )
             Image(
                 painter = painterResource(R.drawable.vehicle_silhouette_suv),
-                contentDescription = title,
+                // Generic silhouette, not a photo of this car; the title below already names it.
+                contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
@@ -75,9 +76,15 @@ fun VehicleHeroSection(
             modifier = Modifier.semantics { heading() },
         )
         Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        mileage?.let { Text(it, style = NumericTextStyles.Hero) }
-        freshness?.let {
-            Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(Modifier.semantics(mergeDescendants = true) {}) {
+            mileage?.let { Text(it, style = NumericTextStyles.Hero) }
+            freshness?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         action?.invoke()
     }
