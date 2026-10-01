@@ -17,3 +17,10 @@ sealed interface TopLevelRoute : NavKey {
     @Serializable
     data object Vehicle : TopLevelRoute
 }
+
+/**
+ * The AI question screen, pushed on top of a tab.
+ * [focusItem] is a maintenance item name when opened from that item's detail.
+ */
+@Serializable
+data class AiRoute(val focusItem: String? = null) : NavKey

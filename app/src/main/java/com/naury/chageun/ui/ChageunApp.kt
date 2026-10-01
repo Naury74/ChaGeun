@@ -11,17 +11,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
 import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.home.MileageUpdateHost
 import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.feature.manage.record.RecordServiceHost
 import com.naury.chageun.feature.vehicle.VehicleRoute
+import com.naury.chageun.navigation.AiRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
@@ -30,6 +34,7 @@ data class AppActions(
     val onRecordService: (MaintenanceItem) -> Unit,
     val onNavigate: (TopLevelDestination) -> Unit,
     val onUpdateMileage: () -> Unit = {},
+    val onAskAi: (MaintenanceItem?) -> Unit = {},
     /** Item opened from a notification, consumed once the Care tab has selected it. */
     val pendingManageItem: MaintenanceItem? = null,
     val onPendingManageItemHandled: () -> Unit = {},
@@ -58,6 +63,7 @@ fun ChageunApp(
         onRecordService = { recordingItem = it },
         onNavigate = navigateTo,
         onUpdateMileage = { isUpdatingMileage = true },
+        onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         pendingManageItem = deepLinkItem,
         onPendingManageItemHandled = onDeepLinkHandled,
     )
@@ -79,9 +85,21 @@ fun ChageunApp(
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
                     entry(destination.route) { destinationContent(destination, actions) }
+                }
+                entry<AiRoute> { route ->
+                    AiHubRoute(
+                        focusItem = route.focusItem?.let { name ->
+                            MaintenanceItem.entries.firstOrNull { it.name == name }
+                        },
+                        onBack = { backStack.removeLastOrNull() },
+                    )
                 }
             },
         )
@@ -102,9 +120,11 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onRecordService = actions.onRecordService,
             onOpenHistory = { actions.onNavigate(TopLevelDestination.History) },
             onUpdateMileage = actions.onUpdateMileage,
+            onAskAi = { actions.onAskAi(null) },
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,
+            onAskAi = { actions.onAskAi(it) },
             pendingSelection = actions.pendingManageItem,
             onPendingSelectionHandled = actions.onPendingManageItemHandled,
         )

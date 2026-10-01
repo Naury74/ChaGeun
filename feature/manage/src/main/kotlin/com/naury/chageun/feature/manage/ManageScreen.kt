@@ -26,6 +26,7 @@ import com.naury.chageun.feature.manage.rule.RuleEditorHost
 @Composable
 fun ManageRoute(
     onRecordService: (MaintenanceItem) -> Unit,
+    onAskAi: (MaintenanceItem) -> Unit = {},
     pendingSelection: MaintenanceItem? = null,
     onPendingSelectionHandled: () -> Unit = {},
     viewModel: ManageViewModel = hiltViewModel(),
@@ -47,6 +48,7 @@ fun ManageRoute(
         onItemSelected = viewModel::selectItem,
         onRecordService = onRecordService,
         onEditRule = { editingItem = it },
+        onAskAi = onAskAi,
     )
     editingItem?.let { item -> RuleEditorHost(item = item, onDismiss = { editingItem = null }) }
 }
@@ -64,6 +66,7 @@ fun ManageScreen(
     onRecordService: (MaintenanceItem) -> Unit,
     onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
+    onAskAi: (MaintenanceItem) -> Unit = {},
 ) {
     if (uiState.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -90,6 +93,7 @@ fun ManageScreen(
                     onBack = null,
                     onRecordService = onRecordService,
                     onEditRule = onEditRule,
+                    onAskAi = onAskAi,
                     modifier = detailModifier,
                 )
             } else {
@@ -103,6 +107,7 @@ fun ManageScreen(
             onBack = { onItemSelected(null) },
             onRecordService = onRecordService,
             onEditRule = onEditRule,
+            onAskAi = onAskAi,
             modifier = modifier.fillMaxSize(),
         )
     } else {
