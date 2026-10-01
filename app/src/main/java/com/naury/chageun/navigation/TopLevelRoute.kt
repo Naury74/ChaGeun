@@ -27,3 +27,9 @@ data class AiRoute(val focusItem: String? = null) : NavKey
 
 @Serializable
 data object SettingsRoute : NavKey
+
+@Serializable
+data object OpenSourceLicensesRoute : NavKey
+
+@Serializable
+data object PrivacyNoticeRoute : NavKey

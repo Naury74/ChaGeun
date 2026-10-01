@@ -17,6 +17,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
+import com.naury.chageun.R
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
@@ -24,9 +25,13 @@ import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.home.MileageUpdateHost
 import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.feature.manage.record.RecordServiceHost
+import com.naury.chageun.feature.settings.OpenSourceLicensesRoute
+import com.naury.chageun.feature.settings.PrivacyNoticeScreen
 import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
 import com.naury.chageun.navigation.AiRoute
+import com.naury.chageun.navigation.OpenSourceLicensesRoute
+import com.naury.chageun.navigation.PrivacyNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
@@ -97,7 +102,17 @@ fun ChageunApp(
                 TopLevelDestination.entries.forEach { destination ->
                     entry(destination.route) { destinationContent(destination, actions) }
                 }
-                entry(SettingsRoute) { SettingsRoute(onBack = { backStack.removeLastOrNull() }) }
+                entry(SettingsRoute) {
+                    SettingsRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
+                        onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
+                    )
+                }
+                entry(OpenSourceLicensesRoute) {
+                    OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
+                }
+                entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
                 entry<AiRoute> { route ->
                     AiHubRoute(
                         focusItem = route.focusItem?.let { name ->

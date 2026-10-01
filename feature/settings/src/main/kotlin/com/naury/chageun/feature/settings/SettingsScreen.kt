@@ -17,10 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -45,7 +41,12 @@ import com.naury.chageun.core.model.UserSettings
 import java.time.LocalDate
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsRoute(
+    onBack: () -> Unit,
+    onOpenLicenses: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val dataState by viewModel.dataState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -64,6 +65,8 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
         onOpenSystemNotifications = { context.openNotificationSettings() },
+        onOpenLicenses = onOpenLicenses,
+        onOpenPrivacy = onOpenPrivacy,
         dataSection = {
             DataSection(
                 state = dataState,
@@ -90,6 +93,8 @@ fun SettingsScreen(
     onRemindersChanged: (Boolean) -> Unit,
     onOpenSystemNotifications: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenLicenses: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
 ) {
     Column(
@@ -99,18 +104,7 @@ fun SettingsScreen(
             .padding(ChageunTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.settings_back))
-            }
-            Text(
-                stringResource(R.string.settings_title),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.semantics {
-                    heading()
-                },
-            )
-        }
+        SettingsTopBar(R.string.settings_title, onBack)
         Column(
             Modifier.widthIn(max = CONTENT_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
@@ -169,6 +163,8 @@ fun SettingsScreen(
                     stringResource(R.string.settings_version, versionName),
                     style = MaterialTheme.typography.bodyMedium,
                 )
+                TextButton(onClick = onOpenPrivacy) { Text(stringResource(R.string.settings_privacy)) }
+                TextButton(onClick = onOpenLicenses) { Text(stringResource(R.string.settings_licenses)) }
             }
         }
     }
