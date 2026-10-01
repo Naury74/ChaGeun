@@ -32,6 +32,37 @@ class DatabaseMigrationTest {
     }
 
     @Test
+    fun migration1To2_keepsRecordsAndAllowsUndatedService() {
+        helper.createDatabase(TEST_DB, 1).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO maintenance_record " +
+                    "(id, vehicle_id, item_type, service_date, mileage_km, cost_won, " +
+                    "source_type, created_at, updated_at) " +
+                    "VALUES ('r1', 'v1', 'EngineOil', 20500, 40000, 0, 'USER', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 2, true, *DatabaseMigrations.ALL.toTypedArray()).use { db ->
+            db.query(
+                "SELECT service_date, mileage_km, cost_won FROM maintenance_record WHERE id = 'r1'",
+            ).use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.getLong(0)).isEqualTo(20_500)
+                assertThat(cursor.getLong(1)).isEqualTo(40_000)
+                assertThat(cursor.getLong(2)).isEqualTo(0)
+            }
+            db.execSQL(
+                "INSERT INTO maintenance_record (id, vehicle_id, item_type, service_date, source_type, created_at, " +
+                    "updated_at) VALUES ('r2', 'v1', 'Tire', NULL, 'USER', 2, 2)",
+            )
+        }
+    }
+
+    @Test
     fun providesMigrationForEveryVersionStep() {
         val covered = DatabaseMigrations.ALL.map { it.startVersion to it.endVersion }.toSet()
         val required = (FIRST_VERSION until currentVersion()).map { it to it + 1 }

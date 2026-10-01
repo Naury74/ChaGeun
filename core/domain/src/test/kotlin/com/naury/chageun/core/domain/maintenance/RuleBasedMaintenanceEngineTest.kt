@@ -103,6 +103,33 @@ class RuleBasedMaintenanceEngineTest {
     }
 
     @Test
+    fun returnsUnknown_whenServiceDateMissingAndDistanceLooksGood() {
+        val status = evaluate(lastService = ServiceRecord(date = null, mileage = Kilometers(40_000)))
+
+        assertThat(status.state).isEqualTo(MaintenanceState.Unknown)
+        assertThat(status.remainingKm).isEqualTo(5_000)
+        assertThat(status.dateDue).isNull()
+        assertThat(status.missingInputs).containsExactly(MissingInput.LastServiceDate)
+    }
+
+    @Test
+    fun keepsOverdue_whenServiceDateMissingButDistanceExceeded() {
+        val status = evaluate(lastService = ServiceRecord(date = null, mileage = Kilometers(30_000)))
+
+        assertThat(status.state).isEqualTo(MaintenanceState.Overdue)
+    }
+
+    @Test
+    fun evaluatesDistanceOnlyRules_withoutServiceDate() {
+        val rule = MaintenanceRule(MaintenanceItem.Tire, intervalKm = 50_000, intervalMonths = null)
+
+        val status = evaluate(rule = rule, lastService = ServiceRecord(date = null, mileage = Kilometers(20_000)))
+
+        assertThat(status.state).isEqualTo(MaintenanceState.Good)
+        assertThat(status.missingInputs).isEmpty()
+    }
+
+    @Test
     fun evaluatesDateOnlyRules_withoutMileage() {
         val wiper = MaintenanceRule(MaintenanceItem.Wiper, intervalKm = null, intervalMonths = 12)
 

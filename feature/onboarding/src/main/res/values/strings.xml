@@ -1,0 +1,62 @@
+<resources>
+    <string name="onboarding_intro_title">Take care of your car,\none step at a time</string>
+    <string name="onboarding_intro_body">See what needs attention, when maintenance is due and keep every record in one place. No sign-up needed.</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_next">Next</string>
+
+    <string name="onboarding_plate_title">Enter your plate number</string>
+    <string name="onboarding_plate_body">We use it to identify your car. It is stored encrypted on this device only.</string>
+    <string name="onboarding_plate_label">Plate number</string>
+    <string name="onboarding_plate_placeholder">e.g. 123가4567</string>
+    <string name="onboarding_plate_skip">Register without a plate</string>
+
+    <string name="onboarding_vehicle_title">Tell us about your car</string>
+    <string name="onboarding_vehicle_maker">Manufacturer</string>
+    <string name="onboarding_vehicle_model">Model</string>
+    <string name="onboarding_vehicle_year">Model year</string>
+    <string name="onboarding_vehicle_fuel">Fuel</string>
+
+    <string name="onboarding_mileage_title">What does the odometer show?</string>
+    <string name="onboarding_mileage_body">Maintenance timing is calculated from this value. An approximate number is fine.</string>
+    <string name="onboarding_mileage_label">Current mileage</string>
+    <string name="onboarding_mileage_unit">km</string>
+    <string name="onboarding_save_failed">Couldn\'t save your car. Please try again.</string>
+
+    <string name="onboarding_error_required">Required</string>
+    <string name="onboarding_error_plate_invalid">Check the format, e.g. 123가4567</string>
+    <string name="onboarding_error_plate_unsupported">This plate type isn\'t supported yet</string>
+    <string name="onboarding_error_year_invalid">Enter a year between 1980 and next year</string>
+    <string name="onboarding_error_mileage_invalid">Check the mileage</string>
+
+    <string name="fuel_gasoline">Gasoline</string>
+    <string name="fuel_diesel">Diesel</string>
+    <string name="fuel_lpg">LPG</string>
+    <string name="fuel_hybrid">Hybrid</string>
+    <string name="fuel_plug_in_hybrid">Plug-in hybrid</string>
+    <string name="fuel_electric">Electric</string>
+    <string name="fuel_hydrogen">Hydrogen</string>
+
+    <string name="onboarding_confirm">OK</string>
+    <string name="onboarding_cancel">Cancel</string>
+
+    <string name="onboarding_quick_title">When did you last replace these?</string>
+    <string name="onboarding_quick_body">Skip anything you don\'t remember. You can fill it in later.</string>
+    <string name="onboarding_quick_engine_oil">Engine oil</string>
+    <string name="onboarding_quick_tire">Tires</string>
+    <string name="onboarding_quick_battery">Battery</string>
+    <string name="onboarding_quick_mode_both">Date and mileage</string>
+    <string name="onboarding_quick_mode_date">Date only</string>
+    <string name="onboarding_quick_mode_mileage">Mileage only</string>
+    <string name="onboarding_quick_mode_unknown">Not sure</string>
+    <string name="onboarding_quick_pick_date">Pick a date</string>
+    <string name="onboarding_quick_mileage">Mileage at replacement</string>
+
+    <string name="onboarding_notifications_title">Get reminded before it\'s too late</string>
+    <string name="onboarding_notifications_body">We only notify you about maintenance, inspections and recalls that are inconvenient or risky to miss.</string>
+    <string name="onboarding_notifications_allow">Get notified</string>
+    <string name="onboarding_notifications_later">Maybe later</string>
+
+    <string name="onboarding_error_future_date">Pick a date that isn\'t in the future</string>
+    <string name="onboarding_error_exceeds_mileage">Can\'t be higher than the current mileage</string>
+</resources>
