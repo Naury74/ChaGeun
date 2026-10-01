@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.chageun.android.application)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -33,6 +34,10 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     lint {
         warningsAsErrors = false
         abortOnError = true
@@ -44,7 +49,16 @@ android {
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.compose.material3)
+    implementation(projects.core.designsystem)
+    implementation(libs.androidx.compose.material.icons.core)
+    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
+    implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.kotlinx.serialization.core)
+
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.test.ext.junit)

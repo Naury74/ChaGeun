@@ -18,6 +18,10 @@ naming:
     forbiddenName: ['Util', 'Utils', 'Manager', 'Helper', 'Common', 'Temp']
 
 style:
+  ReturnCount:
+    max: 3
+    excludeGuardClauses: true
+    excludeReturnFromLambda: true
   ForbiddenComment:
     active: true
     comments:
