@@ -32,6 +32,8 @@ internal fun Project.configureKotlinAndroid(commonExtension: CommonExtension) {
     tasks.withType<Test>().configureEach {
         jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
     }
+    // com.android.test modules have no local unit tests.
+    if (configurations.findByName("testImplementation") == null) return
     dependencies {
         add("testImplementation", libs.library("junit4"))
         add("testImplementation", libs.library("truth"))

@@ -7,6 +7,10 @@ room = "2.8.5"
 ktlintGradle = "14.2.0"
 detekt = "1.23.8"
 aboutLibraries = "15.2.0"
+androidxBenchmark = "1.5.0"
+androidxProfileInstaller = "1.4.1"
+androidxUiAutomator = "2.4.0"
+wire = "6.4.5"
 
 compileSdk = "37"
 minSdk = "26"
@@ -96,11 +100,17 @@ room-gradlePlugin = { module = "androidx.room:room-gradle-plugin", version.ref =
 ktlint-gradlePlugin = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlintGradle" }
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
+androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "androidxBenchmark" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "androidxProfileInstaller" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidxUiAutomator" }
+wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire" }
 
 [plugins]
 aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+android-test = { id = "com.android.test", version.ref = "androidGradlePlugin" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidxBenchmark" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
@@ -116,4 +126,5 @@ chageun-android-compose = { id = "chageun.android.library.compose" }
 chageun-android-feature = { id = "chageun.android.feature" }
 chageun-android-room = { id = "chageun.android.room" }
 chageun-hilt = { id = "chageun.hilt" }
+chageun-android-test = { id = "chageun.android.test" }
 chageun-jvm-library = { id = "chageun.jvm.library" }

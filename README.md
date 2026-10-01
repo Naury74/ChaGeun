@@ -54,6 +54,15 @@ git clone https://github.com/Naury74/ChaGeun.git
 
 PR마다 GitHub Actions에서 동일한 검사가 실행됩니다.
 
+### 성능
+
+```bash
+./gradlew :app:generateReleaseBaselineProfile          # Baseline Profile 생성 → app/src/release/generated
+./gradlew :benchmark:pixel6Api34BenchmarkReleaseAndroidTest  # Cold Start · 목록 Scroll Macrobenchmark
+```
+
+Gradle Managed Device(Pixel 6, API 34 ATD)에서 실행하며, Nightly Workflow가 매일 측정 결과를 Artifact로 남깁니다. 에뮬레이터 수치는 큰 회귀를 잡는 용도이고, 비교는 같은 실기기에서 합니다.
+
 ## 문서
 
 - [Contributing](CONTRIBUTING.md) — Branch · Commit · PR · 주석 규칙

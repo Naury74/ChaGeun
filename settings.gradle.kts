@@ -29,6 +29,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "Chageun"
 include(":app")
+include(":benchmark")
 include(":core:common")
 include(":core:database")
 include(":core:datastore")
