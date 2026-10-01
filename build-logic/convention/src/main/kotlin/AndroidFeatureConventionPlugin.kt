@@ -22,6 +22,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             add("implementation", libs.library("androidx-navigation3-runtime"))
 
             add("testImplementation", project(":core:testing"))
+            add("testImplementation", project(":core:ui-testing"))
             add("testImplementation", libs.library("kotlinx-coroutines-test"))
             add("testImplementation", libs.library("turbine"))
         }

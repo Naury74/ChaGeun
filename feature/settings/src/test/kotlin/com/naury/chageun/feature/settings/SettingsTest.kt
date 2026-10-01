@@ -19,6 +19,7 @@ import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -26,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h2000dp")
@@ -205,5 +207,38 @@ class SettingsTest {
 
         composeRule.onNodeWithText("What leaves the device").assertExists()
         composeRule.onNodeWithText("Nothing is sent automatically", substring = true).assertExists()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsSettingsAndDialogsVisible() {
+        var dialog by mutableStateOf(false)
+        composeRule.setContent {
+            ChageunTheme {
+                SettingsScreen(
+                    settings = UserSettings(),
+                    versionName = "0.1.0",
+                    onBack = {},
+                    onThemeSelected = {},
+                    onRemindersChanged = {},
+                    onOpenSystemNotifications = {},
+                    dataSection = { DataSection(DataUiState(), onExport = {}, onImport = {}, onRequestDelete = {}) },
+                )
+                if (dialog) {
+                    ImportDialog(
+                        ImportPreview.Ready(LocalDataSummary(1, 20, 4), LocalDataSummary(1, 12, 3)),
+                        onConfirm = {},
+                        onDismiss = {},
+                    )
+                }
+            }
+        }
+        composeRule.assertNoClippedText()
+
+        dialog = true
+        composeRule.waitForIdle()
+
+        composeRule.assertNoClippedText()
     }
 }

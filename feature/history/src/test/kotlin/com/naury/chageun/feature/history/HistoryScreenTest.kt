@@ -1,5 +1,8 @@
 package com.naury.chageun.feature.history
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
@@ -18,6 +21,7 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.uitesting.assertNoClippedText
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -26,6 +30,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h2000dp")
@@ -105,5 +110,36 @@ class HistoryScreenTest {
         composeRule.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
 
         assertThat(deleted).isEqualTo(ref)
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun largeFont_keepsTimelineAndDetailTextVisible() {
+        var state by mutableStateOf(
+            HistoryUiState(isLoading = false, sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item)))),
+        )
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAttach = { _, _ -> },
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+        composeRule.assertNoClippedText()
+
+        state = HistoryUiState(isLoading = false, selected = ref, detail = detail)
+        composeRule.waitForIdle()
+
+        composeRule.assertNoClippedText()
     }
 }

@@ -33,6 +33,7 @@ Status: Accepted
   - `core:ui`: Feature 간 직접 참조 없이 도메인 모델 표시 문구와 공용 Composable 공유
   - `core:datastore`: 테마·알림 같은 사용자 설정을 Room과 분리된 Key-Value로 저장
   - `data:backup`: 모든 테이블과 첨부 파일을 읽는 내보내기·전체 삭제를 기능 Repository와 분리
+  - `core:ui-testing`: 큰 글꼴 잘림 검사 같은 Compose 테스트 Helper를 모든 Feature 테스트에서 공유 (`core:testing`은 JVM 모듈이라 Compose를 둘 수 없음)
 
 ## Alternatives considered
 
