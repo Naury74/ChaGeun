@@ -4,10 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.naury.chageun.core.database.converter.TimeConverters
+import com.naury.chageun.core.database.dao.AttachmentDao
 import com.naury.chageun.core.database.dao.HistoryDao
 import com.naury.chageun.core.database.dao.MaintenanceDao
 import com.naury.chageun.core.database.dao.MileageRecordDao
 import com.naury.chageun.core.database.dao.VehicleDao
+import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
@@ -23,6 +25,7 @@ import com.naury.chageun.core.database.entity.VehicleEntity
         MaintenanceRecordEntity::class,
         FuelRecordEntity::class,
         CheckRecordEntity::class,
+        AttachmentEntity::class,
     ],
     version = ChageunDatabase.VERSION,
     exportSchema = true,
@@ -37,8 +40,10 @@ abstract class ChageunDatabase : RoomDatabase() {
 
     abstract fun historyDao(): HistoryDao
 
+    abstract fun attachmentDao(): AttachmentDao
+
     companion object {
         const val NAME = "chageun.db"
-        const val VERSION = 3
+        const val VERSION = 4
     }
 }

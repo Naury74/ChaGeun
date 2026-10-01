@@ -5,6 +5,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
+import com.naury.chageun.core.database.migration.Migration3To4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,6 +89,13 @@ class DatabaseMigrationTest {
                     "41176, 1700, 1, 2, 2)",
             )
         }
+    }
+
+    @Test
+    fun migration3To4_addsAttachmentTable() {
+        helper.createDatabase(TEST_DB, 3).close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 4, true, Migration3To4).close()
     }
 
     @Test

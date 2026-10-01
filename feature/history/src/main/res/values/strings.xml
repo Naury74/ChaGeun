@@ -78,4 +78,14 @@
     <string name="unit_liter">L</string>
     <string name="unit_won_per_liter">₩/L</string>
     <string name="history_detail_kind">Type</string>
+    <string name="attachment_title">Photos and receipts</string>
+    <string name="attachment_add">Add photos (up to %1$d)</string>
+    <string name="attachment_notice">Photos stay on this device only and are removed if you uninstall the app. Location data is removed when saved.</string>
+    <plurals name="attachment_failed">
+        <item quantity="one">Couldn\'t import %1$d photo</item>
+        <item quantity="other">Couldn\'t import %1$d photos</item>
+    </plurals>
+    <string name="attachment_open">Open photo</string>
+    <string name="attachment_thumbnail">Attached photo</string>
+    <string name="attachment_close">Close</string>
 </resources>

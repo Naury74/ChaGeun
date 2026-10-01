@@ -2,6 +2,7 @@ package com.naury.chageun.feature.history
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.history.DeleteHistoryRecordUseCase
 import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelType
@@ -13,6 +14,7 @@ import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -34,7 +36,10 @@ class HistoryViewModelTest {
     private val vehicles = FakeVehicleRepository()
     private val history = FakeHistoryRepository()
 
-    private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) = HistoryViewModel(handle, vehicles, history)
+    private val attachments = FakeAttachmentRepository()
+
+    private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) =
+        HistoryViewModel(handle, vehicles, history, attachments, DeleteHistoryRecordUseCase(history, attachments))
 
     private fun item(type: TimelineEventType, id: String, date: LocalDate?) = TimelineItem(
         ref = RecordRef(type, id),
@@ -98,9 +103,13 @@ class HistoryViewModelTest {
         vm.select(ref)
         assertThat(vm.uiState.first { it.detail != null }.selected).isEqualTo(ref)
 
+        vm.attach(ref, listOf("content://photo/1"))
+        assertThat(vm.uiState.first { it.attachments.isNotEmpty() }.attachments.single().owner).isEqualTo(ref)
+
         vm.delete(ref)
 
         assertThat(history.deleted).containsExactly(ref)
+        assertThat(attachments.attachments.value).isEmpty()
         assertThat(vm.uiState.first { it.detail == null }.sections.flatMap { it.items }.map { it.ref.id })
             .doesNotContain("repair")
     }

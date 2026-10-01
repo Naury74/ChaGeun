@@ -68,6 +68,9 @@ fun HistoryRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HistoryV
         onSelect = viewModel::select,
         onDelete = viewModel::delete,
         onAdd = { dialog = AddDialog.Chooser },
+        onAttach = viewModel::attach,
+        onDeleteAttachment = viewModel::deleteAttachment,
+        onDismissAttachFailure = viewModel::dismissAttachFailure,
     )
 
     when (dialog) {
@@ -94,8 +97,19 @@ fun HistoryScreen(
     onSelect: (RecordRef?) -> Unit,
     onDelete: (RecordRef) -> Unit,
     onAdd: () -> Unit,
+    onAttach: (RecordRef, List<String>) -> Unit,
+    onDeleteAttachment: (String) -> Unit,
+    onDismissAttachFailure: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val attachments =
+        AttachmentsState(
+            uiState.attachments,
+            uiState.attachFailedCount,
+            onAttach,
+            onDeleteAttachment,
+            onDismissAttachFailure,
+        )
     if (uiState.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         return
@@ -128,16 +142,20 @@ fun HistoryScreen(
                 .weight(1f - LIST_PANE_WEIGHT)
                 .fillMaxHeight()
             if (detail != null) {
-                RecordDetailPane(detail, onBack = null, onDelete = onDelete, modifier = detailModifier)
+                RecordDetailPane(detail, attachments, onBack = null, onDelete = onDelete, modifier = detailModifier)
             } else {
                 DetailPlaceholder(detailModifier)
             }
         }
         detail != null -> {
             BackHandler { onSelect(null) }
-            RecordDetailPane(detail, onBack = {
-                onSelect(null)
-            }, onDelete = onDelete, modifier = modifier.fillMaxSize())
+            RecordDetailPane(
+                detail = detail,
+                attachments = attachments,
+                onBack = { onSelect(null) },
+                onDelete = onDelete,
+                modifier = modifier.fillMaxSize(),
+            )
         }
         else -> timeline(modifier.fillMaxSize())
     }
