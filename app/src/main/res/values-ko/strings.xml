@@ -4,5 +4,4 @@
     <string name="nav_manage">관리</string>
     <string name="nav_history">기록</string>
     <string name="nav_vehicle">내 차</string>
-    <string name="destination_pending">곧 준비될 화면이에요.</string>
 </resources>

@@ -15,8 +15,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,26 +34,20 @@ import com.naury.chageun.core.ui.labelRes
 fun HomeRoute(
     onRecordService: (MaintenanceItem) -> Unit,
     onOpenHistory: () -> Unit,
+    onUpdateMileage: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
-    var isUpdatingMileage by rememberSaveable { mutableStateOf(false) }
     HomeScreen(
         uiState = uiState,
         paneCount = homePaneCount(windowSizeClass),
         actions = HomeActions(
             onRecordService = onRecordService,
-            onUpdateMileage = { isUpdatingMileage = true },
+            onUpdateMileage = onUpdateMileage,
             onOpenHistory = onOpenHistory,
         ),
     )
-    if (isUpdatingMileage) {
-        MileageUpdateHost(
-            isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
-            onDismiss = { isUpdatingMileage = false },
-        )
-    }
 }
 
 data class HomeActions(

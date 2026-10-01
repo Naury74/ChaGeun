@@ -33,3 +33,7 @@ data class VehicleRegistration(
     val firstRegistrationDate: LocalDate? = null,
     val knownServices: Map<MaintenanceItem, ServiceRecord> = emptyMap(),
 )
+
+enum class MileageSource { User, Maintenance, Fuel, Check, Correction, Inspection }
+
+data class MileageEntry(val id: String, val date: LocalDate, val mileage: Kilometers, val source: MileageSource)

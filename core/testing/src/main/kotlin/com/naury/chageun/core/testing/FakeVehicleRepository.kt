@@ -1,6 +1,7 @@
 package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
@@ -14,7 +15,11 @@ class FakeVehicleRepository : VehicleRepository {
     val registrations = mutableListOf<VehicleRegistration>()
     var failNextRegistration = false
 
+    val mileageLog = MutableStateFlow<List<MileageEntry>>(emptyList())
+
     override fun observePrimaryVehicle(): Flow<Vehicle?> = primary
+
+    override fun observeMileageLog(vehicleId: VehicleId): Flow<List<MileageEntry>> = mileageLog
 
     override suspend fun register(registration: VehicleRegistration): VehicleId {
         if (failNextRegistration) {

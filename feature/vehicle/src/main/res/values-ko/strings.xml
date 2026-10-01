@@ -1,0 +1,36 @@
+<resources>
+    <string name="vehicle_subtitle">%1$s · %2$s</string>
+    <string name="vehicle_mileage">%1$s km</string>
+    <string name="vehicle_mileage_as_of">%1$s 기준</string>
+    <string name="vehicle_mileage_none">주행거리 기록이 없어요</string>
+    <string name="vehicle_update_mileage">주행거리 갱신</string>
+
+    <string name="vehicle_section_info">기본정보</string>
+    <string name="vehicle_plate">차량번호</string>
+    <string name="vehicle_maker">제조사</string>
+    <string name="vehicle_model">모델</string>
+    <string name="vehicle_trim">세부 트림</string>
+    <string name="vehicle_year">연식</string>
+    <string name="vehicle_fuel">연료</string>
+    <string name="vehicle_first_registration">최초 등록일</string>
+    <string name="vehicle_registration_mode">등록 방식</string>
+    <string name="vehicle_registration_manual">사용자 입력</string>
+    <string name="vehicle_registration_auto">공식 차량 정보</string>
+
+    <string name="vehicle_section_mileage">주행거리 기록</string>
+    <string name="vehicle_mileage_source_user">사용자 입력</string>
+    <string name="vehicle_mileage_source_maintenance">교체 기록에서 갱신</string>
+    <string name="vehicle_mileage_source_fuel">주유 기록에서 갱신</string>
+    <string name="vehicle_mileage_source_check">점검·수리 기록에서 갱신</string>
+    <string name="vehicle_mileage_source_correction">계기판 교정</string>
+    <string name="vehicle_mileage_source_inspection">공식 검사 기록</string>
+
+    <string name="vehicle_section_official">검사·리콜</string>
+    <string name="vehicle_official_pending">공식 검사·리콜 데이터가 아직 연결되지 않아 리콜 대상 여부를 확인할 수 없어요. 아래 공식 사이트에서 확인해 주세요.</string>
+    <string name="vehicle_official_recall">리콜 확인 (자동차리콜센터)</string>
+    <string name="vehicle_official_inspection">검사 예약 (한국교통안전공단)</string>
+
+    <string name="vehicle_section_sources">데이터 출처</string>
+    <string name="vehicle_sources_manual">차량 정보와 주행거리는 직접 입력한 값이에요. 정비 시점은 직접 바꾸지 않았다면 일반적인 권장 기준으로 계산해요.</string>
+    <string name="vehicle_sources_auto">차량 정보는 공식 차량 데이터이고, 주행거리와 정비 기록은 직접 입력한 값이에요.</string>
+</resources>
