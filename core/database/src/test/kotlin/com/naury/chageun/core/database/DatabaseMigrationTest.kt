@@ -7,6 +7,7 @@ import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
 import com.naury.chageun.core.database.migration.Migration3To4
 import com.naury.chageun.core.database.migration.Migration4To5
+import com.naury.chageun.core.database.migration.Migration5To6
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -104,6 +105,13 @@ class DatabaseMigrationTest {
         helper.createDatabase(TEST_DB, 4).close()
 
         helper.runMigrationsAndValidate(TEST_DB, 5, true, Migration4To5).close()
+    }
+
+    @Test
+    fun migration5To6_addsInspectionSchedule() {
+        helper.createDatabase(TEST_DB, 5).close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 6, true, Migration5To6).close()
     }
 
     @Test

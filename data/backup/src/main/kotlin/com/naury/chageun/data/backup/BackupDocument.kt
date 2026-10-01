@@ -18,6 +18,8 @@ internal data class BackupDocument(
     @SerialName("fuel_records") val fuelRecords: List<FuelDto>,
     @SerialName("check_records") val checkRecords: List<CheckDto>,
     val attachments: List<AttachmentDto>,
+    /** Added without a version bump: optional with a default, so earlier version-1 files still import. */
+    @SerialName("inspection_schedules") val inspectionSchedules: List<InspectionDto> = emptyList(),
 ) {
     companion object {
         const val SCHEMA_VERSION = 1
@@ -117,4 +119,12 @@ internal data class AttachmentDto(
     val thumbnail: String,
     @SerialName("size_bytes") val sizeBytes: Long,
     @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
+internal data class InspectionDto(
+    @SerialName("vehicle_id") val vehicleId: String,
+    @SerialName("next_due_date") val nextDueDate: String,
+    val source: String,
+    @SerialName("updated_at") val updatedAt: String,
 )

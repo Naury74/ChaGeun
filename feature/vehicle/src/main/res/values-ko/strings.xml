@@ -34,4 +34,20 @@
     <string name="vehicle_sources_manual">차량 정보와 주행거리는 직접 입력한 값이에요. 정비 시점은 직접 바꾸지 않았다면 일반적인 권장 기준으로 계산해요.</string>
     <string name="vehicle_sources_auto">차량 정보는 공식 차량 데이터이고, 주행거리와 정비 기록은 직접 입력한 값이에요.</string>
     <string name="vehicle_open_settings">설정</string>
+    <string name="vehicle_inspection_title">다음 검사일</string>
+    <string name="vehicle_inspection_empty">검사 안내문에 있는 날짜를 입력하면 30일·7일·1일 전에 알려드려요.</string>
+    <string name="vehicle_inspection_add">검사일 입력</string>
+    <string name="vehicle_inspection_change">변경</string>
+    <string name="vehicle_inspection_clear">지우기</string>
+    <string name="vehicle_inspection_confirm">저장</string>
+    <string name="vehicle_inspection_cancel">취소</string>
+    <string name="vehicle_inspection_due_today">오늘까지</string>
+    <string name="vehicle_inspection_source_user">직접 입력한 날짜</string>
+    <string name="vehicle_inspection_source_official">공식 검사 정보</string>
+    <plurals name="vehicle_inspection_days_left">
+        <item quantity="other">%1$d일 남음</item>
+    </plurals>
+    <plurals name="vehicle_inspection_days_overdue">
+        <item quantity="other">%1$d일 지남</item>
+    </plurals>
 </resources>

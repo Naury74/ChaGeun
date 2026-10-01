@@ -5,6 +5,7 @@ package com.naury.chageun.data.backup
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
+import com.naury.chageun.core.database.entity.InspectionScheduleEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
@@ -168,3 +169,15 @@ internal fun AttachmentDto.toEntity() =
 
 private const val SOURCE_USER = "USER"
 private const val MIME_JPEG = "image/jpeg"
+
+internal fun InspectionScheduleEntity.toDto() =
+    InspectionDto(vehicleId, nextDueDate.toString(), source, updatedAt.toString())
+
+/** Reminder progress is not exported; a restored date notifies again from its current stage. */
+internal fun InspectionDto.toEntity() = InspectionScheduleEntity(
+    vehicleId = vehicleId,
+    nextDueDate = LocalDate.parse(nextDueDate),
+    source = source,
+    notifiedStage = null,
+    updatedAt = Instant.parse(updatedAt),
+)

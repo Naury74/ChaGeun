@@ -2,22 +2,27 @@ package com.naury.chageun.core.domain.reminder
 
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.settings.SettingsRepository
+import com.naury.chageun.core.domain.vehicle.InspectionRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceStatus
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
-/** Shows maintenance notifications; implemented by the platform layer. */
+/** Shows maintenance and inspection notifications; implemented by the platform layer. */
 interface ReminderNotifier {
     fun canNotify(): Boolean
 
     fun notify(statuses: List<MaintenanceStatus>)
+
+    fun notifyInspection(status: InspectionStatus)
 }
 
 class EvaluateRemindersUseCase @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val observeOverview: ObserveMaintenanceOverviewUseCase,
     private val reminderRepository: ReminderRepository,
+    private val inspectionRepository: InspectionRepository,
     private val notifier: ReminderNotifier,
     private val settingsRepository: SettingsRepository,
 ) {
@@ -32,6 +37,15 @@ class EvaluateRemindersUseCase @Inject constructor(
         val plan = ReminderPlanner.plan(overview.statuses, reminderRepository.notifiedStates(vehicle.id))
         if (plan.toNotify.isNotEmpty()) notifier.notify(plan.toNotify)
         reminderRepository.replaceNotifiedStates(vehicle.id, plan.notifiedStates)
-        return plan.toNotify.size
+
+        val inspectionStage = InspectionReminderStage.next(
+            overview.inspection,
+            inspectionRepository.notifiedStage(vehicle.id),
+        )
+        if (inspectionStage != null) {
+            notifier.notifyInspection(overview.inspection)
+            inspectionRepository.markNotified(vehicle.id, inspectionStage)
+        }
+        return plan.toNotify.size + if (inspectionStage != null) 1 else 0
     }
 }

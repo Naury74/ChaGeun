@@ -46,4 +46,16 @@
     <string name="home_brand">차근</string>
     <string name="home_tagline">내 차를 차근차근 관리해요</string>
     <string name="home_open_settings">설정</string>
+    <string name="home_inspection_title">자동차 검사</string>
+    <string name="home_inspection_overdue">기한 초과</string>
+    <string name="home_inspection_due_soon">임박</string>
+    <string name="home_inspection_due_today">오늘까지</string>
+    <string name="home_inspection_due_date">%1$s까지</string>
+    <string name="home_health_inspection_due">자동차 검사 기한이 다가와요</string>
+    <plurals name="home_inspection_days_left">
+        <item quantity="other">%1$d일 남음</item>
+    </plurals>
+    <plurals name="home_inspection_days_overdue">
+        <item quantity="other">%1$d일 지남</item>
+    </plurals>
 </resources>

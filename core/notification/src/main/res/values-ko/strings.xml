@@ -17,4 +17,13 @@
     <plurals name="notification_overdue_days">
         <item quantity="other">교체 주기보다 %1$d일 지났어요</item>
     </plurals>
+    <string name="notification_inspection_due_title">자동차 검사 기한이 다가와요</string>
+    <string name="notification_inspection_overdue_title">자동차 검사 기한이 지났어요</string>
+    <string name="notification_inspection_due_today">오늘까지 받아야 해요</string>
+    <plurals name="notification_inspection_days_left">
+        <item quantity="other">%1$d일 남았어요</item>
+    </plurals>
+    <plurals name="notification_inspection_overdue_days">
+        <item quantity="other">기한보다 %1$d일 지났어요</item>
+    </plurals>
 </resources>

@@ -7,6 +7,10 @@ import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionSchedule
+import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.InspectionState
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
@@ -123,5 +127,42 @@ class HomeScreenTest {
         )
 
         composeRule.assertNoClippedText()
+    }
+
+    @Test
+    fun overdueInspection_isListedFirst_andOpensMyCar() {
+        var opened = false
+        val base = content(
+            VehicleHealthLevel.NeedsAttention,
+            listOf(HealthReason.InspectionOverdue),
+            status(MaintenanceItem.EngineOil, MaintenanceState.Good),
+        )
+        val inspection = InspectionStatus(
+            InspectionSchedule(TODAY.minusDays(3), InspectionSource.User),
+            daysLeft = -3,
+            state = InspectionState.Overdue,
+        )
+        composeRule.setContent {
+            ChageunTheme {
+                HomeScreen(
+                    uiState = base.copy(overview = base.overview.copy(inspection = inspection)),
+                    paneCount = 1,
+                    actions = HomeActions({}, {}, {}, onOpenInspection = { opened = true }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("1 item needs attention").assertIsDisplayed()
+        composeRule.onNodeWithText("3 days overdue").assertIsDisplayed()
+        composeRule.onNodeWithText("Vehicle inspection").performClick()
+
+        assertThat(opened).isTrue()
+    }
+
+    @Test
+    fun dueSoonInspection_headline_namesInspection() {
+        show(content(VehicleHealthLevel.Upcoming, listOf(HealthReason.InspectionDueSoon)))
+
+        composeRule.onNodeWithText("Vehicle inspection is coming up").assertIsDisplayed()
     }
 }

@@ -23,7 +23,11 @@ internal fun healthHeadline(health: VehicleHealth): String {
     val headlineItem = health.reasons.firstNotNullOfOrNull { it.item }
     return when (health.level) {
         VehicleHealthLevel.Good -> stringResource(R.string.home_health_good)
-        VehicleHealthLevel.Upcoming -> stringResource(R.string.home_health_upcoming, itemName(headlineItem))
+        VehicleHealthLevel.Upcoming -> if (health.reasons.firstOrNull() == HealthReason.InspectionDueSoon) {
+            stringResource(R.string.home_health_inspection_due)
+        } else {
+            stringResource(R.string.home_health_upcoming, itemName(headlineItem))
+        }
         VehicleHealthLevel.NeedsAttention -> {
             val count = health.reasons.count { it.isAttention }
             pluralStringResource(R.plurals.home_health_attention, count, count)

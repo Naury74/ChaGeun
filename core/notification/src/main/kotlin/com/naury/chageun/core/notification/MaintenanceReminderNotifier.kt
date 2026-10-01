@@ -7,8 +7,10 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.naury.chageun.core.domain.reminder.ReminderNotifier
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.notification.DeepLinks.putInspection
 import com.naury.chageun.core.notification.DeepLinks.putMaintenanceItem
 import com.naury.chageun.core.ui.labelRes
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -30,23 +32,50 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
         statuses.forEach { status -> manager.notify(status.item.ordinal + NOTIFICATION_ID_OFFSET, build(status)) }
     }
 
+    @SuppressLint("MissingPermission")
+    override fun notifyInspection(status: InspectionStatus) {
+        val daysLeft = status.daysLeft ?: return
+        NotificationChannels.ensureCreated(context)
+        val resources = context.resources
+        val title = if (daysLeft < 0) {
+            context.getString(R.string.notification_inspection_overdue_title)
+        } else {
+            context.getString(R.string.notification_inspection_due_title)
+        }
+        val days = daysLeft.absoluteValue.toInt()
+        val text = when {
+            daysLeft < 0 -> resources.getQuantityString(R.plurals.notification_inspection_overdue_days, days, days)
+            daysLeft == 0L -> context.getString(R.string.notification_inspection_due_today)
+            else -> resources.getQuantityString(R.plurals.notification_inspection_days_left, days, days)
+        }
+        val notification = NotificationCompat.Builder(context, NotificationChannels.INSPECTION)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(launchIntent(INSPECTION_REQUEST_CODE) { putInspection() })
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .build()
+        manager.notify(INSPECTION_NOTIFICATION_ID, notification)
+    }
+
     private fun build(status: MaintenanceStatus) = NotificationCompat.Builder(context, NotificationChannels.MAINTENANCE)
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle(context.getString(status.state.titleRes, context.getString(status.item.labelRes)))
         .setContentText(remainingText(status))
-        .setContentIntent(openItem(status))
+        .setContentIntent(launchIntent(status.item.ordinal) { putMaintenanceItem(status.item) })
         .setAutoCancel(true)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .build()
 
-    private fun openItem(status: MaintenanceStatus): PendingIntent? {
+    private fun launchIntent(requestCode: Int, deepLink: Intent.() -> Intent): PendingIntent? {
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             ?.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
-            ?.putMaintenanceItem(status.item)
+            ?.deepLink()
             ?: return null
         return PendingIntent.getActivity(
             context,
-            status.item.ordinal,
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
@@ -84,5 +113,7 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
 
     private companion object {
         const val NOTIFICATION_ID_OFFSET = 1_000
+        const val INSPECTION_NOTIFICATION_ID = 2_000
+        const val INSPECTION_REQUEST_CODE = 2_000
     }
 }

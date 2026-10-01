@@ -2,6 +2,10 @@ package com.naury.chageun.core.domain.maintenance
 
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionSchedule
+import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -10,6 +14,7 @@ import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import java.time.Clock
 import java.time.Instant
@@ -24,8 +29,10 @@ class ObserveMaintenanceOverviewUseCaseTest {
     private val today = LocalDate.of(2026, 10, 1)
     private val repository = FakeMaintenanceRepository()
     private val inputs = repository.inputs
+    private val inspections = FakeInspectionRepository()
     private val useCase = ObserveMaintenanceOverviewUseCase(
         repository = repository,
+        inspectionRepository = inspections,
         engine = RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
         healthAggregator = VehicleHealthAggregator(),
         clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
@@ -102,5 +109,21 @@ class ObserveMaintenanceOverviewUseCaseTest {
         )
 
         assertThat(overview().health.level).isEqualTo(VehicleHealthLevel.InsufficientData)
+    }
+
+    @Test
+    fun overdueInspection_outranksGoodMaintenance() = runTest {
+        inputs.value = MaintenanceInputs(
+            rules = listOf(rule(MaintenanceItem.EngineOil)),
+            lastServices = mapOf(MaintenanceItem.EngineOil to ServiceRecord(today.minusMonths(1), Kilometers(44_000))),
+            mileageHistory = listOf(MileageReading(today.minusDays(1), Kilometers(45_000))),
+        )
+        inspections.schedule.value = InspectionSchedule(today.minusDays(2), InspectionSource.User)
+
+        val overview = overview()
+
+        assertThat(overview.inspection.state).isEqualTo(InspectionState.Overdue)
+        assertThat(overview.health.level).isEqualTo(VehicleHealthLevel.NeedsAttention)
+        assertThat(overview.health.reasons.first()).isEqualTo(HealthReason.InspectionOverdue)
     }
 }

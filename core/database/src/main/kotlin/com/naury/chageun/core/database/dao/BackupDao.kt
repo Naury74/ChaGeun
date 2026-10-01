@@ -6,6 +6,7 @@ import androidx.room.Query
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
+import com.naury.chageun.core.database.entity.InspectionScheduleEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
@@ -36,6 +37,9 @@ interface BackupDao {
     @Query("SELECT * FROM attachment ORDER BY created_at")
     suspend fun attachments(): List<AttachmentEntity>
 
+    @Query("SELECT * FROM inspection_schedule")
+    suspend fun inspectionSchedules(): List<InspectionScheduleEntity>
+
     @Query(
         """
         SELECT (SELECT COUNT(*) FROM maintenance_record) + (SELECT COUNT(*) FROM fuel_record)
@@ -50,6 +54,7 @@ interface BackupDao {
         vehicles: List<VehicleEntity>,
         mileage: List<MileageRecordEntity>,
         rules: List<MaintenanceRuleEntity>,
+        inspections: List<InspectionScheduleEntity>,
     )
 
     @Insert
