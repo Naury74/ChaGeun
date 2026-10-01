@@ -28,6 +28,9 @@ import com.naury.chageun.core.model.VehicleHealth
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.missingInputText
+import com.naury.chageun.core.ui.remainingText
+import com.naury.chageun.core.ui.tone
 
 @Composable
 internal fun VehicleStatusSummary(health: VehicleHealth, goodCount: Int, modifier: Modifier = Modifier) {

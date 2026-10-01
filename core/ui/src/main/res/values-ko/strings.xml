@@ -19,4 +19,23 @@
     <string name="fuel_plug_in_hybrid">플러그인 하이브리드</string>
     <string name="fuel_electric">전기</string>
     <string name="fuel_hydrogen">수소</string>
+
+    <string name="maintenance_state_overdue">교체 필요</string>
+    <string name="maintenance_state_due">교체 권장</string>
+    <string name="maintenance_state_upcoming">다가옴</string>
+    <string name="maintenance_state_good">정상</string>
+    <string name="maintenance_state_unknown">정보 부족</string>
+    <string name="maintenance_remaining_km">약 %1$skm 남았어요</string>
+    <string name="maintenance_overdue_km">%1$skm 지났어요</string>
+    <string name="maintenance_due_today">오늘이 교체 기준일이에요</string>
+    <string name="maintenance_missing_last_service">마지막 교체 기록이 없어요</string>
+    <string name="maintenance_missing_current_mileage">현재 주행거리를 알려주세요</string>
+    <string name="maintenance_missing_service_date">교체 날짜를 알면 더 정확해요</string>
+    <string name="maintenance_missing_service_mileage">교체 당시 주행거리가 없어요</string>
+    <plurals name="maintenance_remaining_days">
+        <item quantity="other">%1$d일 남았어요</item>
+    </plurals>
+    <plurals name="maintenance_overdue_days">
+        <item quantity="other">%1$d일 지났어요</item>
+    </plurals>
 </resources>

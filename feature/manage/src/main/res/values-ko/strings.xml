@@ -1,0 +1,36 @@
+<resources>
+    <string name="manage_filter_all">전체</string>
+    <string name="manage_filter_attention">확인 필요</string>
+    <string name="manage_filter_upcoming">다가옴</string>
+    <string name="manage_filter_with_count">%1$s %2$d</string>
+    <string name="manage_empty_filter">해당하는 항목이 없어요</string>
+    <string name="manage_select_item">항목을 선택하면 판단 근거를 보여드려요</string>
+    <string name="manage_back">뒤로</string>
+
+    <string name="manage_last_service">최근 교체</string>
+    <string name="manage_last_service_none">기록 없음</string>
+    <string name="manage_next_threshold">다음 교체 기준</string>
+    <string name="manage_interval">교체 주기</string>
+    <plurals name="manage_interval_km_or_months">
+        <item quantity="other">%1$skm 또는 %2$d개월 중 먼저 도래</item>
+    </plurals>
+    <string name="manage_interval_km">%1$skm마다</string>
+    <plurals name="manage_interval_months">
+        <item quantity="other">%1$d개월마다</item>
+    </plurals>
+    <string name="manage_rule_source">기준 출처</string>
+    <string name="manage_rule_source_generic">일반적인 권장 기준 (제조사 공식값 아님)</string>
+    <string name="manage_rule_source_manufacturer">제조사 권장 주기</string>
+    <string name="manage_rule_source_user">사용자 설정</string>
+    <string name="manage_estimated_due">예상 시점</string>
+    <string name="manage_confidence_high">교체 주기 기준</string>
+    <string name="manage_confidence_medium">최근 주행 패턴 기준</string>
+    <string name="manage_confidence_low">기록이 적어 대략적인 예상</string>
+    <string name="manage_estimate_with_confidence">%1$s · %2$s</string>
+    <string name="manage_history">교체 기록</string>
+    <string name="manage_history_empty">아직 교체 기록이 없어요</string>
+    <string name="manage_unknown_date">날짜 모름</string>
+    <string name="manage_value_or">%1$s / %2$s</string>
+    <string name="manage_km">%1$skm</string>
+    <string name="manage_cost_won">%1$s원</string>
+</resources>

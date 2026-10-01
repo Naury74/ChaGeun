@@ -21,27 +21,7 @@
     <string name="home_section_upcoming">다가오는 관리</string>
     <string name="home_section_missing">정보가 필요해요</string>
 
-    <string name="home_state_overdue">교체 필요</string>
-    <string name="home_state_due">교체 권장</string>
-    <string name="home_state_upcoming">다가옴</string>
-    <string name="home_state_good">정상</string>
-    <string name="home_state_unknown">정보 부족</string>
-
-    <string name="home_remaining_km">약 %1$skm 남았어요</string>
-    <string name="home_overdue_km">%1$skm 지났어요</string>
-    <plurals name="home_remaining_days">
-        <item quantity="other">%1$d일 남았어요</item>
-    </plurals>
-    <plurals name="home_overdue_days">
-        <item quantity="other">%1$d일 지났어요</item>
-    </plurals>
-    <string name="home_due_today">오늘이 교체 기준일이에요</string>
     <string name="home_estimated_due">예상 %1$s</string>
-
-    <string name="home_missing_last_service">마지막 교체 기록이 없어요</string>
-    <string name="home_missing_current_mileage">현재 주행거리를 알려주세요</string>
-    <string name="home_missing_service_date">교체 날짜를 알면 더 정확해요</string>
-    <string name="home_missing_service_mileage">교체 당시 주행거리가 없어요</string>
 
     <string name="home_rule_generic">일반적인 권장 기준</string>
 </resources>

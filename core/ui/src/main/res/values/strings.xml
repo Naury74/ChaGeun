@@ -19,4 +19,25 @@
     <string name="fuel_plug_in_hybrid">Plug-in hybrid</string>
     <string name="fuel_electric">Electric</string>
     <string name="fuel_hydrogen">Hydrogen</string>
+
+    <string name="maintenance_state_overdue">Replace now</string>
+    <string name="maintenance_state_due">Due soon</string>
+    <string name="maintenance_state_upcoming">Coming up</string>
+    <string name="maintenance_state_good">Good</string>
+    <string name="maintenance_state_unknown">Needs info</string>
+    <string name="maintenance_remaining_km">About %1$s km left</string>
+    <string name="maintenance_overdue_km">%1$s km past due</string>
+    <string name="maintenance_due_today">Due today</string>
+    <string name="maintenance_missing_last_service">No replacement record yet</string>
+    <string name="maintenance_missing_current_mileage">Add your current mileage</string>
+    <string name="maintenance_missing_service_date">Add the replacement date for accuracy</string>
+    <string name="maintenance_missing_service_mileage">Add the mileage at replacement</string>
+    <plurals name="maintenance_remaining_days">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="maintenance_overdue_days">
+        <item quantity="one">%1$d day past due</item>
+        <item quantity="other">%1$d days past due</item>
+    </plurals>
 </resources>
