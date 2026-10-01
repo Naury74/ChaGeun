@@ -102,10 +102,7 @@ class RuleBasedMaintenanceEngine @Inject constructor(private val paceEstimator: 
         else -> MaintenanceState.Good
     }
 
-    private fun MaintenanceEvaluationInput.currentMileage(): Kilometers? = mileageHistory
-        .filter { !it.date.isAfter(today) }
-        .maxByOrNull { it.date }
-        ?.mileage
+    private fun MaintenanceEvaluationInput.currentMileage(): Kilometers? = mileageHistory.currentAsOf(today)?.mileage
 
     private data class DistanceEvaluation(val due: Kilometers, val remainingKm: Long, val state: MaintenanceState)
 

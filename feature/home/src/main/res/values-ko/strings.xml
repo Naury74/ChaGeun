@@ -25,4 +25,20 @@
 
     <string name="home_rule_generic">일반적인 권장 기준</string>
     <string name="home_record_service">교체했어요</string>
+    <string name="home_mileage_update">주행거리 갱신</string>
+    <string name="home_mileage_update_title">현재 주행거리</string>
+    <string name="home_mileage_update_label">계기판 주행거리</string>
+    <string name="home_mileage_update_required">주행거리를 입력해 주세요</string>
+    <string name="home_mileage_lower">이전 기록 %1$skm보다 낮아요. 값을 다시 확인하거나 계기판을 교체했다면 교정 기록으로 저장해 주세요.</string>
+    <string name="home_mileage_save_correction">계기판 교정으로 저장</string>
+    <string name="home_mileage_prompt_title">현재 주행거리를 알려주세요</string>
+    <string name="home_mileage_prompt_body">정확한 정비 시점을 계산하는 데 사용해요.</string>
+    <string name="home_unit_km">km</string>
+    <string name="home_save">저장</string>
+    <string name="home_cancel">취소</string>
+    <string name="home_section_recent">최근 기록</string>
+    <string name="home_recent_all">전체 기록</string>
+    <string name="home_recent_empty">아직 기록이 없어요</string>
+    <string name="home_recent_add">첫 기록 추가</string>
+    <string name="home_recent_won">%1$s원</string>
 </resources>

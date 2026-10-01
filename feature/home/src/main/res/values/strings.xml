@@ -27,4 +27,20 @@
 
     <string name="home_rule_generic">Based on general guidelines</string>
     <string name="home_record_service">Replaced</string>
+    <string name="home_mileage_update">Update mileage</string>
+    <string name="home_mileage_update_title">Current mileage</string>
+    <string name="home_mileage_update_label">Odometer</string>
+    <string name="home_mileage_update_required">Enter the odometer value</string>
+    <string name="home_mileage_lower">This is lower than the previous record of %1$s km. Check the value, or save it as an odometer correction if the cluster was replaced.</string>
+    <string name="home_mileage_save_correction">Save as odometer correction</string>
+    <string name="home_mileage_prompt_title">Tell us your current mileage</string>
+    <string name="home_mileage_prompt_body">It keeps maintenance timing accurate.</string>
+    <string name="home_unit_km">km</string>
+    <string name="home_save">Save</string>
+    <string name="home_cancel">Cancel</string>
+    <string name="home_section_recent">Recent records</string>
+    <string name="home_recent_all">All records</string>
+    <string name="home_recent_empty">No records yet</string>
+    <string name="home_recent_add">Add your first record</string>
+    <string name="home_recent_won">₩%1$s</string>
 </resources>

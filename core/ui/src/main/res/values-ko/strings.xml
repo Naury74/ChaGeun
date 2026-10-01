@@ -41,4 +41,9 @@
 
     <string name="date_picker_confirm">확인</string>
     <string name="date_picker_cancel">취소</string>
+    <string name="timeline_type_maintenance">정비</string>
+    <string name="timeline_type_fuel">주유</string>
+    <string name="timeline_type_inspection">점검</string>
+    <string name="timeline_type_repair">사고·수리</string>
+    <string name="timeline_type_note">기타</string>
 </resources>

@@ -12,8 +12,13 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.model.TimelineEventType
+import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -34,6 +39,7 @@ class HomeViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
+    private val history = FakeHistoryRepository()
     private val viewModel = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
@@ -42,6 +48,7 @@ class HomeViewModelTest {
             VehicleHealthAggregator(),
             clock,
         ),
+        historyRepository = history,
         clock = clock,
     )
 
@@ -70,5 +77,32 @@ class HomeViewModelTest {
 
         assertThat(before.missingInfo.single().state).isEqualTo(MaintenanceState.Unknown)
         assertThat(after.vehicle.model).isEqualTo("Model")
+    }
+
+    @Test
+    fun showsThreeMostRecentRecords_andPromptsForStaleMileage() = runTest {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+        maintenance.inputs.value =
+            MaintenanceInputs(emptyList(), emptyMap(), listOf(MileageReading(TODAY.minusDays(30), Kilometers(45_000))))
+        history.timeline.value = List(5) { index ->
+            TimelineItem(
+                ref = RecordRef(TimelineEventType.Note, "note-$index"),
+                date = TODAY.minusDays(index.toLong()),
+                title = "Note $index",
+                maintenanceItem = null,
+                mileage = null,
+                costWon = null,
+                source = RecordSource.User,
+                createdAt = Instant.EPOCH,
+            )
+        }
+
+        val state = viewModel.uiState.first {
+            it is HomeUiState.Content && it.recentRecords.isNotEmpty()
+        } as HomeUiState.Content
+
+        assertThat(state.recentRecords.map { it.title }).containsExactly("Note 0", "Note 1", "Note 2").inOrder()
+        assertThat(state.needsMileageUpdate).isTrue()
     }
 }

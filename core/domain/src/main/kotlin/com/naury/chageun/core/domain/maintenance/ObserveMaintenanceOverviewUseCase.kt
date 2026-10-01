@@ -43,7 +43,7 @@ class ObserveMaintenanceOverviewUseCase @Inject constructor(
                 health = healthAggregator.aggregate(
                     VehicleHealthInput(statuses, hasActiveSafetyRecall = false, inspection = InspectionState.Unknown),
                 ),
-                currentMileage = inputs.mileageHistory.filter { !it.date.isAfter(today) }.maxByOrNull { it.date },
+                currentMileage = inputs.mileageHistory.currentAsOf(today),
             )
         }
 

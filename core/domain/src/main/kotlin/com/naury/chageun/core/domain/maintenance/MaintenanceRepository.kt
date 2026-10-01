@@ -31,6 +31,9 @@ interface MaintenanceRepository {
 
     suspend fun findCurrentMileage(vehicleId: VehicleId): MileageReading?
 
+    /** [isCorrection] marks a reading below the previous one, e.g. after an odometer replacement. */
+    suspend fun addMileageReading(vehicleId: VehicleId, reading: MileageReading, isCorrection: Boolean)
+
     /**
      * Stores [entry] and, when [advancesOdometer] is true, a mileage reading sourced from this service,
      * in a single transaction.

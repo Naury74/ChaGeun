@@ -3,6 +3,8 @@ package com.naury.chageun.feature.home
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.MaintenanceItem
@@ -23,7 +25,7 @@ class HomeScreenTest {
     val composeRule = createComposeRule()
 
     private fun show(state: HomeUiState) = composeRule.setContent {
-        ChageunTheme { HomeScreen(uiState = state, paneCount = 1, onRecordService = {}) }
+        ChageunTheme { HomeScreen(uiState = state, paneCount = 1, actions = HomeActions({}, {}, {})) }
     }
 
     @Test
@@ -75,5 +77,32 @@ class HomeScreenTest {
         composeRule.onNodeWithText("Check your Brake pads details").assertIsDisplayed()
         composeRule.onNodeWithText("No replacement record yet").assertIsDisplayed()
         composeRule.onNodeWithText("Nothing needs attention right now").assertDoesNotExist()
+    }
+
+    @Test
+    fun showsMileagePrompt_andRecentRecordsEmptyState_thenOpensHistory() {
+        var opened = false
+        val stale = content(
+            VehicleHealthLevel.Good,
+            emptyList(),
+            status(MaintenanceItem.EngineOil, MaintenanceState.Good),
+        )
+            .let {
+                it.copy(
+                    overview = it.overview.copy(
+                        currentMileage = it.overview.currentMileage?.copy(date = TODAY.minusDays(45)),
+                    ),
+                )
+            }
+        composeRule.setContent {
+            ChageunTheme {
+                HomeScreen(uiState = stale, paneCount = 1, actions = HomeActions({}, {}, { opened = true }))
+            }
+        }
+
+        composeRule.onNodeWithText("Tell us your current mileage").assertIsDisplayed()
+        composeRule.onNodeWithText("Add your first record").performClick()
+
+        assertThat(opened).isTrue()
     }
 }

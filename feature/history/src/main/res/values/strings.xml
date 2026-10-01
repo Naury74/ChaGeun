@@ -13,10 +13,6 @@
     <string name="history_select_record">Select a record to see its details</string>
     <string name="history_back">Back</string>
 
-    <string name="history_type_fuel">Fuel</string>
-    <string name="history_type_inspection">Inspection</string>
-    <string name="history_type_repair">Repair</string>
-    <string name="history_type_note">Note</string>
     <string name="history_source_user">Entered by you</string>
     <string name="history_km">%1$s km</string>
     <string name="history_won">₩%1$s</string>

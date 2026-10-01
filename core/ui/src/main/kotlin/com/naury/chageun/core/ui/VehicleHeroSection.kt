@@ -39,6 +39,7 @@ fun VehicleHeroSection(
     mileage: String?,
     freshness: String?,
     modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
@@ -78,6 +79,7 @@ fun VehicleHeroSection(
         freshness?.let {
             Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        action?.invoke()
     }
 }
 

@@ -2,6 +2,8 @@ package com.naury.chageun.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.history.HistoryRepository
+import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +13,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -21,19 +24,29 @@ import kotlinx.coroutines.flow.stateIn
 class HomeViewModel @Inject constructor(
     vehicleRepository: VehicleRepository,
     observeMaintenanceOverview: ObserveMaintenanceOverviewUseCase,
+    historyRepository: HistoryRepository,
     clock: Clock,
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
         .flatMapLatest { vehicle ->
-            observeMaintenanceOverview(vehicle.id).map { overview ->
-                HomeUiState.Content(vehicle = vehicle, overview = overview, today = LocalDate.now(clock))
+            combine(
+                observeMaintenanceOverview(vehicle.id),
+                historyRepository.observeTimeline(vehicle.id, TimelineQuery()).map { it.take(RECENT_RECORD_COUNT) },
+            ) { overview, recent ->
+                HomeUiState.Content(
+                    vehicle = vehicle,
+                    overview = overview,
+                    today = LocalDate.now(clock),
+                    recentRecords = recent,
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState.Loading)
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        const val RECENT_RECORD_COUNT = 3
     }
 }

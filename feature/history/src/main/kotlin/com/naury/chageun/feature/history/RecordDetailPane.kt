@@ -35,6 +35,7 @@ import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
@@ -119,7 +120,7 @@ internal data class AttachmentsState(
 @Composable
 private fun detailTitle(detail: RecordDetail): String = when (detail) {
     is RecordDetail.Maintenance -> stringResource(detail.item.labelRes)
-    is RecordDetail.Fuel -> stringResource(R.string.history_type_fuel)
+    is RecordDetail.Fuel -> stringResource(TimelineEventType.Fuel.labelRes)
     is RecordDetail.Check -> detail.entry.title
 }
 

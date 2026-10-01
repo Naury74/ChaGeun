@@ -72,6 +72,20 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
     override suspend fun findCurrentMileage(vehicleId: VehicleId): MileageReading? =
         mileageRecordDao.findLatest(vehicleId.value)?.asExternalModel()
 
+    override suspend fun addMileageReading(vehicleId: VehicleId, reading: MileageReading, isCorrection: Boolean) {
+        mileageRecordDao.insert(
+            MileageRecordEntity(
+                id = UUID.randomUUID().toString(),
+                vehicleId = vehicleId.value,
+                mileageKm = reading.mileage.value,
+                recordedOn = reading.date,
+                sourceType = if (isCorrection) MILEAGE_SOURCE_CORRECTION else MILEAGE_SOURCE_USER,
+                relatedRecordId = null,
+                createdAt = clock.instant(),
+            ),
+        )
+    }
+
     override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean) {
         val now = clock.instant()
         val record = MaintenanceRecordEntity(
@@ -108,5 +122,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
     private companion object {
         const val SOURCE_USER = "USER"
         const val MILEAGE_SOURCE_MAINTENANCE = "MAINTENANCE"
+        const val MILEAGE_SOURCE_USER = "USER"
+        const val MILEAGE_SOURCE_CORRECTION = "CORRECTION"
     }
 }
