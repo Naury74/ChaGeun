@@ -1,0 +1,47 @@
+<resources>
+    <string name="home_vehicle_subtitle">%1$s · %2$s</string>
+    <string name="home_mileage">%1$s km</string>
+    <string name="home_mileage_as_of_today">오늘 기준 주행거리</string>
+    <string name="home_mileage_as_of">%1$s 기준 주행거리</string>
+    <string name="home_mileage_unknown">현재 주행거리를 알려주세요</string>
+
+    <string name="home_health_good">특별히 확인할 항목이 없어요</string>
+    <plurals name="home_health_good_detail">
+        <item quantity="other">일반적인 권장 기준으로 %1$d개 항목을 확인했어요</item>
+    </plurals>
+    <string name="home_health_upcoming">%1$s 교체가 가까워졌어요</string>
+    <plurals name="home_health_attention">
+        <item quantity="other">%1$d개 항목을 확인해 주세요</item>
+    </plurals>
+    <string name="home_health_insufficient">%1$s 정보를 확인해 주세요</string>
+    <string name="home_health_insufficient_generic">최근 정비 정보를 추가해 주세요</string>
+    <string name="home_health_insufficient_detail">정보가 없으면 괜찮은지 판단할 수 없어 정상으로 표시하지 않아요.</string>
+
+    <string name="home_section_attention">지금 확인할 항목</string>
+    <string name="home_section_upcoming">다가오는 관리</string>
+    <string name="home_section_missing">정보가 필요해요</string>
+
+    <string name="home_state_overdue">교체 필요</string>
+    <string name="home_state_due">교체 권장</string>
+    <string name="home_state_upcoming">다가옴</string>
+    <string name="home_state_good">정상</string>
+    <string name="home_state_unknown">정보 부족</string>
+
+    <string name="home_remaining_km">약 %1$skm 남았어요</string>
+    <string name="home_overdue_km">%1$skm 지났어요</string>
+    <plurals name="home_remaining_days">
+        <item quantity="other">%1$d일 남았어요</item>
+    </plurals>
+    <plurals name="home_overdue_days">
+        <item quantity="other">%1$d일 지났어요</item>
+    </plurals>
+    <string name="home_due_today">오늘이 교체 기준일이에요</string>
+    <string name="home_estimated_due">예상 %1$s</string>
+
+    <string name="home_missing_last_service">마지막 교체 기록이 없어요</string>
+    <string name="home_missing_current_mileage">현재 주행거리를 알려주세요</string>
+    <string name="home_missing_service_date">교체 날짜를 알면 더 정확해요</string>
+    <string name="home_missing_service_mileage">교체 당시 주행거리가 없어요</string>
+
+    <string name="home_rule_generic">일반적인 권장 기준</string>
+</resources>

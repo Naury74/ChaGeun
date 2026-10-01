@@ -13,6 +13,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             add("implementation", project(":core:model"))
             add("implementation", project(":core:domain"))
             add("implementation", project(":core:designsystem"))
+            add("implementation", project(":core:ui"))
 
             add("implementation", libs.library("androidx-compose-material3"))
             add("implementation", libs.library("androidx-hilt-lifecycle-viewmodel-compose"))

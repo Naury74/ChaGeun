@@ -1,0 +1,22 @@
+<resources>
+    <string name="maintenance_item_engine_oil">엔진오일</string>
+    <string name="maintenance_item_oil_filter">오일필터</string>
+    <string name="maintenance_item_air_filter">에어클리너</string>
+    <string name="maintenance_item_spark_plug">점화플러그</string>
+    <string name="maintenance_item_cabin_filter">에어컨필터</string>
+    <string name="maintenance_item_brake_pad">브레이크패드</string>
+    <string name="maintenance_item_brake_fluid">브레이크액</string>
+    <string name="maintenance_item_coolant">냉각수</string>
+    <string name="maintenance_item_transmission_oil">미션오일</string>
+    <string name="maintenance_item_battery">배터리</string>
+    <string name="maintenance_item_tire">타이어</string>
+    <string name="maintenance_item_wiper">와이퍼</string>
+
+    <string name="fuel_gasoline">가솔린</string>
+    <string name="fuel_diesel">디젤</string>
+    <string name="fuel_lpg">LPG</string>
+    <string name="fuel_hybrid">하이브리드</string>
+    <string name="fuel_plug_in_hybrid">플러그인 하이브리드</string>
+    <string name="fuel_electric">전기</string>
+    <string name="fuel_hydrogen">수소</string>
+</resources>

@@ -36,6 +36,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.ui.labelRes
 
 @Composable
 fun OnboardingRoute(viewModel: OnboardingViewModel = hiltViewModel()) {
@@ -266,17 +267,6 @@ private val FieldError.messageRes: Int
         FieldError.InvalidMileage -> R.string.onboarding_error_mileage_invalid
         FieldError.FutureDate -> R.string.onboarding_error_future_date
         FieldError.ExceedsCurrentMileage -> R.string.onboarding_error_exceeds_mileage
-    }
-
-private val FuelType.labelRes: Int
-    get() = when (this) {
-        FuelType.Gasoline -> R.string.fuel_gasoline
-        FuelType.Diesel -> R.string.fuel_diesel
-        FuelType.Lpg -> R.string.fuel_lpg
-        FuelType.Hybrid -> R.string.fuel_hybrid
-        FuelType.PlugInHybrid -> R.string.fuel_plug_in_hybrid
-        FuelType.Electric -> R.string.fuel_electric
-        FuelType.Hydrogen -> R.string.fuel_hydrogen
     }
 
 private val CONTENT_MAX_WIDTH = 560.dp

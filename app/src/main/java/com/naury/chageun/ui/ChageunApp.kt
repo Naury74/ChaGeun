@@ -17,11 +17,12 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.naury.chageun.R
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
 @Composable
-fun ChageunApp() {
+fun ChageunApp(destinationContent: @Composable (TopLevelDestination) -> Unit = { DestinationContent(it) }) {
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
@@ -49,10 +50,18 @@ fun ChageunApp() {
             onBack = { backStack.removeLastOrNull() },
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
-                    entry(destination.route) { PendingDestination(destination) }
+                    entry(destination.route) { destinationContent(destination) }
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun DestinationContent(destination: TopLevelDestination) {
+    when (destination) {
+        TopLevelDestination.Home -> HomeRoute()
+        else -> PendingDestination(destination)
     }
 }
 
