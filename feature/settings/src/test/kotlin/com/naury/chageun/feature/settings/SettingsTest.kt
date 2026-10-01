@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
@@ -94,7 +95,7 @@ class SettingsTest {
         viewModel.export("content://downloads/backup.zip")
 
         assertThat(backup.exportedTo).containsExactly("content://downloads/backup.zip")
-        assertThat(viewModel.dataState.value.exportResult).isEqualTo(ExportResult.Failure)
+        assertThat(viewModel.dataState.value.message).isEqualTo(DataMessage.ExportFailed)
     }
 
     @Test
@@ -107,5 +108,51 @@ class SettingsTest {
 
         composeRule.onNodeWithText("12 records").assertExists()
         composeRule.onNodeWithText("3 photos and receipts").assertExists()
+    }
+
+    @Test
+    fun import_previewsFirst_thenReplacesOnConfirm() = runTest {
+        val preview = ImportPreview.Ready(incoming = LocalDataSummary(1, 20, 4), current = LocalDataSummary(1, 12, 3))
+        val backup = FakeBackupRepository().apply { importPreview = preview }
+        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup)
+
+        viewModel.previewImport("content://downloads/backup.zip")
+        assertThat(viewModel.dataState.value.pendingImport?.preview).isEqualTo(preview)
+        assertThat(backup.importedFrom).isEmpty()
+
+        viewModel.confirmImport()
+
+        assertThat(backup.importedFrom).containsExactly("content://downloads/backup.zip")
+        assertThat(viewModel.dataState.value.pendingImport).isNull()
+        assertThat(viewModel.dataState.value.message).isEqualTo(DataMessage.ImportDone)
+    }
+
+    @Test
+    fun import_unsupportedVersion_neverReplaces() = runTest {
+        val backup = FakeBackupRepository().apply { importPreview = ImportPreview.UnsupportedVersion(2) }
+        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup)
+
+        viewModel.previewImport("content://downloads/backup.zip")
+        viewModel.confirmImport()
+
+        assertThat(viewModel.dataState.value.message).isEqualTo(DataMessage.ImportUnsupported)
+        assertThat(backup.importedFrom).isEmpty()
+    }
+
+    @Test
+    fun importDialog_showsIncomingAndCurrentCounts() {
+        composeRule.setContent {
+            ChageunTheme {
+                ImportDialog(
+                    ImportPreview.Ready(incoming = LocalDataSummary(1, 20, 4), current = LocalDataSummary(1, 12, 3)),
+                    onConfirm = {},
+                    onDismiss = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("20 records").assertExists()
+        composeRule.onNodeWithText("12 records").assertExists()
+        composeRule.onNodeWithText("Replace").assertExists()
     }
 }

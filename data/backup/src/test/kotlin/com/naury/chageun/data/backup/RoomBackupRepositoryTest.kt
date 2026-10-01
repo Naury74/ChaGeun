@@ -11,13 +11,17 @@ import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
+import com.naury.chageun.core.domain.backup.ImportPreview
+import com.naury.chageun.core.domain.backup.LocalDataSummary
 import java.io.File
 import java.nio.file.Files
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -60,13 +64,8 @@ class RoomBackupRepositoryTest {
         )
         database.historyDao().insertFuel(
             FuelRecordEntity(
-                "f1", "v1",
-                LocalDate.of(
-                    2026,
-                    9,
-                    2,
-                ),
-                42_100, 70_000, 41_176, 1_700, "Volume", true, "Station", null, now, now,
+                "f1", "v1", LocalDate.of(2026, 9, 2), 42_100, 70_000, 41_176, 1_700, "Volume", true, "Station", null,
+                now, now,
             ),
         )
         File(attachmentDir, "a1.jpg").writeText("image")
@@ -125,5 +124,76 @@ class RoomBackupRepositoryTest {
         assertThat(repository.summary().vehicles).isEqualTo(0)
         assertThat(repository.summary().records).isEqualTo(0)
         assertThat(attachmentDir.exists()).isFalse()
+    }
+
+    @Test
+    fun import_restoresExportedArchive_withoutEncryptedPlate() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val archive = Uri.fromFile(File(workDir, "out.zip")).toString()
+        repository.export(archive)
+        repository.deleteAll()
+
+        val preview = repository.previewImport(archive)
+        val succeeded = repository.import(archive)
+
+        assertThat(preview).isEqualTo(
+            ImportPreview.Ready(
+                incoming = LocalDataSummary(vehicles = 1, records = 1, photos = 1),
+                current = LocalDataSummary(vehicles = 0, records = 0, photos = 0),
+            ),
+        )
+        assertThat(succeeded).isTrue()
+        assertThat(repository.summary()).isEqualTo(LocalDataSummary(vehicles = 1, records = 1, photos = 1))
+        val vehicle = database.backupDao().vehicles().single()
+        assertThat(vehicle.plateMasked).isEqualTo("123가 **67")
+        assertThat(vehicle.plateNumberEncrypted).isNull()
+        assertThat(File(attachmentDir, "a1.jpg").readText()).isEqualTo("image")
+    }
+
+    @Test
+    fun import_rejectsOtherSchemaVersion_andKeepsExistingData() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val archive = zip("data.json" to """{"schema_version": 99}""")
+
+        assertThat(repository.previewImport(archive)).isEqualTo(ImportPreview.UnsupportedVersion(99))
+        assertThat(repository.import(archive)).isFalse()
+        assertThat(repository.summary().vehicles).isEqualTo(1)
+        assertThat(File(attachmentDir, "a1.jpg").exists()).isTrue()
+    }
+
+    @Test
+    fun import_rejectsArchiveWithoutData() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val notZip = File(workDir, "note.txt").apply { writeText("hello") }
+
+        assertThat(repository.previewImport(zip("readme.txt" to "x"))).isEqualTo(ImportPreview.Invalid)
+        assertThat(repository.previewImport(Uri.fromFile(notZip).toString())).isEqualTo(ImportPreview.Invalid)
+        assertThat(repository.import(Uri.fromFile(notZip).toString())).isFalse()
+        assertThat(repository.summary().vehicles).isEqualTo(1)
+    }
+
+    @Test
+    fun import_keepsTraversalEntriesInsideAttachmentDirectory() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val exported = File(workDir, "out.zip")
+        repository.export(Uri.fromFile(exported).toString())
+        val data = ZipFile(exported).use { it.getInputStream(it.getEntry("data.json")).bufferedReader().readText() }
+        val archive = zip("data.json" to data, "attachments/../../escaped.jpg" to "evil")
+
+        assertThat(repository.import(archive)).isTrue()
+        assertThat(File(workDir, "escaped.jpg").exists()).isFalse()
+        assertThat(File(attachmentDir, "escaped.jpg").exists()).isTrue()
+    }
+
+    private fun zip(vararg entries: Pair<String, String>): String {
+        val file = Files.createTempFile(workDir.toPath(), "import", ".zip").toFile()
+        ZipOutputStream(file.outputStream()).use { zip ->
+            entries.forEach { (name, body) ->
+                zip.putNextEntry(ZipEntry(name))
+                zip.write(body.toByteArray())
+                zip.closeEntry()
+            }
+        }
+        return Uri.fromFile(file).toString()
     }
 }

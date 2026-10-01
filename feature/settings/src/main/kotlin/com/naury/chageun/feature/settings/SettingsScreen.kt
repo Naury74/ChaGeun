@@ -54,6 +54,9 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ZIP_MIME_TYPE)) { uri ->
             uri?.let { viewModel.export(it.toString()) }
         }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { viewModel.previewImport(it.toString()) }
+    }
     SettingsScreen(
         settings = settings,
         versionName = version,
@@ -65,12 +68,16 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
             DataSection(
                 state = dataState,
                 onExport = { exportLauncher.launch("chageun-backup-${LocalDate.now()}.zip") },
+                onImport = { importLauncher.launch(arrayOf(ZIP_MIME_TYPE)) },
                 onRequestDelete = viewModel::requestDeleteAll,
             )
         },
     )
     dataState.pendingDeletion?.let { summary ->
         DeleteAllDialog(summary, onConfirm = viewModel::confirmDeleteAll, onDismiss = viewModel::cancelDeleteAll)
+    }
+    dataState.pendingImport?.let { pending ->
+        ImportDialog(pending.preview, onConfirm = viewModel::confirmImport, onDismiss = viewModel::cancelImport)
     }
 }
 
