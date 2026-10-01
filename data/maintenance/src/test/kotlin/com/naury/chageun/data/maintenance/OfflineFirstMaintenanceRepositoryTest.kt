@@ -10,6 +10,7 @@ import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
@@ -138,6 +139,16 @@ class OfflineFirstMaintenanceRepositoryTest {
         val rules = repository.observeInputs(vehicleId).first().rules
         assertThat(rules).containsExactly(edited)
         assertThat(database.maintenanceDao().findRule("v1", "EngineOil")?.id).isEqualTo("rule-EngineOil")
+    }
+
+    @Test
+    fun reminderStates_replaceAndReadBack() = runTest {
+        val reminders = RoomReminderRepository(database.reminderDao(), Clock.fixed(now, ZoneOffset.UTC))
+
+        reminders.replaceNotifiedStates(vehicleId, mapOf(MaintenanceItem.EngineOil to MaintenanceState.Due))
+        reminders.replaceNotifiedStates(vehicleId, mapOf(MaintenanceItem.Tire to MaintenanceState.Overdue))
+
+        assertThat(reminders.notifiedStates(vehicleId)).containsExactly(MaintenanceItem.Tire, MaintenanceState.Overdue)
     }
 
     @Test

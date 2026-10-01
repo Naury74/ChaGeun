@@ -3,6 +3,7 @@ package com.naury.chageun.data.maintenance
 import com.naury.chageun.core.domain.maintenance.MaintenanceEngine
 import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
+import com.naury.chageun.core.domain.reminder.ReminderRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,4 +17,7 @@ internal interface MaintenanceDataModule {
 
     @Binds
     fun bindMaintenanceEngine(engine: RuleBasedMaintenanceEngine): MaintenanceEngine
+
+    @Binds
+    fun bindReminderRepository(repository: RoomReminderRepository): ReminderRepository
 }

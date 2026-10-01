@@ -10,10 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.onboarding.OnboardingRoute
 
 @Composable
-fun ChageunRoot(viewModel: AppViewModel = hiltViewModel()) {
+fun ChageunRoot(
+    deepLinkItem: MaintenanceItem?,
+    onDeepLinkHandled: () -> Unit,
+    viewModel: AppViewModel = hiltViewModel(),
+) {
     val entry by viewModel.entry.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 
@@ -23,7 +28,7 @@ fun ChageunRoot(viewModel: AppViewModel = hiltViewModel()) {
                 // Room answers within a frame; an empty surface avoids flashing onboarding to returning users.
                 AppEntry.Loading -> Box(Modifier.fillMaxSize())
                 AppEntry.Onboarding -> OnboardingRoute()
-                AppEntry.Main -> ChageunApp()
+                AppEntry.Main -> ChageunApp(deepLinkItem = deepLinkItem, onDeepLinkHandled = onDeepLinkHandled)
             }
         }
     }

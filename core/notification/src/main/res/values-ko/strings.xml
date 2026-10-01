@@ -1,0 +1,20 @@
+<resources>
+    <string name="notification_channel_maintenance">정비</string>
+    <string name="notification_channel_maintenance_description">소모품 교체가 다가오거나 지났을 때</string>
+    <string name="notification_channel_inspection">자동차 검사</string>
+    <string name="notification_channel_inspection_description">정기검사 기한</string>
+    <string name="notification_channel_recall">리콜</string>
+    <string name="notification_channel_recall_description">내 차의 새로운 안전 리콜</string>
+
+    <string name="notification_upcoming_title">%1$s 교체가 다가와요</string>
+    <string name="notification_due_title">%1$s 교체를 권장해요</string>
+    <string name="notification_overdue_title">%1$s 교체 시기가 지났어요</string>
+    <string name="notification_remaining_km">약 %1$skm 남았어요</string>
+    <string name="notification_overdue_km">교체 주기보다 %1$skm 더 탔어요</string>
+    <plurals name="notification_remaining_days">
+        <item quantity="other">%1$d일 남았어요</item>
+    </plurals>
+    <plurals name="notification_overdue_days">
+        <item quantity="other">교체 주기보다 %1$d일 지났어요</item>
+    </plurals>
+</resources>

@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
 import com.naury.chageun.core.database.migration.Migration3To4
+import com.naury.chageun.core.database.migration.Migration4To5
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,6 +97,13 @@ class DatabaseMigrationTest {
         helper.createDatabase(TEST_DB, 3).close()
 
         helper.runMigrationsAndValidate(TEST_DB, 4, true, Migration3To4).close()
+    }
+
+    @Test
+    fun migration4To5_addsReminderState() {
+        helper.createDatabase(TEST_DB, 4).close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 5, true, Migration4To5).close()
     }
 
     @Test

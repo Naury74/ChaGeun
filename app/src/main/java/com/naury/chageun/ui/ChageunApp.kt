@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,10 +32,18 @@ import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
 /** Cross-feature actions handled by the app shell so feature modules never depend on each other. */
-data class AppActions(val onRecordService: (MaintenanceItem) -> Unit, val onNavigate: (TopLevelDestination) -> Unit)
+data class AppActions(
+    val onRecordService: (MaintenanceItem) -> Unit,
+    val onNavigate: (TopLevelDestination) -> Unit,
+    /** Item opened from a notification, consumed once the Care tab has selected it. */
+    val pendingManageItem: MaintenanceItem? = null,
+    val onPendingManageItemHandled: () -> Unit = {},
+)
 
 @Composable
 fun ChageunApp(
+    deepLinkItem: MaintenanceItem? = null,
+    onDeepLinkHandled: () -> Unit = {},
     destinationContent: @Composable (TopLevelDestination, AppActions) -> Unit =
         { destination, actions -> DestinationContent(destination, actions) },
 ) {
@@ -48,7 +57,13 @@ fun ChageunApp(
             backStack.add(destination.route)
         }
     }
-    val actions = AppActions(onRecordService = { recordingItem = it }, onNavigate = navigateTo)
+    val actions = AppActions(
+        onRecordService = { recordingItem = it },
+        onNavigate = navigateTo,
+        pendingManageItem = deepLinkItem,
+        onPendingManageItemHandled = onDeepLinkHandled,
+    )
+    LaunchedEffect(deepLinkItem) { if (deepLinkItem != null) navigateTo(TopLevelDestination.Manage) }
 
     NavigationSuiteScaffold(
         layoutType = navigationSuiteTypeFor(windowSizeClass),
@@ -90,7 +105,11 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onRecordService = actions.onRecordService,
             onOpenHistory = { actions.onNavigate(TopLevelDestination.History) },
         )
-        TopLevelDestination.Manage -> ManageRoute(onRecordService = actions.onRecordService)
+        TopLevelDestination.Manage -> ManageRoute(
+            onRecordService = actions.onRecordService,
+            pendingSelection = actions.pendingManageItem,
+            onPendingSelectionHandled = actions.onPendingManageItemHandled,
+        )
         TopLevelDestination.History -> HistoryRoute(onRecordService = actions.onRecordService)
         else -> PendingDestination(destination)
     }
