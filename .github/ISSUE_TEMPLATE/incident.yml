@@ -1,0 +1,31 @@
+name: 장애
+description: 배포·운영 중 발생한 장애 기록
+labels: ["type: incident"]
+body:
+  - type: textarea
+    id: impact
+    attributes:
+      label: 영향
+    validations:
+      required: true
+  - type: input
+    id: window
+    attributes:
+      label: 시작/종료 시각
+  - type: input
+    id: detection
+    attributes:
+      label: 탐지 경로
+  - type: textarea
+    id: cause
+    attributes:
+      label: 직접 원인
+  - type: textarea
+    id: recovery
+    attributes:
+      label: 복구 조치
+  - type: textarea
+    id: actions
+    attributes:
+      label: 재발 방지 Action Item
+      placeholder: "- [ ] "
