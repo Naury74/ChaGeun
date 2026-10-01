@@ -1,11 +1,15 @@
 package com.naury.chageun.feature.vehicle
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
 import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.InspectionSchedule
@@ -119,6 +123,33 @@ class VehicleScreenTest {
 
         composeRule.onNodeWithText("Enter inspection date").assertIsDisplayed()
         composeRule.onNodeWithText("days left", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    // A text field inside a dialog never goes idle under the legacy graphics mode.
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun completeInspection_suggestsNextDate_andReportsIt() {
+        val status = dueIn(14)
+        var completion: InspectionCompletion? = null
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, status),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                    onInspectionCompleted = { completion = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Mark as inspected").performClick()
+        composeRule.onNodeWithText("Inspection done").assertIsDisplayed()
+        composeRule.onNode(hasText("Save") and hasAnyAncestor(isDialog())).performClick()
+
+        val result = checkNotNull(completion)
+        assertThat(result.mileage).isEqualTo(Kilometers(1_200))
+        assertThat(result.nextDueDate)
+            .isEqualTo(CompleteInspectionUseCase.suggestNextDueDate(result.completedOn, status.schedule?.nextDueDate))
     }
 
     private fun dueIn(days: Long): InspectionStatus = InspectionEvaluator.evaluate(

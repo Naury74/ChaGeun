@@ -51,6 +51,8 @@ class EvaluateRemindersUseCaseTest {
         override fun notifyInspection(status: InspectionStatus) {
             inspectionShown += status
         }
+
+        override fun cancelInspection() = Unit
     }
     private val evaluate = EvaluateRemindersUseCase(
         vehicles,

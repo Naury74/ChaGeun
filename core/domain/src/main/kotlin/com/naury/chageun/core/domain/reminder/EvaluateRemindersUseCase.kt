@@ -16,6 +16,8 @@ interface ReminderNotifier {
     fun notify(statuses: List<MaintenanceStatus>)
 
     fun notifyInspection(status: InspectionStatus)
+
+    fun cancelInspection()
 }
 
 class EvaluateRemindersUseCase @Inject constructor(

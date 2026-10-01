@@ -50,4 +50,12 @@
     <plurals name="vehicle_inspection_days_overdue">
         <item quantity="other">%1$d일 지남</item>
     </plurals>
+    <string name="vehicle_inspection_complete">검사 받음</string>
+    <string name="vehicle_inspection_complete_title">검사를 받았어요</string>
+    <string name="vehicle_inspection_complete_date">검사일</string>
+    <string name="vehicle_inspection_complete_mileage">검사 당시 주행거리 (선택)</string>
+    <string name="vehicle_inspection_complete_next">다음 검사일</string>
+    <string name="vehicle_inspection_complete_next_hint">비사업용 승용차의 2년 주기로 계산한 날짜예요. 검사 안내문과 다르면 바꿔 주세요.</string>
+    <string name="vehicle_inspection_record_title">자동차 정기검사</string>
+    <string name="vehicle_unit_km">km</string>
 </resources>

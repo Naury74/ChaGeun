@@ -1,0 +1,108 @@
+package com.naury.chageun.feature.vehicle
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
+import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.ui.PastDateField
+import com.naury.chageun.core.ui.formatDate
+import java.time.LocalDate
+
+data class InspectionCompletion(val completedOn: LocalDate, val mileage: Kilometers?, val nextDueDate: LocalDate)
+
+@Composable
+internal fun CompleteInspectionDialog(
+    today: LocalDate,
+    previousDueDate: LocalDate?,
+    currentMileage: Kilometers?,
+    onConfirm: (InspectionCompletion) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var completedOn by rememberSaveable { mutableStateOf(today) }
+    var mileage by rememberSaveable { mutableStateOf(currentMileage?.value?.toString().orEmpty()) }
+    // Null until the user picks a date, so the suggestion follows the inspection day.
+    var chosenNextDue by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    var isPickingNextDue by rememberSaveable { mutableStateOf(false) }
+    val nextDue = chosenNextDue ?: CompleteInspectionUseCase.suggestNextDueDate(completedOn, previousDueDate)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.vehicle_inspection_complete_title)) },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                Text(
+                    stringResource(R.string.vehicle_inspection_complete_date),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                PastDateField(
+                    date = completedOn,
+                    placeholder = stringResource(R.string.vehicle_inspection_complete_date),
+                    onDateSelected = { completedOn = it },
+                )
+                OutlinedTextField(
+                    value = mileage,
+                    onValueChange = { input -> mileage = input.filter(Char::isDigit) },
+                    label = { Text(stringResource(R.string.vehicle_inspection_complete_mileage)) },
+                    suffix = { Text(stringResource(R.string.vehicle_unit_km)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    stringResource(R.string.vehicle_inspection_complete_next),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                OutlinedButton(onClick = { isPickingNextDue = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(formatDate(nextDue))
+                }
+                Text(
+                    stringResource(R.string.vehicle_inspection_complete_next_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(InspectionCompletion(completedOn, mileage.toLongOrNull()?.let(::Kilometers), nextDue))
+                },
+            ) { Text(stringResource(R.string.vehicle_inspection_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.vehicle_inspection_cancel)) }
+        },
+    )
+    if (isPickingNextDue) {
+        InspectionDatePicker(
+            initial = nextDue,
+            onConfirm = {
+                chosenNextDue = it
+                isPickingNextDue = false
+            },
+            onDismiss = { isPickingNextDue = false },
+        )
+    }
+}

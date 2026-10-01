@@ -2,6 +2,7 @@ package com.naury.chageun.feature.vehicle
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
 import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
 import com.naury.chageun.core.domain.vehicle.InspectionRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -38,6 +39,7 @@ sealed interface VehicleUiState {
 class VehicleViewModel @Inject constructor(
     vehicleRepository: VehicleRepository,
     private val inspectionRepository: InspectionRepository,
+    private val completeInspection: CompleteInspectionUseCase,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -57,6 +59,13 @@ class VehicleViewModel @Inject constructor(
     fun setInspectionDate(date: LocalDate?) {
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         viewModelScope.launch { inspectionRepository.setUserDueDate(vehicle.id, date) }
+    }
+
+    fun completeInspection(completion: InspectionCompletion, title: String) {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
+        viewModelScope.launch {
+            completeInspection(vehicle.id, completion.completedOn, title, completion.mileage, completion.nextDueDate)
+        }
     }
 
     private companion object {

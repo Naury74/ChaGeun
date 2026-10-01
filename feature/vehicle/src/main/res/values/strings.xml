@@ -52,4 +52,12 @@
         <item quantity="one">%1$d day overdue</item>
         <item quantity="other">%1$d days overdue</item>
     </plurals>
+    <string name="vehicle_inspection_complete">Mark as inspected</string>
+    <string name="vehicle_inspection_complete_title">Inspection done</string>
+    <string name="vehicle_inspection_complete_date">Inspection date</string>
+    <string name="vehicle_inspection_complete_mileage">Mileage at inspection (optional)</string>
+    <string name="vehicle_inspection_complete_next">Next inspection</string>
+    <string name="vehicle_inspection_complete_next_hint">Estimated for a private passenger car every 2 years. Change it if your notice says otherwise.</string>
+    <string name="vehicle_inspection_record_title">Periodic inspection</string>
+    <string name="vehicle_unit_km">km</string>
 </resources>
