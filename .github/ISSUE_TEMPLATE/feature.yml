@@ -1,0 +1,30 @@
+name: 기능
+description: 사용자 기능 또는 기술 작업
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 문제
+      description: 해결하려는 사용자 또는 기술 문제
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 완료 조건
+      placeholder: "- [ ] "
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 범위와 제외 범위
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 디자인·API 의존성
+  - type: textarea
+    id: tests
+    attributes:
+      label: 테스트 포인트
