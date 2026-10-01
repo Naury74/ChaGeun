@@ -8,10 +8,13 @@ import com.naury.chageun.core.domain.vehicle.RegistrationValidator
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.PlateNumber
 import com.naury.chageun.core.model.PlateParseResult
 import com.naury.chageun.core.model.VehicleRegistration
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +27,7 @@ class OnboardingViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
     private val registrationValidator: RegistrationValidator,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val draftStore = OnboardingDraftStore(savedStateHandle)
@@ -52,6 +56,14 @@ class OnboardingViewModel @Inject constructor(
                 edit(OnboardingField.Mileage) {
                     copy(mileage = action.value.filter(Char::isDigit).take(MILEAGE_DIGITS))
                 }
+            OnboardingAction.SubmitMileage -> submitMileage()
+            is OnboardingAction.QuickServiceModeSelected -> editQuickService(action.item) { copy(mode = action.mode) }
+            is OnboardingAction.QuickServiceDateSelected -> editQuickService(action.item) { copy(date = action.date) }
+            is OnboardingAction.QuickServiceMileageChanged ->
+                editQuickService(action.item) {
+                    copy(mileage = action.value.filter(Char::isDigit).take(MILEAGE_DIGITS))
+                }
+            OnboardingAction.SubmitQuickMaintenance -> submitQuickMaintenance()
             OnboardingAction.Finish -> finish()
         }
     }
@@ -85,18 +97,31 @@ class OnboardingViewModel @Inject constructor(
         if (errors.isEmpty()) moveTo(OnboardingStep.Mileage) else setErrors(errors)
     }
 
+    private fun submitMileage() {
+        val mileage = _uiState.value.mileage.toLongOrNull()
+        when {
+            mileage == null -> setErrors(mapOf(OnboardingField.Mileage to FieldError.Required))
+            mileage > MAX_MILEAGE_KM -> setErrors(mapOf(OnboardingField.Mileage to FieldError.InvalidMileage))
+            else -> moveTo(OnboardingStep.QuickMaintenance)
+        }
+    }
+
+    private fun submitQuickMaintenance() {
+        val state = _uiState.value
+        val errors = QuickServiceForm.validate(state.quickServices, state.mileage.toLong(), LocalDate.now(clock))
+        if (errors.isEmpty()) {
+            moveTo(OnboardingStep.Notifications)
+        } else {
+            _uiState.update { it.copy(quickServiceErrors = errors) }
+        }
+    }
+
     private fun finish() {
         val state = _uiState.value
-        val mileage = state.mileage.toLongOrNull()
-        if (mileage == null) {
-            setErrors(mapOf(OnboardingField.Mileage to FieldError.Required))
-            return
-        }
-        if (mileage > MAX_MILEAGE_KM) {
-            setErrors(mapOf(OnboardingField.Mileage to FieldError.InvalidMileage))
-            return
-        }
-        val registration = draft(state, state.modelYear.toInt()).copy(currentMileage = Kilometers(mileage))
+        val registration = draft(state, state.modelYear.toInt()).copy(
+            currentMileage = Kilometers(state.mileage.toLong()),
+            knownServices = QuickServiceForm.toServiceRecords(state.quickServices),
+        )
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
             runCatching { vehicleRepository.register(registration) }
@@ -119,12 +144,23 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun moveTo(step: OnboardingStep) {
-        _uiState.update { it.copy(step = step, errors = emptyMap()) }
+        _uiState.update { it.copy(step = step, errors = emptyMap(), quickServiceErrors = emptyMap()) }
         draftStore.save(_uiState.value)
     }
 
     private fun edit(field: OnboardingField, transform: OnboardingUiState.() -> OnboardingUiState) {
         _uiState.update { it.transform().copy(errors = it.errors - field, hasSaveFailed = false) }
+        draftStore.save(_uiState.value)
+    }
+
+    private fun editQuickService(item: MaintenanceItem, transform: QuickServiceInput.() -> QuickServiceInput) {
+        _uiState.update { state ->
+            val current = state.quickServices[item] ?: QuickServiceInput()
+            state.copy(
+                quickServices = state.quickServices + (item to current.transform()),
+                quickServiceErrors = state.quickServiceErrors - item,
+            )
+        }
         draftStore.save(_uiState.value)
     }
 

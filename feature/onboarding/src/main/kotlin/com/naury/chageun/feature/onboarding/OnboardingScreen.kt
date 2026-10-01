@@ -68,6 +68,15 @@ fun OnboardingScreen(uiState: OnboardingUiState, onAction: (OnboardingAction) ->
                 OnboardingStep.Plate -> PlateStep(uiState, onAction)
                 OnboardingStep.VehicleInfo -> VehicleInfoStep(uiState, onAction)
                 OnboardingStep.Mileage -> MileageStep(uiState, onAction)
+                OnboardingStep.QuickMaintenance -> QuickMaintenanceStep(uiState, onAction)
+                OnboardingStep.Notifications -> NotificationsStep()
+            }
+            if (uiState.hasSaveFailed) {
+                Text(
+                    stringResource(R.string.onboarding_save_failed),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
         }
         BottomActions(
@@ -156,13 +165,6 @@ private fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction)
         imeAction = ImeAction.Done,
         suffix = { Text(stringResource(R.string.onboarding_mileage_unit)) },
     )
-    if (uiState.hasSaveFailed) {
-        Text(
-            stringResource(R.string.onboarding_save_failed),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
 }
 
 @Composable
@@ -171,21 +173,35 @@ private fun BottomActions(
     onAction: (OnboardingAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val (labelRes, action) = when (uiState.step) {
-        OnboardingStep.Intro -> R.string.onboarding_start to OnboardingAction.Start
-        OnboardingStep.Plate -> R.string.onboarding_next to OnboardingAction.SubmitPlate
-        OnboardingStep.VehicleInfo -> R.string.onboarding_next to OnboardingAction.SubmitVehicleInfo
-        OnboardingStep.Mileage -> R.string.onboarding_finish to OnboardingAction.Finish
+    val optInToNotifications = rememberNotificationOptIn { onAction(OnboardingAction.Finish) }
+    val (labelRes, onPrimary) = when (uiState.step) {
+        OnboardingStep.Intro -> R.string.onboarding_start to { onAction(OnboardingAction.Start) }
+        OnboardingStep.Plate -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitPlate) }
+        OnboardingStep.VehicleInfo -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitVehicleInfo) }
+        OnboardingStep.Mileage -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitMileage) }
+        OnboardingStep.QuickMaintenance ->
+            R.string.onboarding_next to
+                { onAction(OnboardingAction.SubmitQuickMaintenance) }
+        OnboardingStep.Notifications -> R.string.onboarding_notifications_allow to optInToNotifications
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         Button(
-            onClick = { onAction(action) },
+            onClick = onPrimary,
             enabled = !uiState.isSaving,
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = ChageunTheme.spacing.minTouchTarget),
         ) {
             Text(stringResource(labelRes))
+        }
+        if (uiState.step == OnboardingStep.Notifications) {
+            TextButton(
+                onClick = { onAction(OnboardingAction.Finish) },
+                enabled = !uiState.isSaving,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.onboarding_notifications_later))
+            }
         }
         if (uiState.canGoBack) {
             TextButton(onClick = { onAction(OnboardingAction.Back) }, modifier = Modifier.fillMaxWidth()) {
@@ -233,7 +249,7 @@ private fun OnboardingTextField(
 }
 
 @Composable
-private fun ErrorText(error: FieldError) {
+internal fun ErrorText(error: FieldError) {
     Text(
         text = stringResource(error.messageRes),
         color = MaterialTheme.colorScheme.error,
@@ -248,6 +264,8 @@ private val FieldError.messageRes: Int
         FieldError.UnsupportedPlate -> R.string.onboarding_error_plate_unsupported
         FieldError.InvalidYear -> R.string.onboarding_error_year_invalid
         FieldError.InvalidMileage -> R.string.onboarding_error_mileage_invalid
+        FieldError.FutureDate -> R.string.onboarding_error_future_date
+        FieldError.ExceedsCurrentMileage -> R.string.onboarding_error_exceeds_mileage
     }
 
 private val FuelType.labelRes: Int

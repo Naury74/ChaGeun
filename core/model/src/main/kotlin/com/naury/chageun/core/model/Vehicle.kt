@@ -31,4 +31,5 @@ data class VehicleRegistration(
     val plate: PlateNumber? = null,
     val trim: String? = null,
     val firstRegistrationDate: LocalDate? = null,
+    val knownServices: Map<MaintenanceItem, ServiceRecord> = emptyMap(),
 )

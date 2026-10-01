@@ -21,7 +21,6 @@
     <string name="onboarding_mileage_body">정비 시점은 이 값을 기준으로 계산해요. 대략적인 값도 괜찮아요.</string>
     <string name="onboarding_mileage_label">현재 주행거리</string>
     <string name="onboarding_mileage_unit">km</string>
-    <string name="onboarding_finish">관리 시작하기</string>
     <string name="onboarding_save_failed">차량을 저장하지 못했어요. 다시 시도해 주세요.</string>
 
     <string name="onboarding_error_required">입력해 주세요</string>
@@ -37,4 +36,27 @@
     <string name="fuel_plug_in_hybrid">플러그인 하이브리드</string>
     <string name="fuel_electric">전기</string>
     <string name="fuel_hydrogen">수소</string>
+
+    <string name="onboarding_confirm">확인</string>
+    <string name="onboarding_cancel">취소</string>
+
+    <string name="onboarding_quick_title">최근에 언제 교체했나요?</string>
+    <string name="onboarding_quick_body">기억나지 않는 항목은 건너뛰어도 괜찮아요. 나중에 채울 수 있어요.</string>
+    <string name="onboarding_quick_engine_oil">엔진오일</string>
+    <string name="onboarding_quick_tire">타이어</string>
+    <string name="onboarding_quick_battery">배터리</string>
+    <string name="onboarding_quick_mode_both">날짜와 주행거리</string>
+    <string name="onboarding_quick_mode_date">날짜만 알아요</string>
+    <string name="onboarding_quick_mode_mileage">주행거리만 알아요</string>
+    <string name="onboarding_quick_mode_unknown">잘 모르겠어요</string>
+    <string name="onboarding_quick_pick_date">날짜 선택</string>
+    <string name="onboarding_quick_mileage">교체 당시 주행거리</string>
+
+    <string name="onboarding_notifications_title">놓치기 전에 알려드릴게요</string>
+    <string name="onboarding_notifications_body">정비, 검사, 리콜처럼 놓치면 불편하거나 위험한 일정만 알려드릴게요.</string>
+    <string name="onboarding_notifications_allow">알림 받기</string>
+    <string name="onboarding_notifications_later">나중에 할게요</string>
+
+    <string name="onboarding_error_future_date">미래 날짜는 선택할 수 없어요</string>
+    <string name="onboarding_error_exceeds_mileage">현재 주행거리보다 클 수 없어요</string>
 </resources>

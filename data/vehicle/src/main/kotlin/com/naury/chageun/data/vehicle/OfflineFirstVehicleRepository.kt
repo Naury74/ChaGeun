@@ -2,6 +2,7 @@ package com.naury.chageun.data.vehicle
 
 import androidx.room.withTransaction
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
@@ -51,23 +52,42 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
             vehicleId = vehicleId,
             mileageKm = registration.currentMileage.value,
             recordedOn = LocalDate.now(clock),
-            sourceType = MILEAGE_SOURCE_USER,
+            sourceType = SOURCE_USER,
             relatedRecordId = null,
             createdAt = now,
         )
         val rules = DefaultMaintenanceRules.forFuel(registration.fuelType)
             .map { it.asEntity(id = UUID.randomUUID().toString(), vehicleId = vehicleId) }
 
+        val knownServices = registration.knownServices
+            .filterValues { it.date != null || it.mileage != null }
+            .map { (item, record) ->
+                MaintenanceRecordEntity(
+                    id = UUID.randomUUID().toString(),
+                    vehicleId = vehicleId,
+                    itemType = item.name,
+                    serviceDate = record.date,
+                    mileageKm = record.mileage?.value,
+                    costWon = null,
+                    shopName = null,
+                    memo = null,
+                    sourceType = SOURCE_USER,
+                    createdAt = now,
+                    updatedAt = now,
+                )
+            }
+
         database.withTransaction {
             database.vehicleDao().clearPrimary()
             database.vehicleDao().upsert(vehicle)
             database.mileageRecordDao().insert(startingMileage)
             database.maintenanceDao().upsertRules(rules)
+            knownServices.forEach { database.maintenanceDao().insertRecord(it) }
         }
         return VehicleId(vehicleId)
     }
 
     private companion object {
-        const val MILEAGE_SOURCE_USER = "USER"
+        const val SOURCE_USER = "USER"
     }
 }
