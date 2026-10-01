@@ -4,5 +4,4 @@
     <string name="nav_manage">Care</string>
     <string name="nav_history">History</string>
     <string name="nav_vehicle">My car</string>
-    <string name="destination_pending">This screen is on its way.</string>
 </resources>

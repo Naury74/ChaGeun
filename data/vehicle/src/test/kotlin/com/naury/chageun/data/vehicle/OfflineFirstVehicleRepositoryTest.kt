@@ -4,9 +4,11 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.PlateNumber
 import com.naury.chageun.core.model.PlateParseResult
 import com.naury.chageun.core.model.ServiceRecord
@@ -107,6 +109,26 @@ class OfflineFirstVehicleRepositoryTest {
         assertThat(records.keys).containsExactly("EngineOil", "Tire")
         assertThat(records.getValue("Tire").serviceDate).isNull()
         assertThat(records.getValue("EngineOil").mileageKm).isEqualTo(40_260)
+    }
+
+    @Test
+    fun mileageLog_isNewestFirstWithSources() = runTest {
+        val id = repository.register(registration())
+        database.mileageRecordDao().insert(
+            MileageRecordEntity(
+                "m2",
+                id.value,
+                43_000,
+                LocalDate.of(2026, 10, 1),
+                "CORRECTION",
+                null,
+                Instant.parse("2026-10-01T04:00:00Z"),
+            ),
+        )
+
+        val log = repository.observeMileageLog(id).first()
+
+        assertThat(log.map { it.source }).containsExactly(MileageSource.Correction, MileageSource.User).inOrder()
     }
 
     @Test

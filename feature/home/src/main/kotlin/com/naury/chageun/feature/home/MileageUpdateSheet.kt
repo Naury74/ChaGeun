@@ -29,8 +29,9 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.formatNumber
 
+/** Hosted by the app shell so Home and My car share one entry point. */
 @Composable
-internal fun MileageUpdateHost(
+fun MileageUpdateHost(
     isExpanded: Boolean,
     onDismiss: () -> Unit,
     viewModel: MileageUpdateViewModel = hiltViewModel(),

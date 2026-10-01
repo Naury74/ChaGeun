@@ -1,0 +1,36 @@
+<resources>
+    <string name="vehicle_subtitle">%1$s · %2$s</string>
+    <string name="vehicle_mileage">%1$s km</string>
+    <string name="vehicle_mileage_as_of">As of %1$s</string>
+    <string name="vehicle_mileage_none">No mileage recorded</string>
+    <string name="vehicle_update_mileage">Update mileage</string>
+
+    <string name="vehicle_section_info">Vehicle details</string>
+    <string name="vehicle_plate">Plate</string>
+    <string name="vehicle_maker">Manufacturer</string>
+    <string name="vehicle_model">Model</string>
+    <string name="vehicle_trim">Trim</string>
+    <string name="vehicle_year">Model year</string>
+    <string name="vehicle_fuel">Fuel</string>
+    <string name="vehicle_first_registration">First registered</string>
+    <string name="vehicle_registration_mode">Registered by</string>
+    <string name="vehicle_registration_manual">Entered by you</string>
+    <string name="vehicle_registration_auto">Official vehicle data</string>
+
+    <string name="vehicle_section_mileage">Mileage history</string>
+    <string name="vehicle_mileage_source_user">Entered by you</string>
+    <string name="vehicle_mileage_source_maintenance">From a replacement</string>
+    <string name="vehicle_mileage_source_fuel">From a fuel record</string>
+    <string name="vehicle_mileage_source_check">From an inspection or repair</string>
+    <string name="vehicle_mileage_source_correction">Odometer correction</string>
+    <string name="vehicle_mileage_source_inspection">Official inspection</string>
+
+    <string name="vehicle_section_official">Inspection and recall</string>
+    <string name="vehicle_official_pending">Official inspection and recall data is not connected yet, so we can\'t confirm whether a recall applies. Check the official sites below.</string>
+    <string name="vehicle_official_recall">Check recalls (Korea Automobile Recall Center)</string>
+    <string name="vehicle_official_inspection">Book an inspection (Korea Transportation Safety Authority)</string>
+
+    <string name="vehicle_section_sources">Data sources</string>
+    <string name="vehicle_sources_manual">Vehicle details and mileage were entered by you. Maintenance timing uses general guidelines unless you changed them.</string>
+    <string name="vehicle_sources_auto">Vehicle details come from official vehicle data; mileage and maintenance records are yours.</string>
+</resources>

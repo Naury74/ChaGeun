@@ -7,6 +7,9 @@ import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MileageEntry
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
@@ -27,6 +30,18 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
 
     override fun observePrimaryVehicle(): Flow<Vehicle?> =
         database.vehicleDao().observePrimary().map { it?.asExternalModel() }
+
+    override fun observeMileageLog(vehicleId: VehicleId): Flow<List<MileageEntry>> =
+        database.mileageRecordDao().observeAll(vehicleId.value).map { rows ->
+            rows.asReversed().map { row ->
+                MileageEntry(
+                    id = row.id,
+                    date = row.recordedOn,
+                    mileage = Kilometers(row.mileageKm),
+                    source = MILEAGE_SOURCES[row.sourceType] ?: MileageSource.User,
+                )
+            }
+        }
 
     override suspend fun register(registration: VehicleRegistration): VehicleId {
         val vehicleId = UUID.randomUUID().toString()
@@ -89,5 +104,13 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
 
     private companion object {
         const val SOURCE_USER = "USER"
+        val MILEAGE_SOURCES = mapOf(
+            "USER" to MileageSource.User,
+            "MAINTENANCE" to MileageSource.Maintenance,
+            "FUEL" to MileageSource.Fuel,
+            "CHECK" to MileageSource.Check,
+            "CORRECTION" to MileageSource.Correction,
+            "INSPECTION" to MileageSource.Inspection,
+        )
     }
 }
