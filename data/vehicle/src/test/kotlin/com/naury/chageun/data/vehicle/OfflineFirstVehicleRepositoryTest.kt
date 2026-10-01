@@ -6,8 +6,10 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.PlateNumber
 import com.naury.chageun.core.model.PlateParseResult
+import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.security.FieldCipher
 import java.time.Clock
@@ -87,6 +89,24 @@ class OfflineFirstVehicleRepositoryTest {
         assertThat(gasolineRules).hasSize(12)
         assertThat(electricRules.map { it.itemType }).containsNoneOf("EngineOil", "SparkPlug")
         assertThat(gasolineRules.map { it.ruleSource }.toSet()).containsExactly("Generic")
+    }
+
+    @Test
+    fun storesKnownServices_includingUndatedOnes_andSkipsEmptyEntries() = runTest {
+        val id = repository.register(
+            registration().copy(
+                knownServices = mapOf(
+                    MaintenanceItem.EngineOil to ServiceRecord(LocalDate.of(2026, 3, 10), Kilometers(40_260)),
+                    MaintenanceItem.Tire to ServiceRecord(date = null, mileage = Kilometers(28_310)),
+                    MaintenanceItem.Battery to ServiceRecord(date = null, mileage = null),
+                ),
+            ),
+        )
+
+        val records = database.maintenanceDao().observeLatestRecords(id.value).first().associateBy { it.itemType }
+        assertThat(records.keys).containsExactly("EngineOil", "Tire")
+        assertThat(records.getValue("Tire").serviceDate).isNull()
+        assertThat(records.getValue("EngineOil").mileageKm).isEqualTo(40_260)
     }
 
     @Test

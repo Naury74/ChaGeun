@@ -1,4 +1,6 @@
 complexity:
+  CyclomaticComplexMethod:
+    ignoreSimpleWhenEntries: true
   LongParameterList:
     functionThreshold: 8
     ignoreDefaultParameters: true
@@ -6,6 +8,7 @@ complexity:
   LongMethod:
     ignoreAnnotated: ['Composable']
   TooManyFunctions:
+    ignorePrivate: true
     ignoreAnnotatedFunctions: ['Preview']
 
 naming:
