@@ -27,6 +27,10 @@ class FakeMaintenanceRepository : MaintenanceRepository {
     override suspend fun findRule(vehicleId: VehicleId, item: MaintenanceItem): MaintenanceRule? =
         inputs.value.rules.firstOrNull { it.item == item }
 
+    override suspend fun saveRule(vehicleId: VehicleId, rule: MaintenanceRule) {
+        inputs.update { current -> current.copy(rules = current.rules.filterNot { it.item == rule.item } + rule) }
+    }
+
     override suspend fun findLatestService(vehicleId: VehicleId, item: MaintenanceItem): ServiceRecord? =
         inputs.value.lastServices[item]
 

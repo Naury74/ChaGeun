@@ -54,6 +54,7 @@ class ManageViewModel @Inject constructor(
                     items = overview.statuses.filter(activeFilter::accepts),
                     counts = ManageFilter.entries.associateWith { f -> overview.statuses.count(f::accepts) },
                     rules = overview.rules,
+                    disabledItems = overview.disabledItems,
                     selectedItem = selectedStatus?.item,
                     detail = selectedStatus?.let {
                         ManageDetail(it, overview.rules[it.item], entries, overview.currentMileage)

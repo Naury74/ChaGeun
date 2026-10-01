@@ -18,6 +18,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -48,6 +49,7 @@ internal fun ManageDetailPane(
     detail: ManageDetail,
     onBack: (() -> Unit)?,
     onRecordService: (MaintenanceItem) -> Unit,
+    onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val status = detail.status
@@ -87,13 +89,21 @@ internal fun ManageDetailPane(
             }
             headline?.let { Text(it, style = NumericTextStyles.Title) }
         }
-        item(key = "record") {
-            Button(
-                onClick = { onRecordService(status.item) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) { Text(stringResource(R.string.record_action)) }
+        item(key = "actions") {
+            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                OutlinedButton(
+                    onClick = { onEditRule(status.item) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.rule_edit_action)) }
+                Button(
+                    onClick = { onRecordService(status.item) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.record_action)) }
+            }
         }
         item(key = "basis") { BasisSection(detail) }
         item(key = "history-title") {

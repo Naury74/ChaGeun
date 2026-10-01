@@ -10,6 +10,7 @@ import com.naury.chageun.core.model.VehicleId
 import kotlinx.coroutines.flow.Flow
 
 data class MaintenanceInputs(
+    /** Includes disabled rules so they can be re-enabled; evaluation skips them. */
     val rules: List<MaintenanceRule>,
     val lastServices: Map<MaintenanceItem, ServiceRecord>,
     val mileageHistory: List<MileageReading>,
@@ -23,6 +24,8 @@ interface MaintenanceRepository {
     fun observeServiceHistory(vehicleId: VehicleId, item: MaintenanceItem): Flow<List<ServiceHistoryEntry>>
 
     suspend fun findRule(vehicleId: VehicleId, item: MaintenanceItem): MaintenanceRule?
+
+    suspend fun saveRule(vehicleId: VehicleId, rule: MaintenanceRule)
 
     suspend fun findLatestService(vehicleId: VehicleId, item: MaintenanceItem): ServiceRecord?
 

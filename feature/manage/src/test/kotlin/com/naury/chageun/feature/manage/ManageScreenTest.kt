@@ -64,6 +64,7 @@ class ManageScreenTest {
                     onFilterSelected = {},
                     onItemSelected = { selected = it },
                     onRecordService = {},
+                    onEditRule = {},
                 )
             }
         }
@@ -82,7 +83,7 @@ class ManageScreenTest {
         composeRule.setContent {
             ChageunTheme {
                 ManageScreen(stateFor(null), isTwoPane = true, onFilterSelected = {
-                }, onItemSelected = {}, onRecordService = {})
+                }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
             }
         }
 

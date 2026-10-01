@@ -61,4 +61,19 @@
     <string name="record_action">Replaced</string>
     <string name="record_unit_km">km</string>
     <string name="record_unit_won">₩</string>
+
+    <string name="rule_edit_action">Edit interval</string>
+    <string name="rule_title">%1$s interval</string>
+    <string name="rule_enabled">Track this item</string>
+    <string name="rule_interval_km">Distance interval</string>
+    <string name="rule_interval_months">Time interval</string>
+    <string name="rule_unit_km">km</string>
+    <string name="rule_unit_months">months</string>
+    <string name="rule_hint">Leave one empty to track only the other. Whichever comes first is used.</string>
+    <string name="rule_reset">Restore the general guideline</string>
+    <string name="rule_error_no_interval">Enter at least one interval</string>
+    <string name="rule_error_non_positive">Intervals must be greater than 0</string>
+    <string name="rule_error_unknown">This item can\'t be edited</string>
+    <string name="manage_disabled_items">Not tracked</string>
+    <string name="manage_disabled_hint">Tap to track again</string>
 </resources>

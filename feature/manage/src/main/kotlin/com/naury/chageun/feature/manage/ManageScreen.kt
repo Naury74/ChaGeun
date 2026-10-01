@@ -10,6 +10,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -17,18 +20,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.feature.manage.rule.RuleEditorHost
 
 @Composable
 fun ManageRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: ManageViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    var editingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     ManageScreen(
         uiState = uiState,
         isTwoPane = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
         onFilterSelected = viewModel::selectFilter,
         onItemSelected = viewModel::selectItem,
         onRecordService = onRecordService,
+        onEditRule = { editingItem = it },
     )
+    editingItem?.let { item -> RuleEditorHost(item = item, onDismiss = { editingItem = null }) }
 }
 
 /**
@@ -42,6 +49,7 @@ fun ManageScreen(
     onFilterSelected: (ManageFilter) -> Unit,
     onItemSelected: (MaintenanceItem?) -> Unit,
     onRecordService: (MaintenanceItem) -> Unit,
+    onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (uiState.isLoading) {
@@ -55,6 +63,7 @@ fun ManageScreen(
                 uiState = uiState,
                 onFilterSelected = onFilterSelected,
                 onItemSelected = onItemSelected,
+                onEditRule = onEditRule,
                 modifier = Modifier
                     .weight(LIST_PANE_WEIGHT)
                     .fillMaxHeight(),
@@ -63,7 +72,13 @@ fun ManageScreen(
                 .weight(1f - LIST_PANE_WEIGHT)
                 .fillMaxHeight()
             if (detail != null) {
-                ManageDetailPane(detail, onBack = null, onRecordService = onRecordService, modifier = detailModifier)
+                ManageDetailPane(
+                    detail,
+                    onBack = null,
+                    onRecordService = onRecordService,
+                    onEditRule = onEditRule,
+                    modifier = detailModifier,
+                )
             } else {
                 DetailPlaceholder(detailModifier)
             }
@@ -74,10 +89,11 @@ fun ManageScreen(
             detail,
             onBack = { onItemSelected(null) },
             onRecordService = onRecordService,
+            onEditRule = onEditRule,
             modifier = modifier.fillMaxSize(),
         )
     } else {
-        ManageList(uiState, onFilterSelected, onItemSelected, modifier.fillMaxSize())
+        ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize())
     }
 }
 

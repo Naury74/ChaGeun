@@ -59,4 +59,19 @@
     <string name="record_action">교체했어요</string>
     <string name="record_unit_km">km</string>
     <string name="record_unit_won">원</string>
+
+    <string name="rule_edit_action">기준 수정</string>
+    <string name="rule_title">%1$s 교체 기준</string>
+    <string name="rule_enabled">이 항목 관리하기</string>
+    <string name="rule_interval_km">거리 주기</string>
+    <string name="rule_interval_months">기간 주기</string>
+    <string name="rule_unit_km">km</string>
+    <string name="rule_unit_months">개월</string>
+    <string name="rule_hint">한쪽을 비우면 다른 기준만 사용해요. 둘 다 있으면 먼저 도달하는 시점을 기준으로 해요.</string>
+    <string name="rule_reset">일반적인 권장 기준으로 되돌리기</string>
+    <string name="rule_error_no_interval">주기를 하나 이상 입력해 주세요</string>
+    <string name="rule_error_non_positive">주기는 0보다 커야 해요</string>
+    <string name="rule_error_unknown">수정할 수 없는 항목이에요</string>
+    <string name="manage_disabled_items">관리하지 않는 항목</string>
+    <string name="manage_disabled_hint">눌러서 다시 관리할 수 있어요</string>
 </resources>

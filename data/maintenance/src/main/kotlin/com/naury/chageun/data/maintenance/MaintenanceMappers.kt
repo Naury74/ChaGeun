@@ -42,3 +42,19 @@ internal fun MileageRecordEntity.asExternalModel() = MileageReading(
     date = recordedOn,
     mileage = Kilometers(mileageKm),
 )
+
+internal fun MaintenanceRule.asEntity(id: String, vehicleId: String) = MaintenanceRuleEntity(
+    id = id,
+    vehicleId = vehicleId,
+    itemType = item.name,
+    intervalKm = intervalKm,
+    intervalMonths = intervalMonths,
+    dueSoonKm = thresholds.dueSoonKm,
+    dueSoonDays = thresholds.dueSoonDays,
+    upcomingKm = thresholds.upcomingKm,
+    upcomingDays = thresholds.upcomingDays,
+    ruleSource = source.name,
+    sourceTitle = sourceTitle,
+    sourceUrl = sourceUrl,
+    isEnabled = isEnabled,
+)

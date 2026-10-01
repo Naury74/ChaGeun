@@ -39,6 +39,7 @@ internal fun ManageList(
     uiState: ManageUiState,
     onFilterSelected: (ManageFilter) -> Unit,
     onItemSelected: (MaintenanceItem) -> Unit,
+    onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gutter = ChageunTheme.spacing.gutter
@@ -87,6 +88,29 @@ internal fun ManageList(
                 onClick = { onItemSelected(status.item) },
                 modifier = Modifier.padding(horizontal = gutter),
             )
+        }
+        if (uiState.filter == ManageFilter.All && uiState.disabledItems.isNotEmpty()) {
+            item(key = "disabled-title") {
+                Column(Modifier.padding(horizontal = gutter, vertical = ChageunTheme.spacing.xs)) {
+                    Text(stringResource(R.string.manage_disabled_items), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.manage_disabled_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            items(uiState.disabledItems, key = { "disabled-$it" }) { item ->
+                Text(
+                    text = stringResource(item.labelRes),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) { onEditRule(item) }
+                        .padding(horizontal = gutter, vertical = ChageunTheme.spacing.sm),
+                )
+            }
         }
     }
 }
