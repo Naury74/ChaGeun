@@ -1,0 +1,31 @@
+name: 버그
+description: 의도와 다르게 동작하는 문제
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: actual
+    attributes:
+      label: 현재 동작
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 동작
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 절차
+      placeholder: "1. "
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 환경
+      placeholder: "기기, Android 버전, Window Size, 앱 버전"
+  - type: markdown
+    attributes:
+      value: "차량번호·VIN·소유주명 등 실제 개인정보를 첨부하지 마세요."
