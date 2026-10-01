@@ -1,0 +1,12 @@
+name: Setup Android build
+description: JDK and Gradle with cache
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: 21
+    - uses: gradle/actions/setup-gradle@v5
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' }}
