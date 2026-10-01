@@ -1,0 +1,51 @@
+<resources>
+    <string name="home_vehicle_subtitle">%1$s · %2$s</string>
+    <string name="home_mileage">%1$s km</string>
+    <string name="home_mileage_as_of_today">Mileage as of today</string>
+    <string name="home_mileage_as_of">Mileage as of %1$s</string>
+    <string name="home_mileage_unknown">Add your current mileage</string>
+
+    <string name="home_health_good">Nothing needs attention right now</string>
+    <plurals name="home_health_good_detail">
+        <item quantity="one">%1$d item checked against general guidelines</item>
+        <item quantity="other">%1$d items checked against general guidelines</item>
+    </plurals>
+    <string name="home_health_upcoming">%1$s is coming up</string>
+    <plurals name="home_health_attention">
+        <item quantity="one">%1$d item needs attention</item>
+        <item quantity="other">%1$d items need attention</item>
+    </plurals>
+    <string name="home_health_insufficient">Check your %1$s details</string>
+    <string name="home_health_insufficient_generic">Add recent service details</string>
+    <string name="home_health_insufficient_detail">Without data we can\'t tell whether it\'s fine, so we don\'t mark it as good.</string>
+
+    <string name="home_section_attention">Check now</string>
+    <string name="home_section_upcoming">Coming up</string>
+    <string name="home_section_missing">Needs details</string>
+
+    <string name="home_state_overdue">Replace now</string>
+    <string name="home_state_due">Due soon</string>
+    <string name="home_state_upcoming">Coming up</string>
+    <string name="home_state_good">Good</string>
+    <string name="home_state_unknown">Needs info</string>
+
+    <string name="home_remaining_km">About %1$s km left</string>
+    <string name="home_overdue_km">%1$s km past due</string>
+    <plurals name="home_remaining_days">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="home_overdue_days">
+        <item quantity="one">%1$d day past due</item>
+        <item quantity="other">%1$d days past due</item>
+    </plurals>
+    <string name="home_due_today">Due today</string>
+    <string name="home_estimated_due">Expected around %1$s</string>
+
+    <string name="home_missing_last_service">No replacement record yet</string>
+    <string name="home_missing_current_mileage">Add your current mileage</string>
+    <string name="home_missing_service_date">Add the replacement date for accuracy</string>
+    <string name="home_missing_service_mileage">Add the mileage at replacement</string>
+
+    <string name="home_rule_generic">Based on general guidelines</string>
+</resources>

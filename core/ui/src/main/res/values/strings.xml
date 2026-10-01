@@ -1,0 +1,22 @@
+<resources>
+    <string name="maintenance_item_engine_oil">Engine oil</string>
+    <string name="maintenance_item_oil_filter">Oil filter</string>
+    <string name="maintenance_item_air_filter">Air filter</string>
+    <string name="maintenance_item_spark_plug">Spark plugs</string>
+    <string name="maintenance_item_cabin_filter">Cabin air filter</string>
+    <string name="maintenance_item_brake_pad">Brake pads</string>
+    <string name="maintenance_item_brake_fluid">Brake fluid</string>
+    <string name="maintenance_item_coolant">Coolant</string>
+    <string name="maintenance_item_transmission_oil">Transmission fluid</string>
+    <string name="maintenance_item_battery">Battery</string>
+    <string name="maintenance_item_tire">Tires</string>
+    <string name="maintenance_item_wiper">Wipers</string>
+
+    <string name="fuel_gasoline">Gasoline</string>
+    <string name="fuel_diesel">Diesel</string>
+    <string name="fuel_lpg">LPG</string>
+    <string name="fuel_hybrid">Hybrid</string>
+    <string name="fuel_plug_in_hybrid">Plug-in hybrid</string>
+    <string name="fuel_electric">Electric</string>
+    <string name="fuel_hydrogen">Hydrogen</string>
+</resources>
