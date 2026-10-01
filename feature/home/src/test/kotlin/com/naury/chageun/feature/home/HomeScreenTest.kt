@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.home
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -15,6 +16,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
@@ -164,5 +166,27 @@ class HomeScreenTest {
         show(content(VehicleHealthLevel.Upcoming, listOf(HealthReason.InspectionDueSoon)))
 
         composeRule.onNodeWithText("Vehicle inspection is coming up").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "w800dp-h700dp-mdpi")
+    fun tabletop_keepsCarAboveHinge_andListsBelow() {
+        composeRule.setContent {
+            ChageunTheme {
+                HomeScreen(
+                    uiState = content(
+                        VehicleHealthLevel.NeedsAttention,
+                        listOf(HealthReason.ItemOverdue(MaintenanceItem.EngineOil)),
+                        status(MaintenanceItem.EngineOil, MaintenanceState.Overdue, remainingKm = -300),
+                    ),
+                    paneCount = 2,
+                    actions = HomeActions({}, {}, {}),
+                    hinge = Hinge(start = 350f, end = 350f, isVertical = false),
+                )
+            }
+        }
+
+        assertThat(composeRule.onNodeWithText("KG Mobility Torres").getBoundsInRoot().bottom.value).isAtMost(342f)
+        assertThat(composeRule.onNodeWithText("Check now").getBoundsInRoot().top.value).isAtLeast(358f)
     }
 }

@@ -3,7 +3,6 @@ package com.naury.chageun.feature.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,7 +26,10 @@ import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.ui.Hinge
+import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.VehicleHeroSection
+import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
@@ -46,7 +48,10 @@ fun HomeRoute(
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
         uiState = uiState,
-        paneCount = homePaneCount(windowSizeClass),
+        // Book posture: never let the single pane run across the fold.
+        paneCount = homePaneCount(windowSizeClass).let {
+            if (currentSeparatingHinge()?.isVertical == true) maxOf(it, TWO_PANES) else it
+        },
         actions = HomeActions(
             onRecordService = onRecordService,
             onUpdateMileage = onUpdateMileage,
@@ -79,50 +84,77 @@ private const val TWO_PANES = 2
 private const val THREE_PANES = 3
 
 @Composable
-fun HomeScreen(uiState: HomeUiState, paneCount: Int, actions: HomeActions, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    uiState: HomeUiState,
+    paneCount: Int,
+    actions: HomeActions,
+    modifier: Modifier = Modifier,
+    hinge: Hinge? = currentSeparatingHinge(),
+) {
     when (uiState) {
         HomeUiState.Loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        is HomeUiState.Content -> HomeContent(uiState, paneCount, actions, modifier)
+        is HomeUiState.Content -> HomeContent(uiState, paneCount, actions, hinge, modifier)
     }
 }
 
 @Composable
-private fun HomeContent(state: HomeUiState.Content, paneCount: Int, actions: HomeActions, modifier: Modifier) {
+private fun HomeContent(
+    state: HomeUiState.Content,
+    paneCount: Int,
+    actions: HomeActions,
+    hinge: Hinge?,
+    modifier: Modifier,
+) {
     val spacing = ChageunTheme.spacing
-    val panes: List<LazyListScope.() -> Unit> = when (paneCount) {
-        SINGLE_PANE -> listOf({
-            summaryPane(state, actions)
+    // Tabletop: the car and its status stay on the upper half, lists and actions on the lower half.
+    val isTabletop = hinge != null && !hinge.isVertical
+    val panes: List<LazyListScope.() -> Unit> = when {
+        isTabletop -> listOf({ summaryPane(state, actions) }, {
             attentionPane(state, actions)
             missingPane(state)
             recentPane(state, actions)
         })
-        TWO_PANES -> listOf({ summaryPane(state, actions) }, {
-            attentionPane(state, actions)
-            missingPane(state)
-            recentPane(state, actions)
-        })
-        else -> listOf({ summaryPane(state, actions) }, { attentionPane(state, actions) }, {
-            missingPane(state)
-            recentPane(state, actions)
-        })
+        else -> homePanes(state, paneCount, actions)
     }
-    Row(
+    HingeAwarePanes(
+        weights = List(panes.size) { 1f },
         modifier = modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.spacedBy(spacing.paneGap),
+        stacked = isTabletop,
+        hinge = hinge,
     ) {
         panes.forEach { pane ->
             LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 content = pane,
             )
         }
     }
+}
+
+private fun homePanes(
+    state: HomeUiState.Content,
+    paneCount: Int,
+    actions: HomeActions,
+): List<LazyListScope.() -> Unit> = when (paneCount) {
+    SINGLE_PANE -> listOf({
+        summaryPane(state, actions)
+        attentionPane(state, actions)
+        missingPane(state)
+        recentPane(state, actions)
+    })
+    TWO_PANES -> listOf({ summaryPane(state, actions) }, {
+        attentionPane(state, actions)
+        missingPane(state)
+        recentPane(state, actions)
+    })
+    else -> listOf({ summaryPane(state, actions) }, { attentionPane(state, actions) }, {
+        missingPane(state)
+        recentPane(state, actions)
+    })
 }
 
 private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {

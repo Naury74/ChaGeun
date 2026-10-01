@@ -1,10 +1,7 @@
 package com.naury.chageun.feature.manage
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
@@ -18,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowSizeClass
-import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.feature.manage.rule.RuleEditorHost
 
 @Composable
@@ -43,7 +40,7 @@ fun ManageRoute(
     var editingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     ManageScreen(
         uiState = uiState,
-        isTwoPane = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
+        isTwoPane = isListDetailTwoPane(),
         onFilterSelected = viewModel::selectFilter,
         onItemSelected = viewModel::selectItem,
         onRecordService = onRecordService,
@@ -74,19 +71,18 @@ fun ManageScreen(
     }
     val detail = uiState.detail
     if (isTwoPane) {
-        Row(modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.paneGap)) {
+        HingeAwarePanes(
+            weights = listOf(LIST_PANE_WEIGHT, 1f - LIST_PANE_WEIGHT),
+            modifier = modifier.fillMaxSize(),
+        ) {
             ManageList(
                 uiState = uiState,
                 onFilterSelected = onFilterSelected,
                 onItemSelected = onItemSelected,
                 onEditRule = onEditRule,
-                modifier = Modifier
-                    .weight(LIST_PANE_WEIGHT)
-                    .fillMaxHeight(),
+                modifier = Modifier.fillMaxSize(),
             )
-            val detailModifier = Modifier
-                .weight(1f - LIST_PANE_WEIGHT)
-                .fillMaxHeight()
+            val detailModifier = Modifier.fillMaxSize()
             if (detail != null) {
                 ManageDetailPane(
                     detail,
