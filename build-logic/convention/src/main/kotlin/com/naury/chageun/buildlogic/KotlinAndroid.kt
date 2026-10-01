@@ -4,8 +4,10 @@ import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
@@ -25,6 +27,10 @@ internal fun Project.configureKotlinAndroid(commonExtension: CommonExtension) {
             jvmTarget.set(JvmTarget.JVM_17)
             allWarningsAsErrors.set(providers.gradleProperty("warningsAsErrors").map(String::toBoolean).orElse(false))
         }
+    }
+    // Robolectric patches FileDescriptor through JDK internals that JDK 17+ no longer exports.
+    tasks.withType<Test>().configureEach {
+        jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
     }
     dependencies {
         add("testImplementation", libs.library("junit4"))
