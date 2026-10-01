@@ -26,35 +26,33 @@ fun ChageunApp() {
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
 
-    ChageunTheme(spacing = spacingFor(windowSizeClass)) {
-        NavigationSuiteScaffold(
-            layoutType = navigationSuiteTypeFor(windowSizeClass),
-            navigationSuiteItems = {
+    NavigationSuiteScaffold(
+        layoutType = navigationSuiteTypeFor(windowSizeClass),
+        navigationSuiteItems = {
+            TopLevelDestination.entries.forEach { destination ->
+                item(
+                    selected = destination.route == currentTopLevel,
+                    onClick = {
+                        if (destination.route != currentTopLevel) {
+                            backStack.clear()
+                            backStack.add(destination.route)
+                        }
+                    },
+                    icon = { Icon(destination.icon, contentDescription = null) },
+                    label = { Text(stringResource(destination.labelRes)) },
+                )
+            }
+        },
+    ) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
-                    item(
-                        selected = destination.route == currentTopLevel,
-                        onClick = {
-                            if (destination.route != currentTopLevel) {
-                                backStack.clear()
-                                backStack.add(destination.route)
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = null) },
-                        label = { Text(stringResource(destination.labelRes)) },
-                    )
+                    entry(destination.route) { PendingDestination(destination) }
                 }
             },
-        ) {
-            NavDisplay(
-                backStack = backStack,
-                onBack = { backStack.removeLastOrNull() },
-                entryProvider = entryProvider {
-                    TopLevelDestination.entries.forEach { destination ->
-                        entry(destination.route) { PendingDestination(destination) }
-                    }
-                },
-            )
-        }
+        )
     }
 }
 
