@@ -23,7 +23,7 @@ class HomeScreenTest {
     val composeRule = createComposeRule()
 
     private fun show(state: HomeUiState) = composeRule.setContent {
-        ChageunTheme { HomeScreen(uiState = state, paneCount = 1) }
+        ChageunTheme { HomeScreen(uiState = state, paneCount = 1, onRecordService = {}) }
     }
 
     @Test

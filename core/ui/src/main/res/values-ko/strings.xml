@@ -38,4 +38,7 @@
     <plurals name="maintenance_overdue_days">
         <item quantity="other">%1$d일 지났어요</item>
     </plurals>
+
+    <string name="date_picker_confirm">확인</string>
+    <string name="date_picker_cancel">취소</string>
 </resources>

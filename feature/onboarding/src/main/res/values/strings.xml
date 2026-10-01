@@ -29,8 +29,6 @@
     <string name="onboarding_error_year_invalid">Enter a year between 1980 and next year</string>
     <string name="onboarding_error_mileage_invalid">Check the mileage</string>
 
-    <string name="onboarding_confirm">OK</string>
-    <string name="onboarding_cancel">Cancel</string>
 
     <string name="onboarding_quick_title">When did you last replace these?</string>
     <string name="onboarding_quick_body">Skip anything you don\'t remember. You can fill it in later.</string>

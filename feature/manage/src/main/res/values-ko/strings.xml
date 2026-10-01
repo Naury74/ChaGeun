@@ -33,4 +33,30 @@
     <string name="manage_value_or">%1$s / %2$s</string>
     <string name="manage_km">%1$skm</string>
     <string name="manage_cost_won">%1$s원</string>
+
+    <string name="record_title">%1$s 교체 기록</string>
+    <string name="record_date">교체한 날</string>
+    <string name="record_mileage">교체 당시 주행거리</string>
+    <string name="record_cost">비용 (선택)</string>
+    <string name="record_cost_hint">모르면 비워두세요. 무상이면 0을 입력해요.</string>
+    <string name="record_shop">정비소 (선택)</string>
+    <string name="record_memo">메모 (선택)</string>
+    <string name="record_save">저장</string>
+    <string name="record_cancel">취소</string>
+    <string name="record_error_required">입력해 주세요</string>
+    <string name="record_error_future_date">미래 날짜는 선택할 수 없어요</string>
+    <string name="record_error_invalid_number">금액을 확인해 주세요</string>
+    <string name="record_save_failed">저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="record_lower_mileage_title">이전 기록보다 낮아요</string>
+    <string name="record_lower_mileage_body">이전 %1$s 교체는 %2$skm였어요. 값을 다시 확인하거나 계기판을 교체했다면 그대로 저장해 주세요.</string>
+    <string name="record_lower_mileage_save">그대로 저장</string>
+    <string name="record_lower_mileage_edit">수정할게요</string>
+    <string name="record_saved_title">%1$s 교체 기록을 저장했어요</string>
+    <string name="record_saved_next_both">다음 기준은 %1$skm 또는 %2$s 중 먼저 도달하는 시점이에요.</string>
+    <string name="record_saved_next_km">다음 기준은 %1$skm예요.</string>
+    <string name="record_saved_next_date">다음 기준은 %1$s예요.</string>
+    <string name="record_done">확인</string>
+    <string name="record_action">교체했어요</string>
+    <string name="record_unit_km">km</string>
+    <string name="record_unit_won">원</string>
 </resources>

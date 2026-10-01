@@ -19,7 +19,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 
 @Composable
-fun ManageRoute(viewModel: ManageViewModel = hiltViewModel()) {
+fun ManageRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: ManageViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     ManageScreen(
@@ -27,6 +27,7 @@ fun ManageRoute(viewModel: ManageViewModel = hiltViewModel()) {
         isTwoPane = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
         onFilterSelected = viewModel::selectFilter,
         onItemSelected = viewModel::selectItem,
+        onRecordService = onRecordService,
     )
 }
 
@@ -40,6 +41,7 @@ fun ManageScreen(
     isTwoPane: Boolean,
     onFilterSelected: (ManageFilter) -> Unit,
     onItemSelected: (MaintenanceItem?) -> Unit,
+    onRecordService: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (uiState.isLoading) {
@@ -61,14 +63,19 @@ fun ManageScreen(
                 .weight(1f - LIST_PANE_WEIGHT)
                 .fillMaxHeight()
             if (detail != null) {
-                ManageDetailPane(detail, onBack = null, modifier = detailModifier)
+                ManageDetailPane(detail, onBack = null, onRecordService = onRecordService, modifier = detailModifier)
             } else {
                 DetailPlaceholder(detailModifier)
             }
         }
     } else if (detail != null) {
         BackHandler { onItemSelected(null) }
-        ManageDetailPane(detail, onBack = { onItemSelected(null) }, modifier = modifier.fillMaxSize())
+        ManageDetailPane(
+            detail,
+            onBack = { onItemSelected(null) },
+            onRecordService = onRecordService,
+            modifier = modifier.fillMaxSize(),
+        )
     } else {
         ManageList(uiState, onFilterSelected, onItemSelected, modifier.fillMaxSize())
     }
