@@ -74,6 +74,16 @@ class ChageunDatabaseTest {
     }
 
     @Test
+    fun prefersDatedRecord_overUndatedOne() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        val dao = database.maintenanceDao()
+        dao.insertRecord(service("dated", "Tire", LocalDate.of(2024, 8, 5)))
+        dao.insertRecord(service("undated", "Tire", on = null, createdAt = FIXED_NOW.plusSeconds(60)))
+
+        assertThat(dao.observeLatestRecords("vehicle-1").first().single().id).isEqualTo("dated")
+    }
+
+    @Test
     fun keepsZeroCost_distinctFromMissingCost() = runTest {
         database.vehicleDao().upsert(vehicle())
         val dao = database.maintenanceDao()

@@ -32,6 +32,6 @@ abstract class ChageunDatabase : RoomDatabase() {
 
     companion object {
         const val NAME = "chageun.db"
-        const val VERSION = 1
+        const val VERSION = 2
     }
 }

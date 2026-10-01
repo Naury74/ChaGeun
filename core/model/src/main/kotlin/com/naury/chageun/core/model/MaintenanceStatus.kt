@@ -5,11 +5,12 @@ import java.time.LocalDate
 /** Declared from most to least urgent; [ordinal] is used for sorting. */
 enum class MaintenanceState { Overdue, Due, Upcoming, Unknown, Good }
 
-enum class MissingInput { LastService, LastServiceMileage, CurrentMileage }
+enum class MissingInput { LastService, LastServiceDate, LastServiceMileage, CurrentMileage }
 
 enum class Confidence { High, Medium, Low }
 
-data class ServiceRecord(val date: LocalDate, val mileage: Kilometers?)
+/** A past service; either value may be unknown when the user only remembers one of them. */
+data class ServiceRecord(val date: LocalDate?, val mileage: Kilometers?)
 
 data class MileageReading(val date: LocalDate, val mileage: Kilometers)
 

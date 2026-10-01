@@ -35,7 +35,7 @@ internal fun mileage(id: String, km: Long, on: LocalDate, vehicleId: String = "v
     createdAt = FIXED_NOW,
 )
 
-internal fun service(id: String, item: String, on: LocalDate, createdAt: Instant = FIXED_NOW, costWon: Long? = null) =
+internal fun service(id: String, item: String, on: LocalDate?, createdAt: Instant = FIXED_NOW, costWon: Long? = null) =
     MaintenanceRecordEntity(
         id = id,
         vehicleId = "vehicle-1",
