@@ -49,3 +49,5 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/dependency-submission@v5
+        with:
+          dependency-graph-include-configurations: '.*[Rr]untimeClasspath'
