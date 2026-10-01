@@ -3,6 +3,8 @@ package com.naury.chageun.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,12 +42,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import java.time.LocalDate
 
 @Composable
 fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val dataState by viewModel.dataState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val version = remember { context.versionName() }
+    val exportLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ZIP_MIME_TYPE)) { uri ->
+            uri?.let { viewModel.export(it.toString()) }
+        }
     SettingsScreen(
         settings = settings,
         versionName = version,
@@ -53,7 +61,17 @@ fun SettingsRoute(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMod
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
         onOpenSystemNotifications = { context.openNotificationSettings() },
+        dataSection = {
+            DataSection(
+                state = dataState,
+                onExport = { exportLauncher.launch("chageun-backup-${LocalDate.now()}.zip") },
+                onRequestDelete = viewModel::requestDeleteAll,
+            )
+        },
     )
+    dataState.pendingDeletion?.let { summary ->
+        DeleteAllDialog(summary, onConfirm = viewModel::confirmDeleteAll, onDismiss = viewModel::cancelDeleteAll)
+    }
 }
 
 @Composable
@@ -65,6 +83,7 @@ fun SettingsScreen(
     onRemindersChanged: (Boolean) -> Unit,
     onOpenSystemNotifications: () -> Unit,
     modifier: Modifier = Modifier,
+    dataSection: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -129,6 +148,7 @@ fun SettingsScreen(
                     Text(stringResource(R.string.settings_system_notifications))
                 }
             }
+            Section(R.string.settings_section_data) { dataSection() }
             Section(R.string.settings_section_sources) {
                 listOf(
                     R.string.settings_source_user,
@@ -179,3 +199,4 @@ private fun Context.openNotificationSettings() {
 }
 
 private val CONTENT_MAX_WIDTH = 640.dp
+private const val ZIP_MIME_TYPE = "application/zip"

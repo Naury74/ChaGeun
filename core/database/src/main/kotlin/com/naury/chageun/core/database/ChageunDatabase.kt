@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.naury.chageun.core.database.converter.TimeConverters
 import com.naury.chageun.core.database.dao.AttachmentDao
+import com.naury.chageun.core.database.dao.BackupDao
 import com.naury.chageun.core.database.dao.HistoryDao
 import com.naury.chageun.core.database.dao.MaintenanceDao
 import com.naury.chageun.core.database.dao.MileageRecordDao
@@ -46,6 +47,8 @@ abstract class ChageunDatabase : RoomDatabase() {
     abstract fun attachmentDao(): AttachmentDao
 
     abstract fun reminderDao(): ReminderDao
+
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME = "chageun.db"

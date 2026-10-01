@@ -16,4 +16,26 @@
     <string name="settings_source_official">Official inspection and recall data: not connected yet</string>
     <string name="settings_section_about">About</string>
     <string name="settings_version">Version %1$s</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_export">Export data</string>
+    <string name="settings_export_body">Saves your vehicle, records and photos as a ZIP file you choose. The plate number is saved masked.</string>
+    <string name="settings_export_done">Export complete</string>
+    <string name="settings_export_failed">Couldn\'t export. Try another location.</string>
+    <string name="settings_delete_all">Delete all data</string>
+    <string name="settings_delete_title">Delete all data on this device?</string>
+    <plurals name="settings_delete_vehicles">
+        <item quantity="one">%1$d vehicle</item>
+        <item quantity="other">%1$d vehicles</item>
+    </plurals>
+    <plurals name="settings_delete_records">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
+    <plurals name="settings_delete_photos">
+        <item quantity="one">%1$d photo or receipt</item>
+        <item quantity="other">%1$d photos and receipts</item>
+    </plurals>
+    <string name="settings_delete_body">This can\'t be undone. Export first if you want to keep a copy. Settings are kept.</string>
+    <string name="settings_delete_confirm">Delete</string>
+    <string name="settings_cancel">Cancel</string>
 </resources>

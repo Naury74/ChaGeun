@@ -14,7 +14,7 @@ Status: Accepted
   ```text
   app
   feature:onboarding · home · manage · history · vehicle · ai · settings
-  data:vehicle · maintenance · history · recall · ai
+  data:vehicle · maintenance · history · backup · recall · ai
   core:model · domain · common · designsystem · ui · database · datastore · network
   core:security · notification · analytics · ads · testing
   ```
@@ -32,6 +32,7 @@ Status: Accepted
   - `core:security`: 차량번호·VIN 등 필드 암호화를 DB·Network와 분리
   - `core:ui`: Feature 간 직접 참조 없이 도메인 모델 표시 문구와 공용 Composable 공유
   - `core:datastore`: 테마·알림 같은 사용자 설정을 Room과 분리된 Key-Value로 저장
+  - `data:backup`: 모든 테이블과 첨부 파일을 읽는 내보내기·전체 삭제를 기능 Repository와 분리
 
 ## Alternatives considered
 
