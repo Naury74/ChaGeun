@@ -39,6 +39,19 @@ interface MaintenanceDao {
     )
     fun observeRecords(vehicleId: String, itemType: String): Flow<List<MaintenanceRecordEntity>>
 
+    @Query("SELECT * FROM maintenance_rule WHERE vehicle_id = :vehicleId AND item_type = :itemType")
+    suspend fun findRule(vehicleId: String, itemType: String): MaintenanceRuleEntity?
+
+    @Query(
+        """
+        SELECT * FROM maintenance_record
+        WHERE vehicle_id = :vehicleId AND item_type = :itemType
+        ORDER BY service_date DESC, created_at DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun findLatestRecord(vehicleId: String, itemType: String): MaintenanceRecordEntity?
+
     @Insert
     suspend fun insertRecord(record: MaintenanceRecordEntity)
 }

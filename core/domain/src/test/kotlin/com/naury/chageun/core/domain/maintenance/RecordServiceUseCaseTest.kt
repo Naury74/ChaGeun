@@ -1,0 +1,92 @@
+package com.naury.chageun.core.domain.maintenance
+
+import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MaintenanceRule
+import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.ServiceEntry
+import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
+
+class RecordServiceUseCaseTest {
+
+    private val today = LocalDate.of(2026, 10, 1)
+    private val vehicleId = VehicleId("v1")
+    private val repository = FakeMaintenanceRepository()
+    private val recordService = RecordServiceUseCase(
+        repository,
+        Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
+    )
+
+    @Before
+    fun setUp() {
+        repository.inputs.value = MaintenanceInputs(
+            rules = listOf(MaintenanceRule(MaintenanceItem.EngineOil, intervalKm = 10_000, intervalMonths = 12)),
+            lastServices = mapOf(
+                MaintenanceItem.EngineOil to ServiceRecord(LocalDate.of(2026, 3, 10), Kilometers(40_260)),
+            ),
+            mileageHistory = listOf(MileageReading(LocalDate.of(2026, 9, 1), Kilometers(42_000))),
+        )
+    }
+
+    private fun entry(km: Long, date: LocalDate = today, cost: Long? = null) =
+        ServiceEntry(MaintenanceItem.EngineOil, date, Kilometers(km), costWon = cost)
+
+    @Test
+    fun savesAndReturnsNextDue_fromRule() = runTest {
+        val result = recordService(vehicleId, entry(42_891))
+
+        assertThat(result).isEqualTo(RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1)))
+    }
+
+    @Test
+    fun advancesOdometer_onlyWhenEntryIsAheadOfCurrentMileage() = runTest {
+        recordService(vehicleId, entry(42_891))
+        recordService(vehicleId, entry(41_000), isLowerMileageConfirmed = true)
+
+        assertThat(repository.recordedServices.map { it.second }).containsExactly(true, false).inOrder()
+    }
+
+    @Test
+    fun acceptsTodayButRejectsFutureDate() = runTest {
+        assertThat(
+            recordService(vehicleId, entry(42_500, date = today)),
+        ).isInstanceOf(RecordServiceResult.Saved::class.java)
+        assertThat(recordService(vehicleId, entry(42_600, date = today.plusDays(1))))
+            .isEqualTo(RecordServiceResult.Rejected(setOf(ServiceEntryError.FutureDate)))
+    }
+
+    @Test
+    fun rejectsNegativeCost_butAcceptsZero() = runTest {
+        assertThat(recordService(vehicleId, entry(42_500, cost = -1)))
+            .isEqualTo(RecordServiceResult.Rejected(setOf(ServiceEntryError.NegativeCost)))
+        assertThat(
+            recordService(vehicleId, entry(42_500, cost = 0)),
+        ).isInstanceOf(RecordServiceResult.Saved::class.java)
+    }
+
+    @Test
+    fun asksForConfirmation_whenLowerThanPreviousService() = runTest {
+        val result = recordService(vehicleId, entry(39_000))
+
+        assertThat(result).isEqualTo(RecordServiceResult.NeedsConfirmation(Kilometers(40_260)))
+        assertThat(repository.recordedServices).isEmpty()
+    }
+
+    @Test
+    fun savesLowerMileage_afterConfirmation() = runTest {
+        val result = recordService(vehicleId, entry(39_000), isLowerMileageConfirmed = true)
+
+        assertThat(result).isInstanceOf(RecordServiceResult.Saved::class.java)
+        assertThat(repository.recordedServices.single().second).isFalse()
+    }
+}

@@ -10,10 +10,13 @@ import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleId
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -36,7 +39,7 @@ class OfflineFirstMaintenanceRepositoryTest {
             Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), ChageunDatabase::class.java)
                 .allowMainThreadQueries()
                 .build()
-        repository = OfflineFirstMaintenanceRepository(database.maintenanceDao(), database.mileageRecordDao())
+        repository = OfflineFirstMaintenanceRepository(database, Clock.fixed(now, ZoneOffset.UTC))
         database.vehicleDao().upsert(
             VehicleEntity(
                 id = "v1", plateNumberEncrypted = null, plateMasked = null, maker = "Maker", model = "Model",
@@ -87,6 +90,40 @@ class OfflineFirstMaintenanceRepositoryTest {
 
         assertThat(inputs.rules.map { it.item }).containsExactly(MaintenanceItem.EngineOil)
         assertThat(inputs.lastServices).isEmpty()
+    }
+
+    @Test
+    fun recordService_storesRecordAndOdometerReadingTogether() = runTest {
+        repository.recordService(
+            vehicleId,
+            ServiceEntry(
+                MaintenanceItem.EngineOil,
+                LocalDate.of(2026, 9, 30),
+                Kilometers(43_000),
+                costWon = 0,
+                shopName = " ",
+            ),
+            advancesOdometer = true,
+        )
+
+        val record = database.maintenanceDao().findLatestRecord("v1", "EngineOil")
+        val mileage = database.mileageRecordDao().findLatest("v1")
+        assertThat(record?.costWon).isEqualTo(0)
+        assertThat(record?.shopName).isNull()
+        assertThat(mileage?.mileageKm).isEqualTo(43_000)
+        assertThat(mileage?.sourceType).isEqualTo("MAINTENANCE")
+        assertThat(mileage?.relatedRecordId).isEqualTo(record?.id)
+    }
+
+    @Test
+    fun recordService_leavesOdometerAlone_whenNotAdvancing() = runTest {
+        repository.recordService(
+            vehicleId,
+            ServiceEntry(MaintenanceItem.Wiper, LocalDate.of(2026, 1, 5), Kilometers(30_000)),
+            advancesOdometer = false,
+        )
+
+        assertThat(database.mileageRecordDao().findLatest("v1")).isNull()
     }
 
     @Test
