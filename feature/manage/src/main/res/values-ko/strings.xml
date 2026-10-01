@@ -74,4 +74,5 @@
     <string name="rule_error_unknown">수정할 수 없는 항목이에요</string>
     <string name="manage_disabled_items">관리하지 않는 항목</string>
     <string name="manage_disabled_hint">눌러서 다시 관리할 수 있어요</string>
+    <string name="manage_ask_ai">AI로 설명</string>
 </resources>

@@ -41,4 +41,6 @@
     <string name="home_recent_empty">아직 기록이 없어요</string>
     <string name="home_recent_add">첫 기록 추가</string>
     <string name="home_recent_won">%1$s원</string>
+    <string name="home_ai_title">내 차에 대해 물어보세요</string>
+    <string name="home_ai_body">내 차 상태를 ChatGPT·Claude·Gemini에 보내 편하게 물어볼 수 있어요.</string>
 </resources>

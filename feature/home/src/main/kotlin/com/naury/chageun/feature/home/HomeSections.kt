@@ -93,3 +93,24 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
         }
     }
 }
+
+@Composable
+internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
+    val ai = ChageunTheme.colors.ai
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onAskAi),
+        shape = MaterialTheme.shapes.large,
+        color = ai.container,
+        contentColor = ai.content,
+    ) {
+        Column(
+            Modifier.padding(ChageunTheme.spacing.md),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+        ) {
+            Text(stringResource(R.string.home_ai_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.home_ai_body), style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}

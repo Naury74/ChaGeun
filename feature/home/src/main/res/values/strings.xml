@@ -43,4 +43,6 @@
     <string name="home_recent_empty">No records yet</string>
     <string name="home_recent_add">Add your first record</string>
     <string name="home_recent_won">₩%1$s</string>
+    <string name="home_ai_title">Ask about your car</string>
+    <string name="home_ai_body">Send your car\'s status to ChatGPT, Claude or Gemini and ask in your own words.</string>
 </resources>

@@ -1,0 +1,50 @@
+<resources>
+    <string name="ai_title">Ask about your car</string>
+    <string name="ai_subtitle">Your car\'s records go to the AI you already use, so it can answer with context.</string>
+    <string name="ai_back">Back</string>
+    <string name="ai_question_label">Your question</string>
+    <string name="ai_question_required">Enter a question</string>
+    <string name="ai_suggestion_status">How is my car doing?</string>
+    <string name="ai_suggestion_oil">When should I change the engine oil?</string>
+    <string name="ai_suggestion_trip">Anything to check before a long road trip?</string>
+    <string name="ai_suggestion_cost">How much have I spent on maintenance this year?</string>
+    <string name="ai_suggestion_item">Explain the %1$s status in simple terms</string>
+
+    <string name="ai_preview_title">What will be shared</string>
+    <string name="ai_included">Included</string>
+    <string name="ai_excluded">Never shared</string>
+    <string name="ai_included_vehicle">Model, year and fuel</string>
+    <string name="ai_included_mileage">Current mileage</string>
+    <string name="ai_included_maintenance">Maintenance status</string>
+    <string name="ai_include_records">Recent records</string>
+    <string name="ai_include_costs">Costs</string>
+    <string name="ai_excluded_plate">Plate number</string>
+    <string name="ai_excluded_owner">Owner name</string>
+    <string name="ai_excluded_location">Location, notes and photos</string>
+    <string name="ai_show_text">Show full text</string>
+    <string name="ai_hide_text">Hide full text</string>
+
+    <string name="ai_send_with">Send to</string>
+    <string name="ai_other_app">Other app</string>
+    <string name="ai_chooser_title">Share with</string>
+    <string name="ai_disclaimer">The AI answers from what\'s shared. Values are calculated by Chageun and aren\'t a mechanical diagnosis.</string>
+
+    <string name="ai_prompt_header">[Chageun vehicle summary · as of %1$s]</string>
+    <string name="ai_prompt_vehicle">Vehicle: %1$s</string>
+    <string name="ai_prompt_mileage">Mileage: %1$s km (recorded %2$s)</string>
+    <string name="ai_prompt_mileage_unknown">Mileage: unknown</string>
+    <string name="ai_prompt_health">Overall status: %1$s</string>
+    <string name="ai_prompt_maintenance">Maintenance (general guidelines unless noted):</string>
+    <string name="ai_prompt_item">- %1$s: %2$s</string>
+    <string name="ai_prompt_missing">Not enough data: %1$s</string>
+    <string name="ai_prompt_records">Recent records:</string>
+    <string name="ai_prompt_footer">Plate number and owner details are not included. Values were calculated by the app and are not a diagnosis.</string>
+    <string name="ai_prompt_question">Question: %1$s</string>
+    <string name="ai_health_good">nothing needs attention</string>
+    <string name="ai_health_upcoming">something is coming up</string>
+    <string name="ai_health_attention">needs attention</string>
+    <string name="ai_health_insufficient">not enough data</string>
+    <string name="ai_prompt_user_rule">your own interval</string>
+    <string name="ai_km">%1$s km</string>
+    <string name="ai_won">₩%1$s</string>
+</resources>

@@ -20,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,7 @@ internal fun ManageDetailPane(
     onRecordService: (MaintenanceItem) -> Unit,
     onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
+    onAskAi: (MaintenanceItem) -> Unit = {},
 ) {
     val status = detail.status
     val gutter = ChageunTheme.spacing.gutter
@@ -106,6 +108,9 @@ internal fun ManageDetailPane(
             }
         }
         item(key = "basis") { BasisSection(detail) }
+        item(key = "ai") {
+            TextButton(onClick = { onAskAi(status.item) }) { Text(stringResource(R.string.manage_ask_ai)) }
+        }
         item(key = "history-title") {
             Text(
                 stringResource(R.string.manage_history),

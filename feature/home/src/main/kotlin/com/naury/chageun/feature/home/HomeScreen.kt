@@ -35,6 +35,7 @@ fun HomeRoute(
     onRecordService: (MaintenanceItem) -> Unit,
     onOpenHistory: () -> Unit,
     onUpdateMileage: () -> Unit,
+    onAskAi: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -46,6 +47,7 @@ fun HomeRoute(
             onRecordService = onRecordService,
             onUpdateMileage = onUpdateMileage,
             onOpenHistory = onOpenHistory,
+            onAskAi = onAskAi,
         ),
     )
 }
@@ -54,6 +56,7 @@ data class HomeActions(
     val onRecordService: (MaintenanceItem) -> Unit,
     val onUpdateMileage: () -> Unit,
     val onOpenHistory: () -> Unit,
+    val onAskAi: () -> Unit = {},
 )
 
 /** Medium widths keep one pane: next to a rail, two panes would fall below the 360dp minimum detail width. */
@@ -171,6 +174,7 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
             modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
     }
+    item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
 }
 
 @Composable
