@@ -1,0 +1,22 @@
+<resources>
+    <string name="notification_channel_maintenance">Maintenance</string>
+    <string name="notification_channel_maintenance_description">When consumables are coming up, due or past due</string>
+    <string name="notification_channel_inspection">Inspection</string>
+    <string name="notification_channel_inspection_description">Statutory inspection deadlines</string>
+    <string name="notification_channel_recall">Recall</string>
+    <string name="notification_channel_recall_description">New safety recalls for your car</string>
+
+    <string name="notification_upcoming_title">%1$s is coming up</string>
+    <string name="notification_due_title">Time to replace your %1$s</string>
+    <string name="notification_overdue_title">%1$s is past due</string>
+    <string name="notification_remaining_km">About %1$s km left</string>
+    <string name="notification_overdue_km">%1$s km past the interval</string>
+    <plurals name="notification_remaining_days">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
+    <plurals name="notification_overdue_days">
+        <item quantity="one">%1$d day past the interval</item>
+        <item quantity="other">%1$d days past the interval</item>
+    </plurals>
+</resources>

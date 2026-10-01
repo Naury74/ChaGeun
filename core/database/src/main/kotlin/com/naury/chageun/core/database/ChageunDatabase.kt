@@ -8,6 +8,7 @@ import com.naury.chageun.core.database.dao.AttachmentDao
 import com.naury.chageun.core.database.dao.HistoryDao
 import com.naury.chageun.core.database.dao.MaintenanceDao
 import com.naury.chageun.core.database.dao.MileageRecordDao
+import com.naury.chageun.core.database.dao.ReminderDao
 import com.naury.chageun.core.database.dao.VehicleDao
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
@@ -15,6 +16,7 @@ import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.ReminderStateEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 
 @Database(
@@ -26,6 +28,7 @@ import com.naury.chageun.core.database.entity.VehicleEntity
         FuelRecordEntity::class,
         CheckRecordEntity::class,
         AttachmentEntity::class,
+        ReminderStateEntity::class,
     ],
     version = ChageunDatabase.VERSION,
     exportSchema = true,
@@ -42,8 +45,10 @@ abstract class ChageunDatabase : RoomDatabase() {
 
     abstract fun attachmentDao(): AttachmentDao
 
+    abstract fun reminderDao(): ReminderDao
+
     companion object {
         const val NAME = "chageun.db"
-        const val VERSION = 4
+        const val VERSION = 5
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,7 +24,19 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.manage.rule.RuleEditorHost
 
 @Composable
-fun ManageRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: ManageViewModel = hiltViewModel()) {
+fun ManageRoute(
+    onRecordService: (MaintenanceItem) -> Unit,
+    pendingSelection: MaintenanceItem? = null,
+    onPendingSelectionHandled: () -> Unit = {},
+    viewModel: ManageViewModel = hiltViewModel(),
+) {
+    LaunchedEffect(pendingSelection) {
+        if (pendingSelection != null) {
+            viewModel.selectFilter(ManageFilter.All)
+            viewModel.selectItem(pendingSelection)
+            onPendingSelectionHandled()
+        }
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     var editingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
