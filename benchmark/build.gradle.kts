@@ -19,4 +19,9 @@ dependencies {
     implementation(libs.androidx.benchmark.macro.junit4)
     implementation(libs.androidx.test.ext.junit)
     implementation(libs.androidx.test.uiautomator)
+
+    constraints {
+        // benchmark-macro pulls wire-runtime 6.4.0 (GHSA-9rm7-3qhh-h2mc).
+        implementation(libs.wire.runtime)
+    }
 }
