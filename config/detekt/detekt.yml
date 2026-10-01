@@ -1,0 +1,42 @@
+complexity:
+  LongParameterList:
+    functionThreshold: 8
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ['Preview']
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  MatchingDeclarationName:
+    active: false
+  ForbiddenClassName:
+    active: true
+    forbiddenName: ['Util', 'Utils', 'Manager', 'Helper', 'Common', 'Temp']
+
+style:
+  ForbiddenComment:
+    active: true
+    comments:
+      - value: 'FIXME:'
+        reason: 'Track the problem in an Issue and reference it as TODO(CHGN-n).'
+      - value: 'HACK'
+        reason: 'Use WORKAROUND(CHGN-n) with a removal condition.'
+    allowedPatterns: 'TODO\(CHGN-\d+\)'
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreAnnotated: ['Preview']
+    excludes: ['**/test/**', '**/androidTest/**', '**/designsystem/**']
+  UnusedPrivateMember:
+    ignoreAnnotated: ['Preview']
+  WildcardImport:
+    active: true
+    excludeImports: []
+
+potential-bugs:
+  ImplicitDefaultLocale:
+    active: true
