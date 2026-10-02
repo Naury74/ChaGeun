@@ -35,6 +35,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
+import com.naury.chageun.core.ui.usedFraction
 
 @Composable
 internal fun ManageList(

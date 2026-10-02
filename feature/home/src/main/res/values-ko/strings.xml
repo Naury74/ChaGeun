@@ -58,4 +58,6 @@
     <plurals name="home_inspection_days_overdue">
         <item quantity="other">%1$d일 지남</item>
     </plurals>
+    <string name="home_open_detail">자세히</string>
+    <string name="home_progress_km">다음 교체까지 %1$s / %2$s km</string>
 </resources>

@@ -44,7 +44,9 @@ data class AppActions(
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
-    /** 알림에서 연 항목. Care 탭이 선택하고 나면 소비된다. */
+    /** 다른 탭에서 관리 탭의 항목 상세를 연다. */
+    val onOpenManageItem: (MaintenanceItem) -> Unit = {},
+    /** 알림이나 다른 탭에서 연 항목. Care 탭이 선택하고 나면 소비된다. */
     val pendingManageItem: MaintenanceItem? = null,
     val onPendingManageItemHandled: () -> Unit = {},
 )
@@ -59,6 +61,7 @@ fun ChageunApp(
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     var isUpdatingMileage by rememberSaveable { mutableStateOf(false) }
+    var openedManageItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
@@ -74,8 +77,15 @@ fun ChageunApp(
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         onOpenSettings = { backStack.add(SettingsRoute) },
-        pendingManageItem = (deepLink as? DeepLink.Maintenance)?.item,
-        onPendingManageItemHandled = onDeepLinkHandled,
+        onOpenManageItem = { item ->
+            openedManageItem = item
+            navigateTo(TopLevelDestination.Manage)
+        },
+        pendingManageItem = (deepLink as? DeepLink.Maintenance)?.item ?: openedManageItem,
+        onPendingManageItemHandled = {
+            openedManageItem = null
+            onDeepLinkHandled()
+        },
     )
     LaunchedEffect(deepLink) {
         when (deepLink) {
@@ -158,6 +168,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onAskAi = { actions.onAskAi(null) },
             onOpenSettings = actions.onOpenSettings,
             onOpenInspection = { actions.onNavigate(TopLevelDestination.Vehicle) },
+            onOpenItem = actions.onOpenManageItem,
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,

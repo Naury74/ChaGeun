@@ -1,12 +1,18 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,10 +27,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.ui.ItemIconBadge
+import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.timelineTitle
 
 @Composable
@@ -74,7 +84,12 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
             TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.home_recent_add)) }
         }
         records.forEach { record ->
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                RecordIcon(record)
                 Column(Modifier.weight(1f)) {
                     Text(timelineTitle(record), style = MaterialTheme.typography.bodyLarge)
                     val meta = listOfNotNull(
@@ -99,6 +114,16 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
 }
 
 @Composable
+private fun RecordIcon(record: TimelineItem) {
+    val item = record.maintenanceItem
+    if (item != null) {
+        MaintenanceItemIcon(item, size = 40.dp)
+    } else {
+        ItemIconBadge(record.ref.type.icon, ChageunTheme.colors.unknown, size = 40.dp)
+    }
+}
+
+@Composable
 internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
     val ai = ChageunTheme.colors.ai
     Surface(
@@ -109,12 +134,24 @@ internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) 
         color = ai.container,
         contentColor = ai.content,
     ) {
-        Column(
+        Row(
             Modifier.padding(ChageunTheme.spacing.md),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.home_ai_title), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(R.string.home_ai_body), style = MaterialTheme.typography.bodySmall)
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .background(ai.content, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = ai.container)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
+                Text(stringResource(R.string.home_ai_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.home_ai_body), style = MaterialTheme.typography.bodySmall)
+            }
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
     }
 }

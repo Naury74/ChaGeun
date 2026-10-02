@@ -8,14 +8,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -30,15 +32,20 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.VehicleHealth
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.ui.MaintenanceItemIcon
+import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
+import com.naury.chageun.core.ui.usedFraction
 import kotlin.math.absoluteValue
 
 @Composable
@@ -84,9 +91,12 @@ internal fun VehicleStatusSummary(
 @Composable
 internal fun MaintenanceStatusCard(
     status: MaintenanceStatus,
+    rule: MaintenanceRule?,
     onRecordService: (MaintenanceItem) -> Unit,
+    onOpenDetail: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tone = status.state.tone.colors
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
@@ -94,50 +104,86 @@ internal fun MaintenanceStatusCard(
     ) {
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.md),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(status.item.labelRes),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                MaintenanceItemIcon(status.item)
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(status.item.labelRes), style = MaterialTheme.typography.titleMedium)
+                    remainingText(status)?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
                 StatusBadge(tone = status.state.tone, label = stringResource(status.state.labelRes))
             }
-            remainingText(status)?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-            status.estimatedDue?.let {
+            usedFraction(status, rule)?.let { fraction ->
+                MaintenanceProgressBar(fraction, tone.content)
+            }
+            progressCaption(status, rule)?.let {
                 Text(
-                    stringResource(R.string.home_estimated_due, formatDate(it.date)),
+                    it,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (status.ruleSource == RuleSource.Generic) {
-                Text(
-                    stringResource(R.string.home_rule_generic),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                OutlinedButton(
+                    onClick = { onOpenDetail(status.item) },
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.home_open_detail)) }
+                Button(
+                    onClick = { onRecordService(status.item) },
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) { Text(stringResource(R.string.home_record_service)) }
             }
-            FilledTonalButton(
-                onClick = { onRecordService(status.item) },
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) { Text(stringResource(R.string.home_record_service)) }
         }
     }
 }
 
+/** 막대 아래의 '다음 교체까지 1,920 / 10,000 km'. 거리 기준이 없으면 남은 일수와 주기로 보여 준다. */
 @Composable
-internal fun MissingInfoRow(status: MaintenanceStatus, modifier: Modifier = Modifier) {
+private fun progressCaption(status: MaintenanceStatus, rule: MaintenanceRule?): String? {
+    val km = status.remainingKm
+    val intervalKm = rule?.intervalKm
+    if (km != null && km > 0 && intervalKm != null) {
+        return stringResource(R.string.home_progress_km, formatNumber(km), formatNumber(intervalKm))
+    }
+    val generic = status.ruleSource == RuleSource.Generic
+    val estimated = status.estimatedDue?.let { stringResource(R.string.home_estimated_due, formatDate(it.date)) }
+    return listOfNotNull(estimated, stringResource(R.string.home_rule_generic).takeIf { generic })
+        .joinToString(" · ")
+        .ifEmpty { null }
+}
+
+@Composable
+internal fun MissingInfoRow(
+    status: MaintenanceStatus,
+    onOpenDetail: (MaintenanceItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .clickable(role = Role.Button) { onOpenDetail(status.item) }
             .padding(vertical = ChageunTheme.spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        MaintenanceItemIcon(status.item, size = 40.dp)
         Column(Modifier.weight(1f)) {
             Text(stringResource(status.item.labelRes), style = MaterialTheme.typography.bodyLarge)
             Text(
