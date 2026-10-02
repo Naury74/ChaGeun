@@ -53,7 +53,7 @@
     <string name="privacy_stored_title">What is stored</string>
     <string name="privacy_stored_body">Vehicle details you enter, mileage, maintenance, fuel and check records, attached photos and receipts, and app settings. Everything stays on this device. There is no account.</string>
     <string name="privacy_transfer_title">What leaves the device</string>
-    <string name="privacy_transfer_body">Your vehicle details and records are never sent. To show ads, the Google Mobile Ads SDK contacts Google and may use your device\'s advertising ID, depending on your consent. When you ask an external AI, you see the exact text first and choose the app to share it with. Plate number, owner and location are never included.</string>
+    <string name="privacy_transfer_body">Your vehicle details and records are never sent. To improve the app, usage events such as “a fuel record was saved” are sent to Google Firebase Analytics without your plate number, record details, questions or advertising ID. You can turn this off in Settings › Privacy. To show ads, the Google Mobile Ads SDK contacts Google and may use your device\'s advertising ID, depending on your consent. When you ask an external AI, you see the exact text first and choose the app to share it with. Plate number, owner and location are never included.</string>
     <string name="privacy_security_title">How it is protected</string>
     <string name="privacy_security_body">The plate number is encrypted with a key kept in the Android Keystore and is shown masked. Location and camera details are removed from photos when they are attached. App data is excluded from cloud backup and device transfer.</string>
     <string name="privacy_control_title">Your control</string>
@@ -63,4 +63,7 @@
     <string name="settings_mileage_reminders">Monthly mileage reminder</string>
     <string name="settings_mileage_reminders_body">Once a month, only when the mileage hasn\'t been updated for 30 days.</string>
     <string name="settings_ad_privacy">Ad privacy settings</string>
+    <string name="settings_section_privacy">Privacy</string>
+    <string name="settings_usage_stats">Send usage statistics</string>
+    <string name="settings_usage_stats_body">Only which features you use, like saving a record, to improve the app. Plate number, record details and questions are never sent.</string>
 </resources>

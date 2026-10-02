@@ -16,4 +16,7 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setMileageReminderEnabled(enabled: Boolean) =
         settings.update { it.copy(isMileageReminderEnabled = enabled) }
+
+    override suspend fun setUsageStatsEnabled(enabled: Boolean) =
+        settings.update { it.copy(isUsageStatsEnabled = enabled) }
 }

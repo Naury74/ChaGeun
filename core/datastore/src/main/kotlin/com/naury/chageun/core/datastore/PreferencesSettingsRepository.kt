@@ -22,6 +22,7 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
                 ?: ThemeMode.System,
             isMaintenanceReminderEnabled = prefs[MAINTENANCE_REMINDER] ?: true,
             isMileageReminderEnabled = prefs[MILEAGE_REMINDER] ?: false,
+            isUsageStatsEnabled = prefs[USAGE_STATS] ?: true,
         )
     }
 
@@ -37,9 +38,14 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         dataStore.edit { it[MILEAGE_REMINDER] = enabled }
     }
 
+    override suspend fun setUsageStatsEnabled(enabled: Boolean) {
+        dataStore.edit { it[USAGE_STATS] = enabled }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MAINTENANCE_REMINDER = booleanPreferencesKey("maintenance_reminder_enabled")
         val MILEAGE_REMINDER = booleanPreferencesKey("mileage_reminder_enabled")
+        val USAGE_STATS = booleanPreferencesKey("usage_stats_enabled")
     }
 }

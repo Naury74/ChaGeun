@@ -50,7 +50,7 @@
     <string name="privacy_stored_title">저장하는 정보</string>
     <string name="privacy_stored_body">직접 입력한 차량 정보, 주행거리, 정비·주유·점검 기록, 첨부한 사진·영수증, 앱 설정을 저장해요. 모든 정보는 이 기기에만 저장되고 계정은 없어요.</string>
     <string name="privacy_transfer_title">기기 밖으로 나가는 정보</string>
-    <string name="privacy_transfer_body">차량 정보와 기록은 보내지 않아요. 광고를 보여 주기 위해 Google 모바일 광고 SDK가 Google과 통신하며, 동의 여부에 따라 기기의 광고 ID를 쓸 수 있어요. 외부 AI에 질문할 때는 보낼 내용을 먼저 확인하고 공유할 앱을 직접 선택해요. 차량번호, 소유자, 위치는 포함하지 않아요.</string>
+    <string name="privacy_transfer_body">차량 정보와 기록 내용은 보내지 않아요. 앱 개선을 위해 “주유 기록 저장” 같은 사용 이벤트만 차량번호·기록 내용·질문·광고 ID 없이 Google Firebase 애널리틱스로 보내요. 설정 › 개인정보에서 끌 수 있어요. 광고를 보여 주기 위해 Google 모바일 광고 SDK가 Google과 통신하며, 동의 여부에 따라 기기의 광고 ID를 쓸 수 있어요. 외부 AI에 질문할 때는 보낼 내용을 먼저 확인하고 공유할 앱을 직접 선택해요. 차량번호, 소유자, 위치는 포함하지 않아요.</string>
     <string name="privacy_security_title">보호 방법</string>
     <string name="privacy_security_body">차량번호는 Android Keystore의 키로 암호화해 저장하고 화면에는 마스킹해서 보여줘요. 사진을 첨부할 때 위치와 카메라 정보를 지워요. 앱 데이터는 클라우드 백업과 기기 이전에서 제외돼요.</string>
     <string name="privacy_control_title">내가 할 수 있는 것</string>
@@ -60,4 +60,7 @@
     <string name="settings_mileage_reminders">주행거리 입력 알림 (월 1회)</string>
     <string name="settings_mileage_reminders_body">주행거리를 30일 넘게 입력하지 않았을 때만 한 달에 한 번 알려 드려요.</string>
     <string name="settings_ad_privacy">광고 개인정보 설정</string>
+    <string name="settings_section_privacy">개인정보</string>
+    <string name="settings_usage_stats">사용 통계 보내기</string>
+    <string name="settings_usage_stats_body">기록 저장처럼 어떤 기능을 썼는지만 보내 앱 개선에 써요. 차량번호, 기록 내용, 질문은 보내지 않아요.</string>
 </resources>
