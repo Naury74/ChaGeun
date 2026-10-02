@@ -11,6 +11,12 @@ if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
 
+// 개발 중 실제 광고 노출·클릭은 무효 트래픽으로 계정 정지 사유가 되므로 실제 ID는 release에만 쓴다.
+// providers.gradleProperty는 local.properties를 읽지 않는다. ~/.gradle/gradle.properties나 -P로 넣는다.
+val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
+val admobAppId = providers.gradleProperty("chageun.admob.appId").orElse(admobTestAppId).get()
+val admobNativeUnitId = providers.gradleProperty("chageun.admob.nativeUnitId").orNull
+
 android {
     namespace = "com.naury.chageun"
 
@@ -19,10 +25,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // 기본값은 Google 공식 테스트 앱 ID다. 실제 ID는 Gradle 속성(local.properties·CI Secret)으로만 넣는다.
-        manifestPlaceholders["admobAppId"] = providers.gradleProperty("chageun.admob.appId")
-            .orElse("ca-app-pub-3940256099942544~3347511713")
-            .get()
+        manifestPlaceholders["admobAppId"] = admobTestAppId
     }
 
     buildTypes {
@@ -34,16 +37,21 @@ android {
             applicationIdSuffix = ".staging"
             matchingFallbacks += "release"
             signingConfig = signingConfigs.getByName("debug")
+            manifestPlaceholders["admobAppId"] = admobTestAppId
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            manifestPlaceholders["admobAppId"] = admobAppId
+            // 광고 단위 ID 기본값(테스트)은 core:ads 리소스에 있고 여기서 덮어쓴다.
+            admobNativeUnitId?.let { resValue("string", "admob_native_unit_id", it) }
         }
     }
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
 
     testOptions {
