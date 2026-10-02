@@ -2,25 +2,33 @@ package com.naury.chageun.feature.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -28,15 +36,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-import com.naury.chageun.core.model.FuelType
-import com.naury.chageun.core.ui.labelRes
 
 @Composable
 fun OnboardingRoute(viewModel: OnboardingViewModel = hiltViewModel()) {
@@ -47,37 +53,54 @@ fun OnboardingRoute(viewModel: OnboardingViewModel = hiltViewModel()) {
 @Composable
 fun OnboardingScreen(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit, modifier: Modifier = Modifier) {
     BackHandler(enabled = uiState.canGoBack) { onAction(OnboardingAction.Back) }
+    val slide = motionSpec<androidx.compose.ui.unit.IntOffset>()
+    val fade = motionSpec<Float>()
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .safeDrawingPadding()
             .imePadding()
-            .padding(ChageunTheme.spacing.gutter),
+            .padding(horizontal = ChageunTheme.spacing.gutter),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
+        StepTopBar(uiState, onBack = { onAction(OnboardingAction.Back) })
+        AnimatedContent(
+            targetState = uiState.step,
+            transitionSpec = {
+                val forward = targetState.ordinal > initialState.ordinal
+                val direction = if (forward) SlideDirection.Start else SlideDirection.End
+                (slideIntoContainer(direction, slide) + fadeIn(fade))
+                    .togetherWith(slideOutOfContainer(direction, slide) + fadeOut(fade))
+            },
             modifier = Modifier
                 .weight(1f)
                 .widthIn(max = CONTENT_MAX_WIDTH)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-        ) {
-            when (uiState.step) {
-                OnboardingStep.Intro -> IntroStep()
-                OnboardingStep.Plate -> PlateStep(uiState, onAction)
-                OnboardingStep.VehicleInfo -> VehicleInfoStep(uiState, onAction)
-                OnboardingStep.Mileage -> MileageStep(uiState, onAction)
-                OnboardingStep.QuickMaintenance -> QuickMaintenanceStep(uiState, onAction)
-                OnboardingStep.Notifications -> NotificationsStep()
-            }
-            if (uiState.hasSaveFailed) {
-                Text(
-                    stringResource(R.string.onboarding_save_failed),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+                .fillMaxWidth(),
+            label = "onboarding-step",
+        ) { step ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = ChageunTheme.spacing.md),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
+            ) {
+                when (step) {
+                    OnboardingStep.Intro -> IntroStep()
+                    OnboardingStep.Plate -> PlateStep(uiState, onAction)
+                    OnboardingStep.VehicleInfo -> VehicleInfoStep(uiState, onAction)
+                    OnboardingStep.Mileage -> MileageStep(uiState, onAction)
+                    OnboardingStep.QuickMaintenance -> QuickMaintenanceStep(uiState, onAction)
+                    OnboardingStep.Notifications -> NotificationsStep()
+                }
+                if (uiState.hasSaveFailed) {
+                    Text(
+                        stringResource(R.string.onboarding_save_failed),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         }
         BottomActions(
@@ -85,87 +108,43 @@ fun OnboardingScreen(uiState: OnboardingUiState, onAction: (OnboardingAction) ->
             onAction = onAction,
             modifier = Modifier
                 .widthIn(max = CONTENT_MAX_WIDTH)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(bottom = ChageunTheme.spacing.md),
         )
     }
 }
 
+/** 소개 화면에는 진행 막대를 두지 않는다. 입력 단계부터 남은 단계를 보여 준다. */
 @Composable
-private fun IntroStep() {
-    Spacer(Modifier.heightIn(min = 48.dp))
-    Text(stringResource(R.string.onboarding_intro_title), style = MaterialTheme.typography.headlineLarge)
-    Text(
-        stringResource(R.string.onboarding_intro_body),
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
-private fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
-    StepHeader(R.string.onboarding_plate_title, R.string.onboarding_plate_body)
-    OnboardingTextField(
-        value = uiState.plate,
-        onValueChange = { onAction(OnboardingAction.PlateChanged(it)) },
-        labelRes = R.string.onboarding_plate_label,
-        error = uiState.errors[OnboardingField.Plate],
-        placeholderRes = R.string.onboarding_plate_placeholder,
-        imeAction = ImeAction.Done,
-    )
-    TextButton(onClick = { onAction(OnboardingAction.SkipPlate) }) {
-        Text(stringResource(R.string.onboarding_plate_skip))
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun VehicleInfoStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
-    StepHeader(R.string.onboarding_vehicle_title, bodyRes = null)
-    OnboardingTextField(
-        value = uiState.maker,
-        onValueChange = { onAction(OnboardingAction.MakerChanged(it)) },
-        labelRes = R.string.onboarding_vehicle_maker,
-        error = uiState.errors[OnboardingField.Maker],
-    )
-    OnboardingTextField(
-        value = uiState.model,
-        onValueChange = { onAction(OnboardingAction.ModelChanged(it)) },
-        labelRes = R.string.onboarding_vehicle_model,
-        error = uiState.errors[OnboardingField.Model],
-    )
-    OnboardingTextField(
-        value = uiState.modelYear,
-        onValueChange = { onAction(OnboardingAction.ModelYearChanged(it)) },
-        labelRes = R.string.onboarding_vehicle_year,
-        error = uiState.errors[OnboardingField.ModelYear],
-        keyboardType = KeyboardType.Number,
-        imeAction = ImeAction.Done,
-    )
-    Text(stringResource(R.string.onboarding_vehicle_fuel), style = MaterialTheme.typography.titleSmall)
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        FuelType.entries.forEach { fuel ->
-            FilterChip(
-                selected = uiState.fuelType == fuel,
-                onClick = { onAction(OnboardingAction.FuelTypeSelected(fuel)) },
-                label = { Text(stringResource(fuel.labelRes)) },
-            )
+private fun StepTopBar(uiState: OnboardingUiState, onBack: () -> Unit) {
+    if (uiState.step == OnboardingStep.Intro) return
+    val index = uiState.step.ordinal
+    val total = OnboardingStep.entries.size - 1
+    val progress by animateFloatAsState(index / total.toFloat(), motionSpec(), label = "onboarding-progress")
+    Row(
+        modifier = Modifier
+            .widthIn(max = CONTENT_MAX_WIDTH)
+            .fillMaxWidth()
+            .padding(top = ChageunTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+    ) {
+        IconButton(onClick = onBack, enabled = uiState.canGoBack) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.onboarding_back))
         }
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .weight(1f)
+                .height(6.dp),
+            drawStopIndicator = {},
+        )
+        Text(
+            stringResource(R.string.onboarding_step_progress, index, total),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
-    uiState.errors[OnboardingField.FuelType]?.let { ErrorText(it) }
-}
-
-@Composable
-private fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
-    StepHeader(R.string.onboarding_mileage_title, R.string.onboarding_mileage_body)
-    OnboardingTextField(
-        value = uiState.mileage,
-        onValueChange = { onAction(OnboardingAction.MileageChanged(it)) },
-        labelRes = R.string.onboarding_mileage_label,
-        error = uiState.errors[OnboardingField.Mileage],
-        keyboardType = KeyboardType.Number,
-        imeAction = ImeAction.Done,
-        suffix = { Text(stringResource(R.string.onboarding_mileage_unit)) },
-    )
 }
 
 @Composable
@@ -181,19 +160,19 @@ private fun BottomActions(
         OnboardingStep.VehicleInfo -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitVehicleInfo) }
         OnboardingStep.Mileage -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitMileage) }
         OnboardingStep.QuickMaintenance ->
-            R.string.onboarding_next to
-                { onAction(OnboardingAction.SubmitQuickMaintenance) }
+            R.string.onboarding_next to { onAction(OnboardingAction.SubmitQuickMaintenance) }
         OnboardingStep.Notifications -> R.string.onboarding_notifications_allow to optInToNotifications
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         Button(
             onClick = onPrimary,
             enabled = !uiState.isSaving,
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                .heightIn(min = CTA_HEIGHT),
         ) {
-            Text(stringResource(labelRes))
+            Text(stringResource(labelRes), style = MaterialTheme.typography.titleMedium)
         }
         if (uiState.step == OnboardingStep.Notifications) {
             TextButton(
@@ -204,49 +183,26 @@ private fun BottomActions(
                 Text(stringResource(R.string.onboarding_notifications_later))
             }
         }
-        if (uiState.canGoBack) {
-            TextButton(onClick = { onAction(OnboardingAction.Back) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.onboarding_back))
-            }
+    }
+}
+
+@Composable
+internal fun StepHeader(@StringRes titleRes: Int, @StringRes bodyRes: Int?) {
+    Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        Text(
+            stringResource(titleRes),
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics { heading() },
+        )
+        bodyRes?.let {
+            Text(
+                stringResource(it),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
-}
-
-@Composable
-private fun StepHeader(@StringRes titleRes: Int, @StringRes bodyRes: Int?) {
-    Text(stringResource(titleRes), style = MaterialTheme.typography.headlineSmall)
-    bodyRes?.let {
-        Text(
-            stringResource(it),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun OnboardingTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    @StringRes labelRes: Int,
-    error: FieldError?,
-    @StringRes placeholderRes: Int? = null,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    imeAction: ImeAction = ImeAction.Next,
-    suffix: (@Composable () -> Unit)? = null,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(stringResource(labelRes)) },
-        placeholder = placeholderRes?.let { { Text(stringResource(it)) } },
-        isError = error != null,
-        supportingText = error?.let { { ErrorText(it) } },
-        suffix = suffix,
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        modifier = Modifier.fillMaxWidth(),
-    )
+    Spacer(Modifier.height(ChageunTheme.spacing.xs))
 }
 
 @Composable
@@ -270,18 +226,4 @@ private val FieldError.messageRes: Int
     }
 
 private val CONTENT_MAX_WIDTH = 560.dp
-
-@Preview(widthDp = 360, heightDp = 720)
-@Composable
-private fun VehicleInfoStepPreview() {
-    ChageunTheme {
-        OnboardingScreen(
-            uiState = OnboardingUiState(
-                step = OnboardingStep.VehicleInfo,
-                maker = "KG Mobility",
-                errors = mapOf(OnboardingField.Model to FieldError.Required),
-            ),
-            onAction = {},
-        )
-    }
-}
+private val CTA_HEIGHT = 56.dp

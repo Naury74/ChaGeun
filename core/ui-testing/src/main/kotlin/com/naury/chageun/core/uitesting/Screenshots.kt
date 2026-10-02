@@ -18,6 +18,7 @@ object ScreenshotDevices {
     const val PHONE = "w360dp-h800dp-hdpi"
     const val TABLET = "w1280dp-h800dp-hdpi"
     const val PHONE_DARK = "w360dp-h800dp-night-hdpi"
+    const val PHONE_KO = "ko-w360dp-h800dp-hdpi"
 }
 
 /**

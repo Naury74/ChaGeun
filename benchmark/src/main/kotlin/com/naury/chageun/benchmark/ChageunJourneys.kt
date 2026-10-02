@@ -20,10 +20,10 @@ internal fun MacrobenchmarkScope.registerCarIfNeeded() {
     clickText("Register without a plate")
 
     device.wait(Until.hasObject(By.text("Tell us about your car")), UI_TIMEOUT_MS)
-    val fields = device.findObjects(By.clazz("android.widget.EditText"))
-    fields[0].text = "Hyundai"
-    fields[1].text = "Avante"
-    fields[2].text = "2022"
+    clickText("Hyundai")
+    clickText("Avante")
+    clickText("2022")
+    device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 1f)
     clickText("Gasoline")
     clickText("Next")
 
