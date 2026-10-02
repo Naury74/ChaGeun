@@ -16,6 +16,7 @@
     <string name="history_source_user">Entered by you</string>
     <string name="history_km">%1$s km</string>
     <string name="history_won">₩%1$s</string>
+    <string name="history_month_total">₩%1$s spent</string>
     <string name="history_liters">%1$s L</string>
     <string name="history_unit_price">₩%1$s/L</string>
 

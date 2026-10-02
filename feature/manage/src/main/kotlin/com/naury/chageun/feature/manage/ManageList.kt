@@ -10,18 +10,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.component.StatusBadge
@@ -31,6 +35,8 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.ui.MaintenanceItemIcon
+import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
@@ -105,15 +111,27 @@ internal fun ManageList(
                 }
             }
             items(uiState.disabledItems, key = { "disabled-$it" }) { item ->
-                Text(
-                    text = stringResource(item.labelRes),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable(role = Role.Button) { onEditRule(item) }
-                        .padding(horizontal = gutter, vertical = ChageunTheme.spacing.sm),
-                )
+                        .padding(horizontal = gutter, vertical = ChageunTheme.spacing.xs)
+                        .alpha(DISABLED_ALPHA),
+                    horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MaintenanceItemIcon(item, size = 36.dp)
+                    Text(
+                        text = stringResource(item.labelRes),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         // 기획서 17.2: 관리 목록의 마지막에 한 칸. 빈 목록이나 광고를 쓰지 않을 때는 간격도 남기지 않는다.
@@ -143,29 +161,30 @@ private fun MaintenanceItemCard(
             modifier = Modifier.padding(ChageunTheme.spacing.md),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(status.item.labelRes),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                MaintenanceItemIcon(status.item)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
+                    Text(stringResource(status.item.labelRes), style = MaterialTheme.typography.titleMedium)
+                    val supporting = if (status.state == MaintenanceState.Unknown) {
+                        missingInputText(status)
+                    } else {
+                        remainingText(status)
+                    }
+                    supporting?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 StatusBadge(tone = status.state.tone, label = stringResource(status.state.labelRes))
             }
-            val supporting = if (status.state ==
-                MaintenanceState.Unknown
-            ) {
-                missingInputText(status)
-            } else {
-                remainingText(status)
-            }
-            supporting?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
             usedFraction(status, rule)?.let { fraction ->
-                LinearProgressIndicator(
-                    progress = { fraction },
-                    color = status.state.tone.colors.content,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                MaintenanceProgressBar(fraction, status.state.tone.colors.content)
             }
         }
     }
@@ -177,3 +196,5 @@ private val ManageFilter.labelRes: Int
         ManageFilter.NeedsAttention -> R.string.manage_filter_attention
         ManageFilter.Upcoming -> R.string.manage_filter_upcoming
     }
+
+private const val DISABLED_ALPHA = 0.6f
