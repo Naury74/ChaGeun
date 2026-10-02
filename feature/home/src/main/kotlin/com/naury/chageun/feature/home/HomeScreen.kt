@@ -164,6 +164,7 @@ private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeA
         VehicleStatusSummary(
             health = state.overview.health,
             goodCount = state.goodCount,
+            attentionCount = state.attentionCount,
             modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
     }

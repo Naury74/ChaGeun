@@ -21,7 +21,10 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -142,4 +145,53 @@ class HistoryScreenTest {
 
         composeRule.assertNoClippedText()
     }
+
+    private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean) {
+        composeRule.setContent {
+            AppFrame {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = isTwoPane,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAttach = { _, _ -> },
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+        composeRule.captureScreen(name)
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneTimeline() = screenshot(
+        "history_phone",
+        HistoryUiState(isLoading = false, sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item)))),
+        isTwoPane = false,
+    )
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneEmpty() =
+        screenshot("history_phone_empty", HistoryUiState(isLoading = false), isTwoPane = false)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.TABLET)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_tabletDetail() = screenshot(
+        "history_tablet",
+        HistoryUiState(
+            isLoading = false,
+            sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item))),
+            selected = ref,
+            detail = detail,
+        ),
+        isTwoPane = true,
+    )
 }

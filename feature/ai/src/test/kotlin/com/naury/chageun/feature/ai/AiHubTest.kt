@@ -23,7 +23,10 @@ import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -130,5 +133,23 @@ class AiHubTest {
         }
 
         composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phone() {
+        composeRule.setContent {
+            AppFrame {
+                val state = AiHubUiState(question = "How is my car?", options = AiContextOptions(), facts = facts)
+                AiHubScreen(
+                    uiState = state,
+                    promptText = aiPromptText(facts, state.question),
+                    actions = AiHubActions({
+                    }, {}, {}, {}, onShare = {}),
+                )
+            }
+        }
+        composeRule.captureScreen("ai_phone")
     }
 }

@@ -49,10 +49,10 @@ git clone https://github.com/Naury74/ChaGeun.git
 ## 품질 검사
 
 ```bash
-./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug
+./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug assembleDebug
 ```
 
-PR마다 GitHub Actions에서 동일한 검사가 실행됩니다.
+PR마다 GitHub Actions에서 동일한 검사가 실행됩니다. 의도한 UI 변경이면 `./gradlew recordRoborazziDebug`로 기준 Screenshot(`feature/*/src/test/screenshots`)을 갱신해 같은 PR에 포함합니다.
 
 ### 성능
 

@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-android
-      - run: ./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug assembleRelease
+      - run: ./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug assembleDebug assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: debug-apk

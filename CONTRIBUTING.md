@@ -32,7 +32,7 @@ Scope는 Module 또는 Domain 이름을 사용한다. 하나의 PR은 하나의 
 
 ```bash
 ./gradlew ktlintFormat                # 자동 수정
-./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug
+./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug assembleDebug
 ```
 
 ## 코드

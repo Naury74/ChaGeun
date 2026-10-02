@@ -18,8 +18,9 @@ internal val VehicleHealthLevel.tone: StatusTone
         VehicleHealthLevel.Good -> StatusTone.Good
     }
 
+/** [attentionCount]는 '지금 확인' 카드 수와 같아서 헤드라인과 목록 개수가 어긋나지 않는다. */
 @Composable
-internal fun healthHeadline(health: VehicleHealth): String {
+internal fun healthHeadline(health: VehicleHealth, attentionCount: Int): String {
     val headlineItem = health.reasons.firstNotNullOfOrNull { it.item }
     return when (health.level) {
         VehicleHealthLevel.Good -> stringResource(R.string.home_health_good)
@@ -28,10 +29,8 @@ internal fun healthHeadline(health: VehicleHealth): String {
         } else {
             stringResource(R.string.home_health_upcoming, itemName(headlineItem))
         }
-        VehicleHealthLevel.NeedsAttention -> {
-            val count = health.reasons.count { it.isAttention }
-            pluralStringResource(R.plurals.home_health_attention, count, count)
-        }
+        VehicleHealthLevel.NeedsAttention ->
+            pluralStringResource(R.plurals.home_health_attention, attentionCount, attentionCount)
         VehicleHealthLevel.InsufficientData ->
             headlineItem?.let { stringResource(R.string.home_health_insufficient, itemName(it)) }
                 ?: stringResource(R.string.home_health_insufficient_generic)
@@ -50,9 +49,3 @@ private val HealthReason.item: MaintenanceItem?
         is HealthReason.ItemUnknown -> item
         HealthReason.ActiveSafetyRecall, HealthReason.InspectionOverdue, HealthReason.InspectionDueSoon -> null
     }
-
-private val HealthReason.isAttention: Boolean
-    get() = this is HealthReason.ActiveSafetyRecall ||
-        this is HealthReason.InspectionOverdue ||
-        this is HealthReason.SafetyItemOverdue ||
-        this is HealthReason.ItemOverdue
