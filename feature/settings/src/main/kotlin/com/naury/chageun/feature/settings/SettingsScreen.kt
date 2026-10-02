@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.ui.launchExternal
 import java.time.LocalDate
 
 @Composable
@@ -65,14 +66,16 @@ fun SettingsRoute(
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
         onMileageRemindersChanged = viewModel::setMileageReminderEnabled,
-        onOpenSystemNotifications = { context.openNotificationSettings() },
+        onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
         dataSection = {
             DataSection(
                 state = dataState,
-                onExport = { exportLauncher.launch("chageun-backup-${LocalDate.now()}.zip") },
-                onImport = { importLauncher.launch(arrayOf(ZIP_MIME_TYPE)) },
+                onExport = {
+                    context.launchExternal { exportLauncher.launch("chageun-backup-${LocalDate.now()}.zip") }
+                },
+                onImport = { context.launchExternal { importLauncher.launch(arrayOf(ZIP_MIME_TYPE)) } },
                 onRequestDelete = viewModel::requestDeleteAll,
             )
         },

@@ -49,4 +49,5 @@
     <string name="timeline_type_repair">Repair</string>
     <string name="timeline_type_note">Note</string>
     <string name="vehicle_hero_photo">Photo of your car</string>
+    <string name="external_app_unavailable">No app on this device can open this.</string>
 </resources>

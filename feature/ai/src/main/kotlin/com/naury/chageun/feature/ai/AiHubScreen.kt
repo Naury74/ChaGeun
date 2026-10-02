@@ -46,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.launchExternal
 
 @Composable
 fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit) {
@@ -68,7 +69,7 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit) {
                 if (viewModel.validateBeforeShare() &&
                     prompt != null
                 ) {
-                    shareToAi(context, provider, prompt, chooserTitle)
+                    context.launchExternal { shareToAi(context, provider, prompt, chooserTitle) }
                 }
             },
         ),
