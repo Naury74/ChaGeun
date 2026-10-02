@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.home
 
+import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.Kilometers
@@ -55,7 +56,9 @@ internal fun content(level: VehicleHealthLevel, reasons: List<HealthReason>, var
         vehicle = VEHICLE,
         overview = MaintenanceOverview(
             statuses = statuses.toList(),
-            rules = emptyMap(),
+            rules = statuses.mapNotNull {
+                DefaultMaintenanceRules.genericFor(it.item, FuelType.Gasoline)
+            }.associateBy { it.item },
             disabledItems = emptyList(),
             health = VehicleHealth(level, reasons),
             currentMileage = MileageReading(TODAY, Kilometers(42_180)),

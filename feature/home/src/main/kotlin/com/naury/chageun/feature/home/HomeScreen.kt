@@ -30,6 +30,7 @@ import com.naury.chageun.core.domain.analytics.HomeAction
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
@@ -48,6 +49,7 @@ fun HomeRoute(
     onAskAi: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenInspection: () -> Unit,
+    onOpenItem: (MaintenanceItem) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val analytics = LocalAnalyticsTracker.current
@@ -69,6 +71,7 @@ fun HomeRoute(
             onAskAi = analytics.tracking(HomeAction.AskAi, onAskAi),
             onOpenSettings = onOpenSettings,
             onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
+            onOpenItem = onOpenItem,
         ),
     )
 }
@@ -85,6 +88,7 @@ data class HomeActions(
     val onAskAi: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
     val onOpenInspection: () -> Unit = {},
+    val onOpenItem: (MaintenanceItem) -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -129,7 +133,7 @@ private fun HomeContent(
     val panes: List<LazyListScope.() -> Unit> = when {
         isTabletop -> listOf({ summaryPane(state, actions) }, {
             attentionPane(state, actions)
-            missingPane(state)
+            missingPane(state, actions)
             recentPane(state, actions, showAd)
         })
         else -> homePanes(state, paneCount, actions, showAd)
@@ -160,16 +164,16 @@ private fun homePanes(
     SINGLE_PANE -> listOf({
         summaryPane(state, actions)
         attentionPane(state, actions)
-        missingPane(state)
+        missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
     TWO_PANES -> listOf({ summaryPane(state, actions) }, {
         attentionPane(state, actions)
-        missingPane(state)
+        missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
     else -> listOf({ summaryPane(state, actions) }, { attentionPane(state, actions) }, {
-        missingPane(state)
+        missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
 }
@@ -198,6 +202,7 @@ private fun LazyListScope.attentionPane(state: HomeUiState.Content, actions: Hom
         "attention",
         R.string.home_section_attention,
         state.needsAttention,
+        state.overview.rules,
         actions,
         inspection.takeIf { it.state == InspectionState.Overdue },
     )
@@ -205,6 +210,7 @@ private fun LazyListScope.attentionPane(state: HomeUiState.Content, actions: Hom
         "upcoming",
         R.string.home_section_upcoming,
         state.upcoming,
+        state.overview.rules,
         actions,
         inspection.takeIf { it.state == InspectionState.DueSoon },
     )
@@ -214,6 +220,7 @@ private fun LazyListScope.statusSection(
     key: String,
     titleRes: Int,
     statuses: List<MaintenanceStatus>,
+    rules: Map<MaintenanceItem, MaintenanceRule>,
     actions: HomeActions,
     inspection: InspectionStatus?,
 ) {
@@ -232,11 +239,17 @@ private fun LazyListScope.statusSection(
         }
     }
     items(statuses, key = { "$key-${it.item}" }) { status ->
-        MaintenanceStatusCard(status, onRecordService, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+        MaintenanceStatusCard(
+            status = status,
+            rule = rules[status.item],
+            onRecordService = onRecordService,
+            onOpenDetail = actions.onOpenItem,
+            modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+        )
     }
 }
 
-private fun LazyListScope.missingPane(state: HomeUiState.Content) {
+private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeActions) {
     if (state.missingInfo.isEmpty()) return
     item(key = "missing-title") {
         SectionTitle(
@@ -245,7 +258,7 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content) {
         )
     }
     items(state.missingInfo, key = { "missing-${it.item}" }) { status ->
-        MissingInfoRow(status, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+        MissingInfoRow(status, actions.onOpenItem, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
     }
 }
 

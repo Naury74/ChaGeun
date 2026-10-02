@@ -62,4 +62,6 @@
         <item quantity="one">%1$d day overdue</item>
         <item quantity="other">%1$d days overdue</item>
     </plurals>
+    <string name="home_open_detail">Details</string>
+    <string name="home_progress_km">Next replacement in %1$s / %2$s km</string>
 </resources>

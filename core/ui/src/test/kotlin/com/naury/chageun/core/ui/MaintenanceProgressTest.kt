@@ -1,4 +1,4 @@
-package com.naury.chageun.feature.manage
+package com.naury.chageun.core.ui
 
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.MaintenanceItem
