@@ -42,7 +42,12 @@ import com.naury.chageun.core.ui.tone
 import kotlin.math.absoluteValue
 
 @Composable
-internal fun VehicleStatusSummary(health: VehicleHealth, goodCount: Int, modifier: Modifier = Modifier) {
+internal fun VehicleStatusSummary(
+    health: VehicleHealth,
+    goodCount: Int,
+    attentionCount: Int,
+    modifier: Modifier = Modifier,
+) {
     val tone = health.level.tone
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -57,7 +62,7 @@ internal fun VehicleStatusSummary(health: VehicleHealth, goodCount: Int, modifie
         ) {
             Icon(tone.icon, contentDescription = null, modifier = Modifier.size(28.dp))
             Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
-                Text(healthHeadline(health), style = MaterialTheme.typography.titleMedium)
+                Text(healthHeadline(health, attentionCount), style = MaterialTheme.typography.titleMedium)
                 val detail = when (health.level) {
                     VehicleHealthLevel.Good ->
                         pluralStringResource(R.plurals.home_health_good_detail, goodCount, goodCount)

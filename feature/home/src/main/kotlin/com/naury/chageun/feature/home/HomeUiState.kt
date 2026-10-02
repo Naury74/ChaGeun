@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.home
 
 import com.naury.chageun.core.domain.maintenance.MILEAGE_PROMPT_AFTER_DAYS
+import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.MaintenanceOverview
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
@@ -23,6 +24,10 @@ sealed interface HomeUiState {
         val upcoming: List<MaintenanceStatus> = overview.statuses.filter { it.state == MaintenanceState.Upcoming }
         val missingInfo: List<MaintenanceStatus> = overview.statuses.filter { it.state == MaintenanceState.Unknown }
         val goodCount: Int = overview.statuses.count { it.state == MaintenanceState.Good }
+        val attentionCount: Int = needsAttention.size +
+            overview.health.reasons.count {
+                it == HealthReason.ActiveSafetyRecall || it == HealthReason.InspectionOverdue
+            }
         val needsMileageUpdate: Boolean = overview.currentMileage
             ?.let { ChronoUnit.DAYS.between(it.date, today) >= MILEAGE_PROMPT_AFTER_DAYS }
             ?: true

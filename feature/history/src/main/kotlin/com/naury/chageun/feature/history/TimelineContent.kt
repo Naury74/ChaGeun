@@ -51,7 +51,7 @@ internal fun TimelineContent(
     val gutter = ChageunTheme.spacing.gutter
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = FAB_CLEARANCE),
+        contentPadding = PaddingValues(top = ChageunTheme.spacing.sm, bottom = FAB_CLEARANCE),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
         item(key = "search") {

@@ -19,7 +19,10 @@ import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -240,5 +243,25 @@ class SettingsTest {
         composeRule.waitForIdle()
 
         composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phone() {
+        composeRule.setContent {
+            AppFrame {
+                SettingsScreen(
+                    settings = UserSettings(),
+                    versionName = "0.1.0",
+                    onBack = {},
+                    onThemeSelected = {},
+                    onRemindersChanged = {},
+                    onOpenSystemNotifications = {},
+                    dataSection = { DataSection(DataUiState(), onExport = {}, onImport = {}, onRequestDelete = {}) },
+                )
+            }
+        }
+        composeRule.captureScreen("settings_phone")
     }
 }

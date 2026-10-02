@@ -3,6 +3,7 @@ package com.naury.chageun.ui
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -27,7 +28,8 @@ fun ChageunRoot(deepLink: DeepLink?, onDeepLinkHandled: () -> Unit, viewModel: A
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
 
     ChageunTheme(darkTheme = darkTheme, spacing = spacingFor(windowSizeClass)) {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        // 화면 바탕은 background, 카드와 Hero는 surface를 써서 바탕과 구분한다.
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             when (entry) {
                 // Room answers within a frame; an empty surface avoids flashing onboarding to returning users.
                 AppEntry.Loading -> Box(Modifier.fillMaxSize())

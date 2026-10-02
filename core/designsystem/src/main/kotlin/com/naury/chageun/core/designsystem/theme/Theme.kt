@@ -14,6 +14,9 @@ private val LightColorScheme = lightColorScheme(
     primaryContainer = LightTokens.PrimaryContainer,
     onPrimaryContainer = LightTokens.OnPrimaryContainer,
     secondary = LightTokens.Primary,
+    // Tonal 버튼과 선택된 Chip은 secondaryContainer를 쓴다. 지정하지 않으면 Material 기본 보라색이 나온다.
+    secondaryContainer = LightTokens.PrimaryContainer,
+    onSecondaryContainer = LightTokens.OnPrimaryContainer,
     tertiary = LightTokens.AiAccent,
     background = LightTokens.Background,
     onBackground = LightTokens.OnSurface,
@@ -37,6 +40,9 @@ private val DarkColorScheme = darkColorScheme(
     primaryContainer = DarkTokens.PrimaryContainer,
     onPrimaryContainer = DarkTokens.OnPrimaryContainer,
     secondary = DarkTokens.Primary,
+    // Tonal 버튼과 선택된 Chip은 secondaryContainer를 쓴다. 지정하지 않으면 Material 기본 보라색이 나온다.
+    secondaryContainer = DarkTokens.PrimaryContainer,
+    onSecondaryContainer = DarkTokens.OnPrimaryContainer,
     tertiary = DarkTokens.AiAccent,
     background = DarkTokens.Background,
     onBackground = DarkTokens.OnSurface,

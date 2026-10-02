@@ -21,7 +21,10 @@ import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
@@ -156,4 +159,28 @@ class VehicleScreenTest {
         InspectionSchedule(LocalDate.of(2026, 10, 1).plusDays(days), InspectionSource.User),
         LocalDate.of(2026, 10, 1),
     )
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phone() {
+        composeRule.setContent {
+            AppFrame {
+                VehicleScreen(VehicleUiState.Content(vehicle, log, dueIn(14)), isTwoPane = false, onUpdateMileage = {})
+            }
+        }
+        composeRule.captureScreen("vehicle_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.TABLET)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_tablet() {
+        composeRule.setContent {
+            AppFrame {
+                VehicleScreen(VehicleUiState.Content(vehicle, log, dueIn(14)), isTwoPane = true, onUpdateMileage = {})
+            }
+        }
+        composeRule.captureScreen("vehicle_tablet")
+    }
 }

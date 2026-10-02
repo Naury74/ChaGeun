@@ -16,7 +16,10 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceHistoryEntry
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
@@ -116,5 +119,37 @@ class ManageScreenTest {
         composeRule.waitForIdle()
 
         composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneList() {
+        composeRule.setContent {
+            AppFrame {
+                ManageScreen(stateFor(null), isTwoPane = false, onFilterSelected = {
+                }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
+            }
+        }
+        composeRule.captureScreen("care_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.TABLET)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_tabletDetail() {
+        composeRule.setContent {
+            AppFrame {
+                ManageScreen(
+                    stateFor(MaintenanceItem.EngineOil),
+                    isTwoPane = true,
+                    onFilterSelected = {},
+                    onItemSelected = {},
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+        composeRule.captureScreen("care_tablet")
     }
 }

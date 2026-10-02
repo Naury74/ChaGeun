@@ -130,7 +130,11 @@ fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubAction
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
             suggestions(uiState.options.focusItem).forEach { suggestion ->
-                AssistChip(onClick = { actions.onQuestionChanged(suggestion) }, label = { Text(suggestion) })
+                AssistChip(
+                    onClick = { actions.onQuestionChanged(suggestion) },
+                    // 긴 추천 질문은 두 줄이 되는데, Chip 최소 높이 32dp로는 위아래 여백이 남지 않는다.
+                    label = { Text(suggestion, modifier = Modifier.padding(vertical = ChageunTheme.spacing.xs)) },
+                )
             }
         }
         ContextPreview(uiState, promptText, actions)

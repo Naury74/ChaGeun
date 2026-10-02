@@ -16,6 +16,7 @@ dependencies {
     compileOnly(libs.room.gradlePlugin)
     compileOnly(libs.ktlint.gradlePlugin)
     compileOnly(libs.detekt.gradlePlugin)
+    compileOnly(libs.roborazzi.gradlePlugin)
 }
 
 tasks {

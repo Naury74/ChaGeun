@@ -57,12 +57,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-android
-      - run: ./gradlew testDebugUnitTest
+      # Feature 모듈은 같은 테스트 실행에서 Screenshot을 기준 이미지와 비교한다.
+      - run: ./gradlew testDebugUnitTest verifyRoborazziDebug
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: '**/build/reports/tests/'
+          path: |
+            **/build/reports/tests/
+            **/build/outputs/roborazzi/
           retention-days: 7
 
   assemble-debug:
