@@ -44,7 +44,7 @@ class ObserveMaintenanceOverviewUseCase @Inject constructor(
             statuses = statuses,
             rules = inputs.rules.associateBy { it.item },
             disabledItems = inputs.rules.filterNot { it.isEnabled }.map { it.item }.sorted(),
-            // TODO(CHGN-33): Feed recall state once official data is connected.
+            // TODO(CHGN-33): 공식 데이터가 연결되면 리콜 상태를 넘긴다.
             health = healthAggregator.aggregate(
                 VehicleHealthInput(statuses, hasActiveSafetyRecall = false, inspection = inspection.state),
             ),

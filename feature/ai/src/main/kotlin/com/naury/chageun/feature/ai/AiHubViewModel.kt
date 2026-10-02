@@ -23,7 +23,7 @@ data class AiHubUiState(
     val isQuestionMissing: Boolean = false,
 )
 
-/** The question lives only in saved state for this screen; it is never persisted or logged. */
+/** 질문은 이 화면의 saved state에만 둔다. 영구 저장하거나 로그에 남기지 않는다. */
 @HiltViewModel(assistedFactory = AiHubViewModel.Factory::class)
 class AiHubViewModel @AssistedInject constructor(
     @Assisted focusItem: MaintenanceItem?,
@@ -66,7 +66,7 @@ class AiHubViewModel @AssistedInject constructor(
         savedStateHandle[KEY_COSTS] = value
     }
 
-    /** @return true when the question is present and the context may be shared. */
+    /** @return 질문이 있고 컨텍스트를 공유해도 될 때 true */
     fun validateBeforeShare(): Boolean {
         val isValid = question.value.isNotBlank()
         savedStateHandle[KEY_MISSING] = !isValid

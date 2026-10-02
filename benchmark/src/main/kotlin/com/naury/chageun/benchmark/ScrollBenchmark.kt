@@ -9,7 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Frame timing while scrolling the main lists. */
+/** 주요 목록을 스크롤할 때의 프레임 타이밍. */
 @RunWith(AndroidJUnit4::class)
 class ScrollBenchmark {
 

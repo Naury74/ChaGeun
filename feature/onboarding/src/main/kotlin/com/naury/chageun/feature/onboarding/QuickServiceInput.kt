@@ -16,7 +16,7 @@ data class QuickServiceInput(
     val needsMileage: Boolean get() = mode == QuickServiceMode.DateAndMileage || mode == QuickServiceMode.MileageOnly
 }
 
-/** The three items asked during onboarding; the rest are filled in later from Home. */
+/** 온보딩에서 묻는 세 항목. 나머지는 나중에 Home에서 채운다. */
 val QUICK_SERVICE_ITEMS = listOf(MaintenanceItem.EngineOil, MaintenanceItem.Tire, MaintenanceItem.Battery)
 
 internal object QuickServiceForm {

@@ -4,7 +4,7 @@ import androidx.room.TypeConverter
 import java.time.Instant
 import java.time.LocalDate
 
-/** Instants are stored as UTC epoch millis and calendar dates as epoch days so both sort correctly in SQL. */
+/** SQL에서 둘 다 올바르게 정렬되도록 Instant는 UTC epoch millis로, 날짜는 epoch day로 저장한다. */
 internal class TimeConverters {
     @TypeConverter
     fun instantToEpochMillis(value: Instant?): Long? = value?.toEpochMilli()

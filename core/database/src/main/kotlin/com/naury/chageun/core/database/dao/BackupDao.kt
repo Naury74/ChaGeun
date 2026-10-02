@@ -12,7 +12,7 @@ import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 
-/** Whole-database reads, restore and wipe used by export, import and "delete all data". */
+/** 내보내기, 가져오기, "모든 데이터 삭제"에서 쓰는 전체 DB 조회·복원·삭제. */
 @Suppress("TooManyFunctions")
 @Dao
 interface BackupDao {
@@ -48,7 +48,7 @@ interface BackupDao {
     )
     suspend fun recordCount(): Int
 
-    /** Room inserts parameters in order, so parents go before the rows that reference them. */
+    /** Room은 파라미터 순서대로 insert하므로 부모 행을 그 행을 참조하는 행보다 앞에 둔다. */
     @Insert
     suspend fun insertVehicleData(
         vehicles: List<VehicleEntity>,
@@ -65,7 +65,7 @@ interface BackupDao {
         attachments: List<AttachmentEntity>,
     )
 
-    /** Every other table cascades from vehicle. */
+    /** 나머지 테이블은 모두 vehicle에서 cascade로 함께 지워진다. */
     @Query("DELETE FROM vehicle")
     suspend fun deleteAllVehicles()
 }

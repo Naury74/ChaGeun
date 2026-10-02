@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
 
-/** One channel per kind so users can turn each off in system settings. */
+/** 종류마다 채널을 하나씩 둬서 사용자가 시스템 설정에서 각각 끌 수 있게 한다. */
 object NotificationChannels {
     const val MAINTENANCE = "maintenance"
     const val INSPECTION = "inspection"

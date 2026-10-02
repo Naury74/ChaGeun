@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface HistoryDao {
     /**
-     * Timeline is a projection over the per-domain tables instead of a shared history table.
-     * [eventTypes] filters by type; a non-empty [keyword] matches free text or any of [matchingItemTypes].
+     * Timeline은 공용 이력 테이블 없이 도메인별 테이블을 모아 보여주는 projection이다.
+     * [eventTypes]로 유형을 거르고, [keyword]가 비어 있지 않으면 자유 텍스트나 [matchingItemTypes] 중 하나와 일치하는 항목을 찾는다.
      */
     @Query(
         """

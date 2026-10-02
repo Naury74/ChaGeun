@@ -19,8 +19,8 @@ sealed interface TopLevelRoute : NavKey {
 }
 
 /**
- * The AI question screen, pushed on top of a tab.
- * [focusItem] is a maintenance item name when opened from that item's detail.
+ * 탭 위에 쌓이는 AI 질문 화면.
+ * 정비 항목 상세에서 열면 [focusItem]에 해당 항목 이름이 들어온다.
  */
 @Serializable
 data class AiRoute(val focusItem: String? = null) : NavKey

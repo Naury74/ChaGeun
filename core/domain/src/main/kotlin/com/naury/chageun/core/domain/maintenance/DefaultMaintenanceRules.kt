@@ -6,8 +6,8 @@ import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.RuleSource
 
 /**
- * Generic intervals used until manufacturer schedules are available. They are always tagged
- * [RuleSource.Generic] so the UI labels them as general guidance, never as official values.
+ * 제조사 정비 주기를 쓸 수 있을 때까지 사용하는 일반 주기. 항상 [RuleSource.Generic]으로 표시해
+ * UI가 공식 값이 아닌 일반 가이드로 안내하게 한다.
  */
 object DefaultMaintenanceRules {
 
@@ -42,7 +42,7 @@ object DefaultMaintenanceRules {
         return GENERIC.filterNot { it.item in excluded }
     }
 
-    /** The generic rule for [item]; disabled rather than absent when the item does not apply to the fuel type. */
+    /** [item]의 일반 규칙. 연료 유형에 해당하지 않는 항목이면 규칙을 빼지 않고 비활성 상태로 둔다. */
     fun genericFor(item: MaintenanceItem, fuelType: FuelType): MaintenanceRule? {
         val rule = GENERIC.firstOrNull { it.item == item } ?: return null
         return rule.copy(isEnabled = item !in NOT_APPLICABLE[fuelType].orEmpty())

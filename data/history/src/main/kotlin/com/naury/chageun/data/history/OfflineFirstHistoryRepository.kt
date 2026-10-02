@@ -142,7 +142,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
     }
 }
 
-/** Rows of an unknown type or item, e.g. written by a newer app version, are skipped. */
+/** 더 새로운 앱 버전이 쓴 경우처럼 알 수 없는 유형이나 항목의 행은 건너뛴다. */
 private fun TimelineRow.asTimelineItem(): TimelineItem? {
     val type = TimelineEventType.entries.firstOrNull { it.name == eventType } ?: return null
     val item = itemType?.let { name -> MaintenanceItem.entries.firstOrNull { it.name == name } ?: return null }

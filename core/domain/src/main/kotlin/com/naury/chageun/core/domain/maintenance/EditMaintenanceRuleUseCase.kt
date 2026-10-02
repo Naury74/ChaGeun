@@ -15,7 +15,7 @@ class EditMaintenanceRuleUseCase @Inject constructor(
     private val repository: MaintenanceRepository,
     private val vehicleRepository: VehicleRepository,
 ) {
-    /** Saves user-chosen intervals. The thresholds stay as they were so notifications keep their timing. */
+    /** 사용자가 고른 주기를 저장한다. 알림 시점이 바뀌지 않도록 임계값은 그대로 둔다. */
     suspend fun update(
         vehicleId: VehicleId,
         item: MaintenanceItem,

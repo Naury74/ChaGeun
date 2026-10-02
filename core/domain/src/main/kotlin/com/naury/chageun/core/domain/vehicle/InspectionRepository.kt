@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface InspectionRepository {
     fun observeSchedule(vehicleId: VehicleId): Flow<InspectionSchedule?>
 
-    /** Stores a user-entered due date, or clears it when [date] is null. A new date restarts its reminders. */
+    /** 사용자가 입력한 만료일을 저장하고, [date]가 null이면 지운다. 날짜가 바뀌면 알림을 처음부터 다시 시작한다. */
     suspend fun setUserDueDate(vehicleId: VehicleId, date: LocalDate?)
 
     suspend fun notifiedStage(vehicleId: VehicleId): InspectionReminderStage?

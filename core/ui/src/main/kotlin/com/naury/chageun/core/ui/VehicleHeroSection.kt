@@ -29,8 +29,8 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 
 /**
- * Open hero for the vehicle. Deliberately not a card: the image sits on the neutral hero background
- * and status surfaces start below it.
+ * 차량을 보여 주는 열린 형태의 Hero 영역이다. 일부러 카드로 감싸지 않는다. 이미지는 중립적인 Hero 배경
+ * 위에 놓이고 상태 영역은 그 아래에서 시작한다.
  */
 @Composable
 fun VehicleHeroSection(
@@ -62,7 +62,7 @@ fun VehicleHeroSection(
             )
             Image(
                 painter = painterResource(R.drawable.vehicle_silhouette_suv),
-                // Generic silhouette, not a photo of this car; the title below already names it.
+                // 이 차의 사진이 아닌 일반 실루엣이다. 차 이름은 아래 제목에 이미 나온다.
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier

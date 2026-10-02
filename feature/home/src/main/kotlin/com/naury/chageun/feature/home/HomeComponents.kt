@@ -161,7 +161,7 @@ internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     )
 }
 
-/** Inspection has no service to record here; the card opens My car, where the date is managed. */
+/** 검사는 여기서 기록할 정비가 없다. 카드를 누르면 검사일을 관리하는 My car로 이동한다. */
 @Composable
 internal fun InspectionStatusCard(status: InspectionStatus, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val schedule = status.schedule ?: return

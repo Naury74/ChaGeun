@@ -11,8 +11,8 @@ interface AttachmentRepository {
     fun observe(vehicleId: VehicleId, owner: RecordRef): Flow<List<Attachment>>
 
     /**
-     * Copies the picked images into app storage, re-encoded without metadata.
-     * [sourceUris] are content URIs from the system photo picker.
+     * 선택한 이미지를 메타데이터 없이 다시 인코딩해 앱 저장소로 복사한다.
+     * [sourceUris]는 시스템 photo picker가 준 content URI다.
      */
     suspend fun attach(vehicleId: VehicleId, owner: RecordRef, sourceUris: List<String>): AttachResult
 
@@ -21,5 +21,5 @@ interface AttachmentRepository {
     suspend fun deleteAllFor(vehicleId: VehicleId, owner: RecordRef)
 }
 
-/** At most this many images per record keeps local storage predictable. */
+/** 기록당 이미지를 이 개수까지만 허용해 로컬 저장 용량을 예측 가능하게 유지한다. */
 const val MAX_ATTACHMENTS_PER_RECORD = 10

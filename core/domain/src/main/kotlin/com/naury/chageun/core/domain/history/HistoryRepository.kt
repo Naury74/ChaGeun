@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.Flow
 data class TimelineQuery(
     val types: Set<TimelineEventType> = TimelineEventType.entries.toSet(),
     val keyword: String = "",
-    /** Maintenance items whose localized name matches [keyword]; resolved by the UI that knows the locale. */
+    /** 현지화된 이름이 [keyword]와 일치하는 정비 항목. locale을 아는 UI 쪽에서 판단한다. */
     val matchingItems: Set<MaintenanceItem> = emptySet(),
 )
 
 interface HistoryRepository {
-    /** Newest first; undated maintenance entries follow dated ones. */
+    /** 최신순. 날짜 없는 정비 기록은 날짜 있는 기록 뒤에 온다. */
     fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery): Flow<List<TimelineItem>>
 
     fun observeRecord(vehicleId: VehicleId, ref: RecordRef): Flow<RecordDetail?>
@@ -27,6 +27,6 @@ interface HistoryRepository {
 
     suspend fun addCheck(vehicleId: VehicleId, entry: CheckEntry, advancesOdometer: Boolean)
 
-    /** Also removes the odometer reading that was created together with the record. */
+    /** 기록과 함께 생성된 주행거리 기록도 지운다. */
     suspend fun delete(vehicleId: VehicleId, ref: RecordRef)
 }

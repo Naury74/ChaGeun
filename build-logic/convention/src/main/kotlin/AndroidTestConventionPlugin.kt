@@ -6,7 +6,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
-/** Instrumented test modules that run against :app, such as benchmarks, on Gradle Managed Devices. */
+/** 벤치마크처럼 Gradle Managed Devices에서 :app을 대상으로 실행하는 instrumented test 모듈. */
 class AndroidTestConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("com.android.test")

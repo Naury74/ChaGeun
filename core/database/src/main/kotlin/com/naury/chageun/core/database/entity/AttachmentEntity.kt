@@ -8,8 +8,8 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 
 /**
- * Owners are polymorphic (maintenance, fuel or check records), so there is no foreign key to them;
- * deleting a record must delete its attachments explicitly.
+ * 소유자가 정비·주유·점검 기록 중 하나인 다형 구조라 소유자에 대한 foreign key가 없다.
+ * 따라서 기록을 지울 때 첨부도 명시적으로 지워야 한다.
  */
 @Entity(
     tableName = "attachment",

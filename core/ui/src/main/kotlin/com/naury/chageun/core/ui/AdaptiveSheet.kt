@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
-/** Input surface: a bottom sheet on compact windows and a width-limited dialog where a sheet would stretch too wide. */
+/** 입력 화면이다. Compact 창에서는 Bottom Sheet로, Sheet가 너무 넓어지는 창에서는 폭을 제한한 Dialog로 띄운다. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdaptiveSheet(isExpanded: Boolean, onDismiss: () -> Unit, content: @Composable () -> Unit) {

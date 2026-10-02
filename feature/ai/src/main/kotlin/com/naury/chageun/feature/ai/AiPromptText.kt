@@ -12,7 +12,7 @@ import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.remainingText
 
-/** Renders shared facts in the user's language; only fields present in [AiContextFacts] can appear. */
+/** 공유할 정보를 사용자 언어로 렌더링한다. [AiContextFacts]에 있는 필드만 나타날 수 있다. */
 @Composable
 internal fun aiPromptText(facts: AiContextFacts, question: String): String = buildList {
     add(stringResource(R.string.ai_prompt_header, formatDate(facts.asOf)))

@@ -16,7 +16,7 @@ val TimelineEventType.labelRes: Int
         TimelineEventType.Note -> R.string.timeline_type_note
     }
 
-/** Maintenance rows are named by their item; fuel rows add the station; other rows use their own title. */
+/** 정비 행은 항목 이름으로 부르고, 주유 행은 주유소를 덧붙이며, 나머지 행은 자체 제목을 쓴다. */
 @Composable
 fun timelineTitle(item: TimelineItem): String {
     val typeLabel = stringResource(item.ref.type.labelRes)

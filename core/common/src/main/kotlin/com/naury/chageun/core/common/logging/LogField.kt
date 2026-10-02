@@ -1,10 +1,10 @@
 package com.naury.chageun.core.common.logging
 
 /**
- * The only values that may be attached to a log event.
+ * 로그 이벤트에 붙일 수 있는 값은 이것뿐이다.
  *
- * Free-form strings are deliberately not accepted so plate numbers, owner names, notes
- * or raw provider payloads cannot reach logs or crash reports by accident.
+ * 자유 형식 문자열은 일부러 받지 않는다. 차량번호, 소유자 이름, 메모나 제공처 원본 응답이
+ * 실수로 로그나 크래시 리포트에 들어가지 않게 하기 위해서다.
  */
 sealed interface LogField {
     val key: String

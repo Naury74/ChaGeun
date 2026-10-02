@@ -2,14 +2,14 @@ package com.naury.chageun.core.model
 
 import java.time.LocalDate
 
-/** Declared from most to least urgent; [ordinal] is used for sorting. */
+/** 가장 급한 것부터 순서대로 선언한다. 정렬에 [ordinal]을 쓴다. */
 enum class MaintenanceState { Overdue, Due, Upcoming, Unknown, Good }
 
 enum class MissingInput { LastService, LastServiceDate, LastServiceMileage, CurrentMileage }
 
 enum class Confidence { High, Medium, Low }
 
-/** A past service; either value may be unknown when the user only remembers one of them. */
+/** 지난 정비 기록이다. 사용자가 둘 중 하나만 기억하는 경우 어느 쪽이든 비어 있을 수 있다. */
 data class ServiceRecord(val date: LocalDate?, val mileage: Kilometers?)
 
 data class MileageReading(val date: LocalDate, val mileage: Kilometers)

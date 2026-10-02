@@ -129,7 +129,7 @@ class VehicleScreenTest {
     }
 
     @Test
-    // A text field inside a dialog never goes idle under the legacy graphics mode.
+    // legacy graphics 모드에서는 Dialog 안의 텍스트 필드가 idle 상태가 되지 않는다.
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun completeInspection_suggestsNextDate_andReportsIt() {
         val status = dueIn(14)

@@ -10,7 +10,7 @@ import javax.inject.Inject
 sealed interface UpdateMileageResult {
     data object Saved : UpdateMileageResult
 
-    /** Lower than the latest reading; save again with confirmation to record it as an odometer correction. */
+    /** 최근 기록보다 낮은 값이다. 확인 후 다시 저장하면 주행거리 보정으로 기록한다. */
     data class NeedsConfirmation(val previous: Kilometers) : UpdateMileageResult
 }
 
@@ -36,5 +36,5 @@ class UpdateMileageUseCase @Inject constructor(
     }
 }
 
-/** Home asks for a fresh reading when the latest one is at least this old. */
+/** 최근 기록이 이 기간 이상 지났으면 Home에서 새 주행거리 입력을 요청한다. */
 const val MILEAGE_PROMPT_AFTER_DAYS = 30L

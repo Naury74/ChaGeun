@@ -43,7 +43,7 @@ val StatusTone.colors: ToneColors
         StatusTone.Unknown -> ChageunTheme.colors.unknown
     }
 
-/** Status is always conveyed by icon and text together so it never depends on color perception alone. */
+/** 상태는 항상 아이콘과 텍스트를 함께 써서 전달한다. 색 구분 능력에만 의존하지 않기 위해서다. */
 @Composable
 fun StatusBadge(tone: StatusTone, label: String, modifier: Modifier = Modifier) {
     val colors = tone.colors

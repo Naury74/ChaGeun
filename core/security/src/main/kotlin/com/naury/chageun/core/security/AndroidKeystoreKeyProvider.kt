@@ -8,8 +8,8 @@ import javax.crypto.SecretKey
 import javax.inject.Inject
 
 /**
- * The key never leaves the Android Keystore. It is not backed up, so reinstalling the app makes
- * previously encrypted values unreadable by design; callers fall back to the masked value.
+ * 키는 Android Keystore 밖으로 나가지 않는다. 백업되지 않으므로 앱을 다시 설치하면 이전에 암호화한
+ * 값은 의도적으로 읽을 수 없게 된다. 이때 호출부는 마스킹된 값으로 대신 표시한다.
  */
 internal class AndroidKeystoreKeyProvider @Inject constructor() : SecretKeyProvider {
 

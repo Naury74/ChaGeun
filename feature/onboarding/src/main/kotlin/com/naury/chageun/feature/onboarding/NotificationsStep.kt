@@ -20,8 +20,8 @@ internal fun NotificationsStep() {
 }
 
 /**
- * Returns the action for "Get notified". The system prompt is shown only after the user opts in here,
- * and onboarding finishes regardless of the answer.
+ * "Get notified" 액션을 반환한다. 시스템 권한 요청은 사용자가 여기서 동의한 뒤에만 띄우며,
+ * 응답과 관계없이 온보딩을 마친다.
  */
 @Composable
 internal fun rememberNotificationOptIn(onFinish: () -> Unit): () -> Unit {

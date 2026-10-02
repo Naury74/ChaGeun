@@ -20,7 +20,7 @@ internal val ChageunTypography = Typography().run {
     )
 }
 
-/** Numeric styles keep digits at a fixed width so mileage and prices align and do not jitter while animating. */
+/** 숫자 스타일은 숫자 폭을 고정한다. 주행거리와 금액이 정렬되고 애니메이션 중에 흔들리지 않게 하기 위해서다. */
 object NumericTextStyles {
     val Hero = TextStyle(
         fontSize = 40.sp,

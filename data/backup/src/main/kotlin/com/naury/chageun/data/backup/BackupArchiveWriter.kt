@@ -7,8 +7,8 @@ import java.util.zip.ZipOutputStream
 import kotlinx.serialization.json.Json
 
 /**
- * Writes the export ZIP: `data.json` at the root and images with thumbnails under `attachments/`.
- * Missing files are skipped.
+ * 내보내기 ZIP을 쓴다. 루트에는 `data.json`, `attachments/` 아래에는 이미지와 썸네일을 둔다.
+ * 없는 파일은 건너뛴다.
  */
 internal object BackupArchiveWriter {
 

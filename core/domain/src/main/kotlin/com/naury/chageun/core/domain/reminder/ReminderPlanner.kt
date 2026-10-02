@@ -10,10 +10,10 @@ data class ReminderPlan(
 )
 
 /**
- * Notifies each item once per stage as it moves Upcoming → Due → Overdue.
+ * 항목이 Upcoming → Due → Overdue로 넘어갈 때 단계마다 한 번씩 알린다.
  *
- * Returning to Good (e.g. after a replacement is recorded) clears the item so its next cycle notifies again.
- * Unknown items are never notified: without data there is nothing reliable to say.
+ * 교체 기록 등으로 Good으로 돌아오면 항목 상태를 지워 다음 주기에 다시 알리게 한다.
+ * Unknown 항목은 알리지 않는다. 데이터가 없으면 믿을 만한 안내를 할 수 없기 때문이다.
  */
 object ReminderPlanner {
 

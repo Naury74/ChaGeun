@@ -15,10 +15,10 @@ data class VehicleHealthInput(
 )
 
 /**
- * Derives the overall vehicle status from its most important active finding rather than an average.
+ * 차량 전체 상태는 평균이 아니라 현재 가장 중요한 결과를 기준으로 정한다.
  *
- * A safety-critical item that cannot be evaluated outranks GOOD, so missing tire or brake data
- * always surfaces as insufficient data.
+ * 평가할 수 없는 안전 항목은 GOOD보다 우선하므로, 타이어나 브레이크 데이터가 없으면
+ * 항상 데이터 부족으로 드러난다.
  */
 class VehicleHealthAggregator @Inject constructor() {
 
@@ -62,7 +62,7 @@ class VehicleHealthAggregator @Inject constructor() {
 
             is HealthReason.SafetyItemUnknown -> VehicleHealthLevel.InsufficientData
 
-            // Unknown non-safety items alone are prompted on Home, but GOOD still needs at least one evaluated item.
+            // 안전 항목이 아닌 Unknown 항목만 있으면 Home에서 입력을 유도하지만, GOOD이 되려면 평가된 항목이 하나 이상 있어야 한다.
             is HealthReason.ItemUnknown ->
                 if (hasAnyEvaluatedItem) VehicleHealthLevel.Good else VehicleHealthLevel.InsufficientData
         }

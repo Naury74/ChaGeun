@@ -186,7 +186,7 @@ private fun InfoSection(state: VehicleUiState.Content) {
     }
 }
 
-/** Until official data is connected, never imply "no recall"; point to the official services instead. */
+/** 공식 데이터를 연동하기 전까지는 "리콜 없음"으로 보이지 않게 하고, 대신 공식 서비스를 안내한다. */
 @Composable
 private fun OfficialDataSection(
     state: VehicleUiState.Content,

@@ -6,9 +6,9 @@ import com.naury.chageun.core.model.MaintenanceItem
 import java.time.LocalDate
 
 /**
- * Keeps the onboarding draft across configuration changes and process death.
+ * 구성 변경과 프로세스 종료 후에도 온보딩 입력 초안을 유지한다.
  *
- * SECURITY: The plate draft lives only in this process's saved state and is never logged.
+ * SECURITY: 번호판 초안은 이 프로세스의 saved state에만 두며 로그에 남기지 않는다.
  */
 internal class OnboardingDraftStore(private val handle: SavedStateHandle) {
 

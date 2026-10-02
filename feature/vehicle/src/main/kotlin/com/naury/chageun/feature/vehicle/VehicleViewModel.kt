@@ -55,7 +55,7 @@ class VehicleViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), VehicleUiState.Loading)
 
-    /** Null clears the date. */
+    /** null이면 날짜를 지운다. */
     fun setInspectionDate(date: LocalDate?) {
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         viewModelScope.launch { inspectionRepository.setUserDueDate(vehicle.id, date) }

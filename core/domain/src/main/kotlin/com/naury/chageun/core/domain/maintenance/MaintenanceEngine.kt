@@ -14,9 +14,9 @@ data class MaintenanceEvaluationInput(
 )
 
 /**
- * Evaluates a maintenance item using the earliest of the distance or date threshold.
+ * 거리 임계값과 날짜 임계값 중 먼저 도달하는 쪽으로 정비 항목을 평가한다.
  *
- * Unknown mileage or service history never produces [com.naury.chageun.core.model.MaintenanceState.Good].
+ * 주행거리나 정비 이력을 모르면 절대 [com.naury.chageun.core.model.MaintenanceState.Good]을 내지 않는다.
  */
 fun interface MaintenanceEngine {
     fun evaluate(input: MaintenanceEvaluationInput): MaintenanceStatus

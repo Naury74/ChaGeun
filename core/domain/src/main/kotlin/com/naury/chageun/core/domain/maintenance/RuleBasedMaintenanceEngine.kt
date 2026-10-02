@@ -27,7 +27,7 @@ class RuleBasedMaintenanceEngine @Inject constructor(private val paceEstimator: 
         val mostUrgent = listOfNotNull(distance?.state, date?.state).minOrNull()
         val state = when {
             mostUrgent == null -> MaintenanceState.Unknown
-            // A configured dimension we could not evaluate may already be overdue, so it must not read as GOOD.
+            // 설정된 기준 중 평가하지 못한 쪽이 이미 초과됐을 수 있으므로 GOOD으로 보이면 안 된다.
             mostUrgent == MaintenanceState.Good && missing.isNotEmpty() -> MaintenanceState.Unknown
             else -> mostUrgent
         }

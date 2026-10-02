@@ -28,16 +28,16 @@ internal fun Project.configureKotlinAndroid(commonExtension: CommonExtension) {
             allWarningsAsErrors.set(providers.gradleProperty("warningsAsErrors").map(String::toBoolean).orElse(false))
         }
     }
-    // Robolectric patches FileDescriptor through JDK internals that JDK 17+ no longer exports.
+    // Robolectric은 JDK 내부 API로 FileDescriptor를 패치하는데, JDK 17+는 이를 더 이상 export하지 않는다.
     tasks.withType<Test>().configureEach {
         jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
     }
-    // com.android.test modules have no local unit tests.
+    // com.android.test 모듈에는 로컬 단위 테스트가 없다.
     if (configurations.findByName("testImplementation") == null) return
     dependencies {
         add("testImplementation", libs.library("junit4"))
         add("testImplementation", libs.library("truth"))
-        // Robolectric 4.17 pulls espresso-core 3.5, which calls InputManager.getInstance() removed in API 36.
+        // Robolectric 4.17이 끌어오는 espresso-core 3.5는 API 36에서 제거된 InputManager.getInstance()를 호출한다.
         constraints.add("testImplementation", libs.library("androidx-test-espresso-core"))
     }
 }

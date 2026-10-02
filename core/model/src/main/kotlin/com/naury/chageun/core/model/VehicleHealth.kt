@@ -2,7 +2,7 @@ package com.naury.chageun.core.model
 
 enum class VehicleHealthLevel { NeedsAttention, Upcoming, InsufficientData, Good }
 
-/** Ordered by display priority; the first reason drives the headline message. */
+/** 표시 우선순위대로 정렬한다. 첫 번째 사유가 헤드라인 메시지를 정한다. */
 sealed interface HealthReason {
     data object ActiveSafetyRecall : HealthReason
     data object InspectionOverdue : HealthReason

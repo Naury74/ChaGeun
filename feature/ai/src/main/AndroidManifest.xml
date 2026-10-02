@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Package visibility for sharing straight to the user's AI app; falls back to the system chooser. -->
+    <!-- 사용자의 AI 앱으로 바로 공유하기 위한 패키지 가시성 선언. 없으면 시스템 선택기로 대체한다. -->
     <queries>
         <package android:name="com.openai.chatgpt" />
         <package android:name="com.anthropic.claude" />

@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.Flow
 interface VehicleRepository {
     fun observePrimaryVehicle(): Flow<Vehicle?>
 
-    /** Newest first, with same-day readings in reverse entry order. */
+    /** 최신순. 같은 날 기록은 입력 역순으로 정렬한다. */
     fun observeMileageLog(vehicleId: VehicleId): Flow<List<MileageEntry>>
 
     /**
-     * Stores the vehicle, its starting mileage and default maintenance rules atomically,
-     * and makes it the primary vehicle.
+     * 차량, 시작 주행거리, 기본 정비 규칙을 원자적으로 저장하고
+     * 해당 차량을 대표 차량으로 지정한다.
      */
     suspend fun register(registration: VehicleRegistration): VehicleId
 }

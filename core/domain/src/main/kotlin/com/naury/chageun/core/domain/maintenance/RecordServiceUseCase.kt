@@ -14,7 +14,7 @@ sealed interface RecordServiceResult {
 
     data class Rejected(val errors: Set<ServiceEntryError>) : RecordServiceResult
 
-    /** The entry is lower than the previous service of the same item; save again with confirmation to keep it. */
+    /** 같은 항목의 이전 정비보다 낮은 값이다. 유지하려면 확인 후 다시 저장한다. */
     data class NeedsConfirmation(val previousMileage: Kilometers) : RecordServiceResult
 }
 

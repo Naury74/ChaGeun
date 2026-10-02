@@ -45,7 +45,7 @@ data class OpenSourceLibrary(
     val licenseText: String?,
 )
 
-/** [librariesRes] is the metadata the AboutLibraries Gradle plugin generates in the app module at build time. */
+/** [librariesRes]는 AboutLibraries Gradle 플러그인이 빌드 시 app 모듈에 생성하는 메타데이터다. */
 @Composable
 fun OpenSourceLicensesRoute(@RawRes librariesRes: Int, onBack: () -> Unit) {
     val resources = LocalResources.current

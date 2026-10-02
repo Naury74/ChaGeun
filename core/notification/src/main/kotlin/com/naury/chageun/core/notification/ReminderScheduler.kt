@@ -11,8 +11,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 /**
- * Reminders are evaluated daily and on every app start. WorkManager restores the periodic work after reboot,
- * and a reminder arriving a few hours late is acceptable, so exact alarms are not used.
+ * 알림 대상은 매일, 그리고 앱을 시작할 때마다 확인한다. 재부팅 후에는 WorkManager가 주기 작업을 복구하고
+ * 알림이 몇 시간 늦게 와도 괜찮으므로 정확한 알람(exact alarm)은 쓰지 않는다.
  */
 class ReminderScheduler @Inject constructor(@ApplicationContext private val context: Context) {
 

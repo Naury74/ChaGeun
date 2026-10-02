@@ -6,7 +6,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Run with `./gradlew :app:generateBaselineProfile`; the result lands in app/src/release/generated. */
+/** `./gradlew :app:generateBaselineProfile`로 실행한다. 결과는 app/src/release/generated에 생성된다. */
 @RunWith(AndroidJUnit4::class)
 class BaselineProfileGenerator {
 

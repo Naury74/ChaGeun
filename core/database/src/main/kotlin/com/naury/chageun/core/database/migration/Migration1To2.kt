@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Makes `maintenance_record.service_date` nullable. SQLite cannot relax NOT NULL in place, so the table is rebuilt. */
+/** `maintenance_record.service_date`를 nullable로 바꾼다. SQLite는 NOT NULL 제약을 그대로 풀 수 없어 테이블을 다시 만든다. */
 internal object Migration1To2 : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
