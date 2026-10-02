@@ -51,8 +51,8 @@ fun ManageRoute(
 }
 
 /**
- * Compact shows list then detail; wider windows keep both so items can be compared without going back.
- * The selection lives in the ViewModel, so folding or rotating switches layouts without losing it.
+ * Compact에서는 목록 다음에 상세를 보여준다. 넓은 창에서는 뒤로 가지 않고 항목을 비교할 수 있도록 둘 다 유지한다.
+ * 선택 상태는 ViewModel에 있으므로 접거나 회전해 레이아웃이 바뀌어도 유지된다.
  */
 @Composable
 fun ManageScreen(

@@ -9,7 +9,7 @@ import java.time.LocalDate
 @Entity(tableName = "vehicle")
 data class VehicleEntity(
     @PrimaryKey val id: String,
-    // SECURITY: Plate number and VIN are stored only as ciphertext from the Keystore-backed cipher.
+    // SECURITY: 차량 번호와 VIN은 Keystore 기반 cipher로 암호화한 값으로만 저장한다.
     @ColumnInfo(name = "plate_number_encrypted") val plateNumberEncrypted: String?,
     @ColumnInfo(name = "plate_masked") val plateMasked: String?,
     val maker: String,

@@ -1,10 +1,10 @@
 package com.naury.chageun.core.common.logging
 
 /**
- * Single logging entry point. Events are identified by a stable snake_case [event] name.
+ * 로그를 남기는 단일 진입점이다. 이벤트는 변하지 않는 snake_case [event] 이름으로 구분한다.
  *
- * Throwables are reduced to their class name; messages are dropped because platform and provider
- * exceptions frequently embed request data.
+ * Throwable은 클래스 이름만 남기고 메시지는 버린다. 플랫폼과 제공처 예외 메시지에 요청 데이터가
+ * 들어 있는 경우가 많기 때문이다.
  */
 interface AppLogger {
     fun debug(event: String, vararg fields: LogField)

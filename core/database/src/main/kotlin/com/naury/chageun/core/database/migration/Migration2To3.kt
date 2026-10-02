@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Adds fuel and check (inspection, repair, note) records. Existing tables are untouched. */
+/** 주유 기록과 점검(검사, 수리, 메모) 기록을 추가한다. 기존 테이블은 건드리지 않는다. */
 internal object Migration2To3 : Migration(2, 3) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

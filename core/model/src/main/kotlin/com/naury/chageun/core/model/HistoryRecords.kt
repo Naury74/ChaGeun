@@ -5,7 +5,7 @@ import java.time.LocalDate
 
 enum class FuelField { Total, Volume, UnitPrice }
 
-/** Volume is kept in millilitres so amounts never go through floating point. */
+/** 주유량은 밀리리터 단위로 보관해 부동소수점 계산을 거치지 않게 한다. */
 data class FuelAmounts(
     val totalPriceWon: Long,
     val volumeMl: Long,
@@ -42,7 +42,7 @@ data class RecordRef(val type: TimelineEventType, val id: String)
 data class TimelineItem(
     val ref: RecordRef,
     val date: LocalDate?,
-    /** Free text for user records; null for maintenance, which is labelled by [maintenanceItem]. */
+    /** 사용자 기록의 자유 입력 제목이다. 정비 기록은 [maintenanceItem]으로 이름을 붙이므로 null이다. */
     val title: String?,
     val maintenanceItem: MaintenanceItem?,
     val mileage: Kilometers?,

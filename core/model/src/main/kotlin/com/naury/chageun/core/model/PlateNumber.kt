@@ -5,7 +5,7 @@ sealed interface PlateParseResult {
 
     data object Empty : PlateParseResult
 
-    /** Input still contains standalone jamo, i.e. the user is mid-composition. Callers should not show an error. */
+    /** 입력에 아직 낱자모가 남아 있다. 즉 사용자가 글자를 조합하는 중이므로 호출부에서 오류를 표시하지 않아야 한다. */
     data object Composing : PlateParseResult
 
     data object InvalidFormat : PlateParseResult
@@ -14,9 +14,9 @@ sealed interface PlateParseResult {
 }
 
 /**
- * A validated Korean registration plate, created only through [parse].
+ * 검증을 거친 한국 차량번호다. [parse]로만 만들 수 있다.
  *
- * [toString] is masked on purpose so an accidental string interpolation never exposes the full plate.
+ * [toString]은 일부러 마스킹한다. 실수로 문자열 보간에 쓰여도 전체 번호가 드러나지 않게 하기 위해서다.
  */
 class PlateNumber private constructor(
     val region: String?,
@@ -46,7 +46,7 @@ class PlateNumber private constructor(
             "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주",
         )
 
-        // Private, commercial (아바사자배) and rental (하허호) letters. Military and diplomatic plates are out of scope.
+        // 자가용, 영업용(아바사자배), 렌터카(하허호) 용도 문자다. 군용과 외교용 번호판은 범위에서 제외한다.
         private val USAGE_LETTERS =
             "가나다라마거너더러머버서어저고노도로모보소오조구누두루무부수우주아바사자배하허호".toSet()
 

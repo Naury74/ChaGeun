@@ -55,6 +55,6 @@ sealed interface OnboardingAction {
     data class QuickServiceMileageChanged(val item: MaintenanceItem, val value: String) : OnboardingAction
     data object SubmitQuickMaintenance : OnboardingAction
 
-    /** Sent after the notification permission prompt resolves, or immediately when skipped. */
+    /** 알림 권한 요청이 끝난 뒤, 또는 건너뛰면 즉시 보낸다. */
     data object Finish : OnboardingAction
 }

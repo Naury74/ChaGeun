@@ -28,7 +28,7 @@ internal fun VehicleEntity.toDto() = VehicleDto(
     createdAt = createdAt.toString(),
 )
 
-/** The encrypted plate is not restored: it was sealed with the exporting device's Keystore key. */
+/** 암호화된 번호판은 복원하지 않는다. 내보낸 기기의 Keystore 키로 암호화된 값이기 때문이다. */
 internal fun VehicleDto.toEntity(now: Instant) = VehicleEntity(
     id = id,
     plateNumberEncrypted = null,
@@ -173,7 +173,7 @@ private const val MIME_JPEG = "image/jpeg"
 internal fun InspectionScheduleEntity.toDto() =
     InspectionDto(vehicleId, nextDueDate.toString(), source, updatedAt.toString())
 
-/** Reminder progress is not exported; a restored date notifies again from its current stage. */
+/** 알림 진행 상태는 내보내지 않는다. 복원된 날짜는 현재 단계부터 다시 알림을 보낸다. */
 internal fun InspectionDto.toEntity() = InspectionScheduleEntity(
     vehicleId = vehicleId,
     nextDueDate = LocalDate.parse(nextDueDate),

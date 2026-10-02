@@ -22,7 +22,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-/** A button that opens a date picker limited to today and earlier, for events that already happened. */
+/** 이미 일어난 일을 위해 오늘 이전 날짜만 고를 수 있는 날짜 선택기를 여는 버튼이다. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PastDateField(
@@ -70,7 +70,7 @@ fun PastDateField(
 
 @OptIn(ExperimentalMaterial3Api::class)
 private object PastDates : SelectableDates {
-    // DatePicker reports UTC midnight; compare in UTC so today stays selectable in every timezone.
+    // DatePicker는 UTC 자정 값을 준다. 어느 시간대에서든 오늘을 고를 수 있도록 UTC로 비교한다.
     override fun isSelectableDate(utcTimeMillis: Long): Boolean =
         utcTimeMillis <= LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 }

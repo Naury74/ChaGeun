@@ -8,8 +8,8 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 
 /**
- * AES-256-GCM with a random IV per value. Payload layout: `version(1) | iv(12) | ciphertext+tag`.
- * The version byte lets a future key rotation decrypt values written by older builds.
+ * 값마다 무작위 IV를 쓰는 AES-256-GCM이다. Payload 구조: `version(1) | iv(12) | ciphertext+tag`.
+ * 버전 바이트가 있어 나중에 키를 교체해도 이전 빌드가 쓴 값을 복호화할 수 있다.
  */
 internal class AesGcmFieldCipher @Inject constructor(private val keyProvider: SecretKeyProvider) : FieldCipher {
 

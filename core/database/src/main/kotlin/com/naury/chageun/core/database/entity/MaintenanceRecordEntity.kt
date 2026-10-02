@@ -26,7 +26,7 @@ data class MaintenanceRecordEntity(
     @ColumnInfo(name = "item_type") val itemType: String,
     @ColumnInfo(name = "service_date") val serviceDate: LocalDate?,
     @ColumnInfo(name = "mileage_km") val mileageKm: Long?,
-    // Null means "not entered"; 0 is a real free service and must stay distinguishable.
+    // null은 "입력 안 함"이고 0은 실제 무상 정비이므로 둘을 구분해야 한다.
     @ColumnInfo(name = "cost_won") val costWon: Long?,
     @ColumnInfo(name = "shop_name") val shopName: String?,
     val memo: String?,

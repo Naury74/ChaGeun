@@ -20,8 +20,8 @@ internal object BackupArchiveReader {
     private val json = Json { ignoreUnknownKeys = true }
 
     /**
-     * Reads `data.json` and, when [extractTo] is given, copies `attachments/` images into it.
-     * Entry names are reduced to a bare file name so a crafted archive cannot write outside the target.
+     * `data.json`을 읽고, [extractTo]가 주어지면 `attachments/` 이미지를 그곳에 복사한다.
+     * 조작된 아카이브가 대상 밖에 쓰지 못하도록 엔트리 이름은 파일 이름만 남긴다.
      */
     fun read(input: InputStream, extractTo: File? = null): ArchiveContent {
         var content: ArchiveContent = ArchiveContent.Invalid

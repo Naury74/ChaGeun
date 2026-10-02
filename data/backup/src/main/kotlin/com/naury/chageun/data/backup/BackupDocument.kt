@@ -4,8 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Export format. Bump [SCHEMA_VERSION] on any incompatible change; import only accepts the same version.
- * Dates are ISO-8601 strings and amounts are integers (won, km, mL) so the file is readable without the app.
+ * 내보내기 형식. 호환되지 않는 변경이 있으면 [SCHEMA_VERSION]을 올린다. 가져오기는 같은 버전만 받는다.
+ * 앱 없이도 파일을 읽을 수 있도록 날짜는 ISO-8601 문자열, 금액·수치는 정수(won, km, mL)로 둔다.
  */
 @Serializable
 internal data class BackupDocument(
@@ -18,7 +18,7 @@ internal data class BackupDocument(
     @SerialName("fuel_records") val fuelRecords: List<FuelDto>,
     @SerialName("check_records") val checkRecords: List<CheckDto>,
     val attachments: List<AttachmentDto>,
-    /** Added without a version bump: optional with a default, so earlier version-1 files still import. */
+    /** 버전을 올리지 않고 추가한 필드다. 기본값이 있는 선택 항목이라 이전 version-1 파일도 그대로 가져올 수 있다. */
     @SerialName("inspection_schedules") val inspectionSchedules: List<InspectionDto> = emptyList(),
 ) {
     companion object {
@@ -26,7 +26,7 @@ internal data class BackupDocument(
     }
 }
 
-/** The plate is exported masked only; the encrypted value is tied to this device's Keystore key. */
+/** 번호판은 마스킹된 값만 내보낸다. 암호화된 값은 이 기기의 Keystore 키에 묶여 있다. */
 @Serializable
 internal data class VehicleDto(
     val id: String,

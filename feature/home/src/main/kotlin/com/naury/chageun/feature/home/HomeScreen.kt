@@ -48,7 +48,7 @@ fun HomeRoute(
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
         uiState = uiState,
-        // Book posture: never let the single pane run across the fold.
+        // Book 자세: 단일 Pane이 접히는 부분을 가로지르지 않게 한다.
         paneCount = homePaneCount(windowSizeClass).let {
             if (currentSeparatingHinge()?.isVertical == true) maxOf(it, TWO_PANES) else it
         },
@@ -72,7 +72,7 @@ data class HomeActions(
     val onOpenInspection: () -> Unit = {},
 )
 
-/** Medium widths keep one pane: next to a rail, two panes would fall below the 360dp minimum detail width. */
+/** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
 fun homePaneCount(windowSizeClass: WindowSizeClass): Int = when {
     windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND) -> THREE_PANES
     windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> TWO_PANES
@@ -108,7 +108,7 @@ private fun HomeContent(
     modifier: Modifier,
 ) {
     val spacing = ChageunTheme.spacing
-    // Tabletop: the car and its status stay on the upper half, lists and actions on the lower half.
+    // Tabletop: 차량과 상태는 위쪽 절반에, 목록과 액션은 아래쪽 절반에 둔다.
     val isTabletop = hinge != null && !hinge.isVertical
     val panes: List<LazyListScope.() -> Unit> = when {
         isTabletop -> listOf({ summaryPane(state, actions) }, {

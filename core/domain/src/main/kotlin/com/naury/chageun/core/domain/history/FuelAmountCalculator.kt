@@ -4,8 +4,8 @@ import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelField
 
 /**
- * Completes fuel amounts from any two of total, volume and unit price.
- * Every derived value is rounded half up to the nearest won or millilitre.
+ * 총액, 주유량, 단가 중 두 값으로 나머지 주유 금액 정보를 채운다.
+ * 계산한 값은 모두 원 또는 밀리리터 단위에서 반올림한다.
  */
 object FuelAmountCalculator {
 

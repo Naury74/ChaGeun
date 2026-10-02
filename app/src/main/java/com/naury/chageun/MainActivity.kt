@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // A restored activity already navigated for its launch intent.
+        // 복원된 Activity는 실행 intent에 대한 이동을 이미 마쳤다.
         if (savedInstanceState == null) deepLink.value = intent.deepLinkOrNull()
         setContent {
             ChageunRoot(deepLink = deepLink.value, onDeepLinkHandled = { deepLink.value = null })

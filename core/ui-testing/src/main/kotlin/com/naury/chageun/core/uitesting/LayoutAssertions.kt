@@ -10,10 +10,10 @@ import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.text.TextLayoutResult
 
 /**
- * Fails when any composed text is cut off: lines dropped by `maxLines`, clipped by a fixed height, or pushed
- * past the right edge of the window. Run with `@Config(fontScale = 2f)` and `@GraphicsMode(NATIVE)`; the
- * legacy Robolectric graphics mode does not measure text.
- * Only composed nodes are checked, so scroll lazy lists before calling it again for off-screen items.
+ * Compose된 텍스트가 하나라도 잘리면 실패한다. `maxLines` 때문에 줄이 빠지거나, 고정 높이에 잘리거나,
+ * 창 오른쪽 끝 밖으로 밀려난 경우다. `@Config(fontScale = 2f)`와 `@GraphicsMode(NATIVE)`로 실행해야 한다.
+ * 기존 Robolectric 그래픽 모드는 텍스트를 측정하지 않는다.
+ * Compose된 노드만 검사하므로 화면 밖 항목은 lazy 목록을 스크롤한 뒤 다시 호출한다.
  */
 fun SemanticsNodeInteractionsProvider.assertNoClippedText() {
     val windowRight = onAllNodes(isRoot()).fetchSemanticsNodes().maxOf { it.boundsInRoot.right }
@@ -35,7 +35,7 @@ private fun SemanticsNode.textLayout(): TextLayoutResult? {
     return results.firstOrNull()
 }
 
-/** Width overflow is not checked: a layout fetched through semantics reports it even for text that fits. */
+/** 가로 넘침은 검사하지 않는다. semantics로 가져온 레이아웃은 들어맞는 텍스트도 넘친다고 보고하기 때문이다. */
 private fun TextLayoutResult.isTruncated(): Boolean = multiParagraph.didExceedMaxLines || didOverflowHeight
 
 private fun SemanticsNode.label(): String =

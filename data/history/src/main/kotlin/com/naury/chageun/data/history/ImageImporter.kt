@@ -13,14 +13,14 @@ import javax.inject.Inject
 
 internal data class ImportedImage(val file: File, val thumbnail: File, val sizeBytes: Long)
 
-/** Abstracted so the repository can be tested without decoding real images. */
+/** 실제 이미지를 디코딩하지 않고 Repository를 테스트할 수 있도록 추상화했다. */
 internal fun interface ImageImporter {
     fun import(sourceUri: String, target: File, thumbnail: File): ImportedImage?
 }
 
 /**
- * Decodes, downsizes and re-encodes as JPEG. Re-encoding writes no EXIF, which drops GPS location and
- * camera data; orientation is applied to the pixels first so photos keep their rotation.
+ * 디코딩 후 크기를 줄여 JPEG로 다시 인코딩한다. 재인코딩 시 EXIF를 쓰지 않으므로 GPS 위치와 카메라 정보가
+ * 제거된다. 사진 회전이 유지되도록 방향 정보는 먼저 픽셀에 반영한다.
  */
 internal class BitmapImageImporter @Inject constructor(@ApplicationContext private val context: Context) :
     ImageImporter {
@@ -67,14 +67,14 @@ internal class BitmapImageImporter @Inject constructor(@ApplicationContext priva
 }
 
 internal object ImageSizing {
-    /** Largest power-of-two subsampling that keeps the longer edge at or above [maxEdge]. */
+    /** 긴 변이 [maxEdge] 이상으로 유지되는 가장 큰 2의 거듭제곱 서브샘플링 값. */
     fun sampleSize(width: Int, height: Int, maxEdge: Int): Int {
         var sample = 1
         while (maxOf(width, height) / (sample * 2) >= maxEdge) sample *= 2
         return sample
     }
 
-    /** Scales down to fit [maxEdge] on the longer side, keeping the aspect ratio; never upscales. */
+    /** 가로세로 비율을 유지하며 긴 변이 [maxEdge]에 맞도록 축소한다. 확대는 하지 않는다. */
     fun fit(width: Int, height: Int, maxEdge: Int): Pair<Int, Int> {
         val longer = maxOf(width, height)
         if (longer <= maxEdge) return width to height

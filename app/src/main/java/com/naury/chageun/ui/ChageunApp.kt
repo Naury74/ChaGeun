@@ -37,14 +37,14 @@ import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
 
-/** Cross-feature actions handled by the app shell so feature modules never depend on each other. */
+/** feature 모듈끼리 서로 의존하지 않도록 앱 셸이 처리하는 feature 간 액션. */
 data class AppActions(
     val onRecordService: (MaintenanceItem) -> Unit,
     val onNavigate: (TopLevelDestination) -> Unit,
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
-    /** Item opened from a notification, consumed once the Care tab has selected it. */
+    /** 알림에서 연 항목. Care 탭이 선택하고 나면 소비된다. */
     val pendingManageItem: MaintenanceItem? = null,
     val onPendingManageItemHandled: () -> Unit = {},
 )

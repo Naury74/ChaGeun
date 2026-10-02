@@ -29,7 +29,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.formatNumber
 
-/** Hosted by the app shell so Home and My car share one entry point. */
+/** Home과 My car가 하나의 진입점을 공유하도록 앱 셸에서 띄운다. */
 @Composable
 fun MileageUpdateHost(
     isExpanded: Boolean,

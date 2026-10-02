@@ -10,7 +10,7 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
             configureQuality()
             configureKotlinJvm()
 
-            // CI and the documented local check run the Android-flavored task name across all modules.
+            // CI와 문서에 적힌 로컬 검사는 모든 모듈에서 Android 쪽 task 이름으로 실행한다.
             tasks.register("testDebugUnitTest") {
                 group = "verification"
                 dependsOn("test")

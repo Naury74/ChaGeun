@@ -4,8 +4,8 @@ import com.naury.chageun.core.model.MileageReading
 import java.time.LocalDate
 
 /**
- * The odometer value as of [today]. History is ordered oldest first with same-day readings in entry order,
- * so a correction entered later on the same day wins over the reading it corrects.
+ * [today] 기준 주행거리. 이력은 오래된 순이고 같은 날 기록은 입력 순서대로 정렬되므로
+ * 같은 날 나중에 입력한 보정값이 보정 대상 기록보다 우선한다.
  */
 fun List<MileageReading>.currentAsOf(today: LocalDate): MileageReading? {
     val known = filter { !it.date.isAfter(today) }

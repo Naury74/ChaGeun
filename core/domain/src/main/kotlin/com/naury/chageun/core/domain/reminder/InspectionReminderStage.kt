@@ -7,7 +7,7 @@ private const val WEEK_BEFORE_DAYS = 7L
 private const val DAY_BEFORE_DAYS = 1L
 private const val OVERDUE_DAYS = -1L
 
-/** Ordered by urgency; each stage is notified at most once per due date. */
+/** 긴급도 순으로 정렬한다. 각 단계는 만료일마다 최대 한 번만 알린다. */
 enum class InspectionReminderStage(val maxDaysLeft: Long) {
     Days30(InspectionEvaluator.DUE_SOON_DAYS),
     Days7(WEEK_BEFORE_DAYS),
@@ -16,7 +16,7 @@ enum class InspectionReminderStage(val maxDaysLeft: Long) {
     ;
 
     companion object {
-        /** The stage to notify now, or null when nothing new has been reached since [alreadyNotified]. */
+        /** 지금 알릴 단계. [alreadyNotified] 이후 새로 도달한 단계가 없으면 null. */
         fun next(status: InspectionStatus, alreadyNotified: InspectionReminderStage?): InspectionReminderStage? {
             val daysLeft = status.daysLeft ?: return null
             val reached = entries.lastOrNull { daysLeft <= it.maxDaysLeft } ?: return null

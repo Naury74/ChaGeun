@@ -7,7 +7,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 object InspectionEvaluator {
-    /** Periodic inspections open 31 days before the due date, so the last month counts as due soon. */
+    /** 정기검사는 만료일 31일 전부터 받을 수 있으므로 마지막 한 달은 임박으로 본다. */
     const val DUE_SOON_DAYS = 30L
 
     fun evaluate(schedule: InspectionSchedule?, today: LocalDate): InspectionStatus {

@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Adds the user-entered (later official) next inspection date per vehicle. */
+/** 차량별 다음 검사일(지금은 사용자 입력, 이후 공식 데이터)을 추가한다. */
 internal object Migration5To6 : Migration(5, 6) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

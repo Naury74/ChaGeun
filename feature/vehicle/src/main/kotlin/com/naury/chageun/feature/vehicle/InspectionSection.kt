@@ -118,7 +118,7 @@ internal fun InspectionCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun InspectionDatePicker(initial: LocalDate?, onConfirm: (LocalDate) -> Unit, onDismiss: () -> Unit) {
-    // DatePicker works in UTC midnight millis.
+    // DatePicker는 UTC 자정 기준 millis를 사용한다.
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
     )

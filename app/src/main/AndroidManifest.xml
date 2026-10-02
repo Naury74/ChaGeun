@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
 
-        <!-- WorkManager is initialized by ChageunApplication with the Hilt worker factory. -->
+        <!-- WorkManager는 ChageunApplication이 Hilt worker factory로 초기화한다. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

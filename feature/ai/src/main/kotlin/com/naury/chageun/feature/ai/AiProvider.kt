@@ -11,7 +11,7 @@ enum class AiProvider(val packageName: String?, val label: String?) {
     Other(null, null),
 }
 
-/** Shares [text] to the chosen AI app, or the system chooser when it is not installed or "other" is picked. */
+/** [text]를 선택한 AI 앱으로 공유한다. 앱이 설치되어 있지 않거나 "other"를 고르면 시스템 선택기를 띄운다. */
 internal fun shareToAi(context: Context, provider: AiProvider, text: String, chooserTitle: String) {
     val send = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

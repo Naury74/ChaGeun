@@ -21,7 +21,7 @@ internal fun Project.configureQuality() {
         basePath = rootProject.projectDir.absolutePath
     }
 
-    // Detekt 1.23 embeds the Kotlin 2.0 compiler; letting Gradle align it to the project Kotlin version breaks analysis.
+    // Detekt 1.23은 Kotlin 2.0 컴파일러를 내장한다. Gradle이 이를 프로젝트 Kotlin 버전으로 맞추면 분석이 깨진다.
     configurations.matching { it.name == "detekt" }.configureEach {
         resolutionStrategy.eachDependency {
             if (requested.group == "org.jetbrains.kotlin") useVersion("2.0.21")

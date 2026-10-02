@@ -18,8 +18,8 @@ class CompleteInspectionUseCase @Inject constructor(
     private val notifier: ReminderNotifier,
 ) {
     /**
-     * Records the inspection in the timeline and stores [nextDueDate] (null clears it).
-     * The date is only changed when the record is valid, so a rejected entry leaves the schedule as it was.
+     * 검사를 Timeline에 기록하고 [nextDueDate]를 저장한다(null이면 지운다).
+     * 기록이 유효할 때만 날짜를 바꾸므로, 거부된 입력은 기존 일정을 그대로 둔다.
      */
     suspend operator fun invoke(
         vehicleId: VehicleId,
@@ -39,15 +39,15 @@ class CompleteInspectionUseCase @Inject constructor(
     }
 
     companion object {
-        /** Private passenger cars are inspected every two years after the first one. */
+        /** 비사업용 승용차는 최초 검사 이후 2년마다 검사한다. */
         private const val INTERVAL_YEARS = 2L
 
-        /** An inspection taken within this many days of the due date keeps the original cycle. */
+        /** 만료일 전후 이 일수 안에 받은 검사는 원래 주기를 유지한다. */
         private const val ON_TIME_WINDOW_DAYS = 31L
 
         /**
-         * A starting point the user confirms against their notice: on-time inspections extend the previous
-         * due date, late or early ones count from the inspection day.
+         * 사용자가 안내문과 대조해 확인할 기준값이다. 기간 내 검사는 이전 만료일에서 연장하고,
+         * 늦거나 이른 검사는 검사일부터 계산한다.
          */
         fun suggestNextDueDate(completedOn: LocalDate, previousDueDate: LocalDate?): LocalDate {
             val onTime = previousDueDate != null &&

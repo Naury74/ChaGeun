@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import java.time.Instant
 
-/** The most urgent stage already notified for an item, so a daily evaluation never repeats a notification. */
+/** 항목별로 이미 알린 가장 긴급한 단계. 매일 평가해도 같은 알림이 반복되지 않게 한다. */
 @Entity(
     tableName = "reminder_state",
     primaryKeys = ["vehicle_id", "item_type"],

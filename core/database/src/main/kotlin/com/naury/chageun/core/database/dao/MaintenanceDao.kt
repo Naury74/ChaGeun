@@ -19,7 +19,7 @@ interface MaintenanceDao {
     @Upsert
     suspend fun upsertRules(rules: List<MaintenanceRuleEntity>)
 
-    /** Latest record per item; ties on the same date resolve to the most recently created entry. */
+    /** 항목별 최신 기록. 같은 날짜끼리는 가장 나중에 생성된 기록을 택한다. */
     @Query(
         """
         SELECT r.* FROM maintenance_record r

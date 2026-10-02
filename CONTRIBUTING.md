@@ -46,12 +46,12 @@ Scope는 Module 또는 Domain 이름을 사용한다. 하나의 PR은 하나의 
 
 ### 주석
 
-코드가 설명하지 못하는 **이유와 제약**만 남긴다.
+코드가 설명하지 못하는 **이유와 제약**만 한국어로 남긴다. 식별자·API 이름과 `SECURITY:`·`WORKAROUND(CHGN-n)`·`TODO(CHGN-n)` 태그는 그대로 쓴다.
 
 ```kotlin
-// A missing safety record must remain UNKNOWN; showing GOOD could mislead the user.
-// SECURITY: Owner name is used for lookup only and must not be persisted or logged.
-// WORKAROUND(CHGN-184): <원인>. Remove after <조건>.
+// 안전 항목 기록이 없으면 UNKNOWN으로 둔다. GOOD으로 보이면 사용자가 오해할 수 있다.
+// SECURITY: 소유주명은 조회에만 쓰고 저장하거나 로그에 남기지 않는다.
+// WORKAROUND(CHGN-184): <원인>. <조건> 이후 제거.
 // TODO(CHGN-231): <후속 작업>
 ```
 

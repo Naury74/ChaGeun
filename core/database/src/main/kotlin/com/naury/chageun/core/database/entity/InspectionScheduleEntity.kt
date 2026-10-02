@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 import java.time.Instant
 import java.time.LocalDate
 
-/** Next periodic inspection per vehicle. [notifiedStage] is reset whenever the due date changes. */
+/** 차량별 다음 정기검사. 만료일이 바뀔 때마다 [notifiedStage]를 초기화한다. */
 @Entity(
     tableName = "inspection_schedule",
     foreignKeys = [

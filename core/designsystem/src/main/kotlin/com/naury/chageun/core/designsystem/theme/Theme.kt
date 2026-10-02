@@ -61,8 +61,8 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 /**
- * Brand theme. Dynamic color is intentionally not supported: status tones (good/upcoming/critical)
- * must stay consistent across devices to remain recognizable.
+ * 브랜드 테마다. Dynamic color는 일부러 지원하지 않는다. 상태 색(good/upcoming/critical)이
+ * 기기마다 같아야 한눈에 알아볼 수 있기 때문이다.
  */
 @Composable
 fun ChageunTheme(

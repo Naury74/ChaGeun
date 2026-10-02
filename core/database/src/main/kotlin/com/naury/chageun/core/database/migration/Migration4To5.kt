@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Adds the notified reminder stage per maintenance item. */
+/** 정비 항목별로 알림을 보낸 단계를 추가한다. */
 internal object Migration4To5 : Migration(4, 5) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

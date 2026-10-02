@@ -42,7 +42,7 @@ class OfflineFirstAttachmentRepositoryTest {
         override fun error(event: String, vararg fields: LogField, error: Throwable?) = Unit
     }
 
-    /** Writes placeholder files instead of decoding; URIs containing "broken" fail like unreadable images. */
+    /** 디코딩 대신 임시 파일을 쓴다. "broken"이 포함된 URI는 읽을 수 없는 이미지처럼 실패한다. */
     private val fakeImporter = ImageImporter { uri, target, thumbnail ->
         if ("broken" in uri) {
             null

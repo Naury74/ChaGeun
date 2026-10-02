@@ -13,7 +13,7 @@ import com.naury.chageun.core.model.ServiceRecord
 
 internal fun String.toMaintenanceItemOrNull() = MaintenanceItem.entries.firstOrNull { it.name == this }
 
-/** Rows written by a newer app version may reference items this build does not know; they are skipped. */
+/** 더 새로운 앱 버전이 쓴 행은 이 빌드가 모르는 항목을 참조할 수 있으므로 건너뛴다. */
 internal fun MaintenanceRuleEntity.asExternalModelOrNull(): MaintenanceRule? {
     val item = itemType.toMaintenanceItemOrNull() ?: return null
     return MaintenanceRule(

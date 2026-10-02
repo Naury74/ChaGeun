@@ -31,7 +31,7 @@ fun ChageunRoot(deepLink: DeepLink?, onDeepLinkHandled: () -> Unit, viewModel: A
         // 화면 바탕은 background, 카드와 Hero는 surface를 써서 바탕과 구분한다.
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             when (entry) {
-                // Room answers within a frame; an empty surface avoids flashing onboarding to returning users.
+                // Room은 한 프레임 안에 응답한다. 빈 surface를 두어 기존 사용자에게 온보딩이 잠깐 비치지 않게 한다.
                 AppEntry.Loading -> Box(Modifier.fillMaxSize())
                 AppEntry.Onboarding -> OnboardingRoute()
                 AppEntry.Main -> ChageunApp(deepLink = deepLink, onDeepLinkHandled = onDeepLinkHandled)

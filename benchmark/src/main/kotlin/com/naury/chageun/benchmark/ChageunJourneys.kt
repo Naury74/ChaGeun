@@ -10,8 +10,8 @@ internal const val PACKAGE_NAME = "com.naury.chageun"
 private const val UI_TIMEOUT_MS = 5_000L
 
 /**
- * A fresh install opens onboarding. Registers a car without a plate so later journeys start on Home.
- * Labels are the English defaults; managed devices run in en-US.
+ * 새로 설치하면 온보딩이 열린다. 번호판 없이 차량을 등록해 이후 journey가 Home에서 시작하게 한다.
+ * 라벨은 영어 기본값을 쓴다. managed device는 en-US로 실행된다.
  */
 internal fun MacrobenchmarkScope.registerCarIfNeeded() {
     if (!device.wait(Until.hasObject(By.text("Get started")), UI_TIMEOUT_MS)) return
@@ -43,7 +43,7 @@ internal fun MacrobenchmarkScope.openTab(label: String) {
     device.waitForIdle()
 }
 
-/** Flings the first scrollable list down and back up. */
+/** 첫 번째 스크롤 가능한 목록을 아래로 fling한 뒤 다시 위로 올린다. */
 internal fun MacrobenchmarkScope.scrollMainList() {
     val list = device.wait(Until.findObject(By.scrollable(true).pkg(PACKAGE_NAME)), UI_TIMEOUT_MS) ?: return
     list.setGestureMargin(device.displayWidth / GESTURE_MARGIN_DIVISOR)

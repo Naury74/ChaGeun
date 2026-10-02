@@ -23,7 +23,7 @@ enum class DataMessage { ExportDone, ExportFailed, ImportDone, ImportFailed, Imp
 data class PendingImport(val sourceUri: String, val preview: ImportPreview.Ready)
 
 data class DataUiState(
-    /** Non-null while the delete confirmation is shown. */
+    /** 삭제 확인이 표시되는 동안에만 null이 아니다. */
     val pendingDeletion: LocalDataSummary? = null,
     val pendingImport: PendingImport? = null,
     val message: DataMessage? = null,
@@ -108,7 +108,7 @@ class SettingsViewModel @Inject constructor(
 
     fun cancelDeleteAll() = _dataState.update { it.copy(pendingDeletion = null) }
 
-    /** After deletion there is no primary vehicle, so the app root returns to onboarding by itself. */
+    /** 삭제 후에는 대표 차량이 없으므로 앱 루트가 알아서 온보딩으로 돌아간다. */
     fun confirmDeleteAll() {
         _dataState.update { it.copy(pendingDeletion = null, isWorking = true) }
         viewModelScope.launch {

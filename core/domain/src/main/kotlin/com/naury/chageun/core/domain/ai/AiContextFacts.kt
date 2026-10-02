@@ -10,8 +10,8 @@ import com.naury.chageun.core.model.VehicleHealthLevel
 import java.time.LocalDate
 
 /**
- * Everything that may be shared with an external AI. There is deliberately no field for the plate number,
- * VIN, owner name, location, notes or attachments, so they cannot leak through a rendering mistake.
+ * 외부 AI에 공유할 수 있는 정보 전체. 차량 번호, VIN, 소유자 이름, 위치, 메모, 첨부 필드는 일부러 두지 않아
+ * 렌더링 실수로도 새어 나갈 수 없게 한다.
  */
 data class AiContextFacts(
     val asOf: LocalDate,
@@ -27,8 +27,8 @@ data class AiContextFacts(
 )
 
 /**
- * A history entry reduced to what helps answer questions. Memos and fuel station names are never included:
- * the first is free text and the second reveals places the user visits.
+ * 질문에 답하는 데 필요한 정보만 남긴 이력 항목. 메모와 주유소 이름은 절대 넣지 않는다.
+ * 메모는 자유 텍스트이고, 주유소 이름은 사용자가 다니는 장소를 드러내기 때문이다.
  */
 data class SharedRecord(
     val type: TimelineEventType,
@@ -43,6 +43,6 @@ data class AiContextOptions(
     val includeMaintenance: Boolean = true,
     val includeRecords: Boolean = true,
     val includeCosts: Boolean = false,
-    /** When set, only this item's maintenance status is shared. */
+    /** 값이 있으면 이 항목의 정비 상태만 공유한다. */
     val focusItem: MaintenanceItem? = null,
 )

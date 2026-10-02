@@ -28,7 +28,7 @@ val MaintenanceState.labelRes: Int
         MaintenanceState.Unknown -> R.string.maintenance_state_unknown
     }
 
-/** The dimension that is already past due wins; otherwise distance is shown since it is what drivers track. */
+/** 이미 기한이 지난 기준을 우선 표시한다. 그렇지 않으면 운전자가 주로 챙기는 주행거리를 보여 준다. */
 @Composable
 fun remainingText(status: MaintenanceStatus): String? {
     val km = status.remainingKm

@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 
-/** Adds photo and receipt attachments for history records. */
+/** 이력 기록용 사진·영수증 첨부를 추가한다. */
 internal object Migration3To4 : Migration(3, 4) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL(

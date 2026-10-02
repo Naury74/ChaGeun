@@ -25,7 +25,7 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
 
     override fun canNotify(): Boolean = manager.areNotificationsEnabled()
 
-    // canNotify() is checked by the caller right before notify(); lint cannot see across that boundary.
+    // canNotify()는 호출부에서 notify() 직전에 확인한다. lint는 그 경계 너머를 보지 못한다.
     @SuppressLint("MissingPermission")
     override fun notify(statuses: List<MaintenanceStatus>) {
         NotificationChannels.ensureCreated(context)

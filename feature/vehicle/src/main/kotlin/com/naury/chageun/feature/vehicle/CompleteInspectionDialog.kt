@@ -39,7 +39,7 @@ internal fun CompleteInspectionDialog(
 ) {
     var completedOn by rememberSaveable { mutableStateOf(today) }
     var mileage by rememberSaveable { mutableStateOf(currentMileage?.value?.toString().orEmpty()) }
-    // Null until the user picks a date, so the suggestion follows the inspection day.
+    // 사용자가 날짜를 고르기 전까지는 null로 두어 제안값이 검사일을 따라가게 한다.
     var chosenNextDue by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     var isPickingNextDue by rememberSaveable { mutableStateOf(false) }
     val nextDue = chosenNextDue ?: CompleteInspectionUseCase.suggestNextDueDate(completedOn, previousDueDate)

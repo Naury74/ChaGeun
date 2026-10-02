@@ -17,12 +17,12 @@ import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import kotlin.math.roundToInt
 
-/** A fold or gap between displays that splits the window, in window pixels along the axis it splits. */
+/** 창을 나누는 접힘 부분이나 디스플레이 사이 틈이다. 나누는 축 방향의 창 픽셀 좌표로 나타낸다. */
 data class Hinge(val start: Float, val end: Float, val isVertical: Boolean)
 
 /**
- * The hinge content must not cross: half-opened folds (Book or Tabletop) and dual displays.
- * A fully opened flat fold reports nothing, so it keeps the regular weighted layout.
+ * 콘텐츠가 가로질러서는 안 되는 Hinge다. 반쯤 펼친 폴드(Book 또는 Tabletop)와 듀얼 디스플레이가 해당한다.
+ * 완전히 펼친 폴드는 아무것도 보고하지 않으므로 일반 가중치 레이아웃을 그대로 쓴다.
  */
 @Composable
 fun currentSeparatingHinge(): Hinge? = currentWindowAdaptiveInfo().windowPosture.hingeList
@@ -36,7 +36,7 @@ fun currentSeparatingHinge(): Hinge? = currentWindowAdaptiveInfo().windowPosture
         }
     }
 
-/** List-detail screens use two panes from Expanded width, or whenever a vertical hinge splits the window. */
+/** 목록-상세 화면은 Expanded 폭부터, 또는 세로 Hinge가 창을 나눌 때마다 Pane 두 개를 쓴다. */
 @Composable
 fun isListDetailTwoPane(): Boolean {
     val wide = currentWindowAdaptiveInfo().windowSizeClass
@@ -45,9 +45,9 @@ fun isListDetailTwoPane(): Boolean {
 }
 
 /**
- * Lays out each child as a pane, side by side or stacked when [stacked].
- * Without a hinge across that axis the panes share the space by [weights]. With one, the first pane ends
- * before the hinge and the rest start after it, so no card or button sits on the fold.
+ * 각 자식을 Pane으로 배치한다. 나란히 놓거나, [stacked]이면 위아래로 쌓는다.
+ * 그 축을 가로지르는 Hinge가 없으면 Pane들이 [weights] 비율로 공간을 나눈다. Hinge가 있으면 첫 Pane은
+ * Hinge 앞에서 끝나고 나머지는 Hinge 뒤에서 시작해, 접힘 부분에 카드나 버튼이 걸치지 않는다.
  */
 @Composable
 fun HingeAwarePanes(
@@ -93,8 +93,8 @@ fun HingeAwarePanes(
 internal data class PaneSlot(val offset: Int, val size: Int)
 
 /**
- * Splits [total] pixels into panes. A hinge narrower than [gap] is padded on both sides so panes keep
- * at least [gap] of clearance; a hinge outside the layout is ignored.
+ * [total] 픽셀을 Pane들로 나눈다. [gap]보다 좁은 Hinge는 양쪽에 여백을 더해 Pane이 최소 [gap]만큼
+ * 떨어지게 한다. 레이아웃 밖에 있는 Hinge는 무시한다.
  */
 internal fun paneSlots(total: Int, gap: Int, weights: List<Float>, hingeStart: Int?, hingeEnd: Int?): List<PaneSlot> {
     val hingeInside = hingeStart != null && hingeEnd != null && hingeStart > 0 && hingeEnd < total

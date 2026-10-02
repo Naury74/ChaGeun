@@ -31,7 +31,7 @@ fun formatYearMonth(month: YearMonth): String {
     return month.format(DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "yMMMM"), locale))
 }
 
-/** Formats millilitres as litres with two decimals, e.g. 41176 → "41.18". */
+/** 밀리리터를 소수점 둘째 자리까지의 리터로 표시한다. 예: 41176 → "41.18". */
 @Composable
 @ReadOnlyComposable
 fun formatLitres(volumeMl: Long): String = NumberFormat.getNumberInstance(currentLocale()).apply {

@@ -90,7 +90,7 @@ class HistoryViewModel @Inject constructor(
         savedStateHandle[KEY_FILTER] = filter.name
     }
 
-    /** [matchingItems] are maintenance items whose localized name contains [keyword]. */
+    /** [matchingItems]는 현지화된 이름에 [keyword]가 포함된 정비 항목이다. */
     fun search(keyword: String, matchingItems: Set<MaintenanceItem>) {
         savedStateHandle[KEY_KEYWORD] = keyword
         savedStateHandle[KEY_MATCHING_ITEMS] = ArrayList(matchingItems.map { it.name })

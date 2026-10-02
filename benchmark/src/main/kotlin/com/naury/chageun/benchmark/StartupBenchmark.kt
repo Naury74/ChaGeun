@@ -10,7 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Cold start to a drawn Home, compared with and without the Baseline Profile. */
+/** Home이 그려질 때까지의 cold start를 Baseline Profile 적용 여부별로 비교한다. */
 @RunWith(AndroidJUnit4::class)
 class StartupBenchmark {
 

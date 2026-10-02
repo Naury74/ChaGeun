@@ -36,7 +36,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.feature.manage.R
 import java.time.LocalDate
 
-/** Entry point used by the app shell; a bottom sheet on compact windows, a width-limited dialog otherwise. */
+/** 앱 셸에서 쓰는 진입점. Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다. */
 @Composable
 fun RecordServiceHost(item: MaintenanceItem, isExpanded: Boolean, onDismiss: () -> Unit) {
     val viewModel = hiltViewModel<RecordServiceViewModel, RecordServiceViewModel.Factory>(key = item.name) {

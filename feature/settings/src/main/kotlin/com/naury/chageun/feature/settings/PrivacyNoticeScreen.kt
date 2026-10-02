@@ -18,7 +18,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 
-/** Must stay in sync with what the app actually stores and sends; update it with any new permission or SDK. */
+/** 앱이 실제로 저장하고 전송하는 내용과 항상 일치해야 한다. 권한이나 SDK를 새로 추가하면 함께 수정한다. */
 @Composable
 fun PrivacyNoticeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     Column(

@@ -41,7 +41,7 @@ data class FuelFormUiState(
     val hasSaveFailed: Boolean = false,
     val isSaved: Boolean = false,
 ) {
-    /** Live preview of the derived amount, so users see what will be stored before saving. */
+    /** 저장 전에 어떤 값이 저장될지 보이도록 계산된 양을 실시간으로 미리 보여준다. */
     val amounts: FuelAmounts? get() = FuelAmountCalculator.complete(
         total.toLongOrNull(),
         volumeLitres.toMillilitres(),
