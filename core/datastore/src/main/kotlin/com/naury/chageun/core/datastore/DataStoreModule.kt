@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.naury.chageun.core.domain.ads.AppUsageRepository
 import com.naury.chageun.core.domain.reminder.MileageReminderLog
 import com.naury.chageun.core.domain.settings.SettingsRepository
 import dagger.Binds
@@ -32,4 +33,7 @@ internal interface SettingsBindingModule {
 
     @Binds
     fun bindMileageReminderLog(log: PreferencesMileageReminderLog): MileageReminderLog
+
+    @Binds
+    fun bindAppUsageRepository(repository: PreferencesAppUsageRepository): AppUsageRepository
 }

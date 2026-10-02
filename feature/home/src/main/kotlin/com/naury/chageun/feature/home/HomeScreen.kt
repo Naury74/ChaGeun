@@ -21,6 +21,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
+import com.naury.chageun.core.ads.LocalAdsEnabled
+import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
@@ -123,13 +125,14 @@ private fun HomeContent(
     val spacing = ChageunTheme.spacing
     // Tabletop: 차량과 상태는 위쪽 절반에, 목록과 액션은 아래쪽 절반에 둔다.
     val isTabletop = hinge != null && !hinge.isVertical
+    val showAd = LocalAdsEnabled.current
     val panes: List<LazyListScope.() -> Unit> = when {
         isTabletop -> listOf({ summaryPane(state, actions) }, {
             attentionPane(state, actions)
             missingPane(state)
-            recentPane(state, actions)
+            recentPane(state, actions, showAd)
         })
-        else -> homePanes(state, paneCount, actions)
+        else -> homePanes(state, paneCount, actions, showAd)
     }
     HingeAwarePanes(
         weights = List(panes.size) { 1f },
@@ -152,21 +155,22 @@ private fun homePanes(
     state: HomeUiState.Content,
     paneCount: Int,
     actions: HomeActions,
+    showAd: Boolean,
 ): List<LazyListScope.() -> Unit> = when (paneCount) {
     SINGLE_PANE -> listOf({
         summaryPane(state, actions)
         attentionPane(state, actions)
         missingPane(state)
-        recentPane(state, actions)
+        recentPane(state, actions, showAd)
     })
     TWO_PANES -> listOf({ summaryPane(state, actions) }, {
         attentionPane(state, actions)
         missingPane(state)
-        recentPane(state, actions)
+        recentPane(state, actions, showAd)
     })
     else -> listOf({ summaryPane(state, actions) }, { attentionPane(state, actions) }, {
         missingPane(state)
-        recentPane(state, actions)
+        recentPane(state, actions, showAd)
     })
 }
 
@@ -245,7 +249,9 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content) {
     }
 }
 
-private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeActions) {
+private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeActions, showAd: Boolean) {
+    // 기획서 UI 6.1: 다가오는 관리 다음, 최근 기록 앞에 한 칸만 둔다. 광고를 쓰지 않으면 목록 간격도 남기지 않는다.
+    if (showAd) item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
     item(key = "recent") {
         RecentRecords(
             records = state.recentRecords,

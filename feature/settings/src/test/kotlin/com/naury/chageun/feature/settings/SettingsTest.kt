@@ -210,11 +210,11 @@ class SettingsTest {
     }
 
     @Test
-    fun privacyNotice_statesNothingIsSentAutomatically() {
+    fun privacyNotice_statesVehicleDataIsNeverSent() {
         composeRule.setContent { ChageunTheme { PrivacyNoticeScreen(onBack = {}) } }
 
         composeRule.onNodeWithText("What leaves the device").assertExists()
-        composeRule.onNodeWithText("Nothing is sent automatically", substring = true).assertExists()
+        composeRule.onNodeWithText("Your vehicle details and records are never sent", substring = true).assertExists()
     }
 
     @Test

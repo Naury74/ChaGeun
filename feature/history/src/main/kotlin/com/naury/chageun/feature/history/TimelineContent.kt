@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineItem
@@ -92,6 +93,8 @@ internal fun TimelineContent(
                 )
             }
         }
+        // 기획서 17.2: 기록이 충분히 길 때만 8번째 기록 다음에 한 칸 둔다.
+        val adAfter = uiState.sections.flatMap { it.items }.getOrNull(AD_AFTER_RECORDS - 1)?.ref
         uiState.sections.forEach { section ->
             stickyHeader(key = "month-${section.month}") {
                 Text(
@@ -111,6 +114,9 @@ internal fun TimelineContent(
                     onClick = { onSelect(item.ref) },
                     modifier = Modifier.padding(horizontal = gutter),
                 )
+                if (item.ref == adAfter) {
+                    NativeAdSlot(Modifier.padding(start = gutter, end = gutter, top = ChageunTheme.spacing.xs))
+                }
             }
         }
     }
@@ -180,3 +186,5 @@ private val HistoryFilter.labelRes: Int
     }
 
 private val FAB_CLEARANCE = 88.dp
+
+private const val AD_AFTER_RECORDS = 8

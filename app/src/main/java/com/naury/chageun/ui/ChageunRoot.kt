@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -17,7 +18,12 @@ import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.onboarding.OnboardingRoute
 
 @Composable
-fun ChageunRoot(deepLink: DeepLink?, onDeepLinkHandled: () -> Unit, viewModel: AppViewModel = hiltViewModel()) {
+fun ChageunRoot(
+    deepLink: DeepLink?,
+    onDeepLinkHandled: () -> Unit,
+    onMainShown: () -> Unit = {},
+    viewModel: AppViewModel = hiltViewModel(),
+) {
     val entry by viewModel.entry.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val darkTheme = when (themeMode) {
@@ -34,7 +40,10 @@ fun ChageunRoot(deepLink: DeepLink?, onDeepLinkHandled: () -> Unit, viewModel: A
                 // Room은 한 프레임 안에 응답한다. 빈 surface를 두어 기존 사용자에게 온보딩이 잠깐 비치지 않게 한다.
                 AppEntry.Loading -> Box(Modifier.fillMaxSize())
                 AppEntry.Onboarding -> OnboardingRoute()
-                AppEntry.Main -> ChageunApp(deepLink = deepLink, onDeepLinkHandled = onDeepLinkHandled)
+                AppEntry.Main -> {
+                    LaunchedEffect(Unit) { onMainShown() }
+                    ChageunApp(deepLink = deepLink, onDeepLinkHandled = onDeepLinkHandled)
+                }
             }
         }
     }

@@ -14,6 +14,10 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // 기본값은 Google 공식 테스트 앱 ID다. 실제 ID는 Gradle 속성(local.properties·CI Secret)으로만 넣는다.
+        manifestPlaceholders["admobAppId"] = providers.gradleProperty("chageun.admob.appId")
+            .orElse("ca-app-pub-3940256099942544~3347511713")
+            .get()
     }
 
     buildTypes {
@@ -58,6 +62,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.androidx.hilt.work)
+    implementation(projects.core.ads)
     implementation(projects.core.common)
     implementation(projects.core.datastore)
     implementation(projects.core.designsystem)
