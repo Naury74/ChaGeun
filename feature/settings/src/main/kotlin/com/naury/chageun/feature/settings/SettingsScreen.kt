@@ -3,6 +3,7 @@ package com.naury.chageun.feature.settings
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -35,6 +36,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.ads.LocalAdConsent
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
@@ -49,6 +51,9 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val adConsent = LocalAdConsent.current
+    val isAdPrivacyRequired by adConsent.isPrivacyOptionsRequired.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
     val dataState by viewModel.dataState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val version = remember { context.versionName() }
@@ -69,6 +74,8 @@ fun SettingsRoute(
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
+        isAdPrivacyRequired = isAdPrivacyRequired,
+        onOpenAdPrivacy = { activity?.let(adConsent::showPrivacyOptions) },
         dataSection = {
             DataSection(
                 state = dataState,
@@ -100,6 +107,8 @@ fun SettingsScreen(
     onMileageRemindersChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    isAdPrivacyRequired: Boolean = false,
+    onOpenAdPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
 ) {
     Column(
@@ -167,6 +176,9 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 TextButton(onClick = onOpenPrivacy) { Text(stringResource(R.string.settings_privacy)) }
+                if (isAdPrivacyRequired) {
+                    TextButton(onClick = onOpenAdPrivacy) { Text(stringResource(R.string.settings_ad_privacy)) }
+                }
                 TextButton(onClick = onOpenLicenses) { Text(stringResource(R.string.settings_licenses)) }
             }
         }

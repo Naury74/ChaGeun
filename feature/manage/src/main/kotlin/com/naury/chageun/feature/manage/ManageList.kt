@@ -22,6 +22,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import com.naury.chageun.core.ads.LocalAdsEnabled
+import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -43,6 +45,7 @@ internal fun ManageList(
     modifier: Modifier = Modifier,
 ) {
     val gutter = ChageunTheme.spacing.gutter
+    val showAd = LocalAdsEnabled.current
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg),
@@ -111,6 +114,10 @@ internal fun ManageList(
                         .padding(horizontal = gutter, vertical = ChageunTheme.spacing.sm),
                 )
             }
+        }
+        // 기획서 17.2: 관리 목록의 마지막에 한 칸. 빈 목록이나 광고를 쓰지 않을 때는 간격도 남기지 않는다.
+        if (showAd && uiState.items.isNotEmpty()) {
+            item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = gutter)) }
         }
     }
 }
