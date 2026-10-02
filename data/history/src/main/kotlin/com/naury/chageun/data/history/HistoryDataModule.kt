@@ -4,6 +4,7 @@ import android.content.Context
 import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.domain.history.AttachmentRepository
 import com.naury.chageun.core.domain.history.HistoryRepository
+import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -20,6 +21,9 @@ internal interface HistoryDataModule {
 
     @Binds
     fun bindAttachmentRepository(repository: OfflineFirstAttachmentRepository): AttachmentRepository
+
+    @Binds
+    fun bindVehiclePhotoRepository(repository: OfflineFirstVehiclePhotoRepository): VehiclePhotoRepository
 
     @Binds
     fun bindImageImporter(importer: BitmapImageImporter): ImageImporter

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
+import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
@@ -25,6 +26,7 @@ class HomeViewModel @Inject constructor(
     vehicleRepository: VehicleRepository,
     observeMaintenanceOverview: ObserveMaintenanceOverviewUseCase,
     historyRepository: HistoryRepository,
+    photoRepository: VehiclePhotoRepository,
     clock: Clock,
 ) : ViewModel() {
 
@@ -34,12 +36,14 @@ class HomeViewModel @Inject constructor(
             combine(
                 observeMaintenanceOverview(vehicle.id),
                 historyRepository.observeTimeline(vehicle.id, TimelineQuery()).map { it.take(RECENT_RECORD_COUNT) },
-            ) { overview, recent ->
+                photoRepository.observe(vehicle.id),
+            ) { overview, recent, photo ->
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
                     today = LocalDate.now(clock),
                     recentRecords = recent,
+                    photoPath = photo,
                 )
             }
         }

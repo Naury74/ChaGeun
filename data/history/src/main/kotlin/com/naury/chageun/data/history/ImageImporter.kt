@@ -14,6 +14,9 @@ import javax.inject.Inject
 internal data class ImportedImage(val file: File, val thumbnail: File, val sizeBytes: Long)
 
 /** 실제 이미지를 디코딩하지 않고 Repository를 테스트할 수 있도록 추상화했다. */
+/** [ImageImporter]는 항상 JPEG로 다시 인코딩한다. */
+internal const val MIME_JPEG = "image/jpeg"
+
 internal fun interface ImageImporter {
     fun import(sourceUri: String, target: File, thumbnail: File): ImportedImage?
 }

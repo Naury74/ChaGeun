@@ -18,6 +18,7 @@ sealed interface HomeUiState {
         val overview: MaintenanceOverview,
         val today: LocalDate,
         val recentRecords: List<TimelineItem> = emptyList(),
+        val photoPath: String? = null,
     ) : HomeUiState {
         val needsAttention: List<MaintenanceStatus> =
             overview.statuses.filter { it.state == MaintenanceState.Overdue || it.state == MaintenanceState.Due }

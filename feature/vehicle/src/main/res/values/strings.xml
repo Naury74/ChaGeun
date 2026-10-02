@@ -60,4 +60,8 @@
     <string name="vehicle_inspection_complete_next_hint">Estimated for a private passenger car every 2 years. Change it if your notice says otherwise.</string>
     <string name="vehicle_inspection_record_title">Periodic inspection</string>
     <string name="vehicle_unit_km">km</string>
+    <string name="vehicle_photo_add">Add a photo of your car</string>
+    <string name="vehicle_photo_change">Change photo</string>
+    <string name="vehicle_photo_remove">Remove photo</string>
+    <string name="vehicle_photo_failed">Couldn\'t use this photo. Try another one.</string>
 </resources>

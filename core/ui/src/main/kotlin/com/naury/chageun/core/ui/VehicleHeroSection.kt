@@ -15,12 +15,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,6 +41,7 @@ fun VehicleHeroSection(
     mileage: String?,
     freshness: String?,
     modifier: Modifier = Modifier,
+    photoPath: String? = null,
     action: (@Composable () -> Unit)? = null,
 ) {
     Column(
@@ -48,27 +51,22 @@ fun VehicleHeroSection(
             .padding(ChageunTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = ChageunTheme.spacing.sm),
-            contentAlignment = Alignment.Center,
-        ) {
-            FloorShadow(
-                Modifier
-                    .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
-                    .height(18.dp)
-                    .align(Alignment.BottomCenter),
-            )
+        val photo = photoPath?.let { rememberFileImage(it).value }
+        if (photo != null) {
+            // 사용자 사진은 잘리지 않도록 고정 비율 안에 Fit으로 맞춘다 (기획서 13.4).
             Image(
-                painter = painterResource(R.drawable.vehicle_silhouette_suv),
-                // 이 차의 사진이 아닌 일반 실루엣이다. 차 이름은 아래 제목에 이미 나온다.
-                contentDescription = null,
+                bitmap = photo,
+                // 실루엣과 달리 사용자가 찍은 이 차의 사진이므로 TalkBack에 알린다.
+                contentDescription = stringResource(R.string.vehicle_hero_photo),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
-                    .aspectRatio(HERO_IMAGE_ASPECT_RATIO),
+                    .fillMaxWidth()
+                    .padding(vertical = ChageunTheme.spacing.sm)
+                    .aspectRatio(PHOTO_ASPECT_RATIO)
+                    .clip(MaterialTheme.shapes.large),
             )
+        } else {
+            SilhouetteImage()
         }
         Text(
             text = title,
@@ -106,6 +104,33 @@ private fun FloorShadow(modifier: Modifier) {
     }
 }
 
+@Composable
+private fun SilhouetteImage() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = ChageunTheme.spacing.sm),
+        contentAlignment = Alignment.Center,
+    ) {
+        FloorShadow(
+            Modifier
+                .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
+                .height(18.dp)
+                .align(Alignment.BottomCenter),
+        )
+        Image(
+            painter = painterResource(R.drawable.vehicle_silhouette_suv),
+            // 이 차의 사진이 아닌 일반 실루엣이다. 차 이름은 아래 제목에 이미 나온다.
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
+                .aspectRatio(HERO_IMAGE_ASPECT_RATIO),
+        )
+    }
+}
+
+private const val PHOTO_ASPECT_RATIO = 16f / 9f
 private const val HERO_IMAGE_WIDTH_FRACTION = 0.7f
 private const val HERO_IMAGE_ASPECT_RATIO = 360f / 160f
 

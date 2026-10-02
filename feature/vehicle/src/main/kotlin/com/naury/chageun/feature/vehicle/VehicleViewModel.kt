@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
 import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
 import com.naury.chageun.core.domain.vehicle.InspectionRepository
+import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MileageEntry
@@ -14,6 +15,7 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -29,6 +31,8 @@ sealed interface VehicleUiState {
         val vehicle: Vehicle,
         val mileageLog: List<MileageEntry>,
         val inspection: InspectionStatus = InspectionStatus.Unknown,
+        val photoPath: String? = null,
+        val isPhotoImportFailed: Boolean = false,
     ) : VehicleUiState {
         val currentMileage: MileageEntry? get() = mileageLog.firstOrNull()
     }
@@ -40,8 +44,11 @@ class VehicleViewModel @Inject constructor(
     vehicleRepository: VehicleRepository,
     private val inspectionRepository: InspectionRepository,
     private val completeInspection: CompleteInspectionUseCase,
+    private val photoRepository: VehiclePhotoRepository,
     private val clock: Clock,
 ) : ViewModel() {
+
+    private val photoImportFailed = MutableStateFlow(false)
 
     val uiState: StateFlow<VehicleUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
@@ -49,8 +56,16 @@ class VehicleViewModel @Inject constructor(
             combine(
                 vehicleRepository.observeMileageLog(vehicle.id),
                 inspectionRepository.observeSchedule(vehicle.id),
-            ) { log, schedule ->
-                VehicleUiState.Content(vehicle, log, InspectionEvaluator.evaluate(schedule, LocalDate.now(clock)))
+                photoRepository.observe(vehicle.id),
+                photoImportFailed,
+            ) { log, schedule, photo, photoFailed ->
+                VehicleUiState.Content(
+                    vehicle = vehicle,
+                    mileageLog = log,
+                    inspection = InspectionEvaluator.evaluate(schedule, LocalDate.now(clock)),
+                    photoPath = photo,
+                    isPhotoImportFailed = photoFailed,
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), VehicleUiState.Loading)
@@ -66,6 +81,18 @@ class VehicleViewModel @Inject constructor(
         viewModelScope.launch {
             completeInspection(vehicle.id, completion.completedOn, title, completion.mileage, completion.nextDueDate)
         }
+    }
+
+    /** [sourceUri]는 Photo Picker가 준 content URI다. */
+    fun setPhoto(sourceUri: String) {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
+        photoImportFailed.value = false
+        viewModelScope.launch { photoImportFailed.value = !photoRepository.replace(vehicle.id, sourceUri) }
+    }
+
+    fun removePhoto() {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
+        viewModelScope.launch { photoRepository.clear(vehicle.id) }
     }
 
     private companion object {

@@ -13,6 +13,7 @@ import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeReminderNotifier
+import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
@@ -35,6 +36,7 @@ class VehicleViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private val history = FakeHistoryRepository()
     private val notifier = FakeReminderNotifier()
+    private val photos = FakeVehiclePhotoRepository()
 
     private fun viewModel() = VehicleViewModel(
         vehicles,
@@ -44,6 +46,7 @@ class VehicleViewModelTest {
             inspections,
             notifier,
         ),
+        photos,
         clock,
     )
 
@@ -104,5 +107,28 @@ class VehicleViewModelTest {
         assertThat(state.inspection.schedule?.nextDueDate).isEqualTo(LocalDate.of(2028, 9, 30))
         assertThat(history.addedChecks.single().first.title).isEqualTo("Periodic inspection")
         assertThat(notifier.inspectionCancelCount).isEqualTo(1)
+    }
+
+    @Test
+    fun photo_isShown_andFailedImportIsReported() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
+        viewModel.uiState.first { it is VehicleUiState.Content }
+
+        viewModel.setPhoto("car")
+        val withPhoto = viewModel.uiState.first {
+            (it as? VehicleUiState.Content)?.photoPath != null
+        } as VehicleUiState.Content
+        assertThat(withPhoto.photoPath).isEqualTo("/photos/car.jpg")
+
+        photos.importSucceeds = false
+        viewModel.setPhoto("broken")
+        val failed = viewModel.uiState.first { (it as? VehicleUiState.Content)?.isPhotoImportFailed == true }
+        assertThat((failed as VehicleUiState.Content).photoPath).isEqualTo("/photos/car.jpg")
+
+        viewModel.removePhoto()
+        val removed = viewModel.uiState.first { (it as? VehicleUiState.Content)?.photoPath == null }
+        assertThat(removed).isInstanceOf(VehicleUiState.Content::class.java)
     }
 }
