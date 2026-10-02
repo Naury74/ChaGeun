@@ -9,19 +9,26 @@ sealed interface DeepLink {
 
     /** 검사일이 있는 My car 탭을 연다. */
     data object Inspection : DeepLink
+
+    /** Home 위에 주행거리 입력 Sheet를 연다. */
+    data object MileageUpdate : DeepLink
 }
 
 /** 알림을 누르면 보여 줄 화면을 extra로 담아 런처 Activity를 연다. */
 object DeepLinks {
     private const val EXTRA_MAINTENANCE_ITEM = "com.naury.chageun.extra.MAINTENANCE_ITEM"
     private const val EXTRA_INSPECTION = "com.naury.chageun.extra.INSPECTION"
+    private const val EXTRA_MILEAGE_UPDATE = "com.naury.chageun.extra.MILEAGE_UPDATE"
 
     fun Intent.putMaintenanceItem(item: MaintenanceItem): Intent = putExtra(EXTRA_MAINTENANCE_ITEM, item.name)
 
     fun Intent.putInspection(): Intent = putExtra(EXTRA_INSPECTION, true)
 
+    fun Intent.putMileageUpdate(): Intent = putExtra(EXTRA_MILEAGE_UPDATE, true)
+
     fun Intent.deepLinkOrNull(): DeepLink? {
         if (getBooleanExtra(EXTRA_INSPECTION, false)) return DeepLink.Inspection
+        if (getBooleanExtra(EXTRA_MILEAGE_UPDATE, false)) return DeepLink.MileageUpdate
         val itemName = getStringExtra(EXTRA_MAINTENANCE_ITEM) ?: return null
         return MaintenanceItem.entries.firstOrNull { it.name == itemName }?.let(DeepLink::Maintenance)
     }

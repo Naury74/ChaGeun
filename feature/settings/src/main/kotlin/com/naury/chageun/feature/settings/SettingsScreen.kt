@@ -64,6 +64,7 @@ fun SettingsRoute(
         onBack = onBack,
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
+        onMileageRemindersChanged = viewModel::setMileageReminderEnabled,
         onOpenSystemNotifications = { context.openNotificationSettings() },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
@@ -93,6 +94,7 @@ fun SettingsScreen(
     onRemindersChanged: (Boolean) -> Unit,
     onOpenSystemNotifications: () -> Unit,
     modifier: Modifier = Modifier,
+    onMileageRemindersChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
@@ -131,20 +133,18 @@ fun SettingsScreen(
                 }
             }
             Section(R.string.settings_section_notifications) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            stringResource(R.string.settings_maintenance_reminders),
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            stringResource(R.string.settings_maintenance_reminders_body),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(checked = settings.isMaintenanceReminderEnabled, onCheckedChange = onRemindersChanged)
-                }
+                ToggleRow(
+                    titleRes = R.string.settings_maintenance_reminders,
+                    bodyRes = R.string.settings_maintenance_reminders_body,
+                    checked = settings.isMaintenanceReminderEnabled,
+                    onCheckedChange = onRemindersChanged,
+                )
+                ToggleRow(
+                    titleRes = R.string.settings_mileage_reminders,
+                    bodyRes = R.string.settings_mileage_reminders_body,
+                    checked = settings.isMileageReminderEnabled,
+                    onCheckedChange = onMileageRemindersChanged,
+                )
                 TextButton(onClick = onOpenSystemNotifications) {
                     Text(stringResource(R.string.settings_system_notifications))
                 }
@@ -167,6 +167,26 @@ fun SettingsScreen(
                 TextButton(onClick = onOpenLicenses) { Text(stringResource(R.string.settings_licenses)) }
             }
         }
+    }
+}
+
+@Composable
+private fun ToggleRow(
+    @StringRes titleRes: Int,
+    @StringRes bodyRes: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                stringResource(bodyRes),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

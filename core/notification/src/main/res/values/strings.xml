@@ -30,4 +30,6 @@
         <item quantity="one">%1$d day past the deadline</item>
         <item quantity="other">%1$d days past the deadline</item>
     </plurals>
+    <string name="notification_mileage_title">Time to update your mileage</string>
+    <string name="notification_mileage_text">Enter the odometer reading so maintenance timing stays accurate.</string>
 </resources>

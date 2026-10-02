@@ -67,14 +67,18 @@ class SettingsTest {
                     onThemeSelected = { settings = settings.copy(themeMode = it) },
                     onRemindersChanged = { settings = settings.copy(isMaintenanceReminderEnabled = it) },
                     onOpenSystemNotifications = {},
+                    onMileageRemindersChanged = { settings = settings.copy(isMileageReminderEnabled = it) },
                 )
             }
         }
 
         composeRule.onNodeWithText("Dark").performClick()
         composeRule.onNodeWithText("Dark").assertIsSelected()
-        composeRule.onNode(isToggleable()).performClick()
-        composeRule.onNode(isToggleable()).assertIsOff()
+        composeRule.onAllNodes(isToggleable())[0].performClick()
+        composeRule.onAllNodes(isToggleable())[0].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[1].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[1].performClick()
+        assertThat(settings.isMileageReminderEnabled).isTrue()
         composeRule.onNodeWithText("Version 0.1.0").assertExists()
     }
 

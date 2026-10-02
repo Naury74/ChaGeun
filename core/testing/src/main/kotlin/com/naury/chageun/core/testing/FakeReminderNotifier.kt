@@ -6,6 +6,7 @@ import com.naury.chageun.core.model.MaintenanceStatus
 
 class FakeReminderNotifier : ReminderNotifier {
     var inspectionCancelCount = 0
+    var mileagePromptCount = 0
 
     override fun canNotify() = true
 
@@ -15,5 +16,9 @@ class FakeReminderNotifier : ReminderNotifier {
 
     override fun cancelInspection() {
         inspectionCancelCount++
+    }
+
+    override fun notifyMileagePrompt() {
+        mileagePromptCount++
     }
 }

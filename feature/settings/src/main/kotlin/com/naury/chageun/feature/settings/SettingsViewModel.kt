@@ -50,6 +50,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { settingsRepository.setMaintenanceReminderEnabled(enabled) }
     }
 
+    fun setMileageReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setMileageReminderEnabled(enabled) }
+    }
+
     fun export(destinationUri: String) {
         _dataState.update { it.copy(isWorking = true, message = null) }
         viewModelScope.launch {

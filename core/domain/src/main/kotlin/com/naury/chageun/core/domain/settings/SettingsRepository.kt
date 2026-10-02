@@ -10,4 +10,6 @@ interface SettingsRepository {
     suspend fun setThemeMode(mode: ThemeMode)
 
     suspend fun setMaintenanceReminderEnabled(enabled: Boolean)
+
+    suspend fun setMileageReminderEnabled(enabled: Boolean)
 }

@@ -26,4 +26,6 @@
     <plurals name="notification_inspection_overdue_days">
         <item quantity="other">기한보다 %1$d일 지났어요</item>
     </plurals>
+    <string name="notification_mileage_title">주행거리를 알려 주세요</string>
+    <string name="notification_mileage_text">현재 주행거리를 입력하면 정비 시점을 더 정확하게 계산해요.</string>
 </resources>
