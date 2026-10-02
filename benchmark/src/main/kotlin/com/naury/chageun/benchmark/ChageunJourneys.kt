@@ -3,6 +3,7 @@ package com.naury.chageun.benchmark
 import androidx.benchmark.macro.MacrobenchmarkScope
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.Until
 
 internal const val PACKAGE_NAME = "com.naury.chageun"
@@ -45,12 +46,17 @@ internal fun MacrobenchmarkScope.openTab(label: String) {
 
 /** 첫 번째 스크롤 가능한 목록을 아래로 fling한 뒤 다시 위로 올린다. */
 internal fun MacrobenchmarkScope.scrollMainList() {
-    val list = device.wait(Until.findObject(By.scrollable(true).pkg(PACKAGE_NAME)), UI_TIMEOUT_MS) ?: return
-    list.setGestureMargin(device.displayWidth / GESTURE_MARGIN_DIVISOR)
-    list.fling(Direction.DOWN)
-    device.waitForIdle()
-    list.fling(Direction.UP)
-    device.waitForIdle()
+    listOf(Direction.DOWN, Direction.UP).forEach { direction ->
+        // 스크롤 중 목록이 다시 그려지면 이전 UiObject2는 stale이 되므로 방향마다 새로 찾는다.
+        val list = device.wait(Until.findObject(By.scrollable(true).pkg(PACKAGE_NAME)), UI_TIMEOUT_MS) ?: return
+        list.setGestureMargin(device.displayWidth / GESTURE_MARGIN_DIVISOR)
+        try {
+            list.fling(direction)
+        } catch (_: StaleObjectException) {
+            return@forEach
+        }
+        device.waitForIdle()
+    }
 }
 
 private fun MacrobenchmarkScope.clickText(text: String) {
