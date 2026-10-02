@@ -33,6 +33,9 @@ sealed interface LogField {
         override val value = version.toString()
     }
 
+    /** Analytics 이벤트 파라미터 전용. 값은 AnalyticsEvent가 enum·Boolean·정수로만 만든다. */
+    data class EventParam(override val key: String, override val value: String) : LogField
+
     data class Success(val isSuccess: Boolean) : LogField {
         override val key = "success"
         override val value = isSuccess.toString()

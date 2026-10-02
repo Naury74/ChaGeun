@@ -3,6 +3,8 @@ package com.naury.chageun.feature.onboarding
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.vehicle.RegistrationError
 import com.naury.chageun.core.domain.vehicle.RegistrationValidator
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -28,6 +30,7 @@ class OnboardingViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val registrationValidator: RegistrationValidator,
     private val clock: Clock,
+    private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
     private val draftStore = OnboardingDraftStore(savedStateHandle)
@@ -36,7 +39,10 @@ class OnboardingViewModel @Inject constructor(
 
     fun onAction(action: OnboardingAction) {
         when (action) {
-            OnboardingAction.Start -> moveTo(OnboardingStep.Plate)
+            OnboardingAction.Start -> {
+                analytics.track(AnalyticsEvent.OnboardingStarted)
+                moveTo(OnboardingStep.Plate)
+            }
             OnboardingAction.Back -> goBack()
             is OnboardingAction.PlateChanged -> edit(OnboardingField.Plate) { copy(plate = action.value) }
             OnboardingAction.SubmitPlate -> submitPlate()
@@ -125,6 +131,15 @@ class OnboardingViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
             runCatching { vehicleRepository.register(registration) }
+                .onSuccess {
+                    analytics.track(AnalyticsEvent.ManualRegistrationUsed)
+                    analytics.track(
+                        AnalyticsEvent.OnboardingCompleted(
+                            withPlate = registration.plate != null,
+                            knownServiceCount = registration.knownServices.size,
+                        ),
+                    )
+                }
                 .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
         }
     }

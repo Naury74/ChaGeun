@@ -5,14 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.core.notification.DeepLinks.deepLinkOrNull
+import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.ui.ChageunRoot
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var analyticsTracker: AnalyticsTracker
 
     private val deepLink = mutableStateOf<DeepLink?>(null)
 
@@ -22,7 +29,9 @@ class MainActivity : ComponentActivity() {
         // 복원된 Activity는 실행 intent에 대한 이동을 이미 마쳤다.
         if (savedInstanceState == null) deepLink.value = intent.deepLinkOrNull()
         setContent {
-            ChageunRoot(deepLink = deepLink.value, onDeepLinkHandled = { deepLink.value = null })
+            CompositionLocalProvider(LocalAnalyticsTracker provides analyticsTracker) {
+                ChageunRoot(deepLink = deepLink.value, onDeepLinkHandled = { deepLink.value = null })
+            }
         }
     }
 

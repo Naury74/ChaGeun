@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(projects.core.designsystem)
     api(projects.core.model)
+    api(projects.core.domain)
     implementation(libs.androidx.material3.adaptive)
 
     testImplementation(libs.truth)

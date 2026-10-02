@@ -69,7 +69,10 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit) {
                 if (viewModel.validateBeforeShare() &&
                     prompt != null
                 ) {
-                    context.launchExternal { shareToAi(context, provider, prompt, chooserTitle) }
+                    context.launchExternal {
+                        shareToAi(context, provider, prompt, chooserTitle)
+                        viewModel.onShared(provider)
+                    }
                 }
             },
         ),

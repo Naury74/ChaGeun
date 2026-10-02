@@ -10,6 +10,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
@@ -38,6 +39,7 @@ class FuelFormViewModelTest {
         vehicles,
         maintenance,
         AddHistoryRecordUseCase(history, maintenance, clock),
+        FakeAnalyticsTracker(),
         clock,
     )
 

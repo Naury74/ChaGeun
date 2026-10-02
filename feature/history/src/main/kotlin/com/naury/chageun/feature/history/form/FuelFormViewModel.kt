@@ -3,6 +3,8 @@ package com.naury.chageun.feature.history.form
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.history.AddHistoryRecordUseCase
 import com.naury.chageun.core.domain.history.FuelAmountCalculator
 import com.naury.chageun.core.domain.history.HistoryEntryError
@@ -63,6 +65,7 @@ class FuelFormViewModel @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val maintenanceRepository: MaintenanceRepository,
     private val addRecord: AddHistoryRecordUseCase,
+    private val analytics: AnalyticsTracker,
     clock: Clock,
 ) : ViewModel() {
 
@@ -127,6 +130,7 @@ class FuelFormViewModel @Inject constructor(
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
             runCatching { addRecord.addFuel(vehicle.id, entry) }
                 .onSuccess { result ->
+                    if (result.isEmpty()) analytics.track(AnalyticsEvent.FuelRecordAdded)
                     _uiState.update {
                         it.copy(
                             isSaving = false,

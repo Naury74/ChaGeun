@@ -14,6 +14,7 @@
 | OAuth Token | Room 저장 금지 |
 | 영수증·사진 | 로컬 우선, 외부 전송 시 위치 EXIF 제거 |
 | AI 질문·메모 원문 | Analytics·Crash Report 전송 금지 |
+| Analytics 이벤트 | `AnalyticsEvent` 타입으로만 기록하며 파라미터는 enum·Boolean·정수만 허용. 외부 SDK 연결 전까지 Debug Logcat에만 남는다 |
 
 ## Secret 운영
 

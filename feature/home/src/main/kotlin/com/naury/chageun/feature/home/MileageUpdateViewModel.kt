@@ -3,6 +3,8 @@ package com.naury.chageun.feature.home
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.maintenance.UpdateMileageResult
 import com.naury.chageun.core.domain.maintenance.UpdateMileageUseCase
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -30,6 +32,7 @@ class MileageUpdateViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
     private val updateMileage: UpdateMileageUseCase,
+    private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MileageUpdateUiState(mileage = savedStateHandle[KEY_MILEAGE] ?: ""))
@@ -55,7 +58,10 @@ class MileageUpdateViewModel @Inject constructor(
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
             when (val result = updateMileage(vehicle.id, Kilometers(mileage), isCorrectionConfirmed)) {
-                UpdateMileageResult.Saved -> _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                UpdateMileageResult.Saved -> {
+                    analytics.track(AnalyticsEvent.MileageUpdated(isCorrection = isCorrectionConfirmed))
+                    _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                }
                 is UpdateMileageResult.NeedsConfirmation -> _uiState.update {
                     it.copy(isSaving = false, lowerThan = result.previous)
                 }

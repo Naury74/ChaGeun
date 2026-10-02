@@ -8,6 +8,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -30,6 +31,7 @@ class MileageUpdateViewModelTest {
         SavedStateHandle(),
         vehicles,
         UpdateMileageUseCase(maintenance, Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)),
+        FakeAnalyticsTracker(),
     )
 
     @Before
