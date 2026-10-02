@@ -2,4 +2,11 @@
     <style name="Theme.Chageun" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
     </style>
+
+    <!-- 실행 직후 시스템 스플래시. 아이콘 배경색 위에 아이콘 전경을 그대로 띄워 런처 아이콘과 이어지게 한다. -->
+    <style name="Theme.Chageun.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.Chageun</item>
+    </style>
 </resources>
