@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -40,6 +41,7 @@ import androidx.compose.ui.window.Dialog
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.rememberFileImage
 
 @Composable
@@ -52,6 +54,7 @@ internal fun AttachmentSection(
 ) {
     var viewingId by rememberSaveable { mutableStateOf<String?>(null) }
     val remaining = MAX_ATTACHMENTS_PER_RECORD - attachments.size
+    val context = LocalContext.current
     val picker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MAX_ATTACHMENTS_PER_RECORD),
     ) { uris -> onAttach(uris.take(remaining).map { it.toString() }) }
@@ -81,7 +84,11 @@ internal fun AttachmentSection(
             }
         }
         OutlinedButton(
-            onClick = { picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onClick = {
+                context.launchExternal {
+                    picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            },
             enabled = remaining > 0,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD)) }

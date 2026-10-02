@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -43,6 +44,8 @@ import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.launchExternal
+import com.naury.chageun.core.ui.openUriSafely
 import java.time.LocalDate
 
 @Composable
@@ -54,6 +57,7 @@ fun VehicleRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = isListDetailTwoPane()
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
+    val context = LocalContext.current
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { viewModel.setPhoto(it.toString()) }
     }
@@ -66,7 +70,9 @@ fun VehicleRoute(
         onInspectionCompleted = { viewModel.completeInspection(it, inspectionTitle) },
         photoActions = VehiclePhotoActions(
             onPick = {
-                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                context.launchExternal {
+                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
             },
             onRemove = viewModel::removePhoto,
         ),
@@ -239,6 +245,7 @@ private fun OfficialDataSection(
     onInspectionCompleted: (InspectionCompletion) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
     Section(R.string.vehicle_section_official) {
         InspectionCard(
             status = state.inspection,
@@ -253,12 +260,12 @@ private fun OfficialDataSection(
                 modifier = Modifier.padding(ChageunTheme.spacing.md),
             )
         }
-        TextButton(onClick = {
-            uriHandler.openUri(RECALL_CENTER_URL)
-        }) { Text(stringResource(R.string.vehicle_official_recall)) }
-        TextButton(onClick = {
-            uriHandler.openUri(INSPECTION_URL)
-        }) { Text(stringResource(R.string.vehicle_official_inspection)) }
+        TextButton(onClick = { uriHandler.openUriSafely(context, RECALL_CENTER_URL) }) {
+            Text(stringResource(R.string.vehicle_official_recall))
+        }
+        TextButton(onClick = { uriHandler.openUriSafely(context, INSPECTION_URL) }) {
+            Text(stringResource(R.string.vehicle_official_inspection))
+        }
     }
 }
 
