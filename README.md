@@ -8,7 +8,7 @@
 
 | 영역 | 내용 |
 |---|---|
-| 차량 등록 | 차량번호 + 공공 API 자동 조회, 실패 시 수동 등록 |
+| 차량 등록 | 수동 등록 (V1). 차량번호 자동 조회는 공공 API 승인 후 연동 예정 ([ADR-004](docs/adr/ADR-004-v1-manual-registration.md)) |
 | 상태 판단 | 결정론적 정비 Rule Engine — 거리·기간 중 먼저 도달하는 기준, 정보 부족은 `정상`으로 표시하지 않음 |
 | 기록 | 정비·주유·점검·검사·리콜을 하나의 Timeline으로, 사진·영수증 첨부 |
 | 알림 | WorkManager 기반 로컬 알림, 해당 상세 화면으로 Deep Link |
@@ -19,7 +19,7 @@
 
 ## 기술 스택
 
-Kotlin · Jetpack Compose · Material 3 Adaptive · Navigation 3 · Hilt · Coroutines/Flow · Room · DataStore · WorkManager · Retrofit/OkHttp · kotlinx.serialization · Coil · Cloudflare Workers
+Kotlin · Jetpack Compose · Material 3 Adaptive · Navigation 3 · Hilt · Coroutines/Flow · Room · DataStore · WorkManager · kotlinx.serialization · Roborazzi · Macrobenchmark
 
 ## 아키텍처
 
@@ -29,12 +29,12 @@ flowchart LR
     VM --> UC["UseCase / Rule Engine"]
     UC --> R["Repository"]
     R --> DB[("Room · SSOT")]
-    R --> W["Cloudflare Worker"]
-    W --> P["공공 API"]
+    R -.-> W["Cloudflare Worker (승인 후)"]
+    W -.-> P["공공 API"]
 ```
 
 - UI는 Room을 관찰하고 네트워크 결과를 직접 기다리지 않습니다. ([ADR-001](docs/adr/ADR-001-local-first-room.md))
-- 공공 API Key는 APK가 아닌 Worker Secret에만 존재합니다. ([ADR-002](docs/adr/ADR-002-public-api-proxy-worker.md))
+- 공공 API Key는 APK가 아닌 Worker Secret에만 존재합니다. ([ADR-002](docs/adr/ADR-002-public-api-proxy-worker.md)) V1은 공식 데이터 없이 출시하며 Worker는 API 승인 후 연동합니다. ([ADR-004](docs/adr/ADR-004-v1-manual-registration.md))
 - 정비 Rule Engine은 Android Framework와 분리된 Pure Kotlin입니다.
 
 ## 시작하기

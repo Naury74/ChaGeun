@@ -1,6 +1,6 @@
 # ADR-002 공공 API는 Cloudflare Worker를 경유한다
 
-Status: Accepted
+Status: Accepted (공식 데이터 연동 시 적용. V1 범위는 ADR-004)
 
 ## Context
 
