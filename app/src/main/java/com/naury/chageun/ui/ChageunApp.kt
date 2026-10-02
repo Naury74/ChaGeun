@@ -84,6 +84,11 @@ fun ChageunApp(
                 navigateTo(TopLevelDestination.Vehicle)
                 onDeepLinkHandled()
             }
+            DeepLink.MileageUpdate -> {
+                navigateTo(TopLevelDestination.Home)
+                isUpdatingMileage = true
+                onDeepLinkHandled()
+            }
             null -> Unit
         }
     }

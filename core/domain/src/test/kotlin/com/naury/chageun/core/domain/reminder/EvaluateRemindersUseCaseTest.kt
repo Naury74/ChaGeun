@@ -18,6 +18,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import com.naury.chageun.core.testing.FakeMileageReminderLog
 import com.naury.chageun.core.testing.FakeReminderRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
@@ -53,7 +54,15 @@ class EvaluateRemindersUseCaseTest {
         }
 
         override fun cancelInspection() = Unit
+
+        var mileagePrompts = 0
+
+        override fun notifyMileagePrompt() {
+            mileagePrompts++
+        }
     }
+    private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
+    private val mileageLog = FakeMileageReminderLog()
     private val evaluate = EvaluateRemindersUseCase(
         vehicles,
         ObserveMaintenanceOverviewUseCase(
@@ -61,12 +70,12 @@ class EvaluateRemindersUseCaseTest {
             inspections,
             RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
             VehicleHealthAggregator(),
-            Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
+            clock,
         ),
-        reminders,
-        inspections,
         notifier,
         settings,
+        NotifyDueItemsUseCase(reminders, inspections, notifier),
+        PromptMileageUpdateUseCase(notifier, mileageLog, clock),
     )
 
     private suspend fun givenOilDueSoon() {
@@ -136,5 +145,59 @@ class EvaluateRemindersUseCaseTest {
 
         assertThat(evaluate()).isEqualTo(0)
         assertThat(notifier.inspectionShown).isEmpty()
+    }
+
+    @Test
+    fun mileagePrompt_isOffByDefault() = runTest {
+        givenMileageReadOn(today.minusDays(45))
+
+        evaluate()
+
+        assertThat(notifier.mileagePrompts).isEqualTo(0)
+    }
+
+    @Test
+    fun mileagePrompt_onceAMonth_whenReadingIsStale() = runTest {
+        settings.setMileageReminderEnabled(true)
+        givenMileageReadOn(today.minusDays(45))
+
+        evaluate()
+        evaluate()
+
+        assertThat(notifier.mileagePrompts).isEqualTo(1)
+        assertThat(mileageLog.lastNotified).isEqualTo(today)
+    }
+
+    @Test
+    fun mileagePrompt_skipsRecentReading_andRecentPrompt() = runTest {
+        settings.setMileageReminderEnabled(true)
+        givenMileageReadOn(today.minusDays(10))
+        evaluate()
+
+        givenMileageReadOn(today.minusDays(45))
+        mileageLog.lastNotified = today.minusDays(20)
+        evaluate()
+
+        assertThat(notifier.mileagePrompts).isEqualTo(0)
+    }
+
+    @Test
+    fun mileagePrompt_worksWithMaintenanceRemindersOff() = runTest {
+        settings.setMaintenanceReminderEnabled(false)
+        settings.setMileageReminderEnabled(true)
+        givenMileageReadOn(today.minusDays(45))
+
+        assertThat(evaluate()).isEqualTo(1)
+    }
+
+    private suspend fun givenMileageReadOn(date: LocalDate) {
+        if (vehicles.observePrimaryVehicle().first() == null) {
+            vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(10_000)))
+        }
+        maintenance.inputs.value = MaintenanceInputs(
+            rules = emptyList(),
+            lastServices = emptyMap(),
+            mileageHistory = listOf(MileageReading(date, Kilometers(10_000))),
+        )
     }
 }

@@ -21,6 +21,7 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
             prefs[THEME_MODE]?.let { stored -> ThemeMode.entries.firstOrNull { it.name == stored } }
                 ?: ThemeMode.System,
             isMaintenanceReminderEnabled = prefs[MAINTENANCE_REMINDER] ?: true,
+            isMileageReminderEnabled = prefs[MILEAGE_REMINDER] ?: false,
         )
     }
 
@@ -32,8 +33,13 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         dataStore.edit { it[MAINTENANCE_REMINDER] = enabled }
     }
 
+    override suspend fun setMileageReminderEnabled(enabled: Boolean) {
+        dataStore.edit { it[MILEAGE_REMINDER] = enabled }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MAINTENANCE_REMINDER = booleanPreferencesKey("maintenance_reminder_enabled")
+        val MILEAGE_REMINDER = booleanPreferencesKey("mileage_reminder_enabled")
     }
 }

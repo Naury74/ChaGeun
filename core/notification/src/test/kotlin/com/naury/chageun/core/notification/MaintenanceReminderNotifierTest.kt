@@ -107,6 +107,15 @@ class MaintenanceReminderNotifierTest {
     }
 
     @Test
+    fun mileagePrompt_opensMileageUpdate() {
+        notifier.notifyMileagePrompt()
+
+        val posted = shadowOf(manager).allNotifications.single()
+        assertThat(posted.extras.getString(NotificationCompat.EXTRA_TITLE)).isEqualTo("Time to update your mileage")
+        assertThat(shadowOf(posted.contentIntent).savedIntent?.deepLinkOrNull()).isEqualTo(DeepLink.MileageUpdate)
+    }
+
+    @Test
     fun createsSeparateChannelsPerKind() {
         NotificationChannels.ensureCreated(context)
 

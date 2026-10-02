@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.naury.chageun.core.domain.reminder.MileageReminderLog
 import com.naury.chageun.core.domain.settings.SettingsRepository
 import dagger.Binds
 import dagger.Module
@@ -28,4 +29,7 @@ internal object DataStoreModule {
 internal interface SettingsBindingModule {
     @Binds
     fun bindSettingsRepository(repository: PreferencesSettingsRepository): SettingsRepository
+
+    @Binds
+    fun bindMileageReminderLog(log: PreferencesMileageReminderLog): MileageReminderLog
 }

@@ -12,6 +12,7 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.notification.DeepLinks.putInspection
 import com.naury.chageun.core.notification.DeepLinks.putMaintenanceItem
+import com.naury.chageun.core.notification.DeepLinks.putMileageUpdate
 import com.naury.chageun.core.ui.labelRes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.NumberFormat
@@ -60,6 +61,20 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
     }
 
     override fun cancelInspection() = manager.cancel(INSPECTION_NOTIFICATION_ID)
+
+    @SuppressLint("MissingPermission")
+    override fun notifyMileagePrompt() {
+        NotificationChannels.ensureCreated(context)
+        val notification = NotificationCompat.Builder(context, NotificationChannels.MAINTENANCE)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.notification_mileage_title))
+            .setContentText(context.getString(R.string.notification_mileage_text))
+            .setContentIntent(launchIntent(MILEAGE_REQUEST_CODE) { putMileageUpdate() })
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .build()
+        manager.notify(MILEAGE_NOTIFICATION_ID, notification)
+    }
 
     private fun build(status: MaintenanceStatus) = NotificationCompat.Builder(context, NotificationChannels.MAINTENANCE)
         .setSmallIcon(R.drawable.ic_notification)
@@ -117,5 +132,7 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
         const val NOTIFICATION_ID_OFFSET = 1_000
         const val INSPECTION_NOTIFICATION_ID = 2_000
         const val INSPECTION_REQUEST_CODE = 2_000
+        const val MILEAGE_NOTIFICATION_ID = 3_000
+        const val MILEAGE_REQUEST_CODE = 3_000
     }
 }

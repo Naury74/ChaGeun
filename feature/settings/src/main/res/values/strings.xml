@@ -6,8 +6,8 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_section_notifications">Notifications</string>
-    <string name="settings_maintenance_reminders">Maintenance reminders</string>
-    <string name="settings_maintenance_reminders_body">Coming up, due and past-due replacements. Home keeps showing status either way.</string>
+    <string name="settings_maintenance_reminders">Maintenance and inspection reminders</string>
+    <string name="settings_maintenance_reminders_body">Replacements coming up, due or past due, and the inspection deadline. Home keeps showing status either way.</string>
     <string name="settings_system_notifications">Notification categories in system settings</string>
     <string name="settings_section_sources">Data sources</string>
     <string name="settings_source_user">Vehicle details, mileage and records: entered by you</string>
@@ -60,4 +60,6 @@
     <string name="privacy_control_body">Settings › Data lets you export everything to a ZIP file, restore it, or delete it all. Uninstalling the app also removes all data.</string>
     <string name="privacy_disclaimer_title">About the guidance</string>
     <string name="privacy_disclaimer_body">Maintenance intervals are general recommendations, not manufacturer values, unless you changed them. Answers from external AI apps can be wrong. Follow your owner\'s manual and a qualified mechanic for safety decisions.</string>
+    <string name="settings_mileage_reminders">Monthly mileage reminder</string>
+    <string name="settings_mileage_reminders_body">Once a month, only when the mileage hasn\'t been updated for 30 days.</string>
 </resources>
