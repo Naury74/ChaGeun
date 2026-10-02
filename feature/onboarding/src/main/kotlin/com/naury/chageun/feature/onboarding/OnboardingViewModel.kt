@@ -63,7 +63,9 @@ class OnboardingViewModel @Inject constructor(
                     copy(mileage = action.value.filter(Char::isDigit).take(MILEAGE_DIGITS))
                 }
             OnboardingAction.SubmitMileage -> submitMileage()
-            is OnboardingAction.QuickServiceModeSelected -> editQuickService(action.item) { copy(mode = action.mode) }
+            is OnboardingAction.QuickServiceModeSelected -> editQuickService(action.item) {
+                QuickServiceForm.select(this, action.mode, LocalDate.now(clock))
+            }
             is OnboardingAction.QuickServiceDateSelected -> editQuickService(action.item) { copy(date = action.date) }
             is OnboardingAction.QuickServiceMileageChanged ->
                 editQuickService(action.item) {

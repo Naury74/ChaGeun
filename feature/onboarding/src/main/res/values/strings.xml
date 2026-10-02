@@ -1,14 +1,11 @@
 <resources>
-    <string name="onboarding_intro_title">Take care of your car,\none step at a time</string>
-    <string name="onboarding_intro_body">See what needs attention, when maintenance is due and keep every record in one place. No sign-up needed.</string>
+    <string name="onboarding_intro_body">No sign-up needed. Your records stay on this phone.</string>
     <string name="onboarding_start">Get started</string>
     <string name="onboarding_back">Back</string>
     <string name="onboarding_next">Next</string>
 
     <string name="onboarding_plate_title">Enter your plate number</string>
     <string name="onboarding_plate_body">We use it to identify your car. It is stored encrypted on this device only.</string>
-    <string name="onboarding_plate_label">Plate number</string>
-    <string name="onboarding_plate_placeholder">e.g. 123가4567</string>
     <string name="onboarding_plate_skip">Register without a plate</string>
 
     <string name="onboarding_vehicle_title">Tell us about your car</string>
@@ -19,7 +16,6 @@
 
     <string name="onboarding_mileage_title">What does the odometer show?</string>
     <string name="onboarding_mileage_body">Maintenance timing is calculated from this value. An approximate number is fine.</string>
-    <string name="onboarding_mileage_label">Current mileage</string>
     <string name="onboarding_mileage_unit">km</string>
     <string name="onboarding_save_failed">Couldn\'t save your car. Please try again.</string>
 
@@ -32,12 +28,9 @@
 
     <string name="onboarding_quick_title">When did you last replace these?</string>
     <string name="onboarding_quick_body">Skip anything you don\'t remember. You can fill it in later.</string>
-    <string name="onboarding_quick_mode_both">Date and mileage</string>
-    <string name="onboarding_quick_mode_date">Date only</string>
-    <string name="onboarding_quick_mode_mileage">Mileage only</string>
     <string name="onboarding_quick_mode_unknown">Not sure</string>
     <string name="onboarding_quick_pick_date">Pick a date</string>
-    <string name="onboarding_quick_mileage">Mileage at replacement</string>
+    <string name="onboarding_quick_mileage">Mileage at replacement (optional)</string>
 
     <string name="onboarding_notifications_title">Get reminded before it\'s too late</string>
     <string name="onboarding_notifications_body">We only notify you about maintenance, inspections and recalls that are inconvenient or risky to miss.</string>
@@ -46,4 +39,22 @@
 
     <string name="onboarding_error_future_date">Pick a date that isn\'t in the future</string>
     <string name="onboarding_error_exceeds_mileage">Can\'t be higher than the current mileage</string>
+    <string name="onboarding_intro_lead">Take care of your car</string>
+    <string name="onboarding_intro_emphasis">one step at a time</string>
+    <string name="onboarding_intro_feature_due">Know when each part is due</string>
+    <string name="onboarding_intro_feature_remind">Get reminded before it\'s too late</string>
+    <string name="onboarding_intro_feature_ai">Ask your favorite AI about your car</string>
+    <string name="onboarding_step_progress">%1$d/%2$d</string>
+    <string name="onboarding_plate_placeholder_short">123가 4567</string>
+    <string name="onboarding_vehicle_other_maker">Other</string>
+    <string name="onboarding_vehicle_custom">Type it in</string>
+    <string name="onboarding_vehicle_older">Earlier</string>
+    <string name="onboarding_mileage_caption">Check the total distance on your dashboard. A rough number is fine.</string>
+    <string name="onboarding_quick_mode_recent">Last 3 months</string>
+    <string name="onboarding_quick_mode_half_year">6 months ago</string>
+    <string name="onboarding_quick_mode_one_year">A year ago</string>
+    <string name="onboarding_quick_mode_exact">Pick a date</string>
+    <string name="onboarding_notify_example_oil">Engine oil is due in about 500 km</string>
+    <string name="onboarding_notify_example_inspection">Your inspection is due in 30 days</string>
+    <string name="onboarding_notify_example_mileage">Time to update your mileage</string>
 </resources>

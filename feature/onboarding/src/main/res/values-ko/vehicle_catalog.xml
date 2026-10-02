@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="maker_hyundai">현대</string>
+    <string name="maker_kia">기아</string>
+    <string name="maker_genesis">제네시스</string>
+    <string name="maker_kgm">KG 모빌리티</string>
+    <string name="maker_renault">르노코리아</string>
+    <string name="maker_chevrolet">쉐보레</string>
+    <string name="maker_bmw">BMW</string>
+    <string name="maker_benz">벤츠</string>
+    <string name="maker_tesla">테슬라</string>
+    <string-array name="models_hyundai">
+        <item>아반떼</item>
+        <item>쏘나타</item>
+        <item>그랜저</item>
+        <item>캐스퍼</item>
+        <item>코나</item>
+        <item>투싼</item>
+        <item>싼타페</item>
+        <item>팰리세이드</item>
+        <item>아이오닉 5</item>
+        <item>스타리아</item>
+        <item>포터</item>
+    </string-array>
+    <string-array name="models_kia">
+        <item>모닝</item>
+        <item>레이</item>
+        <item>K5</item>
+        <item>K8</item>
+        <item>셀토스</item>
+        <item>스포티지</item>
+        <item>쏘렌토</item>
+        <item>카니발</item>
+        <item>EV6</item>
+        <item>EV9</item>
+    </string-array>
+    <string-array name="models_genesis">
+        <item>G70</item>
+        <item>G80</item>
+        <item>G90</item>
+        <item>GV60</item>
+        <item>GV70</item>
+        <item>GV80</item>
+    </string-array>
+    <string-array name="models_kgm">
+        <item>티볼리</item>
+        <item>코란도</item>
+        <item>토레스</item>
+        <item>렉스턴</item>
+        <item>액티언</item>
+    </string-array>
+    <string-array name="models_renault">
+        <item>아르카나</item>
+        <item>QM6</item>
+        <item>그랑 콜레오스</item>
+    </string-array>
+    <string-array name="models_chevrolet">
+        <item>스파크</item>
+        <item>트랙스</item>
+        <item>트레일블레이저</item>
+        <item>이쿼녹스</item>
+    </string-array>
+    <string-array name="models_bmw">
+        <item>3시리즈</item>
+        <item>5시리즈</item>
+        <item>X3</item>
+        <item>X5</item>
+    </string-array>
+    <string-array name="models_benz">
+        <item>C클래스</item>
+        <item>E클래스</item>
+        <item>GLC</item>
+        <item>GLE</item>
+    </string-array>
+    <string-array name="models_tesla">
+        <item>모델 3</item>
+        <item>모델 Y</item>
+    </string-array>
+</resources>

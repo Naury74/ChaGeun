@@ -165,13 +165,10 @@ class OnboardingViewModelTest {
     fun registersOnlyKnownQuickServices() {
         val vm = viewModel()
         vm.reachQuickMaintenance()
-        vm.onAction(
-            OnboardingAction.QuickServiceModeSelected(MaintenanceItem.EngineOil, QuickServiceMode.DateAndMileage),
-        )
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.EngineOil, QuickServiceMode.Exact))
         vm.onAction(OnboardingAction.QuickServiceDateSelected(MaintenanceItem.EngineOil, LocalDate.of(2026, 3, 10)))
         vm.onAction(OnboardingAction.QuickServiceMileageChanged(MaintenanceItem.EngineOil, "40260"))
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.MileageOnly))
-        vm.onAction(OnboardingAction.QuickServiceMileageChanged(MaintenanceItem.Tire, "28310"))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.HalfYear))
         vm.onAction(OnboardingAction.SubmitQuickMaintenance)
         vm.onAction(OnboardingAction.Finish)
 
@@ -179,31 +176,32 @@ class OnboardingViewModelTest {
         assertThat(services.keys).containsExactly(MaintenanceItem.EngineOil, MaintenanceItem.Tire)
         assertThat(services.getValue(MaintenanceItem.EngineOil))
             .isEqualTo(ServiceRecord(LocalDate.of(2026, 3, 10), Kilometers(40_260)))
-        assertThat(services.getValue(MaintenanceItem.Tire)).isEqualTo(ServiceRecord(null, Kilometers(28_310)))
+        assertThat(services.getValue(MaintenanceItem.Tire)).isEqualTo(ServiceRecord(today.minusMonths(6), null))
     }
 
     @Test
-    fun dropsValuesHiddenByMode() {
+    fun approximateChoice_dropsExactValues() {
         val vm = viewModel()
         vm.reachQuickMaintenance()
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.DateAndMileage))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.Exact))
         vm.onAction(OnboardingAction.QuickServiceDateSelected(MaintenanceItem.Battery, LocalDate.of(2025, 1, 1)))
         vm.onAction(OnboardingAction.QuickServiceMileageChanged(MaintenanceItem.Battery, "30000"))
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.DateOnly))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.OneYear))
         vm.onAction(OnboardingAction.SubmitQuickMaintenance)
         vm.onAction(OnboardingAction.Finish)
 
         assertThat(repository.registrations.single().knownServices.getValue(MaintenanceItem.Battery))
-            .isEqualTo(ServiceRecord(LocalDate.of(2025, 1, 1), null))
+            .isEqualTo(ServiceRecord(today.minusMonths(12), null))
     }
 
     @Test
-    fun rejectsQuickServiceMileage_aboveCurrentMileage_andMissingDate() {
+    fun rejectsExactMileage_aboveCurrentMileage_andMissingDate() {
         val vm = viewModel()
         vm.reachQuickMaintenance(mileage = "30000")
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.EngineOil, QuickServiceMode.MileageOnly))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.EngineOil, QuickServiceMode.Exact))
+        vm.onAction(OnboardingAction.QuickServiceDateSelected(MaintenanceItem.EngineOil, LocalDate.of(2026, 3, 10)))
         vm.onAction(OnboardingAction.QuickServiceMileageChanged(MaintenanceItem.EngineOil, "31000"))
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.DateOnly))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.Exact))
         vm.onAction(OnboardingAction.SubmitQuickMaintenance)
 
         assertThat(vm.uiState.value.step).isEqualTo(OnboardingStep.QuickMaintenance)
@@ -219,7 +217,7 @@ class OnboardingViewModelTest {
     fun rejectsFutureServiceDate() {
         val vm = viewModel()
         vm.reachQuickMaintenance()
-        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.DateOnly))
+        vm.onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Battery, QuickServiceMode.Exact))
         vm.onAction(OnboardingAction.QuickServiceDateSelected(MaintenanceItem.Battery, today.plusDays(1)))
         vm.onAction(OnboardingAction.SubmitQuickMaintenance)
 
@@ -232,13 +230,13 @@ class OnboardingViewModelTest {
         val handle = SavedStateHandle()
         viewModel(handle).apply {
             reachQuickMaintenance()
-            onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.DateOnly))
+            onAction(OnboardingAction.QuickServiceModeSelected(MaintenanceItem.Tire, QuickServiceMode.Exact))
             onAction(OnboardingAction.QuickServiceDateSelected(MaintenanceItem.Tire, LocalDate.of(2024, 8, 5)))
         }
 
         val tire = viewModel(handle).uiState.value.quickServices.getValue(MaintenanceItem.Tire)
 
-        assertThat(tire).isEqualTo(QuickServiceInput(QuickServiceMode.DateOnly, LocalDate.of(2024, 8, 5)))
+        assertThat(tire).isEqualTo(QuickServiceInput(QuickServiceMode.Exact, LocalDate.of(2024, 8, 5)))
     }
 
     @Test

@@ -7,6 +7,7 @@ dependencies {
     api(projects.core.model)
     api(projects.core.domain)
     implementation(libs.androidx.material3.adaptive)
+    api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(libs.truth)
     testImplementation(libs.robolectric)

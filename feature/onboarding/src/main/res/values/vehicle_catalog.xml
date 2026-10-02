@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="maker_hyundai">Hyundai</string>
+    <string name="maker_kia">Kia</string>
+    <string name="maker_genesis">Genesis</string>
+    <string name="maker_kgm">KG Mobility</string>
+    <string name="maker_renault">Renault Korea</string>
+    <string name="maker_chevrolet">Chevrolet</string>
+    <string name="maker_bmw">BMW</string>
+    <string name="maker_benz">Mercedes-Benz</string>
+    <string name="maker_tesla">Tesla</string>
+    <string-array name="models_hyundai">
+        <item>Avante</item>
+        <item>Sonata</item>
+        <item>Grandeur</item>
+        <item>Casper</item>
+        <item>Kona</item>
+        <item>Tucson</item>
+        <item>Santa Fe</item>
+        <item>Palisade</item>
+        <item>Ioniq 5</item>
+        <item>Staria</item>
+        <item>Porter</item>
+    </string-array>
+    <string-array name="models_kia">
+        <item>Morning</item>
+        <item>Ray</item>
+        <item>K5</item>
+        <item>K8</item>
+        <item>Seltos</item>
+        <item>Sportage</item>
+        <item>Sorento</item>
+        <item>Carnival</item>
+        <item>EV6</item>
+        <item>EV9</item>
+    </string-array>
+    <string-array name="models_genesis">
+        <item>G70</item>
+        <item>G80</item>
+        <item>G90</item>
+        <item>GV60</item>
+        <item>GV70</item>
+        <item>GV80</item>
+    </string-array>
+    <string-array name="models_kgm">
+        <item>Tivoli</item>
+        <item>Korando</item>
+        <item>Torres</item>
+        <item>Rexton</item>
+        <item>Actyon</item>
+    </string-array>
+    <string-array name="models_renault">
+        <item>Arkana</item>
+        <item>QM6</item>
+        <item>Grand Koleos</item>
+    </string-array>
+    <string-array name="models_chevrolet">
+        <item>Spark</item>
+        <item>Trax</item>
+        <item>Trailblazer</item>
+        <item>Equinox</item>
+    </string-array>
+    <string-array name="models_bmw">
+        <item>3 Series</item>
+        <item>5 Series</item>
+        <item>X3</item>
+        <item>X5</item>
+    </string-array>
+    <string-array name="models_benz">
+        <item>C-Class</item>
+        <item>E-Class</item>
+        <item>GLC</item>
+        <item>GLE</item>
+    </string-array>
+    <string-array name="models_tesla">
+        <item>Model 3</item>
+        <item>Model Y</item>
+    </string-array>
+</resources>
