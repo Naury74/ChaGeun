@@ -46,4 +46,5 @@
     <string name="timeline_type_inspection">점검</string>
     <string name="timeline_type_repair">사고·수리</string>
     <string name="timeline_type_note">기타</string>
+    <string name="vehicle_hero_photo">내 차 사진</string>
 </resources>

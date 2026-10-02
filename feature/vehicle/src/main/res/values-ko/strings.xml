@@ -58,4 +58,8 @@
     <string name="vehicle_inspection_complete_next_hint">비사업용 승용차의 2년 주기로 계산한 날짜예요. 검사 안내문과 다르면 바꿔 주세요.</string>
     <string name="vehicle_inspection_record_title">자동차 정기검사</string>
     <string name="vehicle_unit_km">km</string>
+    <string name="vehicle_photo_add">내 차 사진 넣기</string>
+    <string name="vehicle_photo_change">사진 바꾸기</string>
+    <string name="vehicle_photo_remove">사진 지우기</string>
+    <string name="vehicle_photo_failed">이 사진은 쓸 수 없어요. 다른 사진을 골라 주세요.</string>
 </resources>

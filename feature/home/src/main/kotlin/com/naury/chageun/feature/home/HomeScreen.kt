@@ -257,6 +257,7 @@ private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit) {
             2 -> stringResource(R.string.home_vehicle_subtitle, subtitleParts[0], subtitleParts[1])
             else -> subtitleParts.joinToString()
         },
+        photoPath = state.photoPath,
         mileage = mileage?.let { stringResource(R.string.home_mileage, formatNumber(it.mileage.value)) },
         freshness = when {
             mileage == null -> stringResource(R.string.home_mileage_unknown)

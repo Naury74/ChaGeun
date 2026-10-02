@@ -21,6 +21,7 @@ import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
@@ -51,6 +52,7 @@ class HomeViewModelTest {
             clock,
         ),
         historyRepository = history,
+        photoRepository = FakeVehiclePhotoRepository(),
         clock = clock,
     )
 

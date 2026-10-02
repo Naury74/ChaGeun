@@ -117,4 +117,43 @@ class OfflineFirstAttachmentRepositoryTest {
         assertThat(repository.observe(vehicleId, owner).first()).isEmpty()
         assertThat(file.exists()).isFalse()
     }
+
+    private fun photoRepository(dispatcher: TestDispatcher) = OfflineFirstVehiclePhotoRepository(
+        database.attachmentDao(),
+        fakeImporter,
+        directory,
+        Clock.fixed(now, ZoneOffset.UTC),
+        silentLogger,
+        dispatcher,
+    )
+
+    @Test
+    fun vehiclePhoto_replaceKeepsOnlyLatest_andStaysOutOfRecords() = runTest {
+        val photos = photoRepository(StandardTestDispatcher(testScheduler))
+        photos.replace(vehicleId, "content://first")
+        val first = photos.observe(vehicleId).first()
+
+        assertThat(photos.replace(vehicleId, "content://second")).isTrue()
+        val second = photos.observe(vehicleId).first()
+
+        assertThat(second).isNotEqualTo(first)
+        assertThat(File(checkNotNull(first)).exists()).isFalse()
+        assertThat(File(checkNotNull(second)).exists()).isTrue()
+        assertThat(repository(StandardTestDispatcher(testScheduler)).observe(vehicleId, owner).first()).isEmpty()
+    }
+
+    @Test
+    fun vehiclePhoto_failedImport_keepsPrevious_andClearRemovesFiles() = runTest {
+        val photos = photoRepository(StandardTestDispatcher(testScheduler))
+        photos.replace(vehicleId, "content://first")
+        val first = checkNotNull(photos.observe(vehicleId).first())
+
+        assertThat(photos.replace(vehicleId, "content://broken")).isFalse()
+        assertThat(photos.observe(vehicleId).first()).isEqualTo(first)
+
+        photos.clear(vehicleId)
+
+        assertThat(photos.observe(vehicleId).first()).isNull()
+        assertThat(File(first).exists()).isFalse()
+    }
 }

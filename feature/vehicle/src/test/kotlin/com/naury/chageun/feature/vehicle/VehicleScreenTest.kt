@@ -1,12 +1,17 @@
 package com.naury.chageun.feature.vehicle
 
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Paint
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.core.graphics.applyCanvas
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
@@ -25,6 +30,7 @@ import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
+import java.io.File
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
@@ -182,5 +188,49 @@ class VehicleScreenTest {
             }
         }
         composeRule.captureScreen("vehicle_tablet")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneWithPhoto() {
+        val photo = File.createTempFile("vehicle", ".jpg").apply { deleteOnExit() }
+        // 실제 사진 대신 하늘·도로 두 색으로 나눈 가로 이미지를 쓴다. 세로가 긴 사진이어도 잘리지 않는지 보기 위해 4:3 비율이다.
+        val bitmap = Bitmap.createBitmap(PHOTO_WIDTH, PHOTO_HEIGHT, Bitmap.Config.ARGB_8888).applyCanvas {
+            drawColor(Color.rgb(176, 205, 230))
+            drawRect(
+                0f,
+                PHOTO_HEIGHT * 0.6f,
+                PHOTO_WIDTH.toFloat(),
+                PHOTO_HEIGHT.toFloat(),
+                Paint().apply {
+                    color =
+                        Color.DKGRAY
+                },
+            )
+        }
+        photo.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+
+        composeRule.setContent {
+            AppFrame {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14), photoPath = photo.absolutePath),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                )
+            }
+        }
+        // 사진은 IO 스레드에서 디코딩되므로 화면에 붙을 때까지 기다린다.
+        composeRule.waitUntil(PHOTO_LOAD_TIMEOUT_MS) {
+            composeRule.onAllNodesWithContentDescription("Photo of your car").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.captureScreen("vehicle_phone_photo")
+    }
+
+    private companion object {
+        const val PHOTO_WIDTH = 800
+        const val PHOTO_HEIGHT = 600
+        const val JPEG_QUALITY = 90
+        const val PHOTO_LOAD_TIMEOUT_MS = 5_000L
     }
 }

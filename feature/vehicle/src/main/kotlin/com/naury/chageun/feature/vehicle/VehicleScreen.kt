@@ -1,9 +1,13 @@
 package com.naury.chageun.feature.vehicle
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,6 +54,9 @@ fun VehicleRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = isListDetailTwoPane()
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { viewModel.setPhoto(it.toString()) }
+    }
     VehicleScreen(
         uiState,
         isTwoPane,
@@ -57,8 +64,16 @@ fun VehicleRoute(
         onOpenSettings = onOpenSettings,
         onInspectionDateSelected = viewModel::setInspectionDate,
         onInspectionCompleted = { viewModel.completeInspection(it, inspectionTitle) },
+        photoActions = VehiclePhotoActions(
+            onPick = {
+                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onRemove = viewModel::removePhoto,
+        ),
     )
 }
+
+data class VehiclePhotoActions(val onPick: () -> Unit = {}, val onRemove: () -> Unit = {})
 
 @Composable
 fun VehicleScreen(
@@ -69,6 +84,7 @@ fun VehicleScreen(
     onOpenSettings: () -> Unit = {},
     onInspectionDateSelected: (LocalDate?) -> Unit = {},
     onInspectionCompleted: (InspectionCompletion) -> Unit = {},
+    photoActions: VehiclePhotoActions = VehiclePhotoActions(),
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -77,13 +93,13 @@ fun VehicleScreen(
     }
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
-        listOf({ overviewPane(state, onUpdateMileage) }, {
+        listOf({ overviewPane(state, onUpdateMileage, photoActions) }, {
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
     } else {
         listOf({
-            overviewPane(state, onUpdateMileage)
+            overviewPane(state, onUpdateMileage, photoActions)
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
@@ -100,8 +116,12 @@ fun VehicleScreen(
     }
 }
 
-private fun LazyListScope.overviewPane(state: VehicleUiState.Content, onUpdateMileage: () -> Unit) {
-    item(key = "hero") { Hero(state, onUpdateMileage) }
+private fun LazyListScope.overviewPane(
+    state: VehicleUiState.Content,
+    onUpdateMileage: () -> Unit,
+    photoActions: VehiclePhotoActions,
+) {
+    item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
     item(key = "info") { InfoSection(state) }
     item(key = "sources") {
         Section(R.string.vehicle_section_sources) {
@@ -140,7 +160,7 @@ private fun LazyListScope.settingsEntry(onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit) {
+private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, photoActions: VehiclePhotoActions) {
     val vehicle = state.vehicle
     val current = state.currentMileage
     VehicleHeroSection(
@@ -155,11 +175,36 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit) {
                     parts.joinToString()
                 }
             },
+        photoPath = state.photoPath,
         mileage = current?.let { stringResource(R.string.vehicle_mileage, formatNumber(it.mileage.value)) },
         freshness = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
             ?: stringResource(R.string.vehicle_mileage_none),
-        action = { TextButton(onClick = onUpdateMileage) { Text(stringResource(R.string.vehicle_update_mileage)) } },
+        action = {
+            Column {
+                FlowRow {
+                    TextButton(onClick = onUpdateMileage) { Text(stringResource(R.string.vehicle_update_mileage)) }
+                    PhotoButtons(state, photoActions)
+                }
+                if (state.isPhotoImportFailed) {
+                    Text(
+                        stringResource(R.string.vehicle_photo_failed),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
+        },
     )
+}
+
+@Composable
+private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoActions) {
+    TextButton(onClick = actions.onPick) {
+        Text(stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change))
+    }
+    if (state.photoPath != null) {
+        TextButton(onClick = actions.onRemove) { Text(stringResource(R.string.vehicle_photo_remove)) }
+    }
 }
 
 @Composable

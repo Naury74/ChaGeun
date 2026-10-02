@@ -97,8 +97,4 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
             createdAt = createdAt,
         )
     }
-
-    private companion object {
-        const val MIME_JPEG = "image/jpeg"
-    }
 }
