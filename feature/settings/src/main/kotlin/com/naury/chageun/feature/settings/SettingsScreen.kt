@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -49,20 +50,21 @@ fun SettingsRoute(
     onOpenLicenses: () -> Unit,
     onOpenPrivacy: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
+    backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val adConsent = LocalAdConsent.current
     val isAdPrivacyRequired by adConsent.isPrivacyOptionsRequired.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
-    val dataState by viewModel.dataState.collectAsStateWithLifecycle()
+    val dataState by backupViewModel.dataState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val version = remember { context.versionName() }
     val exportLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ZIP_MIME_TYPE)) { uri ->
-            uri?.let { viewModel.export(it.toString()) }
+            uri?.let { backupViewModel.export(it.toString()) }
         }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { viewModel.previewImport(it.toString()) }
+        uri?.let { backupViewModel.previewImport(it.toString()) }
     }
     SettingsScreen(
         settings = settings,
@@ -71,6 +73,7 @@ fun SettingsRoute(
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
         onMileageRemindersChanged = viewModel::setMileageReminderEnabled,
+        onUsageStatsChanged = viewModel::setUsageStatsEnabled,
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
@@ -83,15 +86,23 @@ fun SettingsRoute(
                     context.launchExternal { exportLauncher.launch("chageun-backup-${LocalDate.now()}.zip") }
                 },
                 onImport = { context.launchExternal { importLauncher.launch(arrayOf(ZIP_MIME_TYPE)) } },
-                onRequestDelete = viewModel::requestDeleteAll,
+                onRequestDelete = backupViewModel::requestDeleteAll,
             )
         },
     )
     dataState.pendingDeletion?.let { summary ->
-        DeleteAllDialog(summary, onConfirm = viewModel::confirmDeleteAll, onDismiss = viewModel::cancelDeleteAll)
+        DeleteAllDialog(
+            summary,
+            onConfirm = backupViewModel::confirmDeleteAll,
+            onDismiss = backupViewModel::cancelDeleteAll,
+        )
     }
     dataState.pendingImport?.let { pending ->
-        ImportDialog(pending.preview, onConfirm = viewModel::confirmImport, onDismiss = viewModel::cancelImport)
+        ImportDialog(
+            pending.preview,
+            onConfirm = backupViewModel::confirmImport,
+            onDismiss = backupViewModel::cancelImport,
+        )
     }
 }
 
@@ -105,6 +116,7 @@ fun SettingsScreen(
     onOpenSystemNotifications: () -> Unit,
     modifier: Modifier = Modifier,
     onMileageRemindersChanged: (Boolean) -> Unit = {},
+    onUsageStatsChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     isAdPrivacyRequired: Boolean = false,
@@ -162,6 +174,14 @@ fun SettingsScreen(
                 }
             }
             Section(R.string.settings_section_data) { dataSection() }
+            Section(R.string.settings_section_privacy) {
+                ToggleRow(
+                    titleRes = R.string.settings_usage_stats,
+                    bodyRes = R.string.settings_usage_stats_body,
+                    checked = settings.isUsageStatsEnabled,
+                    onCheckedChange = onUsageStatsChanged,
+                )
+            }
             Section(R.string.settings_section_sources) {
                 listOf(
                     R.string.settings_source_user,
@@ -192,7 +212,14 @@ private fun ToggleRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    // 제목을 눌러도 바뀌고, TalkBack에서는 제목·설명·상태를 한 번에 읽도록 행 전체를 스위치로 만든다.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = ChageunTheme.spacing.xxs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Column(Modifier.weight(1f)) {
             Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
             Text(
@@ -201,7 +228,7 @@ private fun ToggleRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 

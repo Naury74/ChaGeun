@@ -6,6 +6,11 @@ plugins {
     alias(libs.plugins.baselineprofile)
 }
 
+// google-services.json은 Git에 없다. 파일이 있는 로컬·배포 빌드만 Firebase를 쓰고, CI와 처음 받은 사람도 빌드할 수 있다.
+if (file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+}
+
 android {
     namespace = "com.naury.chageun"
 
@@ -56,6 +61,8 @@ android {
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.profileinstaller)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

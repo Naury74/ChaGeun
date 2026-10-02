@@ -17,5 +17,5 @@ internal interface LoggingModule {
 
     @Binds
     @Singleton
-    fun bindAnalyticsTracker(tracker: LoggingAnalyticsTracker): AnalyticsTracker
+    fun bindAnalyticsTracker(tracker: FirebaseAnalyticsTracker): AnalyticsTracker
 }

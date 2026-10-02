@@ -14,9 +14,11 @@
 | OAuth Token | Room 저장 금지 |
 | 영수증·사진 | 로컬 우선, 외부 전송 시 위치 EXIF 제거 |
 | AI 질문·메모 원문 | Analytics·Crash Report 전송 금지 |
-| Analytics 이벤트 | `AnalyticsEvent` 타입으로만 기록하며 파라미터는 enum·Boolean·정수만 허용. 외부 SDK 연결 전까지 Debug Logcat에만 남는다 |
+| Analytics 이벤트 | `AnalyticsEvent` 타입으로만 기록하며 파라미터는 enum·Boolean·정수만 허용. Firebase Analytics로 보내되 광고 ID·SSAID는 수집하지 않고, 설정에서 끄면 수집을 멈춘다 |
 
 ## Secret 운영
+
+- `app/google-services.json`은 Git에 올리지 않는다. 파일이 없으면 Firebase 없이 빌드되며, 배포 빌드는 CI Secret에서 파일을 복원한다.
 
 - 로컬 개발 값은 `local.properties` 또는 환경변수에만 둔다.
 - CI Secret은 GitHub Environment로 분리하고 Fork PR에 제공하지 않는다.

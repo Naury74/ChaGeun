@@ -46,14 +46,15 @@ class SettingsTest {
     @Test
     fun viewModel_persistsThemeAndReminderChoice() = runTest {
         val repository = FakeSettingsRepository()
-        val viewModel = SettingsViewModel(repository, FakeBackupRepository(), FakeAnalyticsTracker())
+        val viewModel = SettingsViewModel(repository, FakeAnalyticsTracker())
 
         viewModel.setThemeMode(ThemeMode.Dark)
         viewModel.setMaintenanceReminderEnabled(false)
+        viewModel.setUsageStatsEnabled(false)
 
         assertThat(
             repository.settings.first(),
-        ).isEqualTo(UserSettings(ThemeMode.Dark, isMaintenanceReminderEnabled = false))
+        ).isEqualTo(UserSettings(ThemeMode.Dark, isMaintenanceReminderEnabled = false, isUsageStatsEnabled = false))
     }
 
     @Test
@@ -86,7 +87,7 @@ class SettingsTest {
     @Test
     fun deleteAll_showsSummaryFirst_thenDeletesOnConfirm() = runTest {
         val backup = FakeBackupRepository().apply { summary = LocalDataSummary(1, 12, 3) }
-        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup, FakeAnalyticsTracker())
+        val viewModel = BackupViewModel(backup)
 
         viewModel.requestDeleteAll()
         assertThat(viewModel.dataState.value.pendingDeletion?.records).isEqualTo(12)
@@ -101,7 +102,7 @@ class SettingsTest {
     @Test
     fun export_reportsFailure() = runTest {
         val backup = FakeBackupRepository().apply { exportSucceeds = false }
-        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup, FakeAnalyticsTracker())
+        val viewModel = BackupViewModel(backup)
 
         viewModel.export("content://downloads/backup.zip")
 
@@ -125,7 +126,7 @@ class SettingsTest {
     fun import_previewsFirst_thenReplacesOnConfirm() = runTest {
         val preview = ImportPreview.Ready(incoming = LocalDataSummary(1, 20, 4), current = LocalDataSummary(1, 12, 3))
         val backup = FakeBackupRepository().apply { importPreview = preview }
-        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup, FakeAnalyticsTracker())
+        val viewModel = BackupViewModel(backup)
 
         viewModel.previewImport("content://downloads/backup.zip")
         assertThat(viewModel.dataState.value.pendingImport?.preview).isEqualTo(preview)
@@ -141,7 +142,7 @@ class SettingsTest {
     @Test
     fun import_unsupportedVersion_neverReplaces() = runTest {
         val backup = FakeBackupRepository().apply { importPreview = ImportPreview.UnsupportedVersion(2) }
-        val viewModel = SettingsViewModel(FakeSettingsRepository(), backup, FakeAnalyticsTracker())
+        val viewModel = BackupViewModel(backup)
 
         viewModel.previewImport("content://downloads/backup.zip")
         viewModel.confirmImport()
