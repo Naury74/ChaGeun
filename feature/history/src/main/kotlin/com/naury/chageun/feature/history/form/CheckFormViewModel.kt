@@ -3,6 +3,8 @@ package com.naury.chageun.feature.history.form
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.history.AddHistoryRecordUseCase
 import com.naury.chageun.core.domain.history.HistoryEntryError
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -39,6 +41,7 @@ class CheckFormViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
     private val addRecord: AddHistoryRecordUseCase,
+    private val analytics: AnalyticsTracker,
     clock: Clock,
 ) : ViewModel() {
 
@@ -81,6 +84,7 @@ class CheckFormViewModel @Inject constructor(
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
             runCatching { addRecord.addCheck(vehicle.id, entry) }
                 .onSuccess { result ->
+                    if (result.isEmpty()) analytics.track(AnalyticsEvent.CheckRecordAdded)
                     _uiState.update {
                         it.copy(
                             isSaving = false,

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.ai.AiContextFacts
 import com.naury.chageun.core.domain.ai.AiContextOptions
 import com.naury.chageun.core.domain.ai.BuildAiContextUseCase
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.model.MaintenanceItem
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -29,6 +31,7 @@ class AiHubViewModel @AssistedInject constructor(
     @Assisted focusItem: MaintenanceItem?,
     private val savedStateHandle: SavedStateHandle,
     buildContext: BuildAiContextUseCase,
+    private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
     private val question = savedStateHandle.getStateFlow(KEY_QUESTION, "")
@@ -54,6 +57,11 @@ class AiHubViewModel @AssistedInject constructor(
     )
 
     fun onQuestionChanged(value: String) {
+        // 질문 원문은 기록하지 않고, 화면당 처음 입력을 시작한 사실만 남긴다.
+        if (value.isNotBlank() && savedStateHandle.get<Boolean>(KEY_STARTED) != true) {
+            savedStateHandle[KEY_STARTED] = true
+            analytics.track(AnalyticsEvent.AiQuestionStarted)
+        }
         savedStateHandle[KEY_QUESTION] = value.take(MAX_QUESTION_LENGTH)
         savedStateHandle[KEY_MISSING] = false
     }
@@ -73,6 +81,10 @@ class AiHubViewModel @AssistedInject constructor(
         return isValid
     }
 
+    fun onShared(provider: AiProvider) {
+        analytics.track(AnalyticsEvent.AiShareCompleted(provider.analyticsTarget))
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(focusItem: MaintenanceItem?): AiHubViewModel
@@ -80,6 +92,7 @@ class AiHubViewModel @AssistedInject constructor(
 
     private companion object {
         const val KEY_QUESTION = "ai_question"
+        const val KEY_STARTED = "ai_question_started"
         const val KEY_RECORDS = "ai_include_records"
         const val KEY_COSTS = "ai_include_costs"
         const val KEY_MISSING = "ai_question_missing"

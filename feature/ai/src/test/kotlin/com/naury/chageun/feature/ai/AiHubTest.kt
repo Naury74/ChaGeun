@@ -18,6 +18,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
@@ -67,6 +68,7 @@ class AiHubTest {
         return AiHubViewModel(
             focusItem = null,
             savedStateHandle = SavedStateHandle(),
+            analytics = FakeAnalyticsTracker(),
             buildContext = BuildAiContextUseCase(
                 FakeVehicleRepository(),
                 ObserveMaintenanceOverviewUseCase(

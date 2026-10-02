@@ -63,6 +63,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.model)
     implementation(projects.core.notification)
+    implementation(projects.core.ui)
     implementation(projects.data.backup)
     implementation(projects.data.history)
     implementation(projects.data.maintenance)

@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.maintenance
 
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -8,6 +9,7 @@ import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import java.time.Clock
 import java.time.Instant
@@ -22,9 +24,11 @@ class RecordServiceUseCaseTest {
     private val today = LocalDate.of(2026, 10, 1)
     private val vehicleId = VehicleId("v1")
     private val repository = FakeMaintenanceRepository()
+    private val analytics = FakeAnalyticsTracker()
     private val recordService = RecordServiceUseCase(
         repository,
         Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
+        analytics,
     )
 
     @Before
@@ -46,6 +50,7 @@ class RecordServiceUseCaseTest {
         val result = recordService(vehicleId, entry(42_891))
 
         assertThat(result).isEqualTo(RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1)))
+        assertThat(analytics.events).containsExactly(AnalyticsEvent.MaintenanceRecordAdded(withCost = false))
     }
 
     @Test

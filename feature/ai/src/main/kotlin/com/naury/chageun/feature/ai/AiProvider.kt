@@ -3,6 +3,7 @@ package com.naury.chageun.feature.ai
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import com.naury.chageun.core.domain.analytics.AiTarget
 
 enum class AiProvider(val packageName: String?, val label: String?) {
     ChatGpt("com.openai.chatgpt", "ChatGPT"),
@@ -10,6 +11,14 @@ enum class AiProvider(val packageName: String?, val label: String?) {
     Gemini("com.google.android.apps.bard", "Gemini"),
     Other(null, null),
 }
+
+internal val AiProvider.analyticsTarget: AiTarget
+    get() = when (this) {
+        AiProvider.ChatGpt -> AiTarget.ChatGpt
+        AiProvider.Claude -> AiTarget.Claude
+        AiProvider.Gemini -> AiTarget.Gemini
+        AiProvider.Other -> AiTarget.Other
+    }
 
 /** [text]를 선택한 AI 앱으로 공유한다. 앱이 설치되어 있지 않거나 "other"를 고르면 시스템 선택기를 띄운다. */
 internal fun shareToAi(context: Context, provider: AiProvider, text: String, chooserTitle: String) {

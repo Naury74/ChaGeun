@@ -2,6 +2,9 @@ package com.naury.chageun.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.analytics.ReminderKind
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -34,6 +37,7 @@ data class DataUiState(
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val backupRepository: BackupRepository,
+    private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
     val settings: StateFlow<UserSettings> = settingsRepository.settings
@@ -47,10 +51,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setMaintenanceReminderEnabled(enabled: Boolean) {
+        if (enabled) analytics.track(AnalyticsEvent.ReminderEnabled(ReminderKind.MaintenanceAndInspection))
         viewModelScope.launch { settingsRepository.setMaintenanceReminderEnabled(enabled) }
     }
 
     fun setMileageReminderEnabled(enabled: Boolean) {
+        if (enabled) analytics.track(AnalyticsEvent.ReminderEnabled(ReminderKind.Mileage))
         viewModelScope.launch { settingsRepository.setMileageReminderEnabled(enabled) }
     }
 

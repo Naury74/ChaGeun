@@ -2,11 +2,13 @@ package com.naury.chageun.feature.onboarding
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.vehicle.RegistrationValidator
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
@@ -18,6 +20,8 @@ import org.junit.Test
 
 class OnboardingViewModelTest {
 
+    private val analytics = FakeAnalyticsTracker()
+
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -26,7 +30,7 @@ class OnboardingViewModelTest {
     private val today = LocalDate.of(2026, 10, 1)
 
     private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) =
-        OnboardingViewModel(handle, repository, RegistrationValidator(clock), clock)
+        OnboardingViewModel(handle, repository, RegistrationValidator(clock), clock, analytics)
 
     private fun OnboardingViewModel.reachQuickMaintenance(mileage: String = "42180") {
         onAction(OnboardingAction.Start)
@@ -120,6 +124,11 @@ class OnboardingViewModelTest {
         assertThat(registration.plate?.normalized).isEqualTo("123가4567")
         assertThat(registration.currentMileage).isEqualTo(Kilometers(42_180))
         assertThat(registration.model).isEqualTo("Torres")
+        assertThat(analytics.events).containsExactly(
+            AnalyticsEvent.OnboardingStarted,
+            AnalyticsEvent.ManualRegistrationUsed,
+            AnalyticsEvent.OnboardingCompleted(withPlate = true, knownServiceCount = 0),
+        ).inOrder()
     }
 
     @Test
@@ -133,6 +142,7 @@ class OnboardingViewModelTest {
         assertThat(vm.uiState.value.hasSaveFailed).isTrue()
         assertThat(vm.uiState.value.isSaving).isFalse()
         assertThat(vm.uiState.value.step).isEqualTo(OnboardingStep.Notifications)
+        assertThat(analytics.events).doesNotContain(AnalyticsEvent.ManualRegistrationUsed)
     }
 
     @Test

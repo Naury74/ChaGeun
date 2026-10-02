@@ -35,10 +35,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
@@ -245,6 +247,7 @@ private fun OfficialDataSection(
     onInspectionCompleted: (InspectionCompletion) -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
+    val analytics = LocalAnalyticsTracker.current
     val context = LocalContext.current
     Section(R.string.vehicle_section_official) {
         InspectionCard(
@@ -260,7 +263,12 @@ private fun OfficialDataSection(
                 modifier = Modifier.padding(ChageunTheme.spacing.md),
             )
         }
-        TextButton(onClick = { uriHandler.openUriSafely(context, RECALL_CENTER_URL) }) {
+        TextButton(
+            onClick = {
+                analytics.track(AnalyticsEvent.RecallOpened)
+                uriHandler.openUriSafely(context, RECALL_CENTER_URL)
+            },
+        ) {
             Text(stringResource(R.string.vehicle_official_recall))
         }
         TextButton(onClick = { uriHandler.openUriSafely(context, INSPECTION_URL) }) {

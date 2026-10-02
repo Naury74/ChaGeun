@@ -22,12 +22,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.analytics.HomeAction
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
@@ -44,6 +48,7 @@ fun HomeRoute(
     onOpenInspection: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val analytics = LocalAnalyticsTracker.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
@@ -53,14 +58,22 @@ fun HomeRoute(
             if (currentSeparatingHinge()?.isVertical == true) maxOf(it, TWO_PANES) else it
         },
         actions = HomeActions(
-            onRecordService = onRecordService,
-            onUpdateMileage = onUpdateMileage,
-            onOpenHistory = onOpenHistory,
-            onAskAi = onAskAi,
+            onRecordService = { item ->
+                analytics.track(AnalyticsEvent.HomeActionOpened(HomeAction.RecordService))
+                onRecordService(item)
+            },
+            onUpdateMileage = analytics.tracking(HomeAction.UpdateMileage, onUpdateMileage),
+            onOpenHistory = analytics.tracking(HomeAction.OpenHistory, onOpenHistory),
+            onAskAi = analytics.tracking(HomeAction.AskAi, onAskAi),
             onOpenSettings = onOpenSettings,
-            onOpenInspection = onOpenInspection,
+            onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
         ),
     )
+}
+
+private fun AnalyticsTracker.tracking(action: HomeAction, block: () -> Unit): () -> Unit = {
+    track(AnalyticsEvent.HomeActionOpened(action))
+    block()
 }
 
 data class HomeActions(
