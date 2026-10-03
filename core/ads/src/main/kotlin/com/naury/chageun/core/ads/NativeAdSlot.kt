@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
@@ -38,10 +39,11 @@ val LocalAdsEnabled = compositionLocalOf { false }
 fun NativeAdSlot(modifier: Modifier = Modifier) {
     if (!LocalAdsEnabled.current) return
     val context = LocalContext.current
+    val adUnitId = stringResource(R.string.admob_native_unit_id)
     var nativeAd by remember { mutableStateOf<NativeAd?>(null) }
     DisposableEffect(Unit) {
         var disposed = false
-        AdLoader.Builder(context, BuildConfig.NATIVE_AD_UNIT_ID)
+        AdLoader.Builder(context, adUnitId)
             .forNativeAd { ad -> if (disposed) ad.destroy() else nativeAd = ad }
             .build()
             .loadAd(AdRequest.Builder().build())
