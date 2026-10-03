@@ -30,11 +30,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
-import com.naury.chageun.core.ui.ItemIconBadge
-import com.naury.chageun.core.ui.MaintenanceItemIcon
+import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
-import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.timelineTitle
 
 @Composable
@@ -89,7 +87,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
             ) {
-                RecordIcon(record)
+                TimelineItemIcon(record)
                 Column(Modifier.weight(1f)) {
                     Text(timelineTitle(record), style = MaterialTheme.typography.bodyLarge)
                     val meta = listOfNotNull(
@@ -110,16 +108,6 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun RecordIcon(record: TimelineItem) {
-    val item = record.maintenanceItem
-    if (item != null) {
-        MaintenanceItemIcon(item, size = 40.dp)
-    } else {
-        ItemIconBadge(record.ref.type.icon, ChageunTheme.colors.unknown, size = 40.dp)
     }
 }
 
