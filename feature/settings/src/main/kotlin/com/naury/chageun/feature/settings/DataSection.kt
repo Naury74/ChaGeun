@@ -2,9 +2,12 @@ package com.naury.chageun.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -13,20 +16,38 @@ import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.ListRow
 
 @Composable
 internal fun DataSection(state: DataUiState, onExport: () -> Unit, onImport: () -> Unit, onRequestDelete: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        Text(
-            stringResource(R.string.settings_export_body),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedButton(onClick = onExport, enabled = !state.isWorking) {
-            Text(stringResource(R.string.settings_export))
-        }
-        OutlinedButton(onClick = onImport, enabled = !state.isWorking) {
-            Text(stringResource(R.string.settings_import))
+        CardGroup(stringResource(R.string.settings_section_data)) {
+            ListRow(
+                icon = Icons.Filled.Upload,
+                title = stringResource(R.string.settings_export),
+                body = stringResource(R.string.settings_export_body),
+                tone = ChageunTheme.colors.good,
+                onClick = onExport,
+                enabled = !state.isWorking,
+            )
+            GroupDivider()
+            ListRow(
+                icon = Icons.Filled.Download,
+                title = stringResource(R.string.settings_import),
+                onClick = onImport,
+                enabled = !state.isWorking,
+            )
+            GroupDivider()
+            ListRow(
+                icon = Icons.Filled.DeleteForever,
+                title = stringResource(R.string.settings_delete_all),
+                tone = ChageunTheme.colors.critical,
+                titleColor = MaterialTheme.colorScheme.error,
+                onClick = onRequestDelete,
+                enabled = !state.isWorking,
+            )
         }
         state.message?.let { message ->
             Text(
@@ -34,9 +55,6 @@ internal fun DataSection(state: DataUiState, onExport: () -> Unit, onImport: () 
                 style = MaterialTheme.typography.bodySmall,
                 color = if (message.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
             )
-        }
-        TextButton(onClick = onRequestDelete, enabled = !state.isWorking) {
-            Text(stringResource(R.string.settings_delete_all), color = MaterialTheme.colorScheme.error)
         }
     }
 }
