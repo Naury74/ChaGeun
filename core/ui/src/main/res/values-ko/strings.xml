@@ -48,4 +48,9 @@
     <string name="timeline_type_note">기타</string>
     <string name="vehicle_hero_photo">내 차 사진</string>
     <string name="external_app_unavailable">이 기기에는 이 작업을 처리할 앱이 없어요.</string>
+    <string name="date_today">오늘</string>
+    <string name="date_yesterday">어제</string>
+    <string name="date_other">날짜 선택</string>
+    <string name="form_more_details">더 입력하기 (선택)</string>
+    <string name="form_fewer_details">접기</string>
 </resources>

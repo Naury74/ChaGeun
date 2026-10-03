@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -19,9 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.StatusTone
@@ -29,10 +29,18 @@ import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveSheet
-import com.naury.chageun.core.ui.PastDateField
+import com.naury.chageun.core.ui.FormHeader
+import com.naury.chageun.core.ui.FormLabel
+import com.naury.chageun.core.ui.NumberInputField
+import com.naury.chageun.core.ui.OptionalSection
+import com.naury.chageun.core.ui.QuickDateField
+import com.naury.chageun.core.ui.QuickPick
+import com.naury.chageun.core.ui.SaveSuccessMark
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.manage.R
 import java.time.LocalDate
 
@@ -90,39 +98,42 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
             SavedContent(itemName, saved, actions.onDismiss)
             return@Column
         }
-        Text(stringResource(R.string.record_title, itemName), style = MaterialTheme.typography.titleLarge)
-        Text(stringResource(R.string.record_date), style = MaterialTheme.typography.labelLarge)
-        PastDateField(date = uiState.date, placeholder = "", onDateSelected = actions.onDateSelected)
+        FormHeader(uiState.item.icon, uiState.item.category.tone(), stringResource(R.string.record_title, itemName))
+        FormLabel(stringResource(R.string.record_date))
+        QuickDateField(date = uiState.date, onDateSelected = actions.onDateSelected)
         uiState.errors[RecordServiceField.Date]?.let { ErrorText(it) }
-        NumberField(
+        NumberInputField(
             value = uiState.mileage,
             onValueChange = actions.onMileageChanged,
             label = stringResource(R.string.record_mileage),
-            suffix = stringResource(R.string.record_unit_km),
-            error = uiState.errors[RecordServiceField.Mileage],
+            unit = stringResource(R.string.record_unit_km),
+            errorText = uiState.errors[RecordServiceField.Mileage]?.let { stringResource(it.messageRes) },
         )
-        NumberField(
+        NumberInputField(
             value = uiState.cost,
             onValueChange = actions.onCostChanged,
             label = stringResource(R.string.record_cost),
-            suffix = stringResource(R.string.record_unit_won),
-            error = uiState.errors[RecordServiceField.Cost],
-            supporting = stringResource(R.string.record_cost_hint),
+            unit = stringResource(R.string.record_unit_won),
+            picks = costPicks(uiState.item),
+            errorText = uiState.errors[RecordServiceField.Cost]?.let { stringResource(it.messageRes) },
+            supportingText = stringResource(R.string.record_cost_hint),
         )
-        OutlinedTextField(
-            value = uiState.shopName,
-            onValueChange = actions.onShopNameChanged,
-            label = { Text(stringResource(R.string.record_shop)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = uiState.memo,
-            onValueChange = actions.onMemoChanged,
-            label = { Text(stringResource(R.string.record_memo)) },
-            minLines = 2,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        OptionalSection(hasValue = uiState.shopName.isNotEmpty() || uiState.memo.isNotEmpty()) {
+            OutlinedTextField(
+                value = uiState.shopName,
+                onValueChange = actions.onShopNameChanged,
+                label = { Text(stringResource(R.string.record_shop)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = uiState.memo,
+                onValueChange = actions.onMemoChanged,
+                label = { Text(stringResource(R.string.record_memo)) },
+                minLines = 2,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         uiState.lowerMileageWarning?.let { previous ->
             LowerMileageWarning(itemName, formatNumber(previous.value), actions)
         }
@@ -148,19 +159,55 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
 
 @Composable
 private fun SavedContent(itemName: String, saved: SavedResult, onDone: () -> Unit) {
-    Text(stringResource(R.string.record_saved_title, itemName), style = MaterialTheme.typography.titleLarge)
-    val km = saved.nextDistanceDue?.let { formatNumber(it.value) }
-    val date = saved.nextDateDue?.let { formatDate(it) }
-    val message = when {
-        km != null && date != null -> stringResource(R.string.record_saved_next_both, km, date)
-        km != null -> stringResource(R.string.record_saved_next_km, km)
-        date != null -> stringResource(R.string.record_saved_next_date, date)
-        else -> null
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+    ) {
+        SaveSuccessMark()
+        Text(
+            stringResource(R.string.record_saved_title, itemName),
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Center,
+        )
+        val km = saved.nextDistanceDue?.let { formatNumber(it.value) }
+        val date = saved.nextDateDue?.let { formatDate(it) }
+        val message = when {
+            km != null && date != null -> stringResource(R.string.record_saved_next_both, km, date)
+            km != null -> stringResource(R.string.record_saved_next_km, km)
+            date != null -> stringResource(R.string.record_saved_next_date, date)
+            else -> null
+        }
+        message?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Button(
+            onClick = onDone,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+        ) {
+            Text(stringResource(R.string.record_done))
+        }
     }
-    message?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-    Button(onClick = onDone, modifier = Modifier.fillMaxWidth().heightIn(min = ChageunTheme.spacing.minTouchTarget)) {
-        Text(stringResource(R.string.record_done))
+}
+
+/** 항목마다 흔한 비용대가 달라 가격대별로 세 가지를 제안한다. 실제 견적이 아니라 입력을 줄이기 위한 값이다. */
+@Composable
+private fun costPicks(item: MaintenanceItem): List<QuickPick> {
+    val amounts = when (item) {
+        MaintenanceItem.Wiper, MaintenanceItem.CabinFilter, MaintenanceItem.AirFilter -> LOW_COSTS
+        MaintenanceItem.Tire -> TIRE_COSTS
+        MaintenanceItem.BrakePad, MaintenanceItem.TransmissionOil, MaintenanceItem.Battery -> HIGH_COSTS
+        else -> MID_COSTS
     }
+    return listOf(QuickPick(stringResource(R.string.record_cost_free), "0")) +
+        amounts.map { QuickPick(stringResource(R.string.record_cost_pick, formatNumber(it)), it.toString()) }
 }
 
 @Composable
@@ -189,33 +236,22 @@ private fun LowerMileageWarning(itemName: String, previousKm: String, actions: R
 }
 
 @Composable
-private fun NumberField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    suffix: String,
-    error: RecordServiceError?,
-    supporting: String? = null,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        suffix = { Text(suffix) },
-        isError = error != null,
-        supportingText = (error?.let { { ErrorText(it) } }) ?: supporting?.let { { Text(it) } },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(),
+private fun ErrorText(error: RecordServiceError) {
+    Text(
+        stringResource(error.messageRes),
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodySmall,
     )
 }
 
-@Composable
-private fun ErrorText(error: RecordServiceError) {
-    val res = when (error) {
+private val RecordServiceError.messageRes: Int
+    get() = when (this) {
         RecordServiceError.Required -> R.string.record_error_required
         RecordServiceError.FutureDate -> R.string.record_error_future_date
         RecordServiceError.InvalidNumber -> R.string.record_error_invalid_number
     }
-    Text(stringResource(res), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-}
+
+private val LOW_COSTS = listOf(20_000L, 30_000L, 50_000L)
+private val MID_COSTS = listOf(50_000L, 80_000L, 100_000L)
+private val HIGH_COSTS = listOf(100_000L, 150_000L, 200_000L)
+private val TIRE_COSTS = listOf(300_000L, 600_000L, 800_000L)
