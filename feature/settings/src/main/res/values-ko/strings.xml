@@ -47,6 +47,7 @@
     <string name="settings_cancel">취소</string>
     <string name="settings_licenses">오픈소스 라이선스</string>
     <string name="settings_privacy">개인정보 및 데이터 안내</string>
+    <string name="settings_privacy_policy">개인정보처리방침</string>
     <string name="privacy_stored_title">저장하는 정보</string>
     <string name="privacy_stored_body">직접 입력한 차량 정보, 주행거리, 정비·주유·점검 기록, 첨부한 사진·영수증, 앱 설정을 저장해요. 모든 정보는 이 기기에만 저장되고 계정은 없어요.</string>
     <string name="privacy_transfer_title">기기 밖으로 나가는 정보</string>
