@@ -39,6 +39,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.TimelineEventType
+import com.naury.chageun.core.model.TimelineItem
 
 val MaintenanceItem.icon: ImageVector
     get() = when (this) {
@@ -105,5 +106,27 @@ fun ItemIconBadge(icon: ImageVector, tone: ToneColors, modifier: Modifier = Modi
 @Composable
 fun MaintenanceItemIcon(item: MaintenanceItem, modifier: Modifier = Modifier, size: Dp = 44.dp) =
     ItemIconBadge(item.icon, item.category.tone(), modifier, size)
+
+/** 정비 기록은 항목 아이콘을, 나머지는 기록 종류 아이콘을 쓴다. 주유는 정비와 구분되도록 색을 따로 둔다. */
+@Composable
+fun TimelineItemIcon(record: TimelineItem, modifier: Modifier = Modifier, size: Dp = 40.dp) {
+    val item = record.maintenanceItem
+    if (item != null) {
+        MaintenanceItemIcon(item, modifier, size)
+    } else {
+        ItemIconBadge(record.ref.type.icon, record.ref.type.tone(), modifier, size)
+    }
+}
+
+@Composable
+private fun TimelineEventType.tone(): ToneColors {
+    val colors = ChageunTheme.colors
+    return when (this) {
+        TimelineEventType.Fuel -> colors.good
+        TimelineEventType.Inspection -> colors.ai
+        TimelineEventType.Repair -> colors.critical
+        TimelineEventType.Maintenance, TimelineEventType.Note -> colors.unknown
+    }
+}
 
 private const val ICON_RATIO = 0.5f

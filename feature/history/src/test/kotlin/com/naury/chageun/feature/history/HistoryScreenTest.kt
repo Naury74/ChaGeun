@@ -16,6 +16,7 @@ import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
@@ -146,6 +147,46 @@ class HistoryScreenTest {
         composeRule.assertNoClippedText()
     }
 
+    /** Screenshot은 정비·주유·검사가 섞인 두 달치 기록으로 실제 사용 화면에 가깝게 그린다. */
+    private val screenshotSections = listOf(
+        TimelineSection(
+            YearMonth.of(2026, 9),
+            listOf(
+                TimelineItem(
+                    RecordRef(TimelineEventType.Maintenance, "oil"),
+                    LocalDate.of(2026, 9, 21),
+                    null,
+                    MaintenanceItem.EngineOil,
+                    Kilometers(41_800),
+                    95_000,
+                    RecordSource.User,
+                    Instant.EPOCH,
+                ),
+                TimelineItem(
+                    RecordRef(TimelineEventType.Fuel, "fuel-2"),
+                    LocalDate.of(2026, 9, 12),
+                    "GS Caltex",
+                    null,
+                    Kilometers(41_350),
+                    68_000,
+                    RecordSource.User,
+                    Instant.EPOCH,
+                ),
+                TimelineItem(
+                    RecordRef(TimelineEventType.Inspection, "inspection"),
+                    LocalDate.of(2026, 9, 2),
+                    null,
+                    null,
+                    Kilometers(40_900),
+                    null,
+                    RecordSource.User,
+                    Instant.EPOCH,
+                ),
+            ),
+        ),
+        TimelineSection(YearMonth.of(2026, 8), listOf(item)),
+    )
+
     private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean) {
         composeRule.setContent {
             AppFrame {
@@ -171,7 +212,7 @@ class HistoryScreenTest {
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_phoneTimeline() = screenshot(
         "history_phone",
-        HistoryUiState(isLoading = false, sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item)))),
+        HistoryUiState(isLoading = false, sections = screenshotSections),
         isTwoPane = false,
     )
 
@@ -188,7 +229,7 @@ class HistoryScreenTest {
         "history_tablet",
         HistoryUiState(
             isLoading = false,
-            sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item))),
+            sections = screenshotSections,
             selected = ref,
             detail = detail,
         ),

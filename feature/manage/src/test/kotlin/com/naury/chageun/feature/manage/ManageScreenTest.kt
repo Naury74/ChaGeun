@@ -9,11 +9,14 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
+import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.uitesting.AppFrame
@@ -121,13 +124,34 @@ class ManageScreenTest {
         composeRule.assertNoClippedText()
     }
 
+    /** Screenshot은 실제 사용 화면처럼 여러 상태의 항목을 함께 보여 준다. */
+    private fun screenshotState(selected: MaintenanceItem?): ManageUiState {
+        val tire = oil.copy(item = MaintenanceItem.Tire, state = MaintenanceState.Overdue, remainingKm = -1_200)
+        val airFilter = oil.copy(item = MaintenanceItem.AirFilter, state = MaintenanceState.Good, remainingKm = 12_400)
+        val battery = oil.copy(
+            item = MaintenanceItem.Battery,
+            state = MaintenanceState.Unknown,
+            remainingKm = null,
+            remainingDays = null,
+            missingInputs = setOf(MissingInput.LastService),
+        )
+        return stateFor(selected).copy(
+            items = listOf(tire, oil, airFilter, battery),
+            counts = mapOf(ManageFilter.All to 4, ManageFilter.NeedsAttention to 2, ManageFilter.Upcoming to 0),
+            rules = listOf(tire, airFilter).associate {
+                it.item to checkNotNull(DefaultMaintenanceRules.genericFor(it.item, FuelType.Gasoline))
+            } + (MaintenanceItem.EngineOil to rule),
+            disabledItems = listOf(MaintenanceItem.Wiper),
+        )
+    }
+
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_phoneList() {
         composeRule.setContent {
             AppFrame {
-                ManageScreen(stateFor(null), isTwoPane = false, onFilterSelected = {
+                ManageScreen(screenshotState(null), isTwoPane = false, onFilterSelected = {
                 }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
             }
         }
@@ -141,7 +165,7 @@ class ManageScreenTest {
         composeRule.setContent {
             AppFrame {
                 ManageScreen(
-                    stateFor(MaintenanceItem.EngineOil),
+                    screenshotState(MaintenanceItem.EngineOil),
                     isTwoPane = true,
                     onFilterSelected = {},
                     onItemSelected = {},

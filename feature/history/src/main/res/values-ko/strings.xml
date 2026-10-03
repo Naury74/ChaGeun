@@ -16,6 +16,7 @@
     <string name="history_source_user">사용자 입력</string>
     <string name="history_km">%1$skm</string>
     <string name="history_won">%1$s원</string>
+    <string name="history_month_total">%1$s원 지출</string>
     <string name="history_liters">%1$sL</string>
     <string name="history_unit_price">%1$s원/L</string>
 
