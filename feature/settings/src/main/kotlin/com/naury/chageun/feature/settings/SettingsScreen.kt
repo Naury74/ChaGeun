@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
@@ -42,6 +43,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.ui.launchExternal
+import com.naury.chageun.core.ui.openUriSafely
 import java.time.LocalDate
 
 @Composable
@@ -58,6 +60,7 @@ fun SettingsRoute(
     val activity = LocalActivity.current
     val dataState by backupViewModel.dataState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val version = remember { context.versionName() }
     val exportLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ZIP_MIME_TYPE)) { uri ->
@@ -77,6 +80,7 @@ fun SettingsRoute(
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
+        onOpenPrivacyPolicy = { uriHandler.openUriSafely(context, PRIVACY_POLICY_URL) },
         isAdPrivacyRequired = isAdPrivacyRequired,
         onOpenAdPrivacy = { activity?.let(adConsent::showPrivacyOptions) },
         dataSection = {
@@ -119,6 +123,7 @@ fun SettingsScreen(
     onUsageStatsChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenPrivacyPolicy: () -> Unit = {},
     isAdPrivacyRequired: Boolean = false,
     onOpenAdPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
@@ -196,6 +201,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 TextButton(onClick = onOpenPrivacy) { Text(stringResource(R.string.settings_privacy)) }
+                TextButton(onClick = onOpenPrivacyPolicy) { Text(stringResource(R.string.settings_privacy_policy)) }
                 if (isAdPrivacyRequired) {
                     TextButton(onClick = onOpenAdPrivacy) { Text(stringResource(R.string.settings_ad_privacy)) }
                 }
@@ -265,3 +271,6 @@ private fun Context.openNotificationSettings() {
 
 private val CONTENT_MAX_WIDTH = 640.dp
 private const val ZIP_MIME_TYPE = "application/zip"
+
+// Play 스토어에 등록한 주소와 같아야 한다.
+private const val PRIVACY_POLICY_URL = "https://naury74.github.io/chageun/privacy/"

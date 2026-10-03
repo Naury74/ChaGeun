@@ -50,6 +50,7 @@
     <string name="settings_cancel">Cancel</string>
     <string name="settings_licenses">Open source licenses</string>
     <string name="settings_privacy">Privacy and data</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
     <string name="privacy_stored_title">What is stored</string>
     <string name="privacy_stored_body">Vehicle details you enter, mileage, maintenance, fuel and check records, attached photos and receipts, and app settings. Everything stays on this device. There is no account.</string>
     <string name="privacy_transfer_title">What leaves the device</string>
