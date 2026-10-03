@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.domain.maintenance.UpdateMileageResult
 import com.naury.chageun.core.domain.maintenance.UpdateMileageUseCase
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -21,6 +22,8 @@ import kotlinx.coroutines.launch
 
 data class MileageUpdateUiState(
     val mileage: String = "",
+    /** 마지막으로 기록한 주행거리. '+500 km' 같은 빠른 선택의 기준이 된다. */
+    val previous: Kilometers? = null,
     val isMissing: Boolean = false,
     val lowerThan: Kilometers? = null,
     val isSaving: Boolean = false,
@@ -31,12 +34,21 @@ data class MileageUpdateUiState(
 class MileageUpdateViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
+    private val maintenanceRepository: MaintenanceRepository,
     private val updateMileage: UpdateMileageUseCase,
     private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MileageUpdateUiState(mileage = savedStateHandle[KEY_MILEAGE] ?: ""))
     val uiState: StateFlow<MileageUpdateUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
+            val previous = maintenanceRepository.findCurrentMileage(vehicle.id)?.mileage
+            _uiState.update { it.copy(previous = previous) }
+        }
+    }
 
     fun onMileageChanged(value: String) {
         val digits = value.filter(Char::isDigit).take(MAX_DIGITS)

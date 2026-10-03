@@ -8,12 +8,16 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.captureScreen
 import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "w360dp-h2000dp")
@@ -24,10 +28,11 @@ class RecordServiceContentTest {
 
     private var confirmed = false
     private var dismissed = false
+    private var cost: String? = null
     private val actions = RecordServiceActions(
         onDateSelected = {},
         onMileageChanged = {},
-        onCostChanged = {},
+        onCostChanged = { cost = it },
         onShopNameChanged = {},
         onMemoChanged = {},
         onSave = {},
@@ -61,5 +66,45 @@ class RecordServiceContentTest {
         composeRule.onNodeWithText("Done").performClick()
 
         assertThat(dismissed).isTrue()
+    }
+
+    @Test
+    fun costPick_fillsAmountWithoutTyping() {
+        show(base)
+
+        composeRule.onNodeWithText("₩80,000").performClick()
+
+        assertThat(cost).isEqualTo("80000")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_form() {
+        composeRule.setContent { AppFrame { RecordServiceContent(base.copy(cost = "80000"), actions) } }
+        composeRule.captureScreen("record_service_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_formKorean() {
+        composeRule.setContent { AppFrame { RecordServiceContent(base, actions) } }
+        composeRule.captureScreen("record_service_phone_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_saved() {
+        composeRule.setContent {
+            AppFrame {
+                RecordServiceContent(
+                    base.copy(savedResult = SavedResult(Kilometers(52_891), LocalDate.of(2027, 10, 1))),
+                    actions,
+                )
+            }
+        }
+        composeRule.captureScreen("record_service_saved")
     }
 }

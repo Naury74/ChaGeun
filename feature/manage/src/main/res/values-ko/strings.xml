@@ -75,4 +75,6 @@
     <string name="manage_disabled_items">관리하지 않는 항목</string>
     <string name="manage_disabled_hint">눌러서 다시 관리할 수 있어요</string>
     <string name="manage_ask_ai">AI로 설명</string>
+    <string name="record_cost_free">무료</string>
+    <string name="record_cost_pick">%1$s원</string>
 </resources>

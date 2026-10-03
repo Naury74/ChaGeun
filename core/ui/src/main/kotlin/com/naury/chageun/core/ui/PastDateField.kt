@@ -43,28 +43,35 @@ fun PastDateField(
     }
 
     if (isPickerOpen) {
-        val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
-            selectableDates = PastDates,
-        )
-        DatePickerDialog(
-            onDismissRequest = { isPickerOpen = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        pickerState.selectedDateMillis?.let { millis ->
-                            onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
-                        }
-                        isPickerOpen = false
-                    },
-                ) { Text(stringResource(R.string.date_picker_confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { isPickerOpen = false }) { Text(stringResource(R.string.date_picker_cancel)) }
-            },
-        ) {
-            DatePicker(state = pickerState)
-        }
+        PastDatePickerDialog(date = date, onDateSelected = onDateSelected, onDismiss = { isPickerOpen = false })
+    }
+}
+
+/** 오늘 이전 날짜만 고를 수 있는 달력 Dialog. 고르면 [onDateSelected] 다음에 [onDismiss]를 부른다. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PastDatePickerDialog(date: LocalDate?, onDateSelected: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+    val pickerState = rememberDatePickerState(
+        initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
+        selectableDates = PastDates,
+    )
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    pickerState.selectedDateMillis?.let { millis ->
+                        onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+                    }
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.date_picker_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.date_picker_cancel)) }
+        },
+    ) {
+        DatePicker(state = pickerState)
     }
 }
 

@@ -85,4 +85,35 @@
     <string name="attachment_open">Open photo</string>
     <string name="attachment_thumbnail">Attached photo</string>
     <string name="attachment_close">Close</string>
+    <string name="fuel_form_fill_label">How much did you fill?</string>
+    <string name="fuel_form_full">Full tank</string>
+    <string name="fuel_form_partial">Partial</string>
+    <string name="fuel_form_station_label">Station</string>
+    <string name="fuel_form_station_other">Other</string>
+    <string name="fuel_form_station_name">Station name</string>
+    <string name="fuel_form_amount_pick">₩%1$s</string>
+    <string-array name="fuel_station_brands">
+        <item>SK Energy</item>
+        <item>GS Caltex</item>
+        <item>S-OIL</item>
+        <item>HD Hyundai Oilbank</item>
+        <item>Alddle (budget)</item>
+    </string-array>
+    <string name="check_form_kind_label">Type</string>
+    <string name="check_form_subject_label">What was it?</string>
+    <string-array name="check_titles_inspection">
+        <item>Periodic inspection</item>
+        <item>Comprehensive inspection</item>
+        <item>Free check-up</item>
+    </string-array>
+    <string-array name="check_titles_repair">
+        <item>Flat tire</item>
+        <item>Body and paint</item>
+        <item>Battery jump start</item>
+    </string-array>
+    <string-array name="check_titles_note">
+        <item>Car wash</item>
+        <item>Dashcam installed</item>
+        <item>Window tinting</item>
+    </string-array>
 </resources>

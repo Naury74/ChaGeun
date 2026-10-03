@@ -36,7 +36,7 @@
     <string name="manage_km">%1$s km</string>
     <string name="manage_cost_won">₩%1$s</string>
 
-    <string name="record_title">Record %1$s replacement</string>
+    <string name="record_title">%1$s replacement</string>
     <string name="record_date">Replacement date</string>
     <string name="record_mileage">Mileage at replacement</string>
     <string name="record_cost">Cost (optional)</string>
@@ -77,4 +77,6 @@
     <string name="manage_disabled_items">Not tracked</string>
     <string name="manage_disabled_hint">Tap to track again</string>
     <string name="manage_ask_ai">Explain with AI</string>
+    <string name="record_cost_free">Free</string>
+    <string name="record_cost_pick">₩%1$s</string>
 </resources>

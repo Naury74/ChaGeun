@@ -84,4 +84,35 @@
     <string name="attachment_open">사진 보기</string>
     <string name="attachment_thumbnail">첨부한 사진</string>
     <string name="attachment_close">닫기</string>
+    <string name="fuel_form_fill_label">얼마나 넣었나요?</string>
+    <string name="fuel_form_full">가득</string>
+    <string name="fuel_form_partial">일부만</string>
+    <string name="fuel_form_station_label">주유소</string>
+    <string name="fuel_form_station_other">기타</string>
+    <string name="fuel_form_station_name">주유소 이름</string>
+    <string name="fuel_form_amount_pick">%1$s원</string>
+    <string-array name="fuel_station_brands">
+        <item>SK에너지</item>
+        <item>GS칼텍스</item>
+        <item>S-OIL</item>
+        <item>HD현대오일뱅크</item>
+        <item>알뜰주유소</item>
+    </string-array>
+    <string name="check_form_kind_label">종류</string>
+    <string name="check_form_subject_label">어떤 일이었나요?</string>
+    <string-array name="check_titles_inspection">
+        <item>정기 검사</item>
+        <item>종합 검사</item>
+        <item>무상 점검</item>
+    </string-array>
+    <string-array name="check_titles_repair">
+        <item>타이어 펑크</item>
+        <item>판금·도색</item>
+        <item>배터리 방전</item>
+    </string-array>
+    <string-array name="check_titles_note">
+        <item>세차</item>
+        <item>블랙박스 설치</item>
+        <item>선팅</item>
+    </string-array>
 </resources>

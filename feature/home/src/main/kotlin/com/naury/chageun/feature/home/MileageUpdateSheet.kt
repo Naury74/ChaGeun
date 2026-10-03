@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,13 +20,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.FormHeader
+import com.naury.chageun.core.ui.NumberInputField
+import com.naury.chageun.core.ui.QuickPick
 import com.naury.chageun.core.ui.formatNumber
 
 /** Home과 My car가 하나의 진입점을 공유하도록 앱 셸에서 띄운다. */
@@ -64,25 +66,32 @@ internal fun MileageUpdateContent(
             .padding(ChageunTheme.spacing.lg),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
-        Text(stringResource(R.string.home_mileage_update_title), style = MaterialTheme.typography.titleLarge)
-        OutlinedTextField(
+        FormHeader(
+            Icons.Filled.Speed,
+            ChageunTheme.colors.unknown,
+            stringResource(R.string.home_mileage_update_title),
+        )
+        uiState.previous?.let {
+            Text(
+                stringResource(R.string.home_mileage_previous, formatNumber(it.value)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        NumberInputField(
             value = uiState.mileage,
             onValueChange = onMileageChanged,
-            label = { Text(stringResource(R.string.home_mileage_update_label)) },
-            suffix = { Text(stringResource(R.string.home_unit_km)) },
-            isError = uiState.isMissing,
-            supportingText = if (uiState.isMissing) {
-                (
-                    {
-                        Text(stringResource(R.string.home_mileage_update_required))
-                    }
+            label = stringResource(R.string.home_mileage_update_label),
+            unit = stringResource(R.string.home_unit_km),
+            picks = uiState.previous?.let { previous ->
+                MILEAGE_STEPS.map { step ->
+                    QuickPick(
+                        stringResource(R.string.home_mileage_step, formatNumber(step)),
+                        (previous.value + step).toString(),
                     )
-            } else {
-                null
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
+                }
+            }.orEmpty(),
+            errorText = stringResource(R.string.home_mileage_update_required).takeIf { uiState.isMissing },
         )
         val lowerThan = uiState.lowerThan
         if (lowerThan != null) {
@@ -117,3 +126,6 @@ internal fun MileageUpdateContent(
         }
     }
 }
+
+/** 마지막 기록 이후 흔히 달리는 거리. 칩을 누르면 마지막 값에 더한 주행거리가 채워진다. */
+private val MILEAGE_STEPS = listOf(100L, 300L, 500L, 1_000L)

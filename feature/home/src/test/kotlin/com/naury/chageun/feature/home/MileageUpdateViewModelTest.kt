@@ -27,18 +27,28 @@ class MileageUpdateViewModelTest {
 
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
-    private val viewModel = MileageUpdateViewModel(
-        SavedStateHandle(),
-        vehicles,
-        UpdateMileageUseCase(maintenance, Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)),
-        FakeAnalyticsTracker(),
-    )
+
+    // init에서 저장된 주행거리를 읽으므로 테스트 Dispatcher와 픽스처가 준비된 뒤에 만든다.
+    private val viewModel by lazy {
+        MileageUpdateViewModel(
+            SavedStateHandle(),
+            vehicles,
+            maintenance,
+            UpdateMileageUseCase(maintenance, Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)),
+            FakeAnalyticsTracker(),
+        )
+    }
 
     @Before
     fun setUp() = runTest {
         vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(42_000)))
         maintenance.inputs.value =
             MaintenanceInputs(emptyList(), emptyMap(), listOf(MileageReading(TODAY.minusDays(40), Kilometers(42_891))))
+    }
+
+    @Test
+    fun loadsPreviousMileage_forQuickPicks() {
+        assertThat(viewModel.uiState.value.previous).isEqualTo(Kilometers(42_891))
     }
 
     @Test
