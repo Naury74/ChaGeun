@@ -10,15 +10,36 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Factory
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,12 +47,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -39,11 +61,16 @@ import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.InfoListRow
+import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
@@ -132,17 +159,16 @@ private fun LazyListScope.overviewPane(
     item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
     item(key = "info") { InfoSection(state) }
     item(key = "sources") {
-        Section(R.string.vehicle_section_sources) {
-            val res = if (state.vehicle.registrationMode == RegistrationMode.Manual) {
-                R.string.vehicle_sources_manual
-            } else {
-                R.string.vehicle_sources_auto
-            }
-            Text(
-                stringResource(res),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        val res = if (state.vehicle.registrationMode == RegistrationMode.Manual) {
+            R.string.vehicle_sources_manual
+        } else {
+            R.string.vehicle_sources_auto
+        }
+        CardGroup(
+            stringResource(R.string.vehicle_section_sources),
+            Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+        ) {
+            ListRow(Icons.Filled.Info, stringResource(res))
         }
     }
 }
@@ -161,8 +187,8 @@ private fun LazyListScope.recordsPane(
 
 private fun LazyListScope.settingsEntry(onOpenSettings: () -> Unit) {
     item(key = "settings") {
-        TextButton(onClick = onOpenSettings, modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) {
-            Text(stringResource(R.string.vehicle_open_settings))
+        CardGroup(null, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) {
+            ListRow(Icons.Filled.Settings, stringResource(R.string.vehicle_open_settings), onClick = onOpenSettings)
         }
     }
 }
@@ -189,8 +215,14 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
             ?: stringResource(R.string.vehicle_mileage_none),
         action = {
             Column {
-                FlowRow {
-                    TextButton(onClick = onUpdateMileage) { Text(stringResource(R.string.vehicle_update_mileage)) }
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                ) {
+                    FilledTonalButton(onClick = onUpdateMileage) {
+                        ButtonIcon(Icons.Filled.Speed)
+                        Text(stringResource(R.string.vehicle_update_mileage))
+                    }
                     PhotoButtons(state, photoActions)
                 }
                 if (state.isPhotoImportFailed) {
@@ -207,7 +239,8 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
 
 @Composable
 private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoActions) {
-    TextButton(onClick = actions.onPick) {
+    OutlinedButton(onClick = actions.onPick) {
+        ButtonIcon(Icons.Filled.AddAPhoto)
         Text(stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change))
     }
     if (state.photoPath != null) {
@@ -216,17 +249,32 @@ private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoAct
 }
 
 @Composable
+private fun ButtonIcon(icon: ImageVector) {
+    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+    Spacer(Modifier.width(ChageunTheme.spacing.xs))
+}
+
+@Composable
 private fun InfoSection(state: VehicleUiState.Content) {
     val vehicle = state.vehicle
-    Section(R.string.vehicle_section_info) {
-        InfoRow(R.string.vehicle_plate, vehicle.plateMasked)
-        InfoRow(R.string.vehicle_maker, vehicle.maker)
-        InfoRow(R.string.vehicle_model, vehicle.model)
-        InfoRow(R.string.vehicle_trim, vehicle.trim)
-        InfoRow(R.string.vehicle_year, vehicle.modelYear?.toString())
-        InfoRow(R.string.vehicle_fuel, vehicle.fuelType?.let { stringResource(it.labelRes) })
-        InfoRow(R.string.vehicle_first_registration, vehicle.firstRegistrationDate?.let { formatDate(it) })
-        InfoRow(
+    val rows = listOf(
+        Triple(Icons.Filled.Pin, R.string.vehicle_plate, vehicle.plateMasked),
+        Triple(Icons.Filled.Factory, R.string.vehicle_maker, vehicle.maker),
+        Triple(Icons.Filled.DirectionsCar, R.string.vehicle_model, vehicle.model),
+        Triple(Icons.Filled.Style, R.string.vehicle_trim, vehicle.trim),
+        Triple(Icons.Filled.CalendarMonth, R.string.vehicle_year, vehicle.modelYear?.toString()),
+        Triple(
+            vehicle.fuelType?.icon ?: Icons.Filled.LocalGasStation,
+            R.string.vehicle_fuel,
+            vehicle.fuelType?.let { stringResource(it.labelRes) },
+        ),
+        Triple(
+            Icons.Filled.Event,
+            R.string.vehicle_first_registration,
+            vehicle.firstRegistrationDate?.let { formatDate(it) },
+        ),
+        Triple(
+            Icons.Filled.EditNote,
             R.string.vehicle_registration_mode,
             stringResource(
                 if (vehicle.registrationMode == RegistrationMode.Manual) {
@@ -235,7 +283,16 @@ private fun InfoSection(state: VehicleUiState.Content) {
                     R.string.vehicle_registration_auto
                 },
             ),
-        )
+        ),
+    ).filterNot { it.third.isNullOrBlank() }
+    CardGroup(
+        stringResource(R.string.vehicle_section_info),
+        Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+    ) {
+        rows.forEachIndexed { index, (icon, labelRes, value) ->
+            if (index > 0) GroupDivider()
+            InfoListRow(icon, stringResource(labelRes), value)
+        }
     }
 }
 
@@ -263,16 +320,25 @@ private fun OfficialDataSection(
                 modifier = Modifier.padding(ChageunTheme.spacing.md),
             )
         }
-        TextButton(
-            onClick = {
-                analytics.track(AnalyticsEvent.RecallOpened)
-                uriHandler.openUriSafely(context, RECALL_CENTER_URL)
-            },
-        ) {
-            Text(stringResource(R.string.vehicle_official_recall))
-        }
-        TextButton(onClick = { uriHandler.openUriSafely(context, INSPECTION_URL) }) {
-            Text(stringResource(R.string.vehicle_official_inspection))
+        CardGroup(null) {
+            ListRow(
+                icon = Icons.Filled.Campaign,
+                title = stringResource(R.string.vehicle_official_recall),
+                tone = ChageunTheme.colors.critical,
+                onClick = {
+                    analytics.track(AnalyticsEvent.RecallOpened)
+                    uriHandler.openUriSafely(context, RECALL_CENTER_URL)
+                },
+                trailing = { ExternalIcon() },
+            )
+            GroupDivider()
+            ListRow(
+                icon = Icons.AutoMirrored.Filled.FactCheck,
+                title = stringResource(R.string.vehicle_official_inspection),
+                tone = ChageunTheme.colors.ai,
+                onClick = { uriHandler.openUriSafely(context, INSPECTION_URL) },
+                trailing = { ExternalIcon() },
+            )
         }
     }
 }
@@ -326,26 +392,15 @@ private fun SectionTitle(@StringRes titleRes: Int) {
     )
 }
 
+/** 앱 밖 웹사이트로 나간다는 표시. */
 @Composable
-private fun InfoRow(@StringRes labelRes: Int, value: String?) {
-    if (value.isNullOrBlank()) return
-    Column {
-        HorizontalDivider()
-        Row(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
-            Text(
-                stringResource(labelRes),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                value,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
+private fun ExternalIcon() {
+    Icon(
+        Icons.AutoMirrored.Filled.OpenInNew,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(20.dp),
+    )
 }
 
 private val MileageSource.labelRes: Int

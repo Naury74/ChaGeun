@@ -11,37 +11,51 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AdsClick
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.ads.LocalAdConsent
+import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.ListRow
+import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.openUriSafely
 import java.time.LocalDate
@@ -140,117 +154,119 @@ fun SettingsScreen(
             Modifier.widthIn(max = CONTENT_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
         ) {
-            Section(R.string.settings_section_theme) {
-                Column(Modifier.selectableGroup()) {
+            CardlessSection(R.string.settings_section_theme) {
+                Row(
+                    modifier = Modifier.selectableGroup(),
+                    horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                ) {
                     ThemeMode.entries.forEach { mode ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .selectable(selected = settings.themeMode == mode, role = Role.RadioButton) {
-                                    onThemeSelected(mode)
-                                }
-                                .padding(vertical = ChageunTheme.spacing.xxs),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = settings.themeMode == mode, onClick = null)
-                            Text(
-                                stringResource(mode.labelRes),
-                                modifier = Modifier.padding(start = ChageunTheme.spacing.xs),
-                            )
-                        }
+                        ChoicePill(
+                            label = stringResource(mode.labelRes),
+                            selected = settings.themeMode == mode,
+                            onClick = { onThemeSelected(mode) },
+                        )
                     }
                 }
             }
-            Section(R.string.settings_section_notifications) {
-                ToggleRow(
-                    titleRes = R.string.settings_maintenance_reminders,
-                    bodyRes = R.string.settings_maintenance_reminders_body,
+            CardGroup(stringResource(R.string.settings_section_notifications)) {
+                ToggleListRow(
+                    icon = Icons.Filled.NotificationsActive,
+                    title = stringResource(R.string.settings_maintenance_reminders),
+                    body = stringResource(R.string.settings_maintenance_reminders_body),
                     checked = settings.isMaintenanceReminderEnabled,
                     onCheckedChange = onRemindersChanged,
+                    tone = ChageunTheme.colors.upcoming,
                 )
-                ToggleRow(
-                    titleRes = R.string.settings_mileage_reminders,
-                    bodyRes = R.string.settings_mileage_reminders_body,
+                GroupDivider()
+                ToggleListRow(
+                    icon = Icons.Filled.Speed,
+                    title = stringResource(R.string.settings_mileage_reminders),
+                    body = stringResource(R.string.settings_mileage_reminders_body),
                     checked = settings.isMileageReminderEnabled,
                     onCheckedChange = onMileageRemindersChanged,
                 )
-                TextButton(onClick = onOpenSystemNotifications) {
-                    Text(stringResource(R.string.settings_system_notifications))
-                }
+                GroupDivider()
+                ListRow(
+                    icon = Icons.Filled.Tune,
+                    title = stringResource(R.string.settings_system_notifications),
+                    onClick = onOpenSystemNotifications,
+                    trailing = { ExternalIcon() },
+                )
             }
-            Section(R.string.settings_section_data) { dataSection() }
-            Section(R.string.settings_section_privacy) {
-                ToggleRow(
-                    titleRes = R.string.settings_usage_stats,
-                    bodyRes = R.string.settings_usage_stats_body,
+            dataSection()
+            CardGroup(stringResource(R.string.settings_section_privacy)) {
+                ToggleListRow(
+                    icon = Icons.Filled.BarChart,
+                    title = stringResource(R.string.settings_usage_stats),
+                    body = stringResource(R.string.settings_usage_stats_body),
                     checked = settings.isUsageStatsEnabled,
                     onCheckedChange = onUsageStatsChanged,
+                    tone = ChageunTheme.colors.ai,
                 )
             }
-            Section(R.string.settings_section_sources) {
-                listOf(
-                    R.string.settings_source_user,
-                    R.string.settings_source_derived,
-                    R.string.settings_source_generic,
-                    R.string.settings_source_official,
-                ).forEach { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium) }
-            }
-            Section(R.string.settings_section_about) {
-                Text(
-                    stringResource(R.string.settings_version, versionName),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                TextButton(onClick = onOpenPrivacy) { Text(stringResource(R.string.settings_privacy)) }
-                TextButton(onClick = onOpenPrivacyPolicy) { Text(stringResource(R.string.settings_privacy_policy)) }
-                if (isAdPrivacyRequired) {
-                    TextButton(onClick = onOpenAdPrivacy) { Text(stringResource(R.string.settings_ad_privacy)) }
+            CardGroup(stringResource(R.string.settings_section_sources)) {
+                SOURCES.forEachIndexed { index, (icon, res) ->
+                    if (index > 0) GroupDivider()
+                    ListRow(icon = icon, title = stringResource(res))
                 }
-                TextButton(onClick = onOpenLicenses) { Text(stringResource(R.string.settings_licenses)) }
+            }
+            CardGroup(stringResource(R.string.settings_section_about)) {
+                ListRow(Icons.Filled.Info, stringResource(R.string.settings_version, versionName))
+                GroupDivider()
+                ListRow(Icons.Filled.Shield, stringResource(R.string.settings_privacy), onClick = onOpenPrivacy)
+                GroupDivider()
+                ListRow(
+                    Icons.Filled.Policy,
+                    stringResource(R.string.settings_privacy_policy),
+                    onClick = onOpenPrivacyPolicy,
+                    trailing = { ExternalIcon() },
+                )
+                if (isAdPrivacyRequired) {
+                    GroupDivider()
+                    ListRow(
+                        Icons.Filled.AdsClick,
+                        stringResource(R.string.settings_ad_privacy),
+                        onClick = onOpenAdPrivacy,
+                    )
+                }
+                GroupDivider()
+                ListRow(Icons.Filled.Code, stringResource(R.string.settings_licenses), onClick = onOpenLicenses)
             }
         }
     }
 }
 
+/** 앱 밖(시스템 설정, 웹)으로 나간다는 표시. */
 @Composable
-private fun ToggleRow(
-    @StringRes titleRes: Int,
-    @StringRes bodyRes: Int,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    // 제목을 눌러도 바뀌고, TalkBack에서는 제목·설명·상태를 한 번에 읽도록 행 전체를 스위치로 만든다.
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
-            .padding(vertical = ChageunTheme.spacing.xxs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(titleRes), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                stringResource(bodyRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Switch(checked = checked, onCheckedChange = null)
-    }
+private fun ExternalIcon() {
+    Icon(
+        Icons.AutoMirrored.Filled.OpenInNew,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(20.dp),
+    )
 }
 
 @Composable
-private fun Section(@StringRes titleRes: Int, content: @Composable () -> Unit) {
+private fun CardlessSection(@StringRes titleRes: Int, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         Text(
             stringResource(titleRes),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.semantics {
-                heading()
-            },
+            modifier = Modifier
+                .padding(top = ChageunTheme.spacing.xs)
+                .semantics { heading() },
         )
         content()
     }
 }
+
+private val SOURCES = listOf(
+    Icons.Filled.Person to R.string.settings_source_user,
+    Icons.Filled.Calculate to R.string.settings_source_derived,
+    Icons.AutoMirrored.Filled.MenuBook to R.string.settings_source_generic,
+    Icons.Filled.Verified to R.string.settings_source_official,
+)
 
 private val ThemeMode.labelRes: Int
     get() = when (this) {
