@@ -119,7 +119,7 @@ fun TimelineItemIcon(record: TimelineItem, modifier: Modifier = Modifier, size: 
 }
 
 @Composable
-private fun TimelineEventType.tone(): ToneColors {
+fun TimelineEventType.tone(): ToneColors {
     val colors = ChageunTheme.colors
     return when (this) {
         TimelineEventType.Fuel -> colors.good

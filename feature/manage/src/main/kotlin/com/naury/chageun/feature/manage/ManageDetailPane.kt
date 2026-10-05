@@ -10,17 +10,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.StatusBadge
+import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.chageun.core.model.Confidence
@@ -38,12 +45,19 @@ import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceHistoryEntry
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.LabeledListRow
+import com.naury.chageun.core.ui.ListRow
+import com.naury.chageun.core.ui.MaintenanceItemIcon
+import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
+import com.naury.chageun.core.ui.usedFraction
 
 @Composable
 internal fun ManageDetailPane(
@@ -62,7 +76,10 @@ internal fun ManageDetailPane(
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
         item(key = "header") {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
                 onBack?.let {
                     IconButton(onClick = it) {
                         Icon(
@@ -71,6 +88,7 @@ internal fun ManageDetailPane(
                         )
                     }
                 }
+                MaintenanceItemIcon(status.item, size = 52.dp)
                 Text(
                     stringResource(status.item.labelRes),
                     style = MaterialTheme.typography.headlineSmall,
@@ -81,16 +99,7 @@ internal fun ManageDetailPane(
                 StatusBadge(tone = status.state.tone, label = stringResource(status.state.labelRes))
             }
         }
-        item(key = "remaining") {
-            val headline = if (status.state ==
-                MaintenanceState.Unknown
-            ) {
-                missingInputText(status)
-            } else {
-                remainingText(status)
-            }
-            headline?.let { Text(it, style = NumericTextStyles.Title) }
-        }
+        item(key = "remaining") { RemainingCard(detail) }
         item(key = "actions") {
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
                 OutlinedButton(
@@ -109,27 +118,36 @@ internal fun ManageDetailPane(
         }
         item(key = "basis") { BasisSection(detail) }
         item(key = "ai") {
-            TextButton(onClick = { onAskAi(status.item) }) { Text(stringResource(R.string.manage_ask_ai)) }
-        }
-        item(key = "history-title") {
-            Text(
-                stringResource(R.string.manage_history),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier
-                    .padding(top = ChageunTheme.spacing.sm)
-                    .semantics { heading() },
-            )
-        }
-        if (detail.history.isEmpty()) {
-            item(key = "history-empty") {
-                Text(
-                    stringResource(R.string.manage_history_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            CardGroup(null) {
+                ListRow(
+                    icon = Icons.Filled.AutoAwesome,
+                    title = stringResource(R.string.manage_ask_ai),
+                    tone = ChageunTheme.colors.ai,
+                    onClick = { onAskAi(status.item) },
                 )
             }
         }
-        items(detail.history, key = { it.id }) { HistoryRow(it) }
+        item(key = "history") { HistorySection(detail.history) }
+    }
+}
+
+/** 남은 거리와 진행 막대. 홈 카드와 같은 계산이라 두 화면의 값이 어긋나지 않는다. */
+@Composable
+private fun RemainingCard(detail: ManageDetail) {
+    val status = detail.status
+    val headline = if (status.state == MaintenanceState.Unknown) missingInputText(status) else remainingText(status)
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            Modifier.padding(ChageunTheme.spacing.md),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+        ) {
+            headline?.let { Text(it, style = NumericTextStyles.Title) }
+            usedFraction(status, detail.rule)?.let { MaintenanceProgressBar(it, status.state.tone.colors.content) }
+        }
     }
 }
 
@@ -137,67 +155,68 @@ internal fun ManageDetailPane(
 private fun BasisSection(detail: ManageDetail) {
     val status = detail.status
     val lastService = detail.history.firstOrNull()
-    Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        BasisRow(
-            label = stringResource(R.string.manage_last_service),
-            value = lastService?.let { serviceSummary(it) } ?: stringResource(R.string.manage_last_service_none),
-        )
-        detail.rule?.let { BasisRow(stringResource(R.string.manage_interval), intervalText(it)) }
-        val nextParts = listOfNotNull(
-            status.distanceDue?.let { stringResource(R.string.manage_km, formatNumber(it.value)) },
-            status.dateDue?.let { formatDate(it) },
-        )
-        if (nextParts.isNotEmpty()) {
-            BasisRow(stringResource(R.string.manage_next_threshold), nextParts.joinToString(" / "))
-        }
-        status.estimatedDue?.let {
-            BasisRow(
-                stringResource(R.string.manage_estimated_due),
+    val nextParts = listOfNotNull(
+        status.distanceDue?.let { stringResource(R.string.manage_km, formatNumber(it.value)) },
+        status.dateDue?.let { formatDate(it) },
+    )
+    val rows = listOf(
+        Triple(
+            Icons.Filled.History,
+            stringResource(R.string.manage_last_service),
+            lastService?.let { serviceSummary(it) } ?: stringResource(R.string.manage_last_service_none),
+        ),
+        Triple(Icons.Filled.Repeat, stringResource(R.string.manage_interval), detail.rule?.let { intervalText(it) }),
+        Triple(
+            Icons.Filled.Flag,
+            stringResource(R.string.manage_next_threshold),
+            nextParts.joinToString(" / ").ifEmpty { null },
+        ),
+        Triple(
+            Icons.Filled.Event,
+            stringResource(R.string.manage_estimated_due),
+            status.estimatedDue?.let {
                 stringResource(
                     R.string.manage_estimate_with_confidence,
                     formatDate(it.date),
                     stringResource(it.confidence.labelRes),
-                ),
-            )
-        }
-        BasisRow(stringResource(R.string.manage_rule_source), stringResource(status.ruleSource.labelRes))
-    }
-}
-
-@Composable
-private fun BasisRow(label: String, value: String) {
-    Column(Modifier.fillMaxWidth()) {
-        HorizontalDivider()
-        Row(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                value,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(BASIS_VALUE_WEIGHT),
-            )
+                )
+            },
+        ),
+        Triple(
+            Icons.AutoMirrored.Filled.MenuBook,
+            stringResource(R.string.manage_rule_source),
+            stringResource(status.ruleSource.labelRes),
+        ),
+    ).filterNot { it.third.isNullOrBlank() }
+    CardGroup(null) {
+        rows.forEachIndexed { index, (icon, label, value) ->
+            if (index > 0) GroupDivider()
+            LabeledListRow(icon, label, value)
         }
     }
 }
 
 @Composable
-private fun HistoryRow(entry: ServiceHistoryEntry) {
-    Column(Modifier.fillMaxWidth()) {
-        Text(serviceSummary(entry), style = MaterialTheme.typography.bodyLarge)
-        val extras = listOfNotNull(
-            entry.costWon?.let { stringResource(R.string.manage_cost_won, formatNumber(it)) },
-            entry.shopName,
-        )
-        if (extras.isNotEmpty()) {
+private fun HistorySection(history: List<ServiceHistoryEntry>) {
+    CardGroup(stringResource(R.string.manage_history)) {
+        if (history.isEmpty()) {
             Text(
-                extras.joinToString(" · "),
-                style = MaterialTheme.typography.bodySmall,
+                stringResource(R.string.manage_history_empty),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(ChageunTheme.spacing.md),
+            )
+        }
+        history.forEachIndexed { index, entry ->
+            if (index > 0) GroupDivider()
+            val extras = listOfNotNull(
+                entry.costWon?.let { stringResource(R.string.manage_cost_won, formatNumber(it)) },
+                entry.shopName,
+            )
+            ListRow(
+                icon = Icons.Filled.Build,
+                title = serviceSummary(entry),
+                body = extras.joinToString(" · ").ifEmpty { null },
             )
         }
     }
@@ -239,8 +258,6 @@ internal fun DetailPlaceholder(modifier: Modifier = Modifier) {
         )
     }
 }
-
-private const val BASIS_VALUE_WEIGHT = 1.5f
 
 private val RuleSource.labelRes: Int
     get() = when (this) {

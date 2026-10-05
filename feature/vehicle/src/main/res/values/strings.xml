@@ -64,4 +64,6 @@
     <string name="vehicle_photo_change">Change photo</string>
     <string name="vehicle_photo_remove">Remove photo</string>
     <string name="vehicle_photo_failed">Couldn\'t use this photo. Try another one.</string>
+    <string name="vehicle_mileage_show_all">Show all %1$d</string>
+    <string name="vehicle_mileage_show_less">Show less</string>
 </resources>

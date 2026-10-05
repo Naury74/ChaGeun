@@ -2,17 +2,32 @@ package com.naury.chageun.feature.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,20 +41,29 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.ItemIconBadge
+import com.naury.chageun.core.ui.LabeledListRow
+import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.form.labelRes
 
 @Composable
@@ -66,14 +90,24 @@ internal fun RecordDetailPane(
                         )
                     }
                 }
+                DetailIcon(detail)
                 Text(
                     detailTitle(detail),
                     style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() },
+                    modifier = Modifier
+                        .padding(start = ChageunTheme.spacing.sm)
+                        .semantics { heading() },
                 )
             }
         }
-        item(key = "rows") { Column { detailRows(detail).forEach { (label, value) -> DetailRow(label, value) } } }
+        item(key = "rows") {
+            CardGroup(null, Modifier.padding(top = ChageunTheme.spacing.xs)) {
+                detailRows(detail).forEachIndexed { index, (icon, label, value) ->
+                    if (index > 0) GroupDivider()
+                    LabeledListRow(icon, label, value)
+                }
+            }
+        }
         item(key = "attachments") {
             AttachmentSection(
                 attachments = attachments.items,
@@ -84,7 +118,16 @@ internal fun RecordDetailPane(
             )
         }
         item(key = "delete") {
-            OutlinedButton(onClick = { isConfirmingDelete = true }, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { isConfirmingDelete = true },
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = ChageunTheme.spacing.sm)
+                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+            ) {
+                Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(ChageunTheme.spacing.xs))
                 Text(stringResource(R.string.history_delete))
             }
         }
@@ -118,6 +161,15 @@ internal data class AttachmentsState(
 )
 
 @Composable
+private fun DetailIcon(detail: RecordDetail) {
+    if (detail is RecordDetail.Maintenance) {
+        MaintenanceItemIcon(detail.item, size = HEADER_ICON_SIZE)
+    } else {
+        ItemIconBadge(detail.ref.type.icon, detail.ref.type.tone(), size = HEADER_ICON_SIZE)
+    }
+}
+
+@Composable
 private fun detailTitle(detail: RecordDetail): String = when (detail) {
     is RecordDetail.Maintenance -> stringResource(detail.item.labelRes)
     is RecordDetail.Fuel -> stringResource(TimelineEventType.Fuel.labelRes)
@@ -125,51 +177,85 @@ private fun detailTitle(detail: RecordDetail): String = when (detail) {
 }
 
 @Composable
-private fun detailRows(detail: RecordDetail): List<Pair<String, String>> {
+private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, String>> {
     val yes = stringResource(R.string.history_yes)
     val no = stringResource(R.string.history_no)
-    val rows = mutableListOf<Pair<String, String?>>()
+    val rows = mutableListOf<Triple<ImageVector, String, String?>>()
+    fun add(icon: ImageVector, label: String, value: String?) {
+        rows += Triple(icon, label, value)
+    }
+    val date = stringResource(R.string.history_detail_date)
+    val mileage = stringResource(R.string.history_detail_mileage)
+    val cost = stringResource(R.string.history_detail_cost)
+    val memo = stringResource(R.string.history_detail_memo)
     when (detail) {
         is RecordDetail.Maintenance -> {
             val entry = detail.entry
-            rows += stringResource(R.string.history_detail_date) to
-                (entry.date?.let { formatDate(it) } ?: stringResource(R.string.history_unknown_date))
-            rows += stringResource(R.string.history_detail_mileage) to entry.mileage?.let { km(it.value) }
-            rows += stringResource(R.string.history_detail_cost) to entry.costWon?.let { won(it) }
-            rows += stringResource(R.string.history_detail_shop) to entry.shopName
-            rows += stringResource(R.string.history_detail_memo) to detail.memo
+            add(
+                Icons.Filled.Event,
+                date,
+                entry.date?.let { formatDate(it) } ?: stringResource(R.string.history_unknown_date),
+            )
+            add(Icons.Filled.Speed, mileage, entry.mileage?.let { km(it.value) })
+            add(Icons.Filled.Payments, cost, entry.costWon?.let { won(it) })
+            add(Icons.Filled.Store, stringResource(R.string.history_detail_shop), entry.shopName)
+            add(Icons.AutoMirrored.Filled.Notes, memo, detail.memo)
         }
         is RecordDetail.Fuel -> {
             val entry = detail.entry
             val amounts = entry.amounts
-            rows += stringResource(R.string.history_detail_date) to formatDate(entry.date)
-            rows += stringResource(R.string.history_detail_mileage) to km(entry.mileage.value)
-            rows += stringResource(R.string.history_detail_total) to
-                computed(won(amounts.totalPriceWon), amounts.computedField == FuelField.Total)
-            rows += stringResource(R.string.history_detail_volume) to
+            add(Icons.Filled.Event, date, formatDate(entry.date))
+            add(Icons.Filled.Speed, mileage, km(entry.mileage.value))
+            add(
+                Icons.Filled.Payments,
+                stringResource(R.string.history_detail_total),
+                computed(won(amounts.totalPriceWon), amounts.computedField == FuelField.Total),
+            )
+            add(
+                Icons.Filled.WaterDrop,
+                stringResource(R.string.history_detail_volume),
                 computed(
                     stringResource(R.string.history_liters, formatLitres(amounts.volumeMl)),
                     amounts.computedField == FuelField.Volume,
-                )
-            rows += stringResource(R.string.history_detail_unit_price) to computed(
-                stringResource(R.string.history_unit_price, formatNumber(amounts.unitPriceWon)),
-                amounts.computedField == FuelField.UnitPrice,
+                ),
             )
-            rows += stringResource(R.string.history_detail_full_tank) to if (entry.isFullTank) yes else no
-            rows += stringResource(R.string.history_detail_station) to entry.stationName
-            rows += stringResource(R.string.history_detail_memo) to entry.memo
+            add(
+                Icons.Filled.Sell,
+                stringResource(R.string.history_detail_unit_price),
+                computed(
+                    stringResource(R.string.history_unit_price, formatNumber(amounts.unitPriceWon)),
+                    amounts.computedField == FuelField.UnitPrice,
+                ),
+            )
+            add(
+                Icons.Filled.LocalGasStation,
+                stringResource(R.string.history_detail_full_tank),
+                if (entry.isFullTank) yes else no,
+            )
+            add(Icons.Filled.Place, stringResource(R.string.history_detail_station), entry.stationName)
+            add(Icons.AutoMirrored.Filled.Notes, memo, entry.memo)
         }
         is RecordDetail.Check -> {
             val entry = detail.entry
-            rows += stringResource(R.string.history_detail_date) to formatDate(entry.date)
-            rows += stringResource(R.string.history_detail_kind) to stringResource(entry.kind.labelRes)
-            rows += stringResource(R.string.history_detail_mileage) to entry.mileage?.let { km(it.value) }
-            rows += stringResource(R.string.history_detail_cost) to entry.costWon?.let { won(it) }
-            rows += stringResource(R.string.history_detail_memo) to entry.memo
+            add(Icons.Filled.Event, date, formatDate(entry.date))
+            add(
+                Icons.Filled.Category,
+                stringResource(R.string.history_detail_kind),
+                stringResource(entry.kind.labelRes),
+            )
+            add(Icons.Filled.Speed, mileage, entry.mileage?.let { km(it.value) })
+            add(Icons.Filled.Payments, cost, entry.costWon?.let { won(it) })
+            add(Icons.AutoMirrored.Filled.Notes, memo, entry.memo)
         }
     }
-    rows += stringResource(R.string.history_detail_source) to stringResource(R.string.history_source_user)
-    return rows.mapNotNull { (label, value) -> value?.let { label to it } }
+    add(
+        Icons.Filled.Person,
+        stringResource(R.string.history_detail_source),
+        stringResource(R.string.history_source_user),
+    )
+    return rows.mapNotNull { (icon, label, value) ->
+        value?.takeIf { it.isNotBlank() }?.let { Triple(icon, label, it) }
+    }
 }
 
 @Composable
@@ -181,27 +267,6 @@ private fun won(value: Long) = stringResource(R.string.history_won, formatNumber
 @Composable
 private fun computed(value: String, isComputed: Boolean) =
     if (isComputed) stringResource(R.string.history_detail_computed, value) else value
-
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Column(Modifier.fillMaxWidth()) {
-        HorizontalDivider()
-        Row(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
-            Text(
-                label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                value,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.End,
-                modifier = Modifier.weight(VALUE_WEIGHT),
-            )
-        }
-    }
-}
 
 @Composable
 internal fun DetailPlaceholder(modifier: Modifier = Modifier) {
@@ -220,4 +285,4 @@ internal fun DetailPlaceholder(modifier: Modifier = Modifier) {
     }
 }
 
-private const val VALUE_WEIGHT = 1.5f
+private val HEADER_ICON_SIZE = 52.dp

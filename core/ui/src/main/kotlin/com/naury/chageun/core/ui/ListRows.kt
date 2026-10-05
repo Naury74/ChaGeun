@@ -54,6 +54,21 @@ fun CardGroup(title: String?, modifier: Modifier = Modifier, content: @Composabl
     }
 }
 
+/** 카드 안에서 행 묶음을 나누는 작은 제목. */
+@Composable
+fun CardSubheader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(
+            start = ChageunTheme.spacing.md,
+            end = ChageunTheme.spacing.md,
+            top = ChageunTheme.spacing.sm,
+        ),
+    )
+}
+
 /** 아이콘 너비만큼 들여 써서 아이콘 열이 끊기지 않게 보이는 구분선. */
 @Composable
 fun GroupDivider() {
@@ -108,6 +123,7 @@ fun ToggleListRow(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     tone: ToneColors = ChageunTheme.colors.unknown,
+    enabled: Boolean = true,
 ) {
     RowLayout(
         icon,
@@ -115,7 +131,9 @@ fun ToggleListRow(
         body,
         tone,
         Color.Unspecified,
-        modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+        modifier
+            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
+            .alpha(if (enabled) 1f else DISABLED_ALPHA),
     ) {
         Switch(checked = checked, onCheckedChange = null)
     }
@@ -127,6 +145,34 @@ fun InfoListRow(icon: ImageVector, label: String, value: String?, modifier: Modi
     if (value.isNullOrBlank()) return
     RowLayout(icon, label, null, ChageunTheme.colors.unknown, MaterialTheme.colorScheme.onSurfaceVariant, modifier) {
         Text(value, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End)
+    }
+}
+
+/**
+ * 이름을 작게 위에, 값을 크게 아래에 둔 행. 값이 길어 한 줄 표에서 이름이 눌리는 상세 화면에 쓴다.
+ * 값이 없으면 행을 그리지 않는다.
+ */
+@Composable
+fun LabeledListRow(icon: ImageVector, label: String, value: String?, modifier: Modifier = Modifier) {
+    if (value.isNullOrBlank()) return
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = ROW_MIN_HEIGHT)
+            .semantics(mergeDescendants = true) {}
+            .padding(horizontal = ChageunTheme.spacing.md, vertical = ChageunTheme.spacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ItemIconBadge(icon, ChageunTheme.colors.unknown, size = ROW_ICON_SIZE)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
     }
 }
 

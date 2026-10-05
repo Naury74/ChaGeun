@@ -47,4 +47,5 @@
     <string name="ai_prompt_user_rule">your own interval</string>
     <string name="ai_km">%1$s km</string>
     <string name="ai_won">₩%1$s</string>
+    <string name="ai_pick_question">Pick a question</string>
 </resources>
