@@ -62,4 +62,6 @@
     <string name="vehicle_photo_change">사진 바꾸기</string>
     <string name="vehicle_photo_remove">사진 지우기</string>
     <string name="vehicle_photo_failed">이 사진은 쓸 수 없어요. 다른 사진을 골라 주세요.</string>
+    <string name="vehicle_mileage_show_all">전체 %1$d개 보기</string>
+    <string name="vehicle_mileage_show_less">접기</string>
 </resources>

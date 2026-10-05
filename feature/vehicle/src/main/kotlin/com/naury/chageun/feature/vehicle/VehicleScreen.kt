@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,20 +17,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Factory
+import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Style
@@ -45,6 +47,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -182,7 +187,7 @@ private fun LazyListScope.recordsPane(
         OfficialDataSection(state, onInspectionDateSelected, onInspectionCompleted)
     }
     item(key = "mileage-title") { SectionTitle(R.string.vehicle_section_mileage) }
-    items(state.mileageLog, key = { it.id }) { entry -> MileageRow(entry) }
+    item(key = "mileage-log") { MileageLog(state.mileageLog) }
 }
 
 private fun LazyListScope.settingsEntry(onOpenSettings: () -> Unit) {
@@ -343,26 +348,44 @@ private fun OfficialDataSection(
     }
 }
 
+/** 최근 이력만 먼저 보여 주고, 나머지는 펼쳐서 본다. 대부분은 최근 몇 건만 확인한다. */
 @Composable
-private fun MileageRow(entry: MileageEntry) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.xxs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(R.string.vehicle_mileage, formatNumber(entry.mileage.value)),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                stringResource(entry.source.labelRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun MileageLog(log: List<MileageEntry>) {
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+    val shown = if (isExpanded) log else log.take(MILEAGE_PREVIEW)
+    CardGroup(null, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) {
+        shown.forEachIndexed { index, entry ->
+            if (index > 0) GroupDivider()
+            ListRow(
+                icon = entry.source.icon,
+                title = stringResource(R.string.vehicle_mileage, formatNumber(entry.mileage.value)),
+                body = stringResource(entry.source.labelRes),
+                trailing = {
+                    Text(
+                        formatDate(entry.date),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
             )
         }
-        Text(formatDate(entry.date), style = MaterialTheme.typography.bodyMedium)
+        if (log.size > MILEAGE_PREVIEW) {
+            GroupDivider()
+            TextButton(
+                onClick = { isExpanded = !isExpanded },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = ChageunTheme.spacing.xs),
+            ) {
+                Text(
+                    if (isExpanded) {
+                        stringResource(R.string.vehicle_mileage_show_less)
+                    } else {
+                        stringResource(R.string.vehicle_mileage_show_all, log.size)
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -403,6 +426,16 @@ private fun ExternalIcon() {
     )
 }
 
+private val MileageSource.icon: ImageVector
+    get() = when (this) {
+        MileageSource.User -> Icons.Filled.Edit
+        MileageSource.Maintenance -> Icons.Filled.Build
+        MileageSource.Fuel -> Icons.Filled.LocalGasStation
+        MileageSource.Check -> Icons.Filled.Handyman
+        MileageSource.Correction -> Icons.Filled.Restore
+        MileageSource.Inspection -> Icons.AutoMirrored.Filled.FactCheck
+    }
+
 private val MileageSource.labelRes: Int
     get() = when (this) {
         MileageSource.User -> R.string.vehicle_mileage_source_user
@@ -413,5 +446,6 @@ private val MileageSource.labelRes: Int
         MileageSource.Inspection -> R.string.vehicle_mileage_source_inspection
     }
 
+private const val MILEAGE_PREVIEW = 10
 private const val RECALL_CENTER_URL = "https://www.car.go.kr"
 private const val INSPECTION_URL = "https://www.cyberts.kr"
