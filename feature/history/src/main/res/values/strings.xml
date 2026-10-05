@@ -116,4 +116,6 @@
         <item>Dashcam installed</item>
         <item>Window tinting</item>
     </string-array>
+    <string name="history_empty_body">Log maintenance, fuel and repairs to see them here by month.</string>
+    <string name="history_empty_filtered_body">Try another filter or search word.</string>
 </resources>

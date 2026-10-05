@@ -79,4 +79,10 @@
     <string name="manage_ask_ai">Explain with AI</string>
     <string name="record_cost_free">Free</string>
     <string name="record_cost_pick">₩%1$s</string>
+    <string name="manage_empty_filter_body">Nothing needs your attention here right now.</string>
+    <string name="rule_km_pick">%1$s km</string>
+    <plurals name="rule_months_pick">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
 </resources>

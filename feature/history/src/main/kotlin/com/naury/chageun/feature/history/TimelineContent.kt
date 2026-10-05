@@ -18,14 +18,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +42,7 @@ import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.ui.EmptyState
 import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
@@ -216,22 +218,23 @@ private fun TimelineRow(
 
 @Composable
 private fun EmptyTimeline(isFiltered: Boolean, onAdd: () -> Unit, onClear: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ChageunTheme.spacing.xl),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
-    ) {
-        Text(
-            stringResource(if (isFiltered) R.string.history_empty_filtered else R.string.history_empty),
-            style = MaterialTheme.typography.bodyLarge,
+    if (isFiltered) {
+        EmptyState(
+            icon = Icons.Filled.SearchOff,
+            title = stringResource(R.string.history_empty_filtered),
+            body = stringResource(R.string.history_empty_filtered_body),
+            actionLabel = stringResource(R.string.history_clear_filters),
+            onAction = onClear,
         )
-        if (isFiltered) {
-            TextButton(onClick = onClear) { Text(stringResource(R.string.history_clear_filters)) }
-        } else {
-            TextButton(onClick = onAdd) { Text(stringResource(R.string.history_empty_action)) }
-        }
+    } else {
+        EmptyState(
+            icon = Icons.AutoMirrored.Filled.EventNote,
+            title = stringResource(R.string.history_empty),
+            body = stringResource(R.string.history_empty_body),
+            tone = ChageunTheme.colors.good,
+            actionLabel = stringResource(R.string.history_empty_action),
+            onAction = onAdd,
+        )
     }
 }
 
