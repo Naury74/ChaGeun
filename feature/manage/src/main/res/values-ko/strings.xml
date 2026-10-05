@@ -77,4 +77,9 @@
     <string name="manage_ask_ai">AI로 설명</string>
     <string name="record_cost_free">무료</string>
     <string name="record_cost_pick">%1$s원</string>
+    <string name="manage_empty_filter_body">지금 여기서 챙길 항목은 없어요.</string>
+    <string name="rule_km_pick">%1$s km</string>
+    <plurals name="rule_months_pick">
+        <item quantity="other">%1$d개월</item>
+    </plurals>
 </resources>

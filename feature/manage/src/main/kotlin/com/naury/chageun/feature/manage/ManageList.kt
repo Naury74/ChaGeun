@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.ui.EmptyState
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.labelRes
@@ -82,11 +84,11 @@ internal fun ManageList(
         }
         if (uiState.items.isEmpty() && !uiState.isLoading) {
             item(key = "empty") {
-                Text(
-                    stringResource(R.string.manage_empty_filter),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = gutter),
+                EmptyState(
+                    icon = Icons.Filled.TaskAlt,
+                    title = stringResource(R.string.manage_empty_filter),
+                    body = stringResource(R.string.manage_empty_filter_body),
+                    tone = ChageunTheme.colors.good,
                 )
             }
         }

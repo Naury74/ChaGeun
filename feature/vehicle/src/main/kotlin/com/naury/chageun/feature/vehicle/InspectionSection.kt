@@ -3,13 +3,22 @@ package com.naury.chageun.feature.vehicle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -19,16 +28,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.formatDate
 import java.time.Instant
 import java.time.LocalDate
@@ -45,18 +58,30 @@ internal fun InspectionCard(
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
     var isCompleting by rememberSaveable { mutableStateOf(false) }
     val schedule = status.schedule
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.medium) {
+    Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.large) {
         Column(
             Modifier
                 .fillMaxWidth()
                 .padding(ChageunTheme.spacing.md),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         ) {
-            Text(stringResource(R.string.vehicle_inspection_title), style = MaterialTheme.typography.labelLarge)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                ItemIconBadge(Icons.AutoMirrored.Filled.FactCheck, status.state.tone(), size = 44.dp)
+                Text(
+                    stringResource(R.string.vehicle_inspection_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+            }
             if (schedule == null) {
                 Text(stringResource(R.string.vehicle_inspection_empty), style = MaterialTheme.typography.bodyMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    OutlinedButton(onClick = { isPickerOpen = true }) {
+                    FilledTonalButton(onClick = { isPickerOpen = true }) {
+                        Icon(Icons.Filled.Event, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
                         Text(stringResource(R.string.vehicle_inspection_add))
                     }
                     TextButton(onClick = { isCompleting = true }) {
@@ -78,7 +103,9 @@ internal fun InspectionCard(
                     )
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    OutlinedButton(onClick = { isCompleting = true }) {
+                    FilledTonalButton(onClick = { isCompleting = true }) {
+                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
                         Text(stringResource(R.string.vehicle_inspection_complete))
                     }
                     TextButton(onClick = { isPickerOpen = true }) {
@@ -151,6 +178,14 @@ private fun remainingText(status: InspectionStatus): String {
         days == 0L -> stringResource(R.string.vehicle_inspection_due_today)
         else -> pluralStringResource(R.plurals.vehicle_inspection_days_left, count, count)
     }
+}
+
+@Composable
+private fun InspectionState.tone(): ToneColors = when (this) {
+    InspectionState.Overdue -> ChageunTheme.colors.critical
+    InspectionState.DueSoon -> ChageunTheme.colors.upcoming
+    InspectionState.Ok -> ChageunTheme.colors.good
+    InspectionState.Unknown -> ChageunTheme.colors.unknown
 }
 
 @Composable
