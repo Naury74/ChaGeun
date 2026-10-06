@@ -33,7 +33,8 @@ data class CheckEntry(
     val memo: String? = null,
 )
 
-enum class TimelineEventType { Maintenance, Fuel, Inspection, Repair, Note }
+/** [Mileage]는 직접 입력하거나 계기판으로 교정한 주행거리다. 다른 기록이 남긴 주행거리는 그 기록과 겹쳐 넣지 않는다. */
+enum class TimelineEventType { Maintenance, Fuel, Inspection, Repair, Note, Mileage }
 
 enum class RecordSource { User, Official }
 
@@ -67,4 +68,11 @@ sealed interface RecordDetail {
     data class Fuel(override val ref: RecordRef, val entry: FuelEntry) : RecordDetail
 
     data class Check(override val ref: RecordRef, val entry: CheckEntry) : RecordDetail
+
+    data class Mileage(
+        override val ref: RecordRef,
+        val date: LocalDate,
+        val mileage: Kilometers,
+        val source: MileageSource,
+    ) : RecordDetail
 }

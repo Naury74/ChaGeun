@@ -5,6 +5,7 @@
     <string name="history_filter_fuel">Fuel</string>
     <string name="history_filter_check">Inspection</string>
     <string name="history_filter_other">Other</string>
+    <string name="history_filter_mileage">Mileage</string>
     <string name="history_empty">No records yet</string>
     <string name="history_empty_action">Add your first record</string>
     <string name="history_empty_filtered">No records match</string>
@@ -14,6 +15,7 @@
     <string name="history_back">Back</string>
 
     <string name="history_source_user">Entered by you</string>
+    <string name="history_source_correction">Odometer correction</string>
     <string name="history_km">%1$s km</string>
     <string name="history_won">₩%1$s</string>
     <string name="history_month_total">₩%1$s spent</string>

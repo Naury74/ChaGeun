@@ -7,6 +7,7 @@ import androidx.room.Update
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
+import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.MonthlyCostRow
 import com.naury.chageun.core.database.entity.TimelineRow
 import java.time.LocalDate
@@ -41,6 +42,10 @@ interface HistoryDao {
             SELECT kind, id, check_date, title, NULL, mileage_km, cost_won, created_at, 'USER',
                 title || ' ' || COALESCE(memo, '')
             FROM check_record WHERE vehicle_id = :vehicleId
+            UNION ALL
+            SELECT 'Mileage', id, recorded_on, NULL, NULL, mileage_km, NULL, created_at, 'USER', ''
+            FROM mileage_record
+            WHERE vehicle_id = :vehicleId AND related_record_id IS NULL AND source_type IN ('USER', 'CORRECTION')
         ) AS t
         WHERE event_type IN (:eventTypes)
             AND (:keyword = '' OR search_text LIKE '%' || :keyword || '%' OR item_type IN (:matchingItemTypes))
@@ -89,6 +94,10 @@ interface HistoryDao {
             SELECT kind, id, check_date, title, NULL, mileage_km, cost_won, created_at, 'USER',
                 title || ' ' || COALESCE(memo, '')
             FROM check_record WHERE vehicle_id = :vehicleId
+            UNION ALL
+            SELECT 'Mileage', id, recorded_on, NULL, NULL, mileage_km, NULL, created_at, 'USER', ''
+            FROM mileage_record
+            WHERE vehicle_id = :vehicleId AND related_record_id IS NULL AND source_type IN ('USER', 'CORRECTION')
             ) AS u
         ) AS t
         WHERE event_type IN (:eventTypes)
@@ -115,6 +124,12 @@ interface HistoryDao {
 
     @Query("SELECT * FROM fuel_record WHERE vehicle_id = :vehicleId AND id = :id")
     fun observeFuel(vehicleId: String, id: String): Flow<FuelRecordEntity?>
+
+    @Query("SELECT * FROM mileage_record WHERE vehicle_id = :vehicleId AND id = :id")
+    fun observeMileageRecord(vehicleId: String, id: String): Flow<MileageRecordEntity?>
+
+    @Query("DELETE FROM mileage_record WHERE vehicle_id = :vehicleId AND id = :id")
+    suspend fun deleteMileageRecord(vehicleId: String, id: String)
 
     @Query("SELECT * FROM check_record WHERE vehicle_id = :vehicleId AND id = :id")
     fun observeCheck(vehicleId: String, id: String): Flow<CheckRecordEntity?>

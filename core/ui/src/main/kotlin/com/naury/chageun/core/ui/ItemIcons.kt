@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.PropaneTank
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.TireRepair
 import androidx.compose.material.icons.filled.Umbrella
 import androidx.compose.material.icons.filled.WaterDrop
@@ -75,6 +76,7 @@ val TimelineEventType.icon: ImageVector
         TimelineEventType.Inspection -> Icons.Filled.FactCheck
         TimelineEventType.Repair -> Icons.Filled.Build
         TimelineEventType.Note -> Icons.Filled.NoteAlt
+        TimelineEventType.Mileage -> Icons.Filled.Speed
     }
 
 /** 분류별 색. 같은 분류의 항목은 같은 색이라 목록에서 한눈에 묶여 보인다. */
@@ -125,7 +127,7 @@ fun TimelineEventType.tone(): ToneColors {
         TimelineEventType.Fuel -> colors.good
         TimelineEventType.Inspection -> colors.ai
         TimelineEventType.Repair -> colors.critical
-        TimelineEventType.Maintenance, TimelineEventType.Note -> colors.unknown
+        TimelineEventType.Maintenance, TimelineEventType.Note, TimelineEventType.Mileage -> colors.unknown
     }
 }
 

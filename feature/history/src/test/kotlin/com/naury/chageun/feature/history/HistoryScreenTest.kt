@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,6 +20,7 @@ import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
@@ -236,6 +238,27 @@ class HistoryScreenTest {
         composeRule.onNodeWithText("Ask AI about this record").performScrollTo().performClick()
 
         assertThat(asked).isEqualTo(ref)
+    }
+
+    @Test
+    fun mileageDetail_showsSourceAndOnlyDelete() {
+        val mileageRef = RecordRef(TimelineEventType.Mileage, "m1")
+        val mileage = RecordDetail.Mileage(
+            mileageRef,
+            LocalDate.of(2026, 9, 1),
+            Kilometers(1_200),
+            MileageSource.Correction,
+        )
+        var deleted: RecordRef? = null
+        show(HistoryUiState(isLoading = false, selected = mileageRef, detail = mileage), onDelete = { deleted = it })
+
+        composeRule.onNodeWithText("Odometer correction").assertExists()
+        composeRule.onNodeWithText("Edit").assertDoesNotExist()
+        composeRule.onNodeWithText("Ask AI about this record").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.onAllNodes(hasText("Delete") and hasAnyAncestor(isDialog())).onFirst().performClick()
+
+        assertThat(deleted).isEqualTo(mileageRef)
     }
 
     @Test

@@ -161,7 +161,7 @@ fun HistoryRoute(
         TimelineEventType.Fuel -> FuelFormHost(isExpanded, onDismiss = stopEditing, editingId = editing.id)
         TimelineEventType.Inspection, TimelineEventType.Repair, TimelineEventType.Note ->
             CheckFormHost(isExpanded, onDismiss = stopEditing, editing = editing)
-        TimelineEventType.Maintenance, null -> Unit
+        TimelineEventType.Maintenance, TimelineEventType.Mileage, null -> Unit
     }
 }
 

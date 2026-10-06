@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -81,6 +82,8 @@ internal fun RecordDetailPane(
     onAskAi: ((RecordRef) -> Unit)? = null,
 ) {
     var isConfirmingDelete by rememberSaveable { mutableStateOf(false) }
+    // 주행거리 기록은 값 하나뿐이라 고치기·사진·AI 질문 없이 확인과 삭제만 둔다.
+    val isMileage = detail is RecordDetail.Mileage
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.sm),
@@ -115,7 +118,7 @@ internal fun RecordDetailPane(
             }
         }
         // 이 기록만 질문 대상으로 넣어 AI 화면을 연다. 메모·정비소 이름은 공유하지 않는다.
-        onAskAi?.let { ask ->
+        onAskAi?.takeUnless { isMileage }?.let { ask ->
             item(key = "ask-ai") {
                 CardGroup(null, Modifier.padding(top = ChageunTheme.spacing.xs)) {
                     ListRow(
@@ -135,29 +138,33 @@ internal fun RecordDetailPane(
                 }
             }
         }
-        item(key = "attachments") {
-            AttachmentSection(
-                attachments = attachments.items,
-                failedCount = attachments.failedCount,
-                onAdd = { attachments.onAdd(detail.ref) },
-                onDelete = attachments.onDelete,
-                onDismissFailure = attachments.onDismissFailure,
-            )
+        if (!isMileage) {
+            item(key = "attachments") {
+                AttachmentSection(
+                    attachments = attachments.items,
+                    failedCount = attachments.failedCount,
+                    onAdd = { attachments.onAdd(detail.ref) },
+                    onDelete = attachments.onDelete,
+                    onDismissFailure = attachments.onDismissFailure,
+                )
+            }
         }
         item(key = "actions") {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
             ) {
-                FilledTonalButton(
-                    onClick = { onEdit(detail) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) {
-                    Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(stringResource(R.string.history_edit))
+                if (!isMileage) {
+                    FilledTonalButton(
+                        onClick = { onEdit(detail) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                        Text(stringResource(R.string.history_edit))
+                    }
                 }
                 OutlinedButton(
                     onClick = { isConfirmingDelete = true },
@@ -215,12 +222,11 @@ private fun detailTitle(detail: RecordDetail): String = when (detail) {
     is RecordDetail.Maintenance -> stringResource(detail.item.labelRes)
     is RecordDetail.Fuel -> stringResource(TimelineEventType.Fuel.labelRes)
     is RecordDetail.Check -> detail.entry.title
+    is RecordDetail.Mileage -> stringResource(TimelineEventType.Mileage.labelRes)
 }
 
 @Composable
 private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, String>> {
-    val yes = stringResource(R.string.history_yes)
-    val no = stringResource(R.string.history_no)
     val rows = mutableListOf<Triple<ImageVector, String, String?>>()
     fun add(icon: ImageVector, label: String, value: String?) {
         rows += Triple(icon, label, value)
@@ -252,40 +258,7 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
             add(Icons.Filled.Store, stringResource(R.string.history_detail_shop), entry.shopName)
             add(Icons.AutoMirrored.Filled.Notes, memo, detail.memo)
         }
-        is RecordDetail.Fuel -> {
-            val entry = detail.entry
-            val amounts = entry.amounts
-            add(Icons.Filled.Event, date, formatDate(entry.date))
-            add(Icons.Filled.Speed, mileage, km(entry.mileage.value))
-            add(
-                Icons.Filled.Payments,
-                stringResource(R.string.history_detail_total),
-                computed(won(amounts.totalPriceWon), amounts.computedField == FuelField.Total),
-            )
-            add(
-                Icons.Filled.WaterDrop,
-                stringResource(R.string.history_detail_volume),
-                computed(
-                    stringResource(R.string.history_liters, formatLitres(amounts.volumeMl)),
-                    amounts.computedField == FuelField.Volume,
-                ),
-            )
-            add(
-                Icons.Filled.Sell,
-                stringResource(R.string.history_detail_unit_price),
-                computed(
-                    stringResource(R.string.history_unit_price, formatNumber(amounts.unitPriceWon)),
-                    amounts.computedField == FuelField.UnitPrice,
-                ),
-            )
-            add(
-                Icons.Filled.LocalGasStation,
-                stringResource(R.string.history_detail_full_tank),
-                if (entry.isFullTank) yes else no,
-            )
-            add(Icons.Filled.Place, stringResource(R.string.history_detail_station), entry.stationName)
-            add(Icons.AutoMirrored.Filled.Notes, memo, entry.memo)
-        }
+        is RecordDetail.Fuel -> rows += fuelRows(detail, date, mileage, memo)
         is RecordDetail.Check -> {
             val entry = detail.entry
             add(Icons.Filled.Event, date, formatDate(entry.date))
@@ -298,6 +271,10 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
             add(Icons.Filled.Payments, cost, entry.costWon?.let { won(it) })
             add(Icons.AutoMirrored.Filled.Notes, memo, entry.memo)
         }
+        is RecordDetail.Mileage -> {
+            add(Icons.Filled.Event, date, formatDate(detail.date))
+            add(Icons.Filled.Speed, mileage, km(detail.mileage.value))
+        }
     }
     add(
         Icons.Filled.Person,
@@ -309,11 +286,60 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
     }
 }
 
+/** 주유 기록은 계산값 표시 등 줄이 많아 따로 만든다. 값이 비면 [detailRows]에서 빠진다. */
+@Composable
+private fun fuelRows(
+    detail: RecordDetail.Fuel,
+    date: String,
+    mileage: String,
+    memo: String,
+): List<Triple<ImageVector, String, String?>> {
+    val yes = stringResource(R.string.history_yes)
+    val no = stringResource(R.string.history_no)
+    val rows = mutableListOf<Triple<ImageVector, String, String?>>()
+    fun add(icon: ImageVector, label: String, value: String?) {
+        rows += Triple(icon, label, value)
+    }
+    val entry = detail.entry
+    val amounts = entry.amounts
+    add(Icons.Filled.Event, date, formatDate(entry.date))
+    add(Icons.Filled.Speed, mileage, km(entry.mileage.value))
+    add(
+        Icons.Filled.Payments,
+        stringResource(R.string.history_detail_total),
+        computed(won(amounts.totalPriceWon), amounts.computedField == FuelField.Total),
+    )
+    add(
+        Icons.Filled.WaterDrop,
+        stringResource(R.string.history_detail_volume),
+        computed(
+            stringResource(R.string.history_liters, formatLitres(amounts.volumeMl)),
+            amounts.computedField == FuelField.Volume,
+        ),
+    )
+    add(
+        Icons.Filled.Sell,
+        stringResource(R.string.history_detail_unit_price),
+        computed(
+            stringResource(R.string.history_unit_price, formatNumber(amounts.unitPriceWon)),
+            amounts.computedField == FuelField.UnitPrice,
+        ),
+    )
+    add(
+        Icons.Filled.LocalGasStation,
+        stringResource(R.string.history_detail_full_tank),
+        if (entry.isFullTank) yes else no,
+    )
+    add(Icons.Filled.Place, stringResource(R.string.history_detail_station), entry.stationName)
+    add(Icons.AutoMirrored.Filled.Notes, memo, entry.memo)
+    return rows
+}
+
 private val RecordDetail.sourceLabelRes: Int
-    get() = if ((this as? RecordDetail.Maintenance)?.entry?.isMileageEstimated == true) {
-        R.string.history_source_estimated
-    } else {
-        R.string.history_source_user
+    get() = when {
+        (this as? RecordDetail.Maintenance)?.entry?.isMileageEstimated == true -> R.string.history_source_estimated
+        (this as? RecordDetail.Mileage)?.source == MileageSource.Correction -> R.string.history_source_correction
+        else -> R.string.history_source_user
     }
 
 @Composable

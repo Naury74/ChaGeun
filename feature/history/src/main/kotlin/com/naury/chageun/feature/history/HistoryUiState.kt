@@ -13,6 +13,7 @@ enum class HistoryFilter(val types: Set<TimelineEventType>) {
     Fuel(setOf(TimelineEventType.Fuel)),
     Check(setOf(TimelineEventType.Inspection, TimelineEventType.Repair)),
     Other(setOf(TimelineEventType.Note)),
+    Mileage(setOf(TimelineEventType.Mileage)),
 }
 
 /** [totalWon]은 불러온 기록이 아니라 조건에 맞는 그 달 전체 기록의 비용 합계다. */
