@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
+import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.history.TimelineQuery
@@ -14,7 +15,10 @@ import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
@@ -118,5 +122,62 @@ class OfflineFirstHistoryRepositoryTest {
         val detail = repository.observeRecord(vehicleId, item.ref).first() as RecordDetail.Maintenance
         assertThat(item.isMileageEstimated).isTrue()
         assertThat(detail.entry.isMileageEstimated).isTrue()
+    }
+
+    @Test
+    fun updateFuel_keepsIdAndCreatedAt_andMovesOdometer() = runTest {
+        repository.addFuel(vehicleId, fuel, advancesOdometer = true)
+        val before = repository.observeTimeline(vehicleId, TimelineQuery()).first().single()
+
+        repository.updateFuel(vehicleId, before.ref.id, fuel.copy(mileage = Kilometers(43_500), stationName = "GS"))
+
+        val after = repository.observeTimeline(vehicleId, TimelineQuery()).first().single()
+        assertThat(after.ref).isEqualTo(before.ref)
+        assertThat(after.createdAt).isEqualTo(before.createdAt)
+        assertThat(after.title).isEqualTo("GS")
+        assertThat(database.mileageRecordDao().findLatest("v1")?.mileageKm).isEqualTo(43_500)
+    }
+
+    @Test
+    fun updateCheck_dropsOdometer_whenEditedBelowLatestReading() = runTest {
+        database.mileageRecordDao().insert(
+            MileageRecordEntity("m0", "v1", 44_500, LocalDate.of(2026, 8, 1), "USER", null, now),
+        )
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 9, 1), "Bumper", Kilometers(45_000)),
+            true,
+        )
+        val ref = repository.observeTimeline(vehicleId, TimelineQuery()).first().single().ref
+
+        repository.updateCheck(
+            vehicleId,
+            ref.id,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 9, 1), "Bumper", Kilometers(44_000)),
+        )
+
+        assertThat(database.mileageRecordDao().findLatest("v1")?.id).isEqualTo("m0")
+    }
+
+    @Test
+    fun updateMaintenance_clearsEstimatedMark() = runTest {
+        database.maintenanceDao().insertRecord(
+            MaintenanceRecordEntity(
+                "r1", "v1", "Tire", LocalDate.of(2026, 4, 1), 36_542, null, null, null,
+                RecordSourceTypes.ESTIMATED, now, now,
+            ),
+        )
+
+        repository.updateMaintenance(
+            vehicleId,
+            "r1",
+            ServiceEntry(MaintenanceItem.Tire, LocalDate.of(2026, 4, 2), Kilometers(36_000), costWon = 320_000),
+        )
+
+        val ref = RecordRef(TimelineEventType.Maintenance, "r1")
+        val detail = repository.observeRecord(vehicleId, ref).first() as RecordDetail.Maintenance
+        assertThat(detail.entry.isMileageEstimated).isFalse()
+        assertThat(detail.entry.costWon).isEqualTo(320_000)
+        assertThat(detail.item).isEqualTo(MaintenanceItem.Tire)
     }
 }

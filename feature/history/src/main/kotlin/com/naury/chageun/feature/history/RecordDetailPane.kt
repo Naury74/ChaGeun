@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -17,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.Payments
@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,6 +74,7 @@ internal fun RecordDetailPane(
     onBack: (() -> Unit)?,
     onDelete: (RecordRef) -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: (RecordDetail) -> Unit = {},
 ) {
     var isConfirmingDelete by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
@@ -117,18 +119,32 @@ internal fun RecordDetailPane(
                 onDismissFailure = attachments.onDismissFailure,
             )
         }
-        item(key = "delete") {
-            OutlinedButton(
-                onClick = { isConfirmingDelete = true },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = ChageunTheme.spacing.sm)
-                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+        item(key = "actions") {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
             ) {
-                Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(stringResource(R.string.history_delete))
+                FilledTonalButton(
+                    onClick = { onEdit(detail) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) {
+                    Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                    Text(stringResource(R.string.history_edit))
+                }
+                OutlinedButton(
+                    onClick = { isConfirmingDelete = true },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                ) {
+                    Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                    Text(stringResource(R.string.history_delete))
+                }
             }
         }
     }

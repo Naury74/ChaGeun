@@ -2,6 +2,7 @@ package com.naury.chageun.feature.manage.record
 
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.history.EditHistoryRecordUseCase
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.RecordServiceUseCase
 import com.naury.chageun.core.model.FuelType
@@ -9,9 +10,15 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.RecordDetail
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.ServiceEntry
+import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
+import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeReminderNotifier
 import com.naury.chageun.core.testing.FakeVehicleRepository
@@ -35,14 +42,17 @@ class RecordServiceViewModelTest {
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
 
-    private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) = RecordServiceViewModel(
-        item = MaintenanceItem.EngineOil,
-        savedStateHandle = handle,
-        vehicleRepository = vehicles,
-        maintenanceRepository = maintenance,
-        recordService = RecordServiceUseCase(maintenance, clock, FakeAnalyticsTracker(), FakeReminderNotifier()),
-        clock = clock,
-    )
+    private val history = FakeHistoryRepository()
+
+    private fun viewModel(handle: SavedStateHandle = SavedStateHandle(), editingRecordId: String? = null) =
+        RecordServiceViewModel(
+            target = RecordServiceTarget(MaintenanceItem.EngineOil, editingRecordId),
+            savedStateHandle = handle,
+            vehicleRepository = vehicles,
+            recordService = RecordServiceUseCase(maintenance, clock, FakeAnalyticsTracker(), FakeReminderNotifier()),
+            editRecord = EditHistoryRecordUseCase(history, clock),
+            clock = clock,
+        )
 
     @Before
     fun setUp() = runTest {
@@ -122,5 +132,37 @@ class RecordServiceViewModelTest {
         assertThat(restored.date).isEqualTo(LocalDate.of(2026, 9, 20))
         assertThat(restored.mileage).isEqualTo("42500")
         assertThat(restored.shopName).isEqualTo("Shop")
+    }
+
+    @Test
+    fun editing_fillsSavedRecord_andUpdatesWithoutNextDueScreen() = runTest {
+        val ref = RecordRef(TimelineEventType.Maintenance, "r1")
+        history.details.value = mapOf(
+            ref to RecordDetail.Maintenance(
+                ref,
+                MaintenanceItem.EngineOil,
+                ServiceHistoryEntry("r1", LocalDate.of(2026, 3, 10), Kilometers(40_260), 89_000, "Blue Hands"),
+                memo = "Synthetic",
+            ),
+        )
+        val handle = SavedStateHandle()
+        val vm = viewModel(handle, editingRecordId = "r1")
+
+        val loaded = vm.uiState.value
+        assertThat(loaded.isEditing).isTrue()
+        assertThat(listOf(loaded.mileage, loaded.cost, loaded.shopName, loaded.memo))
+            .containsExactly("40260", "89000", "Blue Hands", "Synthetic").inOrder()
+
+        vm.onCostChanged("95000")
+        // 다시 만들어져도 고친 값을 덮어쓰지 않는다.
+        val recreated = viewModel(handle, editingRecordId = "r1")
+        assertThat(recreated.uiState.value.cost).isEqualTo("95000")
+        recreated.save()
+
+        assertThat(recreated.uiState.value.isEditSaved).isTrue()
+        assertThat(recreated.uiState.value.savedResult).isNull()
+        val (id, entry) = history.updated.single()
+        assertThat(id).isEqualTo("r1")
+        assertThat((entry as ServiceEntry).costWon).isEqualTo(95_000)
     }
 }

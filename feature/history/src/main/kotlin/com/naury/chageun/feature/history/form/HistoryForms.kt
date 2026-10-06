@@ -41,6 +41,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelField
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
@@ -56,9 +57,16 @@ import com.naury.chageun.feature.history.R
 import java.time.LocalDate
 
 @Composable
-internal fun FuelFormHost(isExpanded: Boolean, onDismiss: () -> Unit, viewModel: FuelFormViewModel = hiltViewModel()) {
+internal fun FuelFormHost(
+    isExpanded: Boolean,
+    onDismiss: () -> Unit,
+    editingId: String? = null,
+    // 추가와 수정이 같은 ViewModel을 나눠 쓰지 않도록 수정할 기록마다 따로 둔다.
+    viewModel: FuelFormViewModel = hiltViewModel(key = editingId?.let { "fuel-edit-$it" }),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
+    LaunchedEffect(editingId) { editingId?.let(viewModel::startEditing) }
     AdaptiveSheet(isExpanded = isExpanded, onDismiss = onDismiss) {
         FuelFormContent(
             uiState,
@@ -96,7 +104,7 @@ internal fun FuelFormContent(uiState: FuelFormUiState, actions: FuelFormActions)
     FormColumn(
         icon = Icons.Filled.LocalGasStation,
         tone = ChageunTheme.colors.good,
-        titleRes = R.string.fuel_form_title,
+        titleRes = if (uiState.isEditing) R.string.fuel_form_edit_title else R.string.fuel_form_title,
         isSaving = uiState.isSaving,
         hasSaveFailed = uiState.hasSaveFailed,
         onSave = actions.onSave,
@@ -210,15 +218,17 @@ private fun StationPicker(stationName: String, onStationChanged: (String) -> Uni
 internal fun CheckFormHost(
     isExpanded: Boolean,
     onDismiss: () -> Unit,
-    viewModel: CheckFormViewModel = hiltViewModel(),
+    editing: RecordRef? = null,
+    viewModel: CheckFormViewModel = hiltViewModel(key = editing?.let { "check-edit-${it.id}" }),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
+    LaunchedEffect(editing) { editing?.let(viewModel::startEditing) }
     AdaptiveSheet(isExpanded = isExpanded, onDismiss = onDismiss) {
         FormColumn(
             icon = Icons.Filled.Build,
             tone = ChageunTheme.colors.ai,
-            titleRes = R.string.check_form_title,
+            titleRes = if (uiState.isEditing) R.string.check_form_edit_title else R.string.check_form_title,
             isSaving = uiState.isSaving,
             hasSaveFailed = uiState.hasSaveFailed,
             onSave = viewModel::save,
