@@ -23,6 +23,7 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
             isMaintenanceReminderEnabled = prefs[MAINTENANCE_REMINDER] ?: true,
             isMileageReminderEnabled = prefs[MILEAGE_REMINDER] ?: false,
             isUsageStatsEnabled = prefs[USAGE_STATS] ?: true,
+            isCloudAutoBackupEnabled = prefs[CLOUD_AUTO_BACKUP] ?: false,
         )
     }
 
@@ -42,10 +43,15 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         dataStore.edit { it[USAGE_STATS] = enabled }
     }
 
+    override suspend fun setCloudAutoBackupEnabled(enabled: Boolean) {
+        dataStore.edit { it[CLOUD_AUTO_BACKUP] = enabled }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MAINTENANCE_REMINDER = booleanPreferencesKey("maintenance_reminder_enabled")
         val MILEAGE_REMINDER = booleanPreferencesKey("mileage_reminder_enabled")
         val USAGE_STATS = booleanPreferencesKey("usage_stats_enabled")
+        val CLOUD_AUTO_BACKUP = booleanPreferencesKey("cloud_auto_backup_enabled")
     }
 }

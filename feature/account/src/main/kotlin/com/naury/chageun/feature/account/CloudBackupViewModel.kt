@@ -11,6 +11,7 @@ import com.naury.chageun.core.domain.cloudbackup.CloudBackup
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
 import com.naury.chageun.core.domain.cloudbackup.CloudResult
+import com.naury.chageun.core.domain.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +59,7 @@ data class CloudBackupUiState(
     val pendingDelete: CloudBackup? = null,
     val restore: RestoreStep? = null,
     val notice: BackupNotice? = null,
+    val isAutoBackupEnabled: Boolean = false,
 ) {
     val lastBackup: CloudBackup? get() = backups.firstOrNull()
     val isWorking: Boolean get() = isBackingUp || restore != null
@@ -69,6 +71,7 @@ class CloudBackupViewModel @Inject constructor(
     authRepository: AuthRepository,
     private val cloudBackups: CloudBackupRepository,
     private val localBackup: BackupRepository,
+    private val settingsRepository: SettingsRepository,
     private val analytics: AnalyticsTracker,
 ) : ViewModel() {
 
@@ -79,10 +82,20 @@ class CloudBackupViewModel @Inject constructor(
         // 다른 계정으로 바꾸거나 로그아웃하면 앞 계정의 목록을 지운다.
         viewModelScope.launch {
             authRepository.currentUser.map { it?.uid }.distinctUntilChanged().collect { uid ->
-                state.value = CloudBackupUiState()
+                state.update { CloudBackupUiState(isAutoBackupEnabled = it.isAutoBackupEnabled) }
                 if (uid != null) refresh()
             }
         }
+        viewModelScope.launch {
+            settingsRepository.settings.map { it.isCloudAutoBackupEnabled }.distinctUntilChanged().collect { enabled ->
+                state.update { it.copy(isAutoBackupEnabled = enabled) }
+            }
+        }
+    }
+
+    /** 예약은 AutoBackupSync가 설정을 보고 맞춘다. */
+    fun setAutoBackupEnabled(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setCloudAutoBackupEnabled(enabled) }
     }
 
     fun refresh() {
@@ -149,13 +162,15 @@ class CloudBackupViewModel @Inject constructor(
         }
     }
 
-    fun cancelRestore() {
-        if (state.value.restore is RestoreStep.Confirming) state.update { it.copy(restore = null) }
+    /** 복원 확인·삭제 확인 창을 닫는다. 내려받기·교체 중인 복원은 끝날 때까지 둔다. */
+    fun closeDialog() = state.update {
+        it.copy(
+            pendingDelete = null,
+            restore = it.restore.takeUnless { step -> step is RestoreStep.Confirming },
+        )
     }
 
     fun requestDelete(backup: CloudBackup) = state.update { it.copy(selected = null, pendingDelete = backup) }
-
-    fun cancelDelete() = state.update { it.copy(pendingDelete = null) }
 
     fun confirmDelete() {
         val backup = state.value.pendingDelete ?: return

@@ -95,4 +95,11 @@
         <item quantity="one">%d photo</item>
         <item quantity="other">%d photos</item>
     </plurals>
+    <string name="account_auto_backup">Automatic backup</string>
+    <string name="account_auto_backup_body">Once a week on Wi-Fi while charging</string>
+    <string name="account_restore_mode_title">Restore from backup</string>
+    <string name="account_restore_pick">Choose a backup to restore</string>
+    <string name="account_restore_empty_title">No backups in this account</string>
+    <string name="account_restore_empty_body">Sign in with the account you backed up with, or start fresh.</string>
+    <string name="account_restore_start_fresh">Start fresh</string>
 </resources>

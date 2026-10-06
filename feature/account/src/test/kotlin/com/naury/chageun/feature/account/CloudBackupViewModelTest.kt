@@ -9,6 +9,7 @@ import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeCloudBackupRepository
+import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -24,8 +25,19 @@ class CloudBackupViewModelTest {
     private val cloud = FakeCloudBackupRepository()
     private val local = FakeBackupRepository()
     private val analytics = FakeAnalyticsTracker()
+    private val settings = FakeSettingsRepository()
 
-    private fun viewModel() = CloudBackupViewModel(auth, cloud, local, analytics)
+    private fun viewModel() = CloudBackupViewModel(auth, cloud, local, settings, analytics)
+
+    @Test
+    fun autoBackupSwitch_isStoredInSettings() = runTest {
+        val viewModel = viewModel()
+
+        viewModel.setAutoBackupEnabled(true)
+
+        assertThat(viewModel.uiState.first { it.isAutoBackupEnabled }.isAutoBackupEnabled).isTrue()
+        assertThat(settings.settings.value.isCloudAutoBackupEnabled).isTrue()
+    }
 
     @Test
     fun loadsAfterSignIn_backsUp_andClearsOnSignOut() = runTest {
