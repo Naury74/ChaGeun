@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// 백업 ZIP(기존 내보내기 형식, 차량번호는 마스킹 값만)을 사용자 uid 아래에 둔다.
+// 덮어쓰기 대신 새 이름으로 만들고, 그 밖의 경로는 모두 거부한다.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{uid}/backups/{file} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      // 같은 이름으로 다시 올리는 것도 create로 평가될 수 있어 기존 파일이 없을 때만 허용한다.
+      allow create: if request.auth != null && request.auth.uid == uid
+        && resource == null
+        && file.matches('[A-Za-z0-9_-]+[.]zip')
+        && request.resource.size < 200 * 1024 * 1024
+        && request.resource.contentType == 'application/zip';
+      allow update: if false;
+    }
+  }
+}
