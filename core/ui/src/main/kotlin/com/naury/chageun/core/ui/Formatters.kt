@@ -24,6 +24,14 @@ fun formatNumber(value: Long): String = NumberFormat.getIntegerInstance(currentL
 fun formatDate(date: LocalDate): String =
     date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(currentLocale()))
 
+/** 월·일만 짧게. 예: 한국어 "10. 6.", 영어 "10/6". */
+@Composable
+@ReadOnlyComposable
+fun formatMonthDay(date: LocalDate): String {
+    val locale = currentLocale()
+    return date.format(DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "Md"), locale))
+}
+
 @Composable
 @ReadOnlyComposable
 fun formatYearMonth(month: YearMonth): String {

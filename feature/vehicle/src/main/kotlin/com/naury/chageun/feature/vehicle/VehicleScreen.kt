@@ -82,9 +82,11 @@ import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
+import com.naury.chageun.core.ui.inspectionHeroStat
 import com.naury.chageun.core.ui.isExpandedWidth
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.openUriSafely
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
@@ -248,8 +250,10 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
                 )
             }
         },
-        mileage = current?.let { stringResource(R.string.vehicle_mileage, formatNumber(it.mileage.value)) },
-        freshness = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
+        stats = listOf(mileageHeroStat(current?.mileage?.value), inspectionHeroStat(state.inspection)),
+        // 큰 제목 아래에서 시작하므로 하늘이 위에서 서서히 나타나게 한다.
+        skyFromTop = false,
+        footnote = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
             ?: stringResource(R.string.vehicle_mileage_none),
         action = {
             Column {

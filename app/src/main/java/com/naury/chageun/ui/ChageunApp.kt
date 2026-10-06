@@ -1,7 +1,9 @@
 package com.naury.chageun.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -18,12 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -158,18 +162,19 @@ fun ChageunApp(
             }
         },
     ) {
-        // NavigationSuiteScaffold는 하단 바·레일 쪽 인셋만 처리하므로 상단은 여기서 한 번에 비운다.
         NavDisplay(
             backStack = backStack,
-            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
             onBack = { backStack.removeLastOrNull() },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
+                remember { topInsetDecorator() },
             ),
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
-                    entry(destination.route) { destinationContent(destination, actions) }
+                    // 홈은 Hero의 하늘 바탕을 상태 표시줄 뒤까지 그리고, 상단 인셋은 화면 안에서 비운다.
+                    val metadata = if (destination == TopLevelDestination.Home) DRAWS_BEHIND_STATUS_BAR else emptyMap()
+                    entry(destination.route, metadata = metadata) { destinationContent(destination, actions) }
                 }
                 entry(SettingsRoute) {
                     SettingsRoute(
@@ -285,4 +290,23 @@ private fun iosStyleItemColors(): NavigationSuiteItemColors {
             unselectedTextColor = colors.onSurfaceVariant,
         ),
     )
+}
+
+private val DRAWS_BEHIND_STATUS_BAR = mapOf("drawsBehindStatusBar" to true)
+
+/**
+ * NavigationSuiteScaffold는 하단 바·레일 쪽 인셋만 처리하므로 상단 인셋은 화면마다 비운다.
+ * [DRAWS_BEHIND_STATUS_BAR]가 있는 화면은 바탕을 상태 표시줄 뒤까지 그리고 인셋을 직접 처리한다.
+ */
+private fun <T : Any> topInsetDecorator() = NavEntryDecorator<T> { entry ->
+    val drawsBehind = entry.metadata.keys.containsAll(DRAWS_BEHIND_STATUS_BAR.keys)
+    Box(
+        modifier = if (drawsBehind) {
+            Modifier.fillMaxSize()
+        } else {
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+        },
+    ) { entry.Content() }
 }

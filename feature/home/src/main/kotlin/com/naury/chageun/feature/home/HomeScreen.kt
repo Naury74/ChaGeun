@@ -6,10 +6,16 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -44,14 +50,17 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.CutoutStatusPanel
+import com.naury.chageun.core.ui.HeroStat
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
-import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.formatMonthDay
+import com.naury.chageun.core.ui.inspectionHeroStat
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
@@ -169,10 +178,15 @@ private fun HomeContent(
         stacked = isTabletop,
         hinge = hinge,
     ) {
-        panes.forEach { pane ->
+        // 홈은 상태 표시줄 뒤까지 그린다. 첫 칸은 Hero 안에서, 옆에 나란한 칸은 여기서 상단 인셋을 비운다.
+        val statusBarTop = WindowInsets.safeDrawing.only(WindowInsetsSides.Top).asPaddingValues().calculateTopPadding()
+        panes.forEachIndexed { index, pane ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = spacing.lg),
+                contentPadding = PaddingValues(
+                    top = if (index == 0 || isTabletop) 0.dp else statusBarTop,
+                    bottom = spacing.lg,
+                ),
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 content = pane,
             )
@@ -192,28 +206,24 @@ private fun homePanes(
         missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
-    TWO_PANES -> listOf({ summaryPane(state, actions) }, {
+    TWO_PANES -> listOf({ summaryPane(state, actions, isSideBySide = true) }, {
         attentionPane(state, actions)
         missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
-    else -> listOf({ summaryPane(state, actions) }, { attentionPane(state, actions) }, {
+    else -> listOf({ summaryPane(state, actions, isSideBySide = true) }, { attentionPane(state, actions) }, {
         missingPane(state, actions)
         recentPane(state, actions, showAd)
     })
 }
 
-private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {
-    item(key = "brand") {
-        HomeGreetingBar(
-            name = state.greetingName,
-            dayPart = state.dayPart,
-            today = state.today,
-            onOpenAccount = actions.onOpenAccount,
-            onOpenSettings = actions.onOpenSettings,
-        )
-    }
-    item(key = "hero") { HomeHero(state, actions) }
+private fun LazyListScope.summaryPane(
+    state: HomeUiState.Content,
+    actions: HomeActions,
+    isSideBySide: Boolean = false,
+) {
+    // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다.
+    item(key = "hero") { HomeHero(state, actions, isSideBySide) }
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -314,7 +324,7 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeHero(state: HomeUiState.Content, actions: HomeActions) {
+private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideBySide: Boolean) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
     val subtitleParts = listOfNotNull(
@@ -338,8 +348,27 @@ private fun HomeHero(state: HomeUiState.Content, actions: HomeActions) {
                 )
             }
         },
-        mileage = mileage?.let { stringResource(R.string.home_mileage, formatNumber(it.mileage.value)) },
-        freshness = when {
+        skyFadesAtEnd = isSideBySide,
+        header = {
+            HomeGreetingBar(
+                name = state.greetingName,
+                dayPart = state.dayPart,
+                today = state.today,
+                onOpenAccount = actions.onOpenAccount,
+                onOpenSettings = actions.onOpenSettings,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+            )
+        },
+        stats = listOf(
+            mileageHeroStat(mileage?.mileage?.value),
+            inspectionHeroStat(state.overview.inspection),
+            HeroStat(
+                label = stringResource(R.string.home_stat_recent),
+                value = state.recentRecords.firstNotNullOfOrNull { it.date }?.let { formatMonthDay(it) }
+                    ?: stringResource(R.string.home_stat_recent_none),
+            ),
+        ),
+        footnote = when {
             mileage == null -> stringResource(R.string.home_mileage_unknown)
             mileage.date == state.today -> stringResource(R.string.home_mileage_as_of_today)
             else -> stringResource(R.string.home_mileage_as_of, formatDate(mileage.date))
