@@ -115,4 +115,33 @@ class RecordServiceContentTest {
         }
         composeRule.captureScreen("record_service_saved")
     }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_alsoReplacedKorean() {
+        // 함께 교체한 항목을 하나 고르면 선택 입력이 펼쳐진 채로 보인다.
+        val state = base.copy(
+            cost = "80000",
+            companionCandidates = listOf(MaintenanceItem.OilFilter, MaintenanceItem.AirFilter, MaintenanceItem.Wiper),
+            alsoReplaced = setOf(MaintenanceItem.OilFilter),
+        )
+        composeRule.setContent { AppFrame { RecordServiceContent(state, actions) } }
+        composeRule.captureScreen("record_service_also_replaced_ko")
+    }
+
+    @Test
+    fun savedScreen_listsItemsSavedTogether() {
+        show(
+            base.copy(
+                savedResult = SavedResult(
+                    nextDistanceDue = Kilometers(52_891),
+                    nextDateDue = LocalDate.of(2027, 10, 1),
+                    alsoReplaced = listOf(MaintenanceItem.OilFilter),
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithText("Also saved: Oil filter").assertExists()
+    }
 }

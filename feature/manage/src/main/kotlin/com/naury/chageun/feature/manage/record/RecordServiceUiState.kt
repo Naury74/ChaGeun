@@ -18,6 +18,9 @@ data class RecordServiceUiState(
     val cost: String = "",
     val shopName: String = "",
     val memo: String = "",
+    /** 함께 교체했다고 고를 수 있는 항목. 보통 같이 바꾸는 항목이 앞에 온다. 고칠 때는 비어 있다. */
+    val companionCandidates: List<MaintenanceItem> = emptyList(),
+    val alsoReplaced: Set<MaintenanceItem> = emptySet(),
     val errors: Map<RecordServiceField, RecordServiceError> = emptyMap(),
     val lowerMileageWarning: Kilometers? = null,
     val isSaving: Boolean = false,
@@ -28,4 +31,8 @@ data class RecordServiceUiState(
     val isEditSaved: Boolean = false,
 )
 
-data class SavedResult(val nextDistanceDue: Kilometers?, val nextDateDue: LocalDate?)
+data class SavedResult(
+    val nextDistanceDue: Kilometers?,
+    val nextDateDue: LocalDate?,
+    val alsoReplaced: List<MaintenanceItem> = emptyList(),
+)
