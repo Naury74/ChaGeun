@@ -55,4 +55,11 @@
     <string name="form_fewer_details">접기</string>
     <string name="timeline_km">%1$s km</string>
     <string name="timeline_km_estimated">약 %1$s km (추정)</string>
+    <string name="vehicle_field_maker">제조사</string>
+    <string name="vehicle_field_model">모델명</string>
+    <string name="vehicle_field_year">연식</string>
+    <string name="vehicle_field_fuel">연료</string>
+    <string name="vehicle_field_other_maker">기타</string>
+    <string name="vehicle_field_custom">직접 입력</string>
+    <string name="vehicle_field_older">이전 연식</string>
 </resources>

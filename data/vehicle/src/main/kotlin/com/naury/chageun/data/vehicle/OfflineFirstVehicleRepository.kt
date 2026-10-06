@@ -11,9 +11,11 @@ import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PlateChange
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.model.VehicleProfileUpdate
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.security.FieldCipher
 import java.time.Clock
@@ -21,6 +23,7 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 internal class OfflineFirstVehicleRepository @Inject constructor(
@@ -101,6 +104,32 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
             knownServices.forEach { database.maintenanceDao().insertRecord(it) }
         }
         return VehicleId(vehicleId)
+    }
+
+    override suspend fun updateProfile(vehicleId: VehicleId, update: VehicleProfileUpdate) {
+        val dao = database.vehicleDao()
+        val current = checkNotNull(dao.observe(vehicleId.value).first()) { "Vehicle not found" }
+        val plate = update.plate
+        dao.upsert(
+            current.copy(
+                maker = update.maker.trim(),
+                model = update.model.trim(),
+                modelYear = update.modelYear,
+                trim = update.trim?.trim()?.ifEmpty { null },
+                fuelType = update.fuelType.name,
+                plateNumberEncrypted = when (plate) {
+                    PlateChange.Keep -> current.plateNumberEncrypted
+                    PlateChange.Remove -> null
+                    is PlateChange.Replace -> cipher.encrypt(plate.plate.normalized)
+                },
+                plateMasked = when (plate) {
+                    PlateChange.Keep -> current.plateMasked
+                    PlateChange.Remove -> null
+                    is PlateChange.Replace -> plate.plate.masked
+                },
+                updatedAt = clock.instant(),
+            ),
+        )
     }
 
     private companion object {

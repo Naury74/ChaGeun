@@ -4,6 +4,7 @@ import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCa
 import com.naury.chageun.core.domain.settings.SettingsRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.InspectionStatus
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
@@ -13,6 +14,9 @@ interface ReminderNotifier {
     fun canNotify(): Boolean
 
     fun notify(statuses: List<MaintenanceStatus>)
+
+    /** 이미 처리한 항목의 알림을 알림 창에서 지운다. */
+    fun cancel(item: MaintenanceItem)
 
     fun notifyInspection(status: InspectionStatus)
 
