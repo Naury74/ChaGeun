@@ -108,6 +108,7 @@ dependencies {
     implementation(projects.data.history)
     implementation(projects.data.maintenance)
     implementation(projects.data.vehicle)
+    implementation(projects.data.cloudbackup)
     implementation(projects.feature.account)
     implementation(projects.feature.ai)
     implementation(projects.feature.history)

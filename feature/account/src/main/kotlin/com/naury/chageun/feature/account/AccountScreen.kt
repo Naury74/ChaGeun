@@ -59,8 +59,24 @@ import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.openUriSafely
 
 @Composable
-fun AccountRoute(onBack: () -> Unit, onOpenEmail: () -> Unit, viewModel: AccountViewModel = hiltViewModel()) {
+fun AccountRoute(
+    onBack: () -> Unit,
+    onOpenEmail: () -> Unit,
+    viewModel: AccountViewModel = hiltViewModel(),
+    backupViewModel: CloudBackupViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val backupState by backupViewModel.uiState.collectAsStateWithLifecycle()
+    val backupActions = CloudBackupActions(
+        onBackUpNow = backupViewModel::backUpNow,
+        onSelect = backupViewModel::select,
+        onRestore = backupViewModel::startRestore,
+        onConfirmRestore = backupViewModel::confirmRestore,
+        onCancelRestore = backupViewModel::cancelRestore,
+        onRequestDelete = backupViewModel::requestDelete,
+        onConfirmDelete = backupViewModel::confirmDelete,
+        onCancelDelete = backupViewModel::cancelDelete,
+    )
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     var isSignOutConfirming by rememberSaveable { mutableStateOf(false) }
@@ -74,7 +90,11 @@ fun AccountRoute(onBack: () -> Unit, onOpenEmail: () -> Unit, viewModel: Account
         onResendVerification = viewModel::resendVerification,
         onSignOut = { isSignOutConfirming = true },
         onNoticeShown = viewModel::dismissNotice,
+        backup = backupState,
+        backupActions = backupActions,
+        onBackupNoticeShown = backupViewModel::dismissNotice,
     )
+    CloudBackupDialogs(backupState, backupActions)
     if (isSignOutConfirming) {
         AlertDialog(
             onDismissRequest = { isSignOutConfirming = false },
@@ -105,6 +125,9 @@ fun AccountScreen(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     onNoticeShown: () -> Unit = {},
+    backup: CloudBackupUiState = CloudBackupUiState(),
+    backupActions: CloudBackupActions = CloudBackupActions(),
+    onBackupNoticeShown: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { noticeMessage(it) }
@@ -112,6 +135,13 @@ fun AccountScreen(
         if (noticeText != null) {
             snackbar.showSnackbar(noticeText)
             onNoticeShown()
+        }
+    }
+    val backupNoticeText = backup.notice?.let { backupNoticeMessage(it) }
+    LaunchedEffect(backup.notice) {
+        if (backupNoticeText != null) {
+            snackbar.showSnackbar(backupNoticeText)
+            onBackupNoticeShown()
         }
     }
     Box(modifier.fillMaxSize()) {
@@ -136,6 +166,9 @@ fun AccountScreen(
                         onCheckVerification = onCheckVerification,
                         onResendVerification = onResendVerification,
                         onSignOut = onSignOut,
+                        backup = {
+                            CloudBackupSection(backup, canBackUp = !user.needsEmailVerification, backupActions)
+                        },
                     )
                 }
             }
@@ -212,7 +245,7 @@ private fun ColumnScope.AccountStart(
     }
 }
 
-/** AC05의 계정 부분과 AC04 인증 안내. 백업은 P2에서 이 화면에 붙는다. */
+/** AC05 계정 화면과 AC04 인증 안내. */
 @Composable
 private fun AccountHome(
     user: AuthUser,
@@ -220,6 +253,7 @@ private fun AccountHome(
     onCheckVerification: () -> Unit,
     onResendVerification: () -> Unit,
     onSignOut: () -> Unit,
+    backup: @Composable () -> Unit,
 ) {
     if (user.needsEmailVerification) {
         CardGroup(title = null) {
@@ -259,16 +293,7 @@ private fun AccountHome(
             tone = ChageunTheme.colors.good,
         )
     }
-    CardGroup(stringResource(R.string.account_section_backup)) {
-        ListRow(
-            Icons.Filled.CloudUpload,
-            stringResource(R.string.account_backup_now),
-            body = stringResource(R.string.account_backup_coming),
-            enabled = false,
-            onClick = {},
-            trailing = {},
-        )
-    }
+    backup()
     CardGroup(title = null) {
         ListRow(
             Icons.AutoMirrored.Filled.Logout,
