@@ -82,6 +82,7 @@ fun RecordServiceHost(
                 onConfirmLowerMileage = viewModel::confirmLowerMileage,
                 onEditLowerMileage = viewModel::dismissLowerMileageWarning,
                 onDismiss = onDismiss,
+                onDecideOdometer = viewModel::decideOdometer,
             ),
         )
     }
@@ -98,6 +99,7 @@ data class RecordServiceActions(
     val onConfirmLowerMileage: () -> Unit,
     val onEditLowerMileage: () -> Unit,
     val onDismiss: () -> Unit,
+    val onDecideOdometer: (Boolean) -> Unit = {},
     val onToggleAlsoReplaced: (MaintenanceItem) -> Unit = {},
 )
 
@@ -162,10 +164,13 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
         uiState.lowerMileageWarning?.let { previous ->
             LowerMileageWarning(itemName, formatNumber(previous.value), actions)
         }
+        uiState.odometerPrompt?.let { current ->
+            OdometerPrompt(formatNumber(current.value), uiState.mileage, actions.onDecideOdometer)
+        }
         if (uiState.hasSaveFailed) {
             Text(stringResource(R.string.record_save_failed), color = MaterialTheme.colorScheme.error)
         }
-        if (uiState.lowerMileageWarning == null) {
+        if (uiState.lowerMileageWarning == null && uiState.odometerPrompt == null) {
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
                 TextButton(onClick = actions.onDismiss, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.record_cancel))
@@ -299,6 +304,35 @@ private fun LowerMileageWarning(itemName: String, previousKm: String, actions: R
                 }
                 Button(onClick = actions.onConfirmLowerMileage, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.record_lower_mileage_save))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OdometerPrompt(currentKm: String, enteredKm: String, onDecide: (Boolean) -> Unit) {
+    val entered = enteredKm.toLongOrNull()?.let { formatNumber(it) } ?: enteredKm
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(
+            Modifier.padding(ChageunTheme.spacing.md),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        ) {
+            Text(stringResource(R.string.record_odometer_title), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.record_odometer_body, currentKm, entered),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                TextButton(onClick = { onDecide(false) }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.record_odometer_keep))
+                }
+                Button(onClick = { onDecide(true) }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.record_odometer_update))
                 }
             }
         }
