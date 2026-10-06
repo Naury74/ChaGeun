@@ -35,7 +35,7 @@ object PhotoFiles {
 
     /**
      * [sourceUri]를 방향 정보대로 세운 뒤 [quarterTurns]만큼 시계 방향으로 돌리고 [crop]으로 잘라 JPEG로 쓴다.
-     * EXIF는 쓰지 않으므로 위치와 카메라 정보가 남지 않는다.
+     * 위치와 카메라 정보는 남기지 않고, 앨범이 날짜별로 정리할 수 있게 촬영일만 옮겨 적는다.
      *
      * @return 쓴 파일의 URI. 읽을 수 없는 이미지면 null.
      */
@@ -46,6 +46,7 @@ object PhotoFiles {
         val cropped = Bitmap.createBitmap(rotated, area.x, area.y, area.width, area.height)
         val target = newFile(context)
         target.outputStream().use { cropped.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+        copyTakenDate(context, sourceUri, target)
         return target.toUri().toString()
     }
 
@@ -64,6 +65,22 @@ object PhotoFiles {
             resolver.openInputStream(uri)?.use { ExifInterface(it).rotationDegrees }
         }.getOrNull() ?: 0
         return bitmap.rotate(degrees)
+    }
+
+    private fun copyTakenDate(context: Context, sourceUri: String, target: File) {
+        val taken = runCatching {
+            context.contentResolver.openInputStream(sourceUri.toUri())?.use { stream ->
+                ExifInterface(stream).let {
+                    it.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL) ?: it.getAttribute(ExifInterface.TAG_DATETIME)
+                }
+            }
+        }.getOrNull() ?: return
+        runCatching {
+            ExifInterface(target).apply {
+                setAttribute(ExifInterface.TAG_DATETIME_ORIGINAL, taken)
+                saveAttributes()
+            }
+        }
     }
 
     private fun Bitmap.rotate(degrees: Int): Bitmap {

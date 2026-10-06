@@ -3,6 +3,7 @@ package com.naury.chageun.core.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
@@ -40,6 +41,9 @@ interface BackupDao {
     @Query("SELECT * FROM inspection_schedule")
     suspend fun inspectionSchedules(): List<InspectionScheduleEntity>
 
+    @Query("SELECT * FROM album_photo ORDER BY taken_on, created_at")
+    suspend fun albumPhotos(): List<AlbumPhotoEntity>
+
     @Query(
         """
         SELECT (SELECT COUNT(*) FROM maintenance_record) + (SELECT COUNT(*) FROM fuel_record)
@@ -64,6 +68,9 @@ interface BackupDao {
         checks: List<CheckRecordEntity>,
         attachments: List<AttachmentEntity>,
     )
+
+    @Insert
+    suspend fun insertAlbumPhotos(photos: List<AlbumPhotoEntity>)
 
     /** 나머지 테이블은 모두 vehicle에서 cascade로 함께 지워진다. */
     @Query("DELETE FROM vehicle")

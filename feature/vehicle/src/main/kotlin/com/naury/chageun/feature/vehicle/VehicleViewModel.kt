@@ -2,11 +2,13 @@ package com.naury.chageun.feature.vehicle
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
 import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
 import com.naury.chageun.core.domain.vehicle.InspectionRepository
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.Vehicle
@@ -33,6 +35,9 @@ sealed interface VehicleUiState {
         val inspection: InspectionStatus = InspectionStatus.Unknown,
         val photoPath: String? = null,
         val isPhotoImportFailed: Boolean = false,
+        /** 내 차 탭에 미리 보여 줄 최근 앨범 사진. */
+        val albumPreview: List<AlbumPhoto> = emptyList(),
+        val albumCount: Int = 0,
     ) : VehicleUiState {
         val currentMileage: MileageEntry? get() = mileageLog.firstOrNull()
     }
@@ -45,6 +50,7 @@ class VehicleViewModel @Inject constructor(
     private val inspectionRepository: InspectionRepository,
     private val completeInspection: CompleteInspectionUseCase,
     private val photoRepository: VehiclePhotoRepository,
+    albumRepository: AlbumRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -53,7 +59,7 @@ class VehicleViewModel @Inject constructor(
     val uiState: StateFlow<VehicleUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
         .flatMapLatest { vehicle ->
-            combine(
+            val vehicleState = combine(
                 vehicleRepository.observeMileageLog(vehicle.id),
                 inspectionRepository.observeSchedule(vehicle.id),
                 photoRepository.observe(vehicle.id),
@@ -66,6 +72,9 @@ class VehicleViewModel @Inject constructor(
                     photoPath = photo,
                     isPhotoImportFailed = photoFailed,
                 )
+            }
+            combine(vehicleState, albumRepository.observe(vehicle.id)) { state, album ->
+                state.copy(albumPreview = album.take(ALBUM_PREVIEW_COUNT), albumCount = album.size)
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), VehicleUiState.Loading)
@@ -97,5 +106,6 @@ class VehicleViewModel @Inject constructor(
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        const val ALBUM_PREVIEW_COUNT = 4
     }
 }

@@ -1,12 +1,16 @@
 package com.naury.chageun.feature.vehicle
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,6 +33,7 @@ import androidx.compose.material.icons.filled.Factory
 import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Settings
@@ -49,7 +54,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -80,6 +87,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.openUriSafely
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
+import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
 import java.time.LocalDate
@@ -88,6 +96,7 @@ import java.time.LocalDate
 fun VehicleRoute(
     onUpdateMileage: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAlbum: () -> Unit = {},
     viewModel: VehicleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -109,6 +118,7 @@ fun VehicleRoute(
                 onRemove = viewModel::removePhoto,
             ),
             onEditVehicle = { isEditing = true },
+            onOpenAlbum = onOpenAlbum,
             modifier = Modifier.padding(padding),
         )
     }
@@ -128,6 +138,7 @@ fun VehicleScreen(
     onInspectionCompleted: (InspectionCompletion) -> Unit = {},
     photoActions: VehiclePhotoActions = VehiclePhotoActions(),
     onEditVehicle: () -> Unit = {},
+    onOpenAlbum: () -> Unit = {},
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -136,13 +147,13 @@ fun VehicleScreen(
     }
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
-        listOf({ overviewPane(state, onUpdateMileage, photoActions, onEditVehicle) }, {
+        listOf({ overviewPane(state, onUpdateMileage, photoActions, onEditVehicle, onOpenAlbum) }, {
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
     } else {
         listOf({
-            overviewPane(state, onUpdateMileage, photoActions, onEditVehicle)
+            overviewPane(state, onUpdateMileage, photoActions, onEditVehicle, onOpenAlbum)
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
@@ -164,8 +175,10 @@ private fun LazyListScope.overviewPane(
     onUpdateMileage: () -> Unit,
     photoActions: VehiclePhotoActions,
     onEditVehicle: () -> Unit,
+    onOpenAlbum: () -> Unit,
 ) {
     item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
+    item(key = "album") { AlbumPreview(state, onOpenAlbum) }
     item(key = "info") { InfoSection(state, onEditVehicle) }
     item(key = "sources") {
         val res = if (state.vehicle.registrationMode == RegistrationMode.Manual) {
@@ -456,3 +469,52 @@ private val MileageSource.labelRes: Int
 private const val MILEAGE_PREVIEW = 10
 private const val RECALL_CENTER_URL = "https://www.car.go.kr"
 private const val INSPECTION_URL = "https://www.cyberts.kr"
+
+/** 최근 앨범 사진 몇 장과 앨범으로 가는 행. 사진이 없어도 행은 보여 앨범이 있다는 것을 알린다. */
+@Composable
+private fun AlbumPreview(state: VehicleUiState.Content, onOpenAlbum: () -> Unit) {
+    CardGroup(
+        stringResource(R.string.album_section),
+        Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+    ) {
+        if (state.albumPreview.isNotEmpty()) {
+            Row(
+                Modifier.padding(ChageunTheme.spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            ) {
+                state.albumPreview.forEach { photo ->
+                    val image by rememberFileImage(photo.thumbnailPath)
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        image?.let {
+                            Image(
+                                it,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+                }
+                repeat(ALBUM_PREVIEW_SLOTS - state.albumPreview.size) { Spacer(Modifier.weight(1f)) }
+            }
+            GroupDivider()
+        }
+        ListRow(
+            Icons.Filled.PhotoLibrary,
+            if (state.albumCount > 0) {
+                stringResource(R.string.album_see_all, state.albumCount)
+            } else {
+                stringResource(R.string.album_open)
+            },
+            onClick = onOpenAlbum,
+        )
+    }
+}
+
+private const val ALBUM_PREVIEW_SLOTS = 4

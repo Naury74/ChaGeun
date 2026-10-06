@@ -36,7 +36,7 @@ internal class RoomBackupRepository @Inject constructor(
         LocalDataSummary(
             vehicles = backupDao.vehicles().size,
             records = backupDao.recordCount(),
-            photos = backupDao.attachments().size,
+            photos = backupDao.attachments().size + backupDao.albumPhotos().size,
         )
     }
 
@@ -105,6 +105,7 @@ internal class RoomBackupRepository @Inject constructor(
                 checks = document.checkRecords.map { it.toEntity(now) },
                 attachments = document.attachments.map { it.toEntity() },
             )
+            backupDao.insertAlbumPhotos(document.albumPhotos.map { it.toEntity(now) })
         }
     }
 
@@ -113,7 +114,7 @@ internal class RoomBackupRepository @Inject constructor(
     private fun BackupDocument.summary() = LocalDataSummary(
         vehicles = vehicles.size,
         records = maintenanceRecords.size + fuelRecords.size + checkRecords.size,
-        photos = attachments.size,
+        photos = attachments.size + albumPhotos.size,
     )
 
     internal suspend fun snapshot(): BackupDocument = database.withTransaction {
@@ -127,6 +128,7 @@ internal class RoomBackupRepository @Inject constructor(
             checkRecords = backupDao.checkRecords().map { it.toDto() },
             attachments = backupDao.attachments().map { it.toDto() },
             inspectionSchedules = backupDao.inspectionSchedules().map { it.toDto() },
+            albumPhotos = backupDao.albumPhotos().map { it.toDto() },
         )
     }
 
