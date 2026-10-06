@@ -9,7 +9,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.naury.chageun.core.domain.reminder.ReminderNotifier
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
-import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.notification.DeepLinks.putInspection
 import com.naury.chageun.core.notification.DeepLinks.putMaintenanceItem
@@ -81,7 +80,7 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
 
     private fun build(status: MaintenanceStatus) = NotificationCompat.Builder(context, NotificationChannels.MAINTENANCE)
         .setSmallIcon(R.drawable.ic_notification)
-        .setContentTitle(context.getString(status.state.titleRes, context.getString(status.item.labelRes)))
+        .setContentTitle(context.getString(status.titleRes, context.getString(status.item.labelRes)))
         .setContentText(remainingText(status))
         .setContentIntent(launchIntent(status.item.ordinal) { putMaintenanceItem(status.item) })
         .setAutoCancel(true)
@@ -127,10 +126,11 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
     private val MaintenanceItem.notificationId: Int
         get() = ordinal + NOTIFICATION_ID_OFFSET
 
-    private val MaintenanceState.titleRes: Int
-        get() = when (this) {
-            MaintenanceState.Overdue -> R.string.notification_overdue_title
-            MaintenanceState.Due -> R.string.notification_due_title
+    // 알림 단계(2,000km·500km·도래)는 화면 상태와 기준이 달라, 제목도 남은 거리·기간으로 정한다.
+    private val MaintenanceStatus.titleRes: Int
+        get() = when {
+            (remainingKm ?: 0) < 0 || (remainingDays ?: 0) < 0 -> R.string.notification_overdue_title
+            remainingKm == 0L || remainingDays == 0L -> R.string.notification_due_title
             else -> R.string.notification_upcoming_title
         }
 

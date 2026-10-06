@@ -108,7 +108,8 @@ enum class HomeAction(val key: String) {
     OpenInspection("open_inspection"),
 }
 
-enum class ReminderKind(val key: String) { MaintenanceAndInspection("maintenance"), Mileage("mileage") }
+// 정비 키는 정비·검사를 함께 켜던 때와 같은 "maintenance"를 그대로 써서 기존 집계와 이어지게 한다.
+enum class ReminderKind(val key: String) { Maintenance("maintenance"), Inspection("inspection"), Mileage("mileage") }
 
 enum class AiTarget(val key: String) { ChatGpt("chatgpt"), Claude("claude"), Gemini("gemini"), Other("other") }
 

@@ -11,6 +11,8 @@ interface SettingsRepository {
 
     suspend fun setMaintenanceReminderEnabled(enabled: Boolean)
 
+    suspend fun setInspectionReminderEnabled(enabled: Boolean)
+
     suspend fun setMileageReminderEnabled(enabled: Boolean)
 
     suspend fun setUsageStatsEnabled(enabled: Boolean)

@@ -24,7 +24,12 @@ class ReminderScheduler @Inject constructor(@ApplicationContext private val cont
             ExistingPeriodicWorkPolicy.KEEP,
             PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS).build(),
         )
-        workManager.enqueueUniqueWork(
+        reevaluateNow()
+    }
+
+    /** 앱 시작, 시간대·시각 변경처럼 하루를 기다리지 않고 바로 다시 확인할 때 쓴다. */
+    fun reevaluateNow() {
+        WorkManager.getInstance(context).enqueueUniqueWork(
             ON_START_WORK,
             ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<ReminderWorker>().build(),

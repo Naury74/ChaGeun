@@ -6,8 +6,10 @@
     <string name="settings_theme_light">라이트</string>
     <string name="settings_theme_dark">다크</string>
     <string name="settings_section_notifications">알림</string>
-    <string name="settings_maintenance_reminders">정비·검사 알림</string>
-    <string name="settings_maintenance_reminders_body">교체 시기와 검사 기한이 다가오거나 지났을 때 알려드려요. 꺼도 홈의 상태는 계속 갱신돼요.</string>
+    <string name="settings_maintenance_reminders">정비 알림</string>
+    <string name="settings_maintenance_reminders_body">교체까지 2,000km·500km 남았을 때(기간형은 60일·14일 전)와 교체 시기가 됐을 때 알려 드려요. 꺼도 홈의 상태는 계속 갱신돼요.</string>
+    <string name="settings_inspection_reminders">자동차 검사 알림</string>
+    <string name="settings_inspection_reminders_body">검사 기한 30일·7일·1일 전과 기한이 지났을 때 알려 드려요.</string>
     <string name="settings_system_notifications">시스템 설정에서 알림 종류별로 관리</string>
     <string name="settings_section_sources">데이터 출처</string>
     <string name="settings_source_user">차량 정보·주행거리·기록: 직접 입력한 값</string>

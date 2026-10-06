@@ -11,7 +11,6 @@ import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
-import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.ServiceRecord
@@ -99,8 +98,9 @@ class EvaluateRemindersUseCaseTest {
 
         assertThat(evaluate()).isEqualTo(1)
         assertThat(evaluate()).isEqualTo(0)
-        assertThat(notifier.shown.single().state).isEqualTo(MaintenanceState.Due)
-        assertThat(reminders.states).containsExactly(MaintenanceItem.EngineOil, MaintenanceState.Due)
+        // 교체까지 300km 남아 500km 단계에 해당한다.
+        assertThat(notifier.shown.single().remainingKm).isEqualTo(300)
+        assertThat(reminders.stages).containsExactly(MaintenanceItem.EngineOil, MaintenanceReminderStage.Near)
     }
 
     @Test
@@ -114,7 +114,7 @@ class EvaluateRemindersUseCaseTest {
         evaluate()
 
         assertThat(notifier.cancelled).containsExactly(MaintenanceItem.EngineOil)
-        assertThat(reminders.states).isEmpty()
+        assertThat(reminders.stages).isEmpty()
     }
 
     @Test
@@ -123,7 +123,7 @@ class EvaluateRemindersUseCaseTest {
         notifier.enabled = false
 
         assertThat(evaluate()).isEqualTo(0)
-        assertThat(reminders.states).isEmpty()
+        assertThat(reminders.stages).isEmpty()
     }
 
     @Test
@@ -133,6 +133,30 @@ class EvaluateRemindersUseCaseTest {
 
         assertThat(evaluate()).isEqualTo(0)
         assertThat(notifier.shown).isEmpty()
+    }
+
+    @Test
+    fun inspectionReminders_canBeTurnedOffSeparately() = runTest {
+        givenOilDueSoon()
+        inspections.setUserDueDate(vehicles.observePrimaryVehicle().first()!!.id, today.plusDays(5))
+        settings.setInspectionReminderEnabled(false)
+
+        assertThat(evaluate()).isEqualTo(1)
+        assertThat(notifier.shown.map { it.item }).containsExactly(MaintenanceItem.EngineOil)
+        assertThat(notifier.inspectionShown).isEmpty()
+    }
+
+    @Test
+    fun maintenanceOff_stillSendsInspectionReminders() = runTest {
+        givenOilDueSoon()
+        inspections.setUserDueDate(vehicles.observePrimaryVehicle().first()!!.id, today.plusDays(5))
+        settings.setMaintenanceReminderEnabled(false)
+
+        assertThat(evaluate()).isEqualTo(1)
+        assertThat(notifier.shown).isEmpty()
+        assertThat(notifier.inspectionShown).hasSize(1)
+        // 꺼 둔 동안에는 단계를 기록하지 않아, 다시 켜면 그때 도달한 단계부터 알린다.
+        assertThat(reminders.stages).isEmpty()
     }
 
     @Test

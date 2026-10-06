@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
@@ -94,6 +95,7 @@ fun SettingsRoute(
         onBack = onBack,
         onThemeSelected = viewModel::setThemeMode,
         onRemindersChanged = viewModel::setMaintenanceReminderEnabled,
+        onInspectionRemindersChanged = viewModel::setInspectionReminderEnabled,
         onMileageRemindersChanged = viewModel::setMileageReminderEnabled,
         onUsageStatsChanged = viewModel::setUsageStatsEnabled,
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
@@ -155,6 +157,7 @@ fun SettingsScreen(
     onOpenSystemNotifications: () -> Unit,
     modifier: Modifier = Modifier,
     onMileageRemindersChanged: (Boolean) -> Unit = {},
+    onInspectionRemindersChanged: (Boolean) -> Unit = {},
     onUsageStatsChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
@@ -202,6 +205,15 @@ fun SettingsScreen(
                         checked = settings.isMaintenanceReminderEnabled,
                         onCheckedChange = onRemindersChanged,
                         tone = ChageunTheme.colors.upcoming,
+                    )
+                    GroupDivider()
+                    ToggleListRow(
+                        icon = Icons.Filled.EventAvailable,
+                        title = stringResource(R.string.settings_inspection_reminders),
+                        body = stringResource(R.string.settings_inspection_reminders_body),
+                        checked = settings.isInspectionReminderEnabled,
+                        onCheckedChange = onInspectionRemindersChanged,
+                        tone = ChageunTheme.colors.good,
                     )
                     GroupDivider()
                     ToggleListRow(

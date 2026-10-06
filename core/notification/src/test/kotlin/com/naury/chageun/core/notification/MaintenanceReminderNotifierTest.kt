@@ -61,8 +61,20 @@ class MaintenanceReminderNotifierTest {
 
         val posted = shadowOf(manager).allNotifications.single()
         assertThat(posted.channelId).isEqualTo(NotificationChannels.MAINTENANCE)
-        assertThat(posted.extras.getString(NotificationCompat.EXTRA_TITLE)).isEqualTo("Time to replace your Engine oil")
+        // 500km 단계 알림이므로 아직 '다가와요' 제목이다. 화면 상태(Due)가 아니라 남은 거리로 정한다.
+        assertThat(posted.extras.getString(NotificationCompat.EXTRA_TITLE)).isEqualTo(UPCOMING_TITLE)
         assertThat(posted.extras.getString(NotificationCompat.EXTRA_TEXT)).isEqualTo("About 420 km left")
+    }
+
+    @Test
+    fun title_followsRemainingDistance() {
+        notifier.notify(listOf(status(MaintenanceState.Upcoming, km = 0)))
+        assertThat(shadowOf(manager).allNotifications.single().extras.getString(NotificationCompat.EXTRA_TITLE))
+            .isEqualTo(DUE_TITLE)
+
+        notifier.notify(listOf(status(MaintenanceState.Overdue, km = -50)))
+        assertThat(shadowOf(manager).allNotifications.single().extras.getString(NotificationCompat.EXTRA_TITLE))
+            .isEqualTo(OVERDUE_TITLE)
     }
 
     @Test
@@ -138,5 +150,11 @@ class MaintenanceReminderNotifierTest {
                 NotificationChannels.INSPECTION,
                 NotificationChannels.RECALL,
             )
+    }
+
+    private companion object {
+        const val UPCOMING_TITLE = "Engine oil is coming up"
+        const val DUE_TITLE = "Time to replace your Engine oil"
+        const val OVERDUE_TITLE = "Engine oil is past due"
     }
 }

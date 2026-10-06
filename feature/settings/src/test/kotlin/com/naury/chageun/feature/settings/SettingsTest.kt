@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -70,16 +71,21 @@ class SettingsTest {
                     onRemindersChanged = { settings = settings.copy(isMaintenanceReminderEnabled = it) },
                     onOpenSystemNotifications = {},
                     onMileageRemindersChanged = { settings = settings.copy(isMileageReminderEnabled = it) },
+                    onInspectionRemindersChanged = { settings = settings.copy(isInspectionReminderEnabled = it) },
                 )
             }
         }
 
         composeRule.onNodeWithText("Dark").performClick()
         composeRule.onNodeWithText("Dark").assertIsSelected()
+        // 순서: 정비 → 검사 → 주행거리. 정비를 꺼도 검사는 켜져 있다.
         composeRule.onAllNodes(isToggleable())[0].performClick()
         composeRule.onAllNodes(isToggleable())[0].assertIsOff()
-        composeRule.onAllNodes(isToggleable())[1].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[1].assertIsOn()
         composeRule.onAllNodes(isToggleable())[1].performClick()
+        assertThat(settings.isInspectionReminderEnabled).isFalse()
+        composeRule.onAllNodes(isToggleable())[2].assertIsOff()
+        composeRule.onAllNodes(isToggleable())[2].performClick()
         assertThat(settings.isMileageReminderEnabled).isTrue()
         composeRule.onNodeWithText("Version 0.1.0").assertExists()
     }
