@@ -27,6 +27,9 @@ class RecordServiceUseCase @Inject constructor(
     private val analytics: AnalyticsTracker,
     private val notifier: ReminderNotifier,
 ) {
+    /** 입력 폼의 주행거리 기본값. */
+    suspend fun currentMileage(vehicleId: VehicleId): Kilometers? = repository.findCurrentMileage(vehicleId)?.mileage
+
     suspend operator fun invoke(
         vehicleId: VehicleId,
         entry: ServiceEntry,

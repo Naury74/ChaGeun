@@ -20,6 +20,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
+import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
@@ -103,6 +104,79 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
         }
     }
 
+    override suspend fun updateFuel(vehicleId: VehicleId, id: String, entry: FuelEntry) {
+        database.withTransaction {
+            val current = historyDao.findFuel(vehicleId.value, id) ?: return@withTransaction
+            historyDao.updateFuel(
+                current.copy(
+                    fuelDate = entry.date,
+                    mileageKm = entry.mileage.value,
+                    totalPriceWon = entry.amounts.totalPriceWon,
+                    volumeMl = entry.amounts.volumeMl,
+                    unitPriceWon = entry.amounts.unitPriceWon,
+                    computedField = entry.amounts.computedField?.name,
+                    isFullTank = entry.isFullTank,
+                    stationName = entry.stationName.normalized(),
+                    memo = entry.memo.normalized(),
+                    updatedAt = clock.instant(),
+                ),
+            )
+            syncOdometer(vehicleId, id, entry.mileage, entry.date, SOURCE_FUEL)
+        }
+    }
+
+    override suspend fun updateCheck(vehicleId: VehicleId, id: String, entry: CheckEntry) {
+        database.withTransaction {
+            val current = historyDao.findCheck(vehicleId.value, id) ?: return@withTransaction
+            historyDao.updateCheck(
+                current.copy(
+                    kind = entry.kind.name,
+                    checkDate = entry.date,
+                    title = entry.title,
+                    mileageKm = entry.mileage?.value,
+                    costWon = entry.costWon,
+                    memo = entry.memo.normalized(),
+                    updatedAt = clock.instant(),
+                ),
+            )
+            syncOdometer(vehicleId, id, entry.mileage, entry.date, SOURCE_CHECK)
+        }
+    }
+
+    override suspend fun updateMaintenance(vehicleId: VehicleId, id: String, entry: ServiceEntry) {
+        database.withTransaction {
+            val current = historyDao.findMaintenance(vehicleId.value, id) ?: return@withTransaction
+            historyDao.updateMaintenance(
+                current.copy(
+                    serviceDate = entry.date,
+                    mileageKm = entry.mileage.value,
+                    costWon = entry.costWon,
+                    shopName = entry.shopName.normalized(),
+                    memo = entry.memo.normalized(),
+                    sourceType = RecordSourceTypes.USER,
+                    updatedAt = clock.instant(),
+                ),
+            )
+            syncOdometer(vehicleId, id, entry.mileage, entry.date, SOURCE_MAINTENANCE)
+        }
+    }
+
+    /** 고친 기록이 남긴 주행거리를 다시 계산한다. 추가할 때와 같이 지금보다 클 때만 주행거리를 올린다. */
+    private suspend fun syncOdometer(
+        vehicleId: VehicleId,
+        recordId: String,
+        mileage: Kilometers?,
+        date: LocalDate,
+        source: String,
+    ) {
+        historyDao.deleteMileageCreatedBy(vehicleId.value, recordId)
+        if (mileage == null) return
+        val latest = database.mileageRecordDao().findLatest(vehicleId.value)
+        if (latest == null || mileage.value > latest.mileageKm) {
+            insertOdometer(vehicleId, mileage, date, source, recordId)
+        }
+    }
+
     override suspend fun delete(vehicleId: VehicleId, ref: RecordRef) {
         database.withTransaction {
             when (ref.type) {
@@ -140,6 +214,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
     private companion object {
         const val SOURCE_FUEL = "FUEL"
         const val SOURCE_CHECK = "CHECK"
+        const val SOURCE_MAINTENANCE = "MAINTENANCE"
     }
 }
 

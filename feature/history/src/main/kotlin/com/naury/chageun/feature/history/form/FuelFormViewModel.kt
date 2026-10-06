@@ -6,13 +6,17 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.history.AddHistoryRecordUseCase
+import com.naury.chageun.core.domain.history.EditHistoryRecordUseCase
 import com.naury.chageun.core.domain.history.FuelAmountCalculator
 import com.naury.chageun.core.domain.history.HistoryEntryError
-import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelEntry
+import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.RecordDetail
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -42,6 +46,8 @@ data class FuelFormUiState(
     val isSaving: Boolean = false,
     val hasSaveFailed: Boolean = false,
     val isSaved: Boolean = false,
+    /** 저장된 기록을 고치는 중이다. 제목과 저장 동작만 다르다. */
+    val isEditing: Boolean = false,
 ) {
     /** 저장 전에 어떤 값이 저장될지 보이도록 계산된 양을 실시간으로 미리 보여준다. */
     val amounts: FuelAmounts? get() = FuelAmountCalculator.complete(
@@ -63,8 +69,8 @@ private const val ML_PER_LITRE = 1_000
 class FuelFormViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
-    private val maintenanceRepository: MaintenanceRepository,
     private val addRecord: AddHistoryRecordUseCase,
+    private val editRecord: EditHistoryRecordUseCase,
     private val analytics: AnalyticsTracker,
     clock: Clock,
 ) : ViewModel() {
@@ -79,6 +85,7 @@ class FuelFormViewModel @Inject constructor(
             isFullTank = savedStateHandle[KEY_FULL] ?: true,
             stationName = savedStateHandle[KEY_STATION] ?: "",
             memo = savedStateHandle[KEY_MEMO] ?: "",
+            isEditing = savedStateHandle.get<String>(KEY_EDIT_ID) != null,
         ),
     )
     val uiState: StateFlow<FuelFormUiState> = _uiState.asStateFlow()
@@ -87,9 +94,40 @@ class FuelFormViewModel @Inject constructor(
         if (_uiState.value.mileage.isEmpty()) {
             viewModelScope.launch {
                 val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-                maintenanceRepository.findCurrentMileage(vehicle.id)?.let { current ->
-                    if (_uiState.value.mileage.isEmpty()) edit { copy(mileage = current.mileage.value.toString()) }
+                addRecord.currentMileage(vehicle.id)?.let { current ->
+                    if (_uiState.value.mileage.isEmpty()) edit { copy(mileage = current.value.toString()) }
                 }
+            }
+        }
+    }
+
+    /**
+     * 저장된 주유 기록을 폼에 채운다. 화면 회전이나 접기 뒤 다시 불려도 사용자가 고친 값을 덮어쓰지 않는다.
+     * 자동으로 계산된 칸은 비워 두어, 사용자가 입력했던 두 값에서 다시 계산되게 한다.
+     */
+    fun startEditing(recordId: String) {
+        if (savedStateHandle.get<String>(KEY_EDIT_ID) == recordId) return
+        viewModelScope.launch {
+            val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
+            val ref = RecordRef(TimelineEventType.Fuel, recordId)
+            val entry = (editRecord.load(vehicle.id, ref) as? RecordDetail.Fuel)?.entry
+                ?: return@launch
+            val amounts = entry.amounts
+            savedStateHandle[KEY_EDIT_ID] = recordId
+            edit {
+                copy(
+                    date = entry.date,
+                    mileage = entry.mileage.value.toString(),
+                    total = amounts.totalPriceWon.takeIf { amounts.computedField != FuelField.Total }.asInput(),
+                    volumeLitres = amounts.volumeMl.takeIf { amounts.computedField != FuelField.Volume }
+                        ?.let { BigDecimal(it).movePointLeft(LITRE_SCALE).stripTrailingZeros().toPlainString() }
+                        .orEmpty(),
+                    unitPrice = amounts.unitPriceWon.takeIf { amounts.computedField != FuelField.UnitPrice }.asInput(),
+                    isFullTank = entry.isFullTank,
+                    stationName = entry.stationName.orEmpty(),
+                    memo = entry.memo.orEmpty(),
+                    isEditing = true,
+                )
             }
         }
     }
@@ -128,9 +166,16 @@ class FuelFormViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-            runCatching { addRecord.addFuel(vehicle.id, entry) }
+            val editingId = savedStateHandle.get<String>(KEY_EDIT_ID)
+            runCatching {
+                if (editingId != null) {
+                    editRecord.updateFuel(vehicle.id, editingId, entry)
+                } else {
+                    addRecord.addFuel(vehicle.id, entry)
+                }
+            }
                 .onSuccess { result ->
-                    if (result.isEmpty()) analytics.track(AnalyticsEvent.FuelRecordAdded)
+                    if (result.isEmpty() && editingId == null) analytics.track(AnalyticsEvent.FuelRecordAdded)
                     _uiState.update {
                         it.copy(
                             isSaving = false,
@@ -158,6 +203,8 @@ class FuelFormViewModel @Inject constructor(
 
     private fun String.digits() = filter(Char::isDigit).take(MAX_LENGTH)
 
+    private fun Long?.asInput() = this?.toString().orEmpty()
+
     private companion object {
         const val KEY_DATE = "fuel_date"
         const val KEY_MILEAGE = "fuel_mileage"
@@ -167,6 +214,8 @@ class FuelFormViewModel @Inject constructor(
         const val KEY_FULL = "fuel_full"
         const val KEY_STATION = "fuel_station"
         const val KEY_MEMO = "fuel_memo"
+        const val KEY_EDIT_ID = "fuel_edit_id"
+        const val LITRE_SCALE = 3
         const val MAX_LENGTH = 9
         const val MAX_TEXT_LENGTH = 200
     }

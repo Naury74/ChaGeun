@@ -36,7 +36,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
@@ -46,12 +48,23 @@ import com.naury.chageun.feature.history.form.FuelFormHost
 private enum class AddDialog { Chooser, MaintenanceItem, Fuel, Check }
 
 @Composable
-fun HistoryRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HistoryViewModel = hiltViewModel()) {
+fun HistoryRoute(
+    onRecordService: (MaintenanceItem) -> Unit,
+    onEditService: (MaintenanceItem, String) -> Unit = { _, _ -> },
+    viewModel: HistoryViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isTwoPane = isListDetailTwoPane()
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
+    // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
+    var editingType by rememberSaveable { mutableStateOf<TimelineEventType?>(null) }
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val stopEditing = {
+        editingType = null
+        editingId = null
+    }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
 
     HistoryScreen(
@@ -70,6 +83,14 @@ fun HistoryRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HistoryV
         onFilterSelected = viewModel::selectFilter,
         onSelect = viewModel::select,
         onDelete = viewModel::delete,
+        onEdit = { detail ->
+            if (detail is RecordDetail.Maintenance) {
+                onEditService(detail.item, detail.ref.id)
+            } else {
+                editingType = detail.ref.type
+                editingId = detail.ref.id
+            }
+        },
         onAdd = { dialog = AddDialog.Chooser },
         onAttach = viewModel::attach,
         onDeleteAttachment = viewModel::deleteAttachment,
@@ -89,6 +110,13 @@ fun HistoryRoute(onRecordService: (MaintenanceItem) -> Unit, viewModel: HistoryV
         AddDialog.Check -> CheckFormHost(isExpanded = isExpanded, onDismiss = { dialog = null })
         null -> Unit
     }
+    val editing = editingType?.let { type -> editingId?.let { RecordRef(type, it) } }
+    when (editing?.type) {
+        TimelineEventType.Fuel -> FuelFormHost(isExpanded, onDismiss = stopEditing, editingId = editing.id)
+        TimelineEventType.Inspection, TimelineEventType.Repair, TimelineEventType.Note ->
+            CheckFormHost(isExpanded, onDismiss = stopEditing, editing = editing)
+        TimelineEventType.Maintenance, null -> Unit
+    }
 }
 
 @Composable
@@ -104,6 +132,7 @@ fun HistoryScreen(
     onDeleteAttachment: (String) -> Unit,
     onDismissAttachFailure: () -> Unit,
     modifier: Modifier = Modifier,
+    onEdit: (RecordDetail) -> Unit = {},
 ) {
     val attachments =
         AttachmentsState(
@@ -156,6 +185,7 @@ fun HistoryScreen(
                         onBack = { onSelect(null) },
                         onDelete = onDelete,
                         modifier = Modifier.fillMaxSize(),
+                        onEdit = onEdit,
                     )
                 },
                 emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
@@ -170,6 +200,7 @@ fun HistoryScreen(
                 onBack = { onSelect(null) },
                 onDelete = onDelete,
                 modifier = modifier.fillMaxSize(),
+                onEdit = onEdit,
             )
         }
         else -> timeline(modifier.fillMaxSize())

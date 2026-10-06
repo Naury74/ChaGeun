@@ -6,6 +6,7 @@ import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleId
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,7 @@ class FakeHistoryRepository : HistoryRepository {
     val addedFuel = mutableListOf<Pair<FuelEntry, Boolean>>()
     val addedChecks = mutableListOf<Pair<CheckEntry, Boolean>>()
     val deleted = mutableListOf<RecordRef>()
+    val updated = mutableListOf<Pair<String, Any>>()
     var lastQuery: TimelineQuery? = null
 
     override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery): Flow<List<TimelineItem>> {
@@ -33,6 +35,18 @@ class FakeHistoryRepository : HistoryRepository {
 
     override suspend fun addCheck(vehicleId: VehicleId, entry: CheckEntry, advancesOdometer: Boolean) {
         addedChecks += entry to advancesOdometer
+    }
+
+    override suspend fun updateFuel(vehicleId: VehicleId, id: String, entry: FuelEntry) {
+        updated += id to entry
+    }
+
+    override suspend fun updateCheck(vehicleId: VehicleId, id: String, entry: CheckEntry) {
+        updated += id to entry
+    }
+
+    override suspend fun updateMaintenance(vehicleId: VehicleId, id: String, entry: ServiceEntry) {
+        updated += id to entry
     }
 
     override suspend fun delete(vehicleId: VehicleId, ref: RecordRef) {

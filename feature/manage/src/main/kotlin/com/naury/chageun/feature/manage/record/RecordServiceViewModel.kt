@@ -3,14 +3,17 @@ package com.naury.chageun.feature.manage.record
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
+import com.naury.chageun.core.domain.history.EditHistoryRecordUseCase
+import com.naury.chageun.core.domain.history.HistoryEntryError
 import com.naury.chageun.core.domain.maintenance.RecordServiceResult
 import com.naury.chageun.core.domain.maintenance.RecordServiceUseCase
 import com.naury.chageun.core.domain.maintenance.ServiceEntryError
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.Kilometers
-import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordDetail
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
+import com.naury.chageun.core.model.TimelineEventType
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -27,13 +30,16 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel(assistedFactory = RecordServiceViewModel.Factory::class)
 class RecordServiceViewModel @AssistedInject constructor(
-    @Assisted private val item: MaintenanceItem,
+    @Assisted target: RecordServiceTarget,
     private val savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
-    private val maintenanceRepository: MaintenanceRepository,
     private val recordService: RecordServiceUseCase,
+    private val editRecord: EditHistoryRecordUseCase,
     clock: Clock,
 ) : ViewModel() {
+
+    private val item = target.item
+    private val editingRecordId = target.editingRecordId
 
     private val _uiState = MutableStateFlow(
         RecordServiceUiState(
@@ -43,16 +49,41 @@ class RecordServiceViewModel @AssistedInject constructor(
             cost = savedStateHandle[KEY_COST] ?: "",
             shopName = savedStateHandle[KEY_SHOP] ?: "",
             memo = savedStateHandle[KEY_MEMO] ?: "",
+            isEditing = editingRecordId != null,
         ),
     )
     val uiState: StateFlow<RecordServiceUiState> = _uiState.asStateFlow()
 
     init {
-        if (_uiState.value.mileage.isEmpty()) {
+        if (editingRecordId != null) {
+            loadEditingRecord(editingRecordId)
+        } else if (_uiState.value.mileage.isEmpty()) {
             viewModelScope.launch {
                 val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-                val current = maintenanceRepository.findCurrentMileage(vehicle.id) ?: return@launch
-                if (_uiState.value.mileage.isEmpty()) onMileageChanged(current.mileage.value.toString())
+                val current = recordService.currentMileage(vehicle.id) ?: return@launch
+                if (_uiState.value.mileage.isEmpty()) onMileageChanged(current.value.toString())
+            }
+        }
+    }
+
+    /** 화면 회전이나 접기 뒤에는 이미 채운 값을 그대로 쓴다. */
+    private fun loadEditingRecord(recordId: String) {
+        if (savedStateHandle.get<Boolean>(KEY_EDIT_LOADED) == true) return
+        viewModelScope.launch {
+            val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
+            val ref = RecordRef(TimelineEventType.Maintenance, recordId)
+            val detail = editRecord.load(vehicle.id, ref) as? RecordDetail.Maintenance
+                ?: return@launch
+            savedStateHandle[KEY_EDIT_LOADED] = true
+            val entry = detail.entry
+            edit(null) {
+                copy(
+                    date = entry.date ?: date,
+                    mileage = entry.mileage?.value?.toString().orEmpty(),
+                    cost = entry.costWon?.toString().orEmpty(),
+                    shopName = entry.shopName.orEmpty(),
+                    memo = detail.memo.orEmpty(),
+                )
             }
         }
     }
@@ -92,10 +123,40 @@ class RecordServiceViewModel @AssistedInject constructor(
             memo = state.memo,
         )
         _uiState.update { it.copy(isSaving = true, lowerMileageWarning = null, hasSaveFailed = false) }
+        if (editingRecordId != null) {
+            saveEdit(editingRecordId, entry)
+            return
+        }
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
             runCatching { recordService(vehicle.id, entry, isLowerMileageConfirmed) }
                 .onSuccess(::applyResult)
+                .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
+        }
+    }
+
+    /** 고칠 때는 같은 기록과 비교하게 되므로 이전 정비보다 낮은 값인지 확인하지 않는다. */
+    private fun saveEdit(recordId: String, entry: ServiceEntry) {
+        viewModelScope.launch {
+            val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
+            runCatching { editRecord.updateService(vehicle.id, recordId, entry) }
+                .onSuccess { errors ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isSaving = false,
+                            isEditSaved = errors.isEmpty(),
+                            errors = errors.mapNotNull { error ->
+                                when (error) {
+                                    HistoryEntryError.FutureDate ->
+                                        RecordServiceField.Date to RecordServiceError.FutureDate
+                                    HistoryEntryError.NegativeCost ->
+                                        RecordServiceField.Cost to RecordServiceError.InvalidNumber
+                                    HistoryEntryError.MissingTitle -> null
+                                }
+                            }.toMap(),
+                        )
+                    }
+                }
                 .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
         }
     }
@@ -136,7 +197,7 @@ class RecordServiceViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(item: MaintenanceItem): RecordServiceViewModel
+        fun create(target: RecordServiceTarget): RecordServiceViewModel
     }
 
     private companion object {
@@ -145,6 +206,7 @@ class RecordServiceViewModel @AssistedInject constructor(
         const val KEY_COST = "record_cost"
         const val KEY_SHOP = "record_shop"
         const val KEY_MEMO = "record_memo"
+        const val KEY_EDIT_LOADED = "record_edit_loaded"
         const val MAX_DIGITS = 9
         const val MAX_TEXT_LENGTH = 200
     }

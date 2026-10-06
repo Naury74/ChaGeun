@@ -17,6 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,11 +47,19 @@ import java.time.LocalDate
 
 /** 앱 셸에서 쓰는 진입점. Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다. */
 @Composable
-fun RecordServiceHost(item: MaintenanceItem, isExpanded: Boolean, onDismiss: () -> Unit) {
-    val viewModel = hiltViewModel<RecordServiceViewModel, RecordServiceViewModel.Factory>(key = item.name) {
-        it.create(item)
+fun RecordServiceHost(
+    item: MaintenanceItem,
+    isExpanded: Boolean,
+    onDismiss: () -> Unit,
+    editingRecordId: String? = null,
+) {
+    val viewModel = hiltViewModel<RecordServiceViewModel, RecordServiceViewModel.Factory>(
+        key = editingRecordId?.let { "${item.name}-edit-$it" } ?: item.name,
+    ) {
+        it.create(RecordServiceTarget(item, editingRecordId))
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(uiState.isEditSaved) { if (uiState.isEditSaved) onDismiss() }
     val content: @Composable () -> Unit = {
         RecordServiceContent(
             uiState = uiState,
@@ -98,7 +107,8 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
             SavedContent(itemName, saved, actions.onDismiss)
             return@Column
         }
-        FormHeader(uiState.item.icon, uiState.item.category.tone(), stringResource(R.string.record_title, itemName))
+        val titleRes = if (uiState.isEditing) R.string.record_edit_title else R.string.record_title
+        FormHeader(uiState.item.icon, uiState.item.category.tone(), stringResource(titleRes, itemName))
         FormLabel(stringResource(R.string.record_date))
         QuickDateField(date = uiState.date, onDateSelected = actions.onDateSelected)
         uiState.errors[RecordServiceField.Date]?.let { ErrorText(it) }
