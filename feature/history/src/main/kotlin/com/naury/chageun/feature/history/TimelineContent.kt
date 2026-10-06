@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -72,9 +73,9 @@ internal fun TimelineContent(
     onOpenAdvancedFilter: () -> Unit = {},
     onClearAdvancedFilter: () -> Unit = {},
     onLoadMore: () -> Unit = {},
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val gutter = ChageunTheme.spacing.gutter
-    val listState = rememberLazyListState()
     // 끝에서 LOAD_MORE_AHEAD줄 전에 미리 다음 페이지를 읽어, 스크롤이 끝에서 멈추지 않게 한다.
     val isNearEnd by remember {
         derivedStateOf {

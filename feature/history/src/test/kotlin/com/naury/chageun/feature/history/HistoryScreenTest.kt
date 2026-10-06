@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FuelAmounts
@@ -267,6 +269,42 @@ class HistoryScreenTest {
         show(HistoryUiState(isLoading = false, sections = listOf(section)))
 
         composeRule.onNodeWithText("₩250,000 spent").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun closingDetailOnPhone_returnsToWhereTheListWas() {
+        val items = (1..30).map { day ->
+            item.copy(ref = RecordRef(TimelineEventType.Fuel, "fuel-$day"), title = "Station $day")
+        }
+        val section = TimelineSection(YearMonth.of(2026, 8), items)
+        var state by mutableStateOf(HistoryUiState(isLoading = false, sections = listOf(section)))
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+        composeRule.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText("Fuel · Station 25"))
+
+        state = state.copy(selected = ref, detail = detail)
+        composeRule.waitForIdle()
+        state = state.copy(selected = null, detail = null)
+        composeRule.waitForIdle()
+
+        // 휴대폰에서는 상세를 여는 동안 목록이 사라지지만, 돌아오면 보던 자리에서 이어진다.
+        composeRule.onNodeWithText("Fuel · Station 25").assertIsDisplayed()
+        composeRule.onNodeWithText("Fuel · Station 1").assertDoesNotExist()
     }
 
     @Test

@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -58,6 +60,7 @@ internal fun ManageList(
     onItemSelected: (MaintenanceItem) -> Unit,
     onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
+    gridState: LazyGridState = rememberLazyGridState(),
 ) {
     val gutter = ChageunTheme.spacing.gutter
     val showAd = LocalAdsEnabled.current
@@ -65,6 +68,7 @@ internal fun ManageList(
     LazyVerticalGrid(
         columns = GridCells.Adaptive(CARD_MIN_WIDTH),
         modifier = modifier,
+        state = gridState,
         contentPadding = PaddingValues(start = gutter, end = gutter, bottom = ChageunTheme.spacing.lg),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
