@@ -86,6 +86,14 @@ class RecordServiceContentTest {
     }
 
     @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_formDark() {
+        composeRule.setContent { AppFrame { RecordServiceContent(base.copy(cost = "80000"), actions) } }
+        composeRule.captureScreen("record_service_phone_dark")
+    }
+
+    @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_formKorean() {

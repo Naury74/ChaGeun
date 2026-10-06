@@ -72,4 +72,13 @@ class FuelFormContentTest {
         composeRule.setContent { AppFrame { FuelFormContent(state, actions) } }
         composeRule.captureScreen("fuel_form_phone")
     }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_formDark() {
+        val state = base.copy(total = "50000", unitPrice = "1700", stationName = "S-OIL")
+        composeRule.setContent { AppFrame { FuelFormContent(state, actions) } }
+        composeRule.captureScreen("fuel_form_phone_dark")
+    }
 }
