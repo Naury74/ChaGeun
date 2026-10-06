@@ -56,6 +56,7 @@ import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.RecordTimestamps
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.GroupDivider
@@ -64,6 +65,7 @@ import com.naury.chageun.core.ui.LabeledListRow
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.formatDateTime
 import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
@@ -116,6 +118,9 @@ internal fun RecordDetailPane(
                     LabeledListRow(icon, label, value)
                 }
             }
+        }
+        detail.timestamps?.let { times ->
+            item(key = "timestamps") { RecordTimes(times) }
         }
         // 이 기록만 질문 대상으로 넣어 AI 화면을 연다. 메모·정비소 이름은 공유하지 않는다.
         onAskAi?.takeUnless { isMileage }?.let { ask ->
@@ -370,3 +375,21 @@ internal fun DetailPlaceholder(modifier: Modifier = Modifier) {
 }
 
 private val HEADER_ICON_SIZE = 52.dp
+
+@Composable
+private fun RecordTimes(times: RecordTimestamps) {
+    val created = stringResource(R.string.history_detail_created, formatDateTime(times.createdAt))
+    val text = times.editedAt?.let {
+        stringResource(
+            R.string.history_detail_times,
+            created,
+            stringResource(R.string.history_detail_edited, formatDateTime(it)),
+        )
+    } ?: created
+    Text(
+        text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = ChageunTheme.spacing.md),
+    )
+}

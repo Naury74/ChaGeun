@@ -151,4 +151,7 @@
     <string name="history_title">History</string>
     <string name="history_ask_ai">Ask AI about this record</string>
     <string name="history_ask_ai_body">Get a summary or ask what it means. Notes and shop names aren\'t shared.</string>
+    <string name="history_detail_created">Recorded %1$s</string>
+    <string name="history_detail_edited">edited %1$s</string>
+    <string name="history_detail_times">%1$s · %2$s</string>
 </resources>
