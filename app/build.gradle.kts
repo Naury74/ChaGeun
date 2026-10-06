@@ -9,6 +9,8 @@ plugins {
 // google-services.json은 Git에 없다. 파일이 있는 로컬·배포 빌드만 Firebase를 쓰고, CI와 처음 받은 사람도 빌드할 수 있다.
 if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
+    // release 빌드 때 R8 mapping을 올려 Crashlytics 스택을 원래 이름으로 보여 준다.
+    apply(plugin = libs.plugins.firebase.crashlytics.get().pluginId)
 }
 
 // 개발 중 실제 광고 노출·클릭은 무효 트래픽으로 계정 정지 사유가 되므로 실제 ID는 release에만 쓴다.
@@ -86,6 +88,7 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)
