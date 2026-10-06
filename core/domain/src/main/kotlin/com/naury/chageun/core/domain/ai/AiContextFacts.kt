@@ -5,6 +5,7 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleHealthLevel
 import java.time.LocalDate
@@ -24,6 +25,8 @@ data class AiContextFacts(
     val maintenance: List<MaintenanceStatus>,
     val missingInfo: List<MaintenanceItem>,
     val recentRecords: List<SharedRecord>,
+    /** 기록 상세에서 물어볼 때 질문 대상인 기록. 최근 기록 목록에는 다시 넣지 않는다. */
+    val focusRecord: SharedRecord? = null,
 )
 
 /**
@@ -37,6 +40,10 @@ data class SharedRecord(
     val title: String?,
     val mileage: Kilometers?,
     val costWon: Long?,
+    /** 질문 대상 주유 기록에만 채운다. 연비나 단가를 물을 때 필요하다. */
+    val fuelVolumeMl: Long? = null,
+    val fuelUnitPriceWon: Long? = null,
+    val isFullTank: Boolean? = null,
 )
 
 data class AiContextOptions(
@@ -45,4 +52,6 @@ data class AiContextOptions(
     val includeCosts: Boolean = false,
     /** 값이 있으면 이 항목의 정비 상태만 공유한다. */
     val focusItem: MaintenanceItem? = null,
+    /** 기록 상세에서 열면 그 기록. 정비 기록이면 그 항목의 상태와 기록도 함께 공유한다. */
+    val focusRecord: RecordRef? = null,
 )

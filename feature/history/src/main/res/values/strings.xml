@@ -147,4 +147,6 @@
         <item quantity="other">%1$d photos attached</item>
     </plurals>
     <string name="history_title">History</string>
+    <string name="history_ask_ai">Ask AI about this record</string>
+    <string name="history_ask_ai_body">Get a summary or ask what it means. Notes and shop names aren\'t shared.</string>
 </resources>

@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
@@ -58,6 +60,7 @@ import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.LabeledListRow
+import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatLitres
@@ -75,6 +78,7 @@ internal fun RecordDetailPane(
     onDelete: (RecordRef) -> Unit,
     modifier: Modifier = Modifier,
     onEdit: (RecordDetail) -> Unit = {},
+    onAskAi: ((RecordRef) -> Unit)? = null,
 ) {
     var isConfirmingDelete by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
@@ -107,6 +111,27 @@ internal fun RecordDetailPane(
                 detailRows(detail).forEachIndexed { index, (icon, label, value) ->
                     if (index > 0) GroupDivider()
                     LabeledListRow(icon, label, value)
+                }
+            }
+        }
+        // 이 기록만 질문 대상으로 넣어 AI 화면을 연다. 메모·정비소 이름은 공유하지 않는다.
+        onAskAi?.let { ask ->
+            item(key = "ask-ai") {
+                CardGroup(null, Modifier.padding(top = ChageunTheme.spacing.xs)) {
+                    ListRow(
+                        icon = Icons.Filled.AutoAwesome,
+                        title = stringResource(R.string.history_ask_ai),
+                        body = stringResource(R.string.history_ask_ai_body),
+                        tone = ChageunTheme.colors.ai,
+                        onClick = { ask(detail.ref) },
+                        trailing = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                    )
                 }
             }
         }
