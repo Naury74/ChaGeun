@@ -18,11 +18,14 @@ import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -38,8 +41,14 @@ class HistoryViewModelTest {
 
     private val attachments = FakeAttachmentRepository()
 
-    private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) =
-        HistoryViewModel(handle, vehicles, history, attachments, DeleteHistoryRecordUseCase(history, attachments))
+    private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) = HistoryViewModel(
+        handle,
+        vehicles,
+        history,
+        attachments,
+        DeleteHistoryRecordUseCase(history, attachments),
+        Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
+    )
 
     private fun item(type: TimelineEventType, id: String, date: LocalDate?) = TimelineItem(
         ref = RecordRef(type, id),
@@ -126,5 +135,24 @@ class HistoryViewModelTest {
         backgroundScope.launch { restored.uiState.collect {} }
 
         assertThat(restored.uiState.first { !it.isLoading }.filter).isEqualTo(HistoryFilter.Fuel)
+    }
+
+    @Test
+    fun advancedFilter_isPassedToQuery_andSurvivesRecreation() = runTest {
+        val handle = SavedStateHandle()
+        val viewModel = viewModel(handle)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.applyAdvancedFilter(
+            AdvancedFilter(period = HistoryPeriod.Last3Months, minCostWon = 50_000, withAttachmentsOnly = true),
+        )
+        advanceUntilIdle()
+
+        val query = history.lastQuery!!
+        assertThat(query.dateFrom).isEqualTo(LocalDate.of(2026, 7, 1))
+        assertThat(query.dateTo).isEqualTo(LocalDate.of(2026, 10, 1))
+        assertThat(query.minCostWon).isEqualTo(50_000)
+        assertThat(query.withAttachmentsOnly).isTrue()
+        assertThat(viewModel(handle).uiState.first { !it.isLoading }.advanced.activeCount).isEqualTo(3)
     }
 }

@@ -45,6 +45,11 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
             eventTypes = query.types.map { it.name },
             keyword = query.keyword.trim(),
             matchingItemTypes = query.matchingItems.map { it.name },
+            dateFrom = query.dateFrom,
+            dateTo = query.dateTo,
+            minCostWon = query.minCostWon,
+            maxCostWon = query.maxCostWon,
+            withAttachmentsOnly = query.withAttachmentsOnly,
         ).map { rows -> rows.mapNotNull { it.asTimelineItem() } }
 
     override fun observeRecord(vehicleId: VehicleId, ref: RecordRef): Flow<RecordDetail?> = when (ref.type) {
@@ -232,6 +237,7 @@ private fun TimelineRow.asTimelineItem(): TimelineItem? {
         source = RecordSource.User,
         createdAt = createdAt,
         isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
+        attachmentCount = attachmentCount,
     )
 }
 

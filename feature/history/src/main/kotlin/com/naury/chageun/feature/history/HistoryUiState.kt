@@ -20,6 +20,7 @@ data class TimelineSection(val month: YearMonth?, val items: List<TimelineItem>)
 data class HistoryUiState(
     val isLoading: Boolean = true,
     val filter: HistoryFilter = HistoryFilter.All,
+    val advanced: AdvancedFilter = AdvancedFilter(),
     val keyword: String = "",
     val sections: List<TimelineSection> = emptyList(),
     val selected: RecordRef? = null,
@@ -28,5 +29,6 @@ data class HistoryUiState(
     val attachFailedCount: Int = 0,
 ) {
     val isEmpty: Boolean get() = !isLoading && sections.isEmpty()
-    val isFiltered: Boolean get() = filter != HistoryFilter.All || keyword.isNotBlank()
+    val isFiltered: Boolean
+        get() = filter != HistoryFilter.All || keyword.isNotBlank() || advanced.activeCount > 0
 }

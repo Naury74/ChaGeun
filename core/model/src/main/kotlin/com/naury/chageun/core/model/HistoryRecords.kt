@@ -51,6 +51,7 @@ data class TimelineItem(
     val createdAt: Instant,
     /** 주행거리를 평균 주행량으로 추정한 정비 기록이다. */
     val isMileageEstimated: Boolean = false,
+    val attachmentCount: Int = 0,
 )
 
 sealed interface RecordDetail {
