@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -39,7 +38,7 @@ class HomeViewModel @Inject constructor(
         .flatMapLatest { vehicle ->
             combine(
                 observeMaintenanceOverview(vehicle.id),
-                historyRepository.observeTimeline(vehicle.id, TimelineQuery()).map { it.take(RECENT_RECORD_COUNT) },
+                historyRepository.observeTimeline(vehicle.id, TimelineQuery(), limit = RECENT_RECORD_COUNT),
                 photoRepository.observe(vehicle.id),
                 photoRepository.observeCutout(vehicle.id),
                 authRepository.currentUser,

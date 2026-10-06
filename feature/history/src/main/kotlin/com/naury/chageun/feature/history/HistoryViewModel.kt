@@ -27,7 +27,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,6 +44,9 @@ class HistoryViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val attachFailedCount = MutableStateFlow(0)
+
+    // 기록이 많아도 첫 화면이 빨리 뜨도록 한 번에 PAGE_SIZE개씩 늘려 읽는다. 조건이 바뀌면 첫 페이지로 돌아간다.
+    private val pageLimit = MutableStateFlow(PAGE_SIZE)
 
     private val filter = savedStateHandle.getStateFlow(KEY_FILTER, HistoryFilter.All.name)
     private val keyword = savedStateHandle.getStateFlow(KEY_KEYWORD, "")
@@ -65,10 +70,17 @@ class HistoryViewModel @Inject constructor(
                     advancedFilter.applyTo(base, LocalDate.now(clock)),
                 )
             }
-            val timeline = query.flatMapLatest { (activeFilter, advancedFilter, timelineQuery) ->
-                historyRepository.observeTimeline(vehicle.id, timelineQuery)
-                    .map { items -> Triple(activeFilter, advancedFilter, items) }
-            }
+            val timeline = query
+                .onEach { pageLimit.value = PAGE_SIZE }
+                .flatMapLatest { (activeFilter, advancedFilter, timelineQuery) ->
+                    combine(
+                        pageLimit.flatMapLatest { limit ->
+                            historyRepository.observeTimeline(vehicle.id, timelineQuery, limit)
+                                .map { items -> TimelinePage(items, hasMore = items.size >= limit) }
+                        },
+                        historyRepository.observeMonthlyCosts(vehicle.id, timelineQuery),
+                    ) { page, totals -> Triple(activeFilter, advancedFilter, page to totals) }
+                }
             val detail = selected.flatMapLatest { key ->
                 key?.toRecordRef()?.let { ref ->
                     combine(
@@ -78,17 +90,19 @@ class HistoryViewModel @Inject constructor(
                 } ?: flowOf(null to emptyList())
             }
             combine(timeline, keyword, detail, attachFailedCount) {
-                    (activeFilter, advancedFilter, items),
+                    (activeFilter, advancedFilter, pageAndTotals),
                     text,
                     (record, attachments),
                     failed,
                 ->
+                val (page, totals) = pageAndTotals
                 HistoryUiState(
                     isLoading = false,
                     filter = activeFilter,
                     advanced = advancedFilter,
                     keyword = text,
-                    sections = items.groupIntoMonths(),
+                    sections = page.items.groupIntoMonths(totals),
+                    hasMore = page.hasMore,
                     selected = record?.ref,
                     detail = record,
                     attachments = if (record != null) attachments else emptyList(),
@@ -97,6 +111,14 @@ class HistoryViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HistoryUiState())
+
+    /** 목록 끝 근처에 닿으면 부른다. 이미 읽는 중이어도 한 페이지씩만 늘린다. */
+    fun loadMore() {
+        val state = uiState.value
+        if (!state.hasMore) return
+        val loaded = state.sections.sumOf { it.items.size }
+        pageLimit.update { current -> if (loaded >= current) current + PAGE_SIZE else current }
+    }
 
     fun applyAdvancedFilter(filter: AdvancedFilter) {
         savedStateHandle[KEY_ADVANCED] = filter.encode()
@@ -140,9 +162,9 @@ class HistoryViewModel @Inject constructor(
 
     private suspend fun vehicleId() = vehicleRepository.observePrimaryVehicle().filterNotNull().first().id
 
-    private fun List<TimelineItem>.groupIntoMonths(): List<TimelineSection> =
+    private fun List<TimelineItem>.groupIntoMonths(totals: Map<YearMonth?, Long>): List<TimelineSection> =
         groupBy { item -> item.date?.let(YearMonth::from) }
-            .map { (month, items) -> TimelineSection(month, items) }
+            .map { (month, items) -> TimelineSection(month, items, totals[month] ?: 0) }
 
     private companion object {
         const val KEY_FILTER = "history_filter"
@@ -151,6 +173,7 @@ class HistoryViewModel @Inject constructor(
         const val KEY_SELECTED = "history_selected"
         const val KEY_ADVANCED = "history_advanced"
         const val STOP_TIMEOUT_MILLIS = 5_000L
+        const val PAGE_SIZE = 50
     }
 }
 
@@ -159,3 +182,5 @@ internal fun String.toRecordRef(): RecordRef? {
     val type = substringBefore(':').let { name -> TimelineEventType.entries.firstOrNull { it.name == name } }
     return type?.let { RecordRef(it, substringAfter(':')) }
 }
+
+private data class TimelinePage(val items: List<TimelineItem>, val hasMore: Boolean)

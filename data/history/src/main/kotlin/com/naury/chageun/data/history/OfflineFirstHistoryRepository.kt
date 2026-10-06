@@ -27,6 +27,7 @@ import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +40,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
 
     private val historyDao get() = database.historyDao()
 
-    override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery): Flow<List<TimelineItem>> =
+    override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery, limit: Int?): Flow<List<TimelineItem>> =
         historyDao.observeTimeline(
             vehicleId = vehicleId.value,
             eventTypes = query.types.map { it.name },
@@ -50,7 +51,26 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
             minCostWon = query.minCostWon,
             maxCostWon = query.maxCostWon,
             withAttachmentsOnly = query.withAttachmentsOnly,
+            limit = limit ?: NO_LIMIT,
         ).map { rows -> rows.mapNotNull { it.asTimelineItem() } }
+
+    override fun observeMonthlyCosts(vehicleId: VehicleId, query: TimelineQuery): Flow<Map<YearMonth?, Long>> =
+        historyDao.observeMonthlyCosts(
+            vehicleId = vehicleId.value,
+            eventTypes = query.types.map { it.name },
+            keyword = query.keyword.trim(),
+            matchingItemTypes = query.matchingItems.map { it.name },
+            dateFrom = query.dateFrom,
+            dateTo = query.dateTo,
+            minCostWon = query.minCostWon,
+            maxCostWon = query.maxCostWon,
+            withAttachmentsOnly = query.withAttachmentsOnly,
+        ).map { rows ->
+            rows.mapNotNull { row ->
+                val total = row.totalWon ?: return@mapNotNull null
+                row.month?.let(YearMonth::parse) to total
+            }.toMap()
+        }
 
     override fun observeRecord(vehicleId: VehicleId, ref: RecordRef): Flow<RecordDetail?> = when (ref.type) {
         TimelineEventType.Maintenance -> historyDao.observeMaintenance(vehicleId.value, ref.id).map {
@@ -220,6 +240,9 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
         const val SOURCE_FUEL = "FUEL"
         const val SOURCE_CHECK = "CHECK"
         const val SOURCE_MAINTENANCE = "MAINTENANCE"
+
+        // SQLite에서 LIMIT -1은 제한 없음이다.
+        const val NO_LIMIT = -1
     }
 }
 
