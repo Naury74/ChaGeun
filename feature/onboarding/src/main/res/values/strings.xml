@@ -49,7 +49,7 @@
     <string name="onboarding_vehicle_other_maker">Other</string>
     <string name="onboarding_vehicle_custom">Type it in</string>
     <string name="onboarding_vehicle_older">Earlier</string>
-    <string name="onboarding_mileage_caption">Check the total distance on your dashboard. A rough number is fine.</string>
+    <string name="onboarding_mileage_caption">Look for ODO, the total distance, on your dashboard.</string>
     <string name="onboarding_quick_mode_recent">Last 3 months</string>
     <string name="onboarding_quick_mode_half_year">6 months ago</string>
     <string name="onboarding_quick_mode_one_year">A year ago</string>
@@ -57,4 +57,5 @@
     <string name="onboarding_notify_example_oil">Engine oil is due in about 500 km</string>
     <string name="onboarding_notify_example_inspection">Your inspection is due in 30 days</string>
     <string name="onboarding_notify_example_mileage">Time to update your mileage</string>
+    <string name="onboarding_mileage_estimate">Not sure? About %2$s km for a %1$d car</string>
 </resources>

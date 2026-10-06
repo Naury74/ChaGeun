@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.motionSpec
@@ -70,7 +71,7 @@ fun ChoiceCard(
         Column(
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
         ) {
             Icon(
                 icon,
@@ -80,7 +81,10 @@ fun ChoiceCard(
             )
             Text(
                 label,
-                style = MaterialTheme.typography.labelLarge,
+                // '플러그인 하이브리드'가 글자 중간에서 끊기지 않도록 어절 단위로 줄을 바꾼다.
+                style = MaterialTheme.typography.labelLarge.copy(
+                    lineBreak = LineBreak.Heading.copy(wordBreak = LineBreak.WordBreak.Phrase),
+                ),
                 textAlign = TextAlign.Center,
                 color = if (selected) colors.onPrimaryContainer else colors.onSurface,
             )

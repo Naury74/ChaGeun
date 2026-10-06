@@ -45,8 +45,15 @@ class OnboardingScreenshotTest {
     )
 
     @Test
-    fun mileage() =
-        screenshot("onboarding_mileage", OnboardingUiState(step = OnboardingStep.Mileage, mileage = "42180"))
+    fun mileage() = screenshot(
+        "onboarding_mileage",
+        OnboardingUiState(
+            step = OnboardingStep.Mileage,
+            mileage = "42180",
+            modelYear = "2022",
+            mileageEstimate = 57_000,
+        ),
+    )
 
     @Test
     fun notifications() = screenshot("onboarding_notifications", OnboardingUiState(step = OnboardingStep.Notifications))

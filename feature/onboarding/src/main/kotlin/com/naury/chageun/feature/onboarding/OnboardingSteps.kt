@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -23,6 +27,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -37,6 +42,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -60,6 +68,7 @@ import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.R as UiR
+import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
 import java.time.Year
@@ -219,22 +228,34 @@ internal fun VehicleInfoStep(uiState: OnboardingUiState, onAction: (OnboardingAc
     uiState.errors[OnboardingField.ModelYear]?.let { ErrorText(it) }
 
     SectionLabel(R.string.onboarding_vehicle_fuel)
-    FlowRow(
-        maxItemsInEachRow = FUEL_COLUMNS,
-        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-    ) {
-        FuelType.entries.forEach { fuel ->
-            ChoiceCard(
-                label = stringResource(fuel.labelRes),
-                icon = fuel.icon,
-                selected = uiState.fuelType == fuel,
-                onClick = { onAction(OnboardingAction.FuelTypeSelected(fuel)) },
-                modifier = Modifier.weight(1f),
-            )
+    FuelPicker(uiState.fuelType) { onAction(OnboardingAction.FuelTypeSelected(it)) }
+    uiState.errors[OnboardingField.FuelType]?.let { ErrorText(it) }
+}
+
+@Composable
+private fun FuelPicker(selected: FuelType?, onSelected: (FuelType) -> Unit) {
+    // 마지막 줄이 한 칸만 남아도 다른 카드와 너비를 맞추도록 빈 칸을 채우고, 한 줄의 카드 높이를 같게 둔다.
+    Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        FuelType.entries.chunked(FUEL_COLUMNS).forEach { row ->
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            ) {
+                row.forEach { fuel ->
+                    ChoiceCard(
+                        label = stringResource(fuel.labelRes),
+                        icon = fuel.icon,
+                        selected = selected == fuel,
+                        onClick = { onSelected(fuel) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                    )
+                }
+                repeat(FUEL_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
+            }
         }
     }
-    uiState.errors[OnboardingField.FuelType]?.let { ErrorText(it) }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -325,15 +346,35 @@ internal fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction
             fontSize = MaterialTheme.typography.headlineSmall.fontSize,
         )
         val transformation = remember(unit, unitStyle) { MileageTransformation(unit, unitStyle) }
+        val focusRequester = remember { FocusRequester() }
+        // 이 단계는 숫자 하나만 받으므로 들어오자마자 키패드를 띄운다.
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
         BasicTextField(
             value = uiState.mileage,
             onValueChange = { onAction(OnboardingAction.MileageChanged(it)) },
             textStyle = style,
             singleLine = true,
             visualTransformation = transformation,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
         )
+        HorizontalDivider(
+            thickness = 2.dp,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth(UNDERLINE_WIDTH),
+        )
+        val year = uiState.modelYear.toIntOrNull()
+        val estimate = uiState.mileageEstimate
+        if (year != null && estimate != null) {
+            ChoicePill(
+                label = stringResource(R.string.onboarding_mileage_estimate, year, formatNumber(estimate)),
+                selected = uiState.mileage == estimate.toString(),
+                onClick = { onAction(OnboardingAction.MileageChanged(estimate.toString())) },
+            )
+        }
         Text(
             stringResource(R.string.onboarding_mileage_caption),
             style = MaterialTheme.typography.bodySmall,
@@ -403,6 +444,7 @@ private class MileageTransformation(private val unit: String, private val unitSt
     }
 }
 
+private const val UNDERLINE_WIDTH = 0.7f
 private const val INTRO_IMAGE_RATIO = 360f / 160f
 private const val FUEL_COLUMNS = 3
 private const val RECENT_YEARS = 15

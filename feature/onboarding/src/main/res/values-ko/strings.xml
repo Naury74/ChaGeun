@@ -49,7 +49,7 @@
     <string name="onboarding_vehicle_other_maker">기타</string>
     <string name="onboarding_vehicle_custom">직접 입력</string>
     <string name="onboarding_vehicle_older">이전 연식</string>
-    <string name="onboarding_mileage_caption">계기판의 누적 주행거리를 확인해 주세요. 대략적인 값이어도 괜찮아요.</string>
+    <string name="onboarding_mileage_caption">계기판의 ODO(누적 주행거리) 값을 보면 돼요.</string>
     <string name="onboarding_quick_mode_recent">3개월 이내</string>
     <string name="onboarding_quick_mode_half_year">6개월 전</string>
     <string name="onboarding_quick_mode_one_year">1년 전</string>
@@ -57,4 +57,5 @@
     <string name="onboarding_notify_example_oil">엔진오일 교체까지 약 500km 남았어요</string>
     <string name="onboarding_notify_example_inspection">자동차 검사 기한이 30일 남았어요</string>
     <string name="onboarding_notify_example_mileage">이번 달 주행거리를 알려 주세요</string>
+    <string name="onboarding_mileage_estimate">잘 모르겠어요 · %1$d년식 평균 약 %2$s km</string>
 </resources>
