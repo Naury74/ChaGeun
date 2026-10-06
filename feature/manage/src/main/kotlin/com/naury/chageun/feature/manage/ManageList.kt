@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.component.PressStyle
+import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.pressable
@@ -70,25 +70,19 @@ internal fun ManageList(
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
         item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            ) {
-                items(ManageFilter.entries) { filter ->
-                    FilterChip(
-                        selected = uiState.filter == filter,
-                        onClick = { onFilterSelected(filter) },
-                        label = {
-                            Text(
-                                stringResource(
-                                    R.string.manage_filter_with_count,
-                                    stringResource(filter.labelRes),
-                                    uiState.counts[filter] ?: 0,
-                                ),
-                            )
-                        },
+            // 넓은 화면에서 끝까지 늘어나면 눌러야 할 곳이 멀어지므로 폭을 제한한다.
+            SegmentedControl(
+                options = ManageFilter.entries.map { filter ->
+                    stringResource(
+                        R.string.manage_filter_with_count,
+                        stringResource(filter.labelRes),
+                        uiState.counts[filter] ?: 0,
                     )
-                }
-            }
+                },
+                selectedIndex = ManageFilter.entries.indexOf(uiState.filter),
+                onSelect = { onFilterSelected(ManageFilter.entries[it]) },
+                modifier = Modifier.widthIn(max = SEGMENT_MAX_WIDTH),
+            )
         }
         if (uiState.items.isEmpty() && !uiState.isLoading) {
             item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
@@ -219,6 +213,7 @@ private val ManageFilter.labelRes: Int
 private const val DISABLED_ALPHA = 0.6f
 
 private val CARD_MIN_WIDTH = 300.dp
+private val SEGMENT_MAX_WIDTH = 480.dp
 
 // 상세가 열리며 칸 너비가 바뀔 때 카드가 새 자리로 미끄러지는 시간. 칸 애니메이션과 맞춘다.
 private const val PLACEMENT_MS = 360
