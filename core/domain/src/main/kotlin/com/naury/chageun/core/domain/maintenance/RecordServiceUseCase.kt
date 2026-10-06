@@ -26,6 +26,9 @@ sealed interface RecordServiceResult {
 
     /** 같은 항목의 이전 정비보다 낮은 값이다. 유지하려면 확인 후 다시 저장한다. */
     data class NeedsConfirmation(val previousMileage: Kilometers) : RecordServiceResult
+
+    /** 지금 저장된 주행거리보다 높다. 현재 주행거리도 올릴지 정한 뒤 다시 저장한다. */
+    data class NeedsOdometerDecision(val currentMileage: Kilometers) : RecordServiceResult
 }
 
 class RecordServiceUseCase @Inject constructor(
@@ -54,20 +57,12 @@ class RecordServiceUseCase @Inject constructor(
         entry: ServiceEntry,
         isLowerMileageConfirmed: Boolean = false,
         alsoReplaced: Set<MaintenanceItem> = emptySet(),
+        updateOdometer: Boolean? = null,
     ): RecordServiceResult {
-        val errors = buildSet {
-            if (entry.date.isAfter(LocalDate.now(clock))) add(ServiceEntryError.FutureDate)
-            if ((entry.costWon ?: 0) < 0) add(ServiceEntryError.NegativeCost)
-        }
-        if (errors.isNotEmpty()) return RecordServiceResult.Rejected(errors)
-
-        val previousMileage = repository.findLatestService(vehicleId, entry.item)?.mileage
-        if (!isLowerMileageConfirmed && previousMileage != null && entry.mileage < previousMileage) {
-            return RecordServiceResult.NeedsConfirmation(previousMileage)
-        }
+        checkBeforeSaving(vehicleId, entry, isLowerMileageConfirmed, updateOdometer)?.let { return it }
 
         val currentMileage = repository.findCurrentMileage(vehicleId)?.mileage
-        val advancesOdometer = currentMileage == null || entry.mileage > currentMileage
+        val advancesOdometer = currentMileage == null || (entry.mileage > currentMileage && updateOdometer == true)
         repository.recordService(vehicleId, entry, advancesOdometer)
         analytics.track(AnalyticsEvent.MaintenanceRecordAdded(withCost = entry.costWon != null))
         notifier.cancel(entry.item)
@@ -89,6 +84,30 @@ class RecordServiceUseCase @Inject constructor(
             nextDateDue = rule?.intervalMonths?.let { entry.date.plusMonths(it) },
             alsoReplaced = companions,
         )
+    }
+
+    /** 저장하기 전에 고치거나 사용자가 정해야 할 것이 있으면 그 결과를, 바로 저장해도 되면 null을 낸다. */
+    private suspend fun checkBeforeSaving(
+        vehicleId: VehicleId,
+        entry: ServiceEntry,
+        isLowerMileageConfirmed: Boolean,
+        updateOdometer: Boolean?,
+    ): RecordServiceResult? {
+        val errors = buildSet {
+            if (entry.date.isAfter(LocalDate.now(clock))) add(ServiceEntryError.FutureDate)
+            if ((entry.costWon ?: 0) < 0) add(ServiceEntryError.NegativeCost)
+        }
+        val previousMileage = repository.findLatestService(vehicleId, entry.item)?.mileage
+        // 지난 교체를 늦게 적는 경우도 있어, 현재 주행거리를 올릴지는 사용자가 정한다.
+        val currentMileage = repository.findCurrentMileage(vehicleId)?.mileage
+        return when {
+            errors.isNotEmpty() -> RecordServiceResult.Rejected(errors)
+            !isLowerMileageConfirmed && previousMileage != null && entry.mileage < previousMileage ->
+                RecordServiceResult.NeedsConfirmation(previousMileage)
+            updateOdometer == null && currentMileage != null && entry.mileage > currentMileage ->
+                RecordServiceResult.NeedsOdometerDecision(currentMileage)
+            else -> null
+        }
     }
 }
 
