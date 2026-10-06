@@ -5,6 +5,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.Until
+import java.time.Year
 
 internal const val PACKAGE_NAME = "com.naury.chageun"
 
@@ -22,7 +23,8 @@ internal fun MacrobenchmarkScope.registerCarIfNeeded() {
     awaitText("Tell us about your car")
     clickText("Hyundai")
     clickText("Avante")
-    clickText("2022")
+    // 연식은 가로 목록이라 좁은 화면에서는 오래된 해가 밖에 있다. 늘 앞쪽에 보이는 작년을 고른다.
+    clickText((Year.now().value - 1).toString())
     clickText("Gasoline")
     clickText("Next")
 
