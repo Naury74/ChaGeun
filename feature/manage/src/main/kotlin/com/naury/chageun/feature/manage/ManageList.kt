@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -23,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -32,6 +36,7 @@ import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
+import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -56,14 +61,16 @@ internal fun ManageList(
 ) {
     val gutter = ChageunTheme.spacing.gutter
     val showAd = LocalAdsEnabled.current
-    LazyColumn(
+    // 넓으면 카드를 여러 열로 놓고, 상세가 열려 칸이 좁아지면 한 열로 다시 배치된다.
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(CARD_MIN_WIDTH),
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(start = gutter, end = gutter, bottom = ChageunTheme.spacing.lg),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
-        item(key = "filters") {
+        item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
             LazyRow(
-                contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
             ) {
                 items(ManageFilter.entries) { filter ->
@@ -84,7 +91,7 @@ internal fun ManageList(
             }
         }
         if (uiState.items.isEmpty() && !uiState.isLoading) {
-            item(key = "empty") {
+            item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
                 EmptyState(
                     icon = Icons.Filled.TaskAlt,
                     title = stringResource(R.string.manage_empty_filter),
@@ -99,12 +106,12 @@ internal fun ManageList(
                 rule = uiState.rules[status.item],
                 isSelected = status.item == uiState.selectedItem,
                 onClick = { onItemSelected(status.item) },
-                modifier = Modifier.padding(horizontal = gutter),
+                modifier = Modifier.animateItem(placementSpec = motionSpec(PLACEMENT_MS)),
             )
         }
         if (uiState.filter == ManageFilter.All && uiState.disabledItems.isNotEmpty()) {
-            item(key = "disabled-title") {
-                Column(Modifier.padding(horizontal = gutter, vertical = ChageunTheme.spacing.xs)) {
+            item(key = "disabled-title", span = { GridItemSpan(maxLineSpan) }) {
+                Column(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
                     Text(stringResource(R.string.manage_disabled_items), style = MaterialTheme.typography.titleMedium)
                     Text(
                         stringResource(R.string.manage_disabled_hint),
@@ -117,8 +124,9 @@ internal fun ManageList(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.medium)
                         .clickable(role = Role.Button) { onEditRule(item) }
-                        .padding(horizontal = gutter, vertical = ChageunTheme.spacing.xs)
+                        .padding(horizontal = ChageunTheme.spacing.xs, vertical = ChageunTheme.spacing.xs)
                         .alpha(DISABLED_ALPHA),
                     horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
@@ -139,7 +147,7 @@ internal fun ManageList(
         }
         // 기획서 17.2: 관리 목록의 마지막에 한 칸. 빈 목록이나 광고를 쓰지 않을 때는 간격도 남기지 않는다.
         if (showAd && uiState.items.isNotEmpty()) {
-            item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = gutter)) }
+            item(key = "ad", span = { GridItemSpan(maxLineSpan) }) { NativeAdSlot() }
         }
     }
 }
@@ -209,6 +217,11 @@ private val ManageFilter.labelRes: Int
     }
 
 private const val DISABLED_ALPHA = 0.6f
+
+private val CARD_MIN_WIDTH = 300.dp
+
+// 상세가 열리며 칸 너비가 바뀔 때 카드가 새 자리로 미끄러지는 시간. 칸 애니메이션과 맞춘다.
+private const val PLACEMENT_MS = 360
 
 // 아이콘·이름·배지가 한 줄에 들어가려면 이 정도 너비가 필요하다.
 private val NARROW_CARD_WIDTH = 320.dp

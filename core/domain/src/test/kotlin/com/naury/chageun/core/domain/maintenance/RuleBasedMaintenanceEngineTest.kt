@@ -2,6 +2,7 @@ package com.naury.chageun.core.domain.maintenance
 
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.Confidence
+import com.naury.chageun.core.model.DueEstimate
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -24,6 +25,22 @@ class RuleBasedMaintenanceEngineTest {
         currentKm: Long? = 45_000,
         history: List<MileageReading> = listOfNotNull(currentKm?.let { MileageReading(today, Kilometers(it)) }),
     ) = engine.evaluate(MaintenanceEvaluationInput(rule, lastService, history, today))
+
+    @Test
+    fun estimatesDueDate_fromLifetimePace_whenOnlyOneReadingExists() {
+        // 2024-01-01부터 1,004일에 45,000 km → 하루 약 44.8 km, 남은 5,000 km는 112일
+        val status = engine.evaluate(
+            MaintenanceEvaluationInput(
+                engineOil,
+                ServiceRecord(today.minusMonths(3), Kilometers(40_000)),
+                listOf(MileageReading(today, Kilometers(45_000))),
+                today,
+                modelYear = 2024,
+            ),
+        )
+
+        assertThat(status.estimatedDue).isEqualTo(DueEstimate(today.plusDays(112), Confidence.Low))
+    }
 
     @Test
     fun returnsGood_whenBothDimensionsAreFarFromDue() {

@@ -11,6 +11,7 @@ data class MaintenanceEvaluationInput(
     val lastService: ServiceRecord?,
     val mileageHistory: List<MileageReading>,
     val today: LocalDate,
+    val modelYear: Int? = null,
 )
 
 /**
