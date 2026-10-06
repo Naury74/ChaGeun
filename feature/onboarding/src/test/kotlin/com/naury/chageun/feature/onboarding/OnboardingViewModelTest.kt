@@ -49,6 +49,14 @@ class OnboardingViewModelTest {
     }
 
     @Test
+    fun offersMileageEstimate_fromModelYear() {
+        val vm = viewModel()
+        vm.onAction(OnboardingAction.ModelYearChanged("2023"))
+
+        assertThat(vm.uiState.value.mileageEstimate).isEqualTo(45_000)
+    }
+
+    @Test
     fun keepsPlateStep_withoutError_whileHangulIsComposing() {
         val vm = viewModel()
         vm.onAction(OnboardingAction.Start)

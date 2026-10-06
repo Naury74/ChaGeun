@@ -24,6 +24,8 @@ data class OnboardingUiState(
     val modelYear: String = "",
     val fuelType: FuelType? = null,
     val mileage: String = "",
+    /** 계기판을 볼 수 없을 때 고를 수 있는 연식 기준 대략값. 연식을 모르면 null이다. */
+    val mileageEstimate: Long? = null,
     val quickServices: Map<MaintenanceItem, QuickServiceInput> = QUICK_SERVICE_ITEMS.associateWith {
         QuickServiceInput()
     },

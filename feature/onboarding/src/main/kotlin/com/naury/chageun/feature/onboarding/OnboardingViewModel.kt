@@ -54,7 +54,11 @@ class OnboardingViewModel @Inject constructor(
             is OnboardingAction.ModelChanged -> edit(OnboardingField.Model) { copy(model = action.value) }
             is OnboardingAction.ModelYearChanged ->
                 edit(OnboardingField.ModelYear) {
-                    copy(modelYear = action.value.filter(Char::isDigit).take(YEAR_DIGITS))
+                    val year = action.value.filter(Char::isDigit).take(YEAR_DIGITS)
+                    copy(
+                        modelYear = year,
+                        mileageEstimate = MileageEstimate.fromModelYear(year.toIntOrNull(), LocalDate.now(clock)),
+                    )
                 }
             is OnboardingAction.FuelTypeSelected -> edit(OnboardingField.FuelType) { copy(fuelType = action.value) }
             OnboardingAction.SubmitVehicleInfo -> submitVehicleInfo()
