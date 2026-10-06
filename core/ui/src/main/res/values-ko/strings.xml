@@ -76,4 +76,12 @@
     <string name="photo_source_title">사진 추가</string>
     <string name="photo_source_camera">사진 찍기</string>
     <string name="photo_source_gallery">앨범에서 고르기</string>
+    <string name="cutout_downloading">배경 지우기 기능을 내려받는 중이에요 (처음 한 번만)</string>
+    <string name="cutout_progress">%1$d%%</string>
+    <string name="cutout_processing">배경을 지우는 중이에요…</string>
+    <string name="cutout_failed_download">배경 지우기 기능을 내려받지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</string>
+    <string name="cutout_failed_no_car">사진에서 차를 찾지 못했어요. 차가 크게 나온 사진으로 바꿔 보세요.</string>
+    <string name="cutout_failed">배경을 지우지 못했어요.</string>
+    <string name="cutout_retry">다시 시도</string>
+    <string name="cutout_remove_background">배경 지우기</string>
 </resources>

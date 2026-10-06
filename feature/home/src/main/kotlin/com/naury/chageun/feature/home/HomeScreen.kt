@@ -43,6 +43,7 @@ import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceStatus
+import com.naury.chageun.core.ui.CutoutStatusPanel
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
@@ -89,6 +90,7 @@ fun HomeRoute(
             onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
             onOpenItem = onOpenItem,
             onAddPhoto = photoInput::open,
+            onRemoveBackground = viewModel::removeBackground,
         ),
     )
 }
@@ -108,6 +110,7 @@ data class HomeActions(
     val onOpenItem: (MaintenanceItem) -> Unit = {},
     /** null이면 사진 넣기 버튼을 보이지 않는다. */
     val onAddPhoto: (() -> Unit)? = null,
+    val onRemoveBackground: () -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -199,7 +202,7 @@ private fun homePanes(
 
 private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {
     item(key = "brand") { BrandAppBar(actions.onOpenSettings) }
-    item(key = "hero") { HomeHero(state, actions.onUpdateMileage, actions.onAddPhoto) }
+    item(key = "hero") { HomeHero(state, actions) }
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -300,7 +303,7 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit, onAddPhoto: (() -> Unit)?) {
+private fun HomeHero(state: HomeUiState.Content, actions: HomeActions) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
     val subtitleParts = listOfNotNull(
@@ -315,6 +318,15 @@ private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit, on
         },
         photoPath = state.photoPath,
         bodyType = vehicleBodyTypeOf(vehicle.model),
+        photoStatus = state.photoPath?.let { path ->
+            {
+                CutoutStatusPanel(
+                    status = state.cutout,
+                    canRemoveBackground = !path.endsWith(".png", ignoreCase = true),
+                    onRemoveBackground = actions.onRemoveBackground,
+                )
+            }
+        },
         mileage = mileage?.let { stringResource(R.string.home_mileage, formatNumber(it.mileage.value)) },
         freshness = when {
             mileage == null -> stringResource(R.string.home_mileage_unknown)
@@ -326,14 +338,14 @@ private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit, on
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
             ) {
-                FilledTonalButton(onClick = onUpdateMileage) {
+                FilledTonalButton(onClick = actions.onUpdateMileage) {
                     Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(ChageunTheme.spacing.xs))
                     Text(stringResource(R.string.home_mileage_update))
                 }
                 // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
-                if (state.photoPath == null && onAddPhoto != null) {
-                    OutlinedButton(onClick = onAddPhoto) {
+                if (state.photoPath == null && actions.onAddPhoto != null) {
+                    OutlinedButton(onClick = actions.onAddPhoto) {
                         Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(ChageunTheme.spacing.xs))
                         Text(stringResource(R.string.home_add_photo))

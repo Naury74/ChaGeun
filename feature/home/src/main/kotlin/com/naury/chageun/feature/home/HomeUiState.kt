@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.home
 
 import com.naury.chageun.core.domain.maintenance.MILEAGE_PROMPT_AFTER_DAYS
+import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.MaintenanceOverview
 import com.naury.chageun.core.model.MaintenanceState
@@ -19,6 +20,7 @@ sealed interface HomeUiState {
         val today: LocalDate,
         val recentRecords: List<TimelineItem> = emptyList(),
         val photoPath: String? = null,
+        val cutout: CutoutStatus = CutoutStatus.Idle,
     ) : HomeUiState {
         val needsAttention: List<MaintenanceStatus> =
             overview.statuses.filter { it.state == MaintenanceState.Overdue || it.state == MaintenanceState.Due }

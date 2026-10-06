@@ -9,6 +9,7 @@ import com.naury.chageun.core.domain.vehicle.InspectionRepository
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.AlbumPhoto
+import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.Vehicle
@@ -35,6 +36,7 @@ sealed interface VehicleUiState {
         val inspection: InspectionStatus = InspectionStatus.Unknown,
         val photoPath: String? = null,
         val isPhotoImportFailed: Boolean = false,
+        val cutout: CutoutStatus = CutoutStatus.Idle,
         /** 내 차 탭에 미리 보여 줄 최근 앨범 사진. */
         val albumPreview: List<AlbumPhoto> = emptyList(),
         val albumCount: Int = 0,
@@ -64,13 +66,15 @@ class VehicleViewModel @Inject constructor(
                 inspectionRepository.observeSchedule(vehicle.id),
                 photoRepository.observe(vehicle.id),
                 photoImportFailed,
-            ) { log, schedule, photo, photoFailed ->
+                photoRepository.observeCutout(vehicle.id),
+            ) { log, schedule, photo, photoFailed, cutout ->
                 VehicleUiState.Content(
                     vehicle = vehicle,
                     mileageLog = log,
                     inspection = InspectionEvaluator.evaluate(schedule, LocalDate.now(clock)),
                     photoPath = photo,
                     isPhotoImportFailed = photoFailed,
+                    cutout = cutout,
                 )
             }
             combine(vehicleState, albumRepository.observe(vehicle.id)) { state, album ->
@@ -97,6 +101,12 @@ class VehicleViewModel @Inject constructor(
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         photoImportFailed.value = false
         viewModelScope.launch { photoImportFailed.value = !photoRepository.replace(vehicle.id, sourceUri) }
+    }
+
+    /** 배경을 지우지 못한 사진에 다시 시도한다. 모델이 없으면 내려받는 것부터 진행 상태로 보여 준다. */
+    fun removeBackground() {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
+        photoRepository.removeBackground(vehicle.id)
     }
 
     fun removePhoto() {

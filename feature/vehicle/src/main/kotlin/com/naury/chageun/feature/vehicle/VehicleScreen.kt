@@ -72,6 +72,7 @@ import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.CutoutStatusPanel
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.InfoListRow
@@ -116,6 +117,7 @@ fun VehicleRoute(
             photoActions = VehiclePhotoActions(
                 onPick = photoInput::open,
                 onRemove = viewModel::removePhoto,
+                onRemoveBackground = viewModel::removeBackground,
             ),
             onEditVehicle = { isEditing = true },
             onOpenAlbum = onOpenAlbum,
@@ -125,7 +127,11 @@ fun VehicleRoute(
     if (isEditing) VehicleEditHost(isExpanded = isExpandedWidth(), onDismiss = { isEditing = false })
 }
 
-data class VehiclePhotoActions(val onPick: () -> Unit = {}, val onRemove: () -> Unit = {})
+data class VehiclePhotoActions(
+    val onPick: () -> Unit = {},
+    val onRemove: () -> Unit = {},
+    val onRemoveBackground: () -> Unit = {},
+)
 
 @Composable
 fun VehicleScreen(
@@ -233,6 +239,15 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
             },
         photoPath = state.photoPath,
         bodyType = vehicleBodyTypeOf(vehicle.model),
+        photoStatus = state.photoPath?.let { path ->
+            {
+                CutoutStatusPanel(
+                    status = state.cutout,
+                    canRemoveBackground = !path.endsWith(".png", ignoreCase = true),
+                    onRemoveBackground = photoActions.onRemoveBackground,
+                )
+            }
+        },
         mileage = current?.let { stringResource(R.string.vehicle_mileage, formatNumber(it.mileage.value)) },
         freshness = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
             ?: stringResource(R.string.vehicle_mileage_none),

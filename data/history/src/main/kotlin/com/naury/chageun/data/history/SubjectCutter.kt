@@ -1,18 +1,25 @@
 package com.naury.chageun.data.history
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmentation
 import com.google.mlkit.vision.segmentation.subject.SubjectSegmenterOptions
+import com.naury.chageun.core.model.CutoutStatus
 import java.io.File
 import kotlinx.coroutines.tasks.await
 
 /** 사진에서 피사체만 남긴 투명 PNG를 만든다. 실제 모델 없이 Repository를 테스트할 수 있도록 추상화했다. */
 internal fun interface SubjectCutter {
-    /** 피사체를 찾아 [target]에 저장하면 true. 모델이 아직 없거나 피사체가 너무 작으면 false다. */
-    suspend fun cutout(source: File, target: File): Boolean
+    /**
+     * 피사체를 찾아 [target]에 저장한다. 모델을 내려받거나 처리하기 시작하면 [onStatus]로 알린다.
+     * [onStatus]는 어느 스레드에서나 불릴 수 있다.
+     */
+    suspend fun cutout(source: File, target: File, onStatus: (CutoutStatus) -> Unit): CutoutResult
 }
+
+internal enum class CutoutResult { Success, NoSubject, ModelUnavailable, Failed }
 
 /**
  * ML Kit 피사체 분리. 기기 안에서만 처리하므로 사진이 밖으로 나가지 않는다.
@@ -21,14 +28,19 @@ internal fun interface SubjectCutter {
  * 네이티브 코드라 일부 CPU(에뮬레이터 등)에서 SIGILL로 프로세스가 죽을 수 있다. 앱이 함께 죽지 않도록
  * 이 클래스는 [CutoutService]의 별도 프로세스에서만 쓴다.
  */
-internal object MlKitSubjectCutter : SubjectCutter {
+internal class MlKitSubjectCutter(private val context: Context) : SubjectCutter {
 
-    override suspend fun cutout(source: File, target: File): Boolean {
-        val bitmap = BitmapFactory.decodeFile(source.path) ?: return false
+    override suspend fun cutout(source: File, target: File, onStatus: (CutoutStatus) -> Unit): CutoutResult {
+        val bitmap = BitmapFactory.decodeFile(source.path) ?: return CutoutResult.Failed
         val segmenter = SubjectSegmentation.getClient(
             SubjectSegmenterOptions.Builder().enableForegroundBitmap().build(),
         )
         val trimmed = try {
+            val isReady = awaitOptionalModule(context, segmenter, MODULE_TIMEOUT_MILLIS) { progress ->
+                onStatus(CutoutStatus.DownloadingModel(progress))
+            }
+            if (!isReady) return CutoutResult.ModelUnavailable
+            onStatus(CutoutStatus.Processing)
             segmenter.process(InputImage.fromBitmap(bitmap, 0)).await().foregroundBitmap?.let { foreground ->
                 // 피사체가 사진의 아주 작은 부분이면 차가 아닌 다른 것을 잡았을 가능성이 커 원본을 쓴다.
                 SubjectBounds.of(foreground)
@@ -38,14 +50,18 @@ internal object MlKitSubjectCutter : SubjectCutter {
         } finally {
             segmenter.close()
         }
-        trimmed?.let { image ->
-            target.outputStream().use { image.compress(Bitmap.CompressFormat.PNG, PNG_QUALITY, it) }
-        }
-        return trimmed != null
+        trimmed ?: return CutoutResult.NoSubject
+        target.outputStream().use { trimmed.compress(Bitmap.CompressFormat.PNG, PNG_QUALITY, it) }
+        return CutoutResult.Success
     }
 
-    private const val MIN_SUBJECT_FRACTION = 0.05
-    private const val PNG_QUALITY = 100
+    private companion object {
+        const val MIN_SUBJECT_FRACTION = 0.05
+        const val PNG_QUALITY = 100
+
+        // 모델은 보통 몇 초면 받아지지만 느린 네트워크를 고려한다. 진행률을 보여 주므로 넉넉히 기다린다.
+        const val MODULE_TIMEOUT_MILLIS = 150_000L
+    }
 }
 
 /** 불투명한 픽셀을 모두 담는 가장 작은 사각형. */

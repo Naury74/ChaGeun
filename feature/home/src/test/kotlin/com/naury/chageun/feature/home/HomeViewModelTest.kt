@@ -6,6 +6,7 @@ import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
@@ -42,6 +43,7 @@ class HomeViewModelTest {
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
     private val history = FakeHistoryRepository()
+    private val photos = FakeVehiclePhotoRepository()
     private val viewModel = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
@@ -52,9 +54,25 @@ class HomeViewModelTest {
             clock,
         ),
         historyRepository = history,
-        photoRepository = FakeVehiclePhotoRepository(),
+        photoRepository = photos,
         clock = clock,
     )
+
+    @Test
+    fun showsCutoutProgress_andRetriesBackgroundRemoval() = runTest {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+        photos.photo.value = "/photos/car.jpg"
+        photos.cutout.value = CutoutStatus.DownloadingModel(0.3f)
+
+        val downloading = viewModel.uiState.first {
+            it is HomeUiState.Content && it.cutout is CutoutStatus.DownloadingModel
+        } as HomeUiState.Content
+        viewModel.removeBackground()
+
+        assertThat(downloading.cutout).isEqualTo(CutoutStatus.DownloadingModel(0.3f))
+        assertThat(photos.removeBackgroundCalls).isEqualTo(1)
+    }
 
     @Test
     fun staysLoading_untilVehicleExists() = runTest {

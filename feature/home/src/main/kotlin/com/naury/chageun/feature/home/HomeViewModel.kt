@@ -38,13 +38,15 @@ class HomeViewModel @Inject constructor(
                 observeMaintenanceOverview(vehicle.id),
                 historyRepository.observeTimeline(vehicle.id, TimelineQuery()).map { it.take(RECENT_RECORD_COUNT) },
                 photoRepository.observe(vehicle.id),
-            ) { overview, recent, photo ->
+                photoRepository.observeCutout(vehicle.id),
+            ) { overview, recent, photo, cutout ->
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
                     today = LocalDate.now(clock),
                     recentRecords = recent,
                     photoPath = photo,
+                    cutout = cutout,
                 )
             }
         }
@@ -54,6 +56,12 @@ class HomeViewModel @Inject constructor(
     fun setPhoto(sourceUri: String) {
         val vehicle = (uiState.value as? HomeUiState.Content)?.vehicle ?: return
         viewModelScope.launch { photoRepository.replace(vehicle.id, sourceUri) }
+    }
+
+    /** 배경을 지우지 못한 사진에 다시 시도한다. 모델이 없으면 내려받는 것부터 진행 상태로 보여 준다. */
+    fun removeBackground() {
+        val vehicle = (uiState.value as? HomeUiState.Content)?.vehicle ?: return
+        photoRepository.removeBackground(vehicle.id)
     }
 
     private companion object {
