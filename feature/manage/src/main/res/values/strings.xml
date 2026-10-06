@@ -53,6 +53,10 @@
     <string name="record_lower_mileage_body">The previous %1$s replacement was at %2$s km. Check the value, or save it as is if the odometer was replaced.</string>
     <string name="record_lower_mileage_save">Save as is</string>
     <string name="record_lower_mileage_edit">Edit</string>
+    <string name="record_odometer_title">Update your current mileage too?</string>
+    <string name="record_odometer_body">Your current mileage is %1$s km. Change it to %2$s km from this record?</string>
+    <string name="record_odometer_keep">Just save the record</string>
+    <string name="record_odometer_update">Update mileage</string>
     <string name="record_saved_title">%1$s replacement saved</string>
     <string name="record_saved_next_both">Next replacement is due at %1$s km or on %2$s, whichever comes first.</string>
     <string name="record_saved_next_km">Next replacement is due at %1$s km.</string>

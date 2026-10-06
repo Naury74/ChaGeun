@@ -51,6 +51,10 @@
     <string name="record_lower_mileage_body">이전 %1$s 교체는 %2$skm였어요. 값을 다시 확인하거나 계기판을 교체했다면 그대로 저장해 주세요.</string>
     <string name="record_lower_mileage_save">그대로 저장</string>
     <string name="record_lower_mileage_edit">수정할게요</string>
+    <string name="record_odometer_title">현재 주행거리도 바꿀까요?</string>
+    <string name="record_odometer_body">지금 저장된 주행거리는 %1$skm예요. 이 기록의 %2$skm로 바꿀까요?</string>
+    <string name="record_odometer_keep">기록만 저장</string>
+    <string name="record_odometer_update">주행거리도 바꾸기</string>
     <string name="record_saved_title">%1$s 교체 기록을 저장했어요</string>
     <string name="record_saved_next_both">다음 기준은 %1$skm 또는 %2$s 중 먼저 도달하는 시점이에요.</string>
     <string name="record_saved_next_km">다음 기준은 %1$skm예요.</string>

@@ -23,6 +23,8 @@ data class RecordServiceUiState(
     val alsoReplaced: Set<MaintenanceItem> = emptySet(),
     val errors: Map<RecordServiceField, RecordServiceError> = emptyMap(),
     val lowerMileageWarning: Kilometers? = null,
+    /** 입력값이 현재 주행거리보다 높을 때 지금 저장된 값. 현재 주행거리도 바꿀지 묻는다. */
+    val odometerPrompt: Kilometers? = null,
     val isSaving: Boolean = false,
     val hasSaveFailed: Boolean = false,
     val savedResult: SavedResult? = null,
