@@ -26,4 +26,10 @@ internal object UnavailableAuthRepository : AuthRepository {
     override suspend fun reload() = unavailable
 
     override suspend fun signOut() = Unit
+
+    override suspend fun reauthenticateWithPassword(password: String) = unavailable
+
+    override suspend fun reauthenticateWithGoogle(idToken: String) = unavailable
+
+    override suspend fun deleteAccount() = unavailable
 }

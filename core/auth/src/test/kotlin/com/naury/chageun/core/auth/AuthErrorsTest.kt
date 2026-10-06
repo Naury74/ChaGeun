@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.naury.chageun.core.domain.auth.AuthError
@@ -28,6 +29,8 @@ class AuthErrorsTest {
             .isEqualTo(AuthError.InvalidCredentials)
         assertThat(FirebaseAuthInvalidUserException("ERROR_USER_DISABLED", "off").toAuthError())
             .isEqualTo(AuthError.UserDisabled)
+        assertThat(FirebaseAuthRecentLoginRequiredException("ERROR_REQUIRES_RECENT_LOGIN", "again").toAuthError())
+            .isEqualTo(AuthError.RecentLoginRequired)
         assertThat(FirebaseAuthException("ERROR_OPERATION_NOT_ALLOWED", "disabled").toAuthError())
             .isEqualTo(AuthError.Unavailable)
         assertThat(FirebaseException("An internal error has occurred. [ CONFIGURATION_NOT_FOUND ]").toAuthError())

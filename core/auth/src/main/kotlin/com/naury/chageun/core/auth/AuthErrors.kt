@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.naury.chageun.core.domain.auth.AuthError
@@ -18,6 +19,7 @@ import com.naury.chageun.core.domain.auth.AuthError
 internal fun Throwable.toAuthError(): AuthError = when (this) {
     is FirebaseNetworkException -> AuthError.Network
     is FirebaseTooManyRequestsException -> AuthError.TooManyRequests
+    is FirebaseAuthRecentLoginRequiredException -> AuthError.RecentLoginRequired
     is FirebaseAuthWeakPasswordException -> AuthError.WeakPassword
     is FirebaseAuthUserCollisionException -> AuthError.EmailInUse
     is FirebaseAuthInvalidUserException ->

@@ -42,3 +42,6 @@ data object AccountRoute : NavKey
 
 @Serializable
 data object AccountEmailRoute : NavKey
+
+@Serializable
+data object AccountDeleteRoute : NavKey

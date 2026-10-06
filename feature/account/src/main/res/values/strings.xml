@@ -24,7 +24,7 @@
     <string name="account_privacy_agree">I agree to the privacy policy</string>
     <string name="account_privacy_view">View</string>
     <string name="account_submit_sign_in">Sign in</string>
-    <string name="account_submit_sign_up">Create account</string>
+    <string name="account_submit_sign_up">Sign up and get verification email</string>
     <string name="account_forgot_password">Forgot your password?</string>
     <string name="account_reset_title">Reset password</string>
     <string name="account_reset_body">We\'ll email you a link to set a new password.</string>
@@ -33,7 +33,7 @@
     <string name="account_close">Close</string>
     <string name="account_cancel">Cancel</string>
     <string name="account_error_network">Check your internet connection and try again.</string>
-    <string name="account_error_email_in_use">This email is already in use. Sign in, or continue with Google.</string>
+    <string name="account_error_email_in_use">This email is already registered or waiting for verification. Sign in to continue, or continue with Google.</string>
     <string name="account_error_weak_password">Use at least 8 characters with letters and numbers.</string>
     <string name="account_error_invalid_credentials">The email or password is incorrect.</string>
     <string name="account_error_too_many">Too many attempts. Try again in a moment.</string>
@@ -44,13 +44,13 @@
     <string name="account_section_account">Account</string>
     <string name="account_signed_in_google">Signed in with Google</string>
     <string name="account_signed_in_email">Signed in with email</string>
-    <string name="account_verify_title">Verify your email</string>
-    <string name="account_verify_body">Tap the link we sent to %1$s. You can back up once it\'s verified.</string>
-    <string name="account_verify_check">I\'ve verified it</string>
+    <string name="account_verify_title">Check your inbox to finish signing up</string>
+    <string name="account_verify_body">We sent a verification email to %1$s. Tap the link in the email, then tap the button below to finish signing up.</string>
+    <string name="account_verify_check">I\'ve verified my email</string>
     <string name="account_verify_resend">Resend email</string>
     <string name="account_notice_verification_sent">Verification email sent.</string>
     <string name="account_notice_not_verified">Not verified yet. Check your inbox.</string>
-    <string name="account_notice_verified">Your email is verified.</string>
+    <string name="account_notice_verified">You\'re signed up.</string>
     <string name="account_section_backup">Cloud backup</string>
     <string name="account_backup_now">Back up now</string>
     <string name="account_sign_out">Sign out</string>
@@ -102,4 +102,19 @@
     <string name="account_restore_empty_title">No backups in this account</string>
     <string name="account_restore_empty_body">Sign in with the account you backed up with, or start fresh.</string>
     <string name="account_restore_start_fresh">Start fresh</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_title">Delete account</string>
+    <string name="account_delete_removed">What gets deleted</string>
+    <string name="account_delete_removed_account">Your Chageun account and sign-in details</string>
+    <string name="account_delete_kept">What stays on this phone</string>
+    <string name="account_delete_kept_data">Cars, records, photos, and album</string>
+    <string name="account_delete_kept_body">You can keep using Chageun without an account.</string>
+    <string name="account_delete_password">Enter your password to confirm</string>
+    <string name="account_delete_google_confirm">When you tap delete, choose your Google account once more to confirm.</string>
+    <string name="account_delete_confirm">Delete account</string>
+    <string name="account_delete_done">Your account has been deleted.</string>
+    <string name="account_error_recent_login">For your security, sign in again and retry.</string>
+    <string name="account_delete_kept_drive">Backups in your Google Drive</string>
+    <string name="account_delete_kept_drive_body">They stay in your Drive. Delete them in Google Drive › Settings › Manage apps.</string>
+    <string name="account_verify_start_over">Sign up with a different email</string>
 </resources>

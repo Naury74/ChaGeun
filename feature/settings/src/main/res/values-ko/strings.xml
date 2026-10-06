@@ -49,13 +49,13 @@
     <string name="settings_privacy">개인정보 및 데이터 안내</string>
     <string name="settings_privacy_policy">개인정보처리방침</string>
     <string name="privacy_stored_title">저장하는 정보</string>
-    <string name="privacy_stored_body">직접 입력한 차량 정보, 주행거리, 정비·주유·점검 기록, 첨부한 사진·영수증, 앱 설정을 저장해요. 모든 정보는 이 기기에만 저장되고 계정은 없어요.</string>
+    <string name="privacy_stored_body">직접 입력한 차량 정보, 주행거리, 정비·주유·점검 기록, 첨부한 사진·영수증, 앨범 사진과 메모, 앱 설정을 저장해요. 모든 정보는 이 기기에 저장돼요. 계정은 선택이에요.</string>
     <string name="privacy_transfer_title">기기 밖으로 나가는 정보</string>
-    <string name="privacy_transfer_body">차량 정보와 기록 내용은 보내지 않아요. 앱 개선을 위해 “주유 기록 저장” 같은 사용 이벤트만 차량번호·기록 내용·질문·광고 ID 없이 Google Firebase 애널리틱스로 보내요. 앱이 비정상 종료되면 오류 정보와 기기 모델을 Google Firebase Crashlytics로 보내요. 둘 다 설정 › 개인정보에서 끌 수 있어요. 광고를 보여 주기 위해 Google 모바일 광고 SDK가 Google과 통신하며, 동의 여부에 따라 기기의 광고 ID를 쓸 수 있어요. 외부 AI에 질문할 때는 보낼 내용을 먼저 확인하고 공유할 앱을 직접 선택해요. 차량번호, 소유자, 위치는 포함하지 않아요.</string>
+    <string name="privacy_transfer_body">차량 정보와 기록 내용은 차근으로 보내지 않아요. 차근 계정(이메일 또는 Google)에 가입하면 이메일과 Firebase 사용자 ID만 Google Firebase에 보관돼요. Google 드라이브 백업을 켜면 백업 파일(기록·사진·앨범, 차량번호는 마스킹)이 내 Google 드라이브의 앱 전용 숨김 폴더에 저장돼요. 차근 운영자는 이 파일에 접근할 수 없고, 내 드라이브 저장 공간을 써요. 계기판 사진 인식과 차 사진 배경 제거는 기기 안에서만 처리해요. 앱 개선을 위해 “주유 기록 저장” 같은 사용 이벤트만 차량번호·기록 내용·질문·이메일·광고 ID 없이 Google Firebase 애널리틱스로 보내요. 앱이 비정상 종료되면 오류 정보와 기기 모델을 Google Firebase Crashlytics로 보내요. 둘 다 설정 › 개인정보에서 끌 수 있어요. 광고를 보여 주기 위해 Google 모바일 광고 SDK가 Google과 통신하며, 동의 여부에 따라 기기의 광고 ID를 쓸 수 있어요. 외부 AI에 질문할 때는 보낼 내용을 먼저 확인하고 공유할 앱을 직접 선택해요. 차량번호, 소유자, 위치는 포함하지 않아요.</string>
     <string name="privacy_security_title">보호 방법</string>
-    <string name="privacy_security_body">차량번호는 Android Keystore의 키로 암호화해 저장하고 화면에는 마스킹해서 보여줘요. 사진을 첨부할 때 위치와 카메라 정보를 지워요. 앱 데이터는 클라우드 백업과 기기 이전에서 제외돼요.</string>
+    <string name="privacy_security_body">차량번호는 Android Keystore의 키로 암호화해 저장하고 화면에는 마스킹해서 보여줘요. 사진을 첨부할 때 위치와 카메라 정보를 지워요. 앱 데이터는 Android 자동 백업과 기기 이전에 포함되지 않고, 직접 내보낸 ZIP 파일이나 직접 켠 Google 드라이브 백업으로만 기기 밖에 나가요.</string>
     <string name="privacy_control_title">내가 할 수 있는 것</string>
-    <string name="privacy_control_body">설정 › 데이터에서 전체 데이터를 ZIP 파일로 내보내거나, 가져오거나, 모두 삭제할 수 있어요. 앱을 삭제해도 모든 데이터가 지워져요.</string>
+    <string name="privacy_control_body">설정 › 데이터에서 전체 데이터를 ZIP 파일로 내보내거나, 가져오거나, 모두 삭제할 수 있어요. 설정 › 계정·백업에서 계정을 삭제하면 이메일과 사용자 ID가 지워져요. Google 드라이브 백업은 내 드라이브에 남고 Google 드라이브 › 설정 › 앱 관리에서 지울 수 있어요. 앱을 삭제하면 이 기기의 데이터가 지워져요.</string>
     <string name="privacy_disclaimer_title">안내 정보에 대해</string>
     <string name="privacy_disclaimer_body">정비 주기는 직접 바꾸지 않았다면 제조사 공식값이 아닌 일반적인 권장 기준이에요. 외부 AI의 답변은 틀릴 수 있어요. 안전과 관련된 판단은 차량 취급설명서와 정비 전문가의 안내를 따라 주세요.</string>
     <string name="settings_mileage_reminders">주행거리 입력 알림 (월 1회)</string>

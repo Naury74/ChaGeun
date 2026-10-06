@@ -49,12 +49,14 @@ class EmailAuthViewModelTest {
         assertThat(done.password).isEmpty()
         assertThat(auth.currentUser.value?.needsEmailVerification).isTrue()
         assertThat(auth.verificationMails).isEqualTo(1)
-        assertThat(analytics.events).containsExactly(AnalyticsEvent.SignUp(AuthMethod.Email))
+        // 가입 이벤트는 인증을 마칠 때 센다.
+        assertThat(analytics.events).isEmpty()
     }
 
     @Test
     fun signIn_showsServerError_andClearsItWhenTyping() = runTest {
         auth.signUpWithEmail("driver@example.com", "chageun1")
+        auth.verifyEmailOutside("driver@example.com")
         auth.signOut()
         val viewModel = viewModel()
         viewModel.setEmail("driver@example.com")

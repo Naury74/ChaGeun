@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
  * 이메일·비밀번호를 메모리에 두는 계정. [nextError]를 정하면 다음 요청 한 번이 그 오류로 실패한다.
  * [verifyEmailOutside]는 사용자가 메일 앱에서 인증 링크를 누른 것처럼 동작하고, [reload] 뒤에 반영된다.
  */
+@Suppress("TooManyFunctions") // AuthRepository의 요청을 모두 흉내 낸다.
 class FakeAuthRepository : AuthRepository {
     private val user = MutableStateFlow<AuthUser?>(null)
     private val passwords = mutableMapOf<String, String>()
@@ -62,6 +63,28 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun signOut() {
         user.value = null
     }
+
+    override suspend fun reauthenticateWithPassword(password: String): AuthResult = respond {
+        val email = user.value?.email
+        if (passwords[email] != password) return AuthResult.Failure(AuthError.InvalidCredentials)
+        AuthResult.Success()
+    }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String): AuthResult = respond { AuthResult.Success() }
+
+    override suspend fun deleteAccount(): AuthResult = respond {
+        failDeletionWith?.let { return AuthResult.Failure(it) }
+        user.value?.email?.let { passwords -= it }
+        user.value = null
+        deletedAccounts++
+        AuthResult.Success()
+    }
+
+    var deletedAccounts = 0
+        private set
+
+    /** 다시 확인은 통과하고 삭제만 실패하게 할 때 쓴다. */
+    var failDeletionWith: AuthError? = null
 
     fun verifyEmailOutside(email: String) {
         verified += email
