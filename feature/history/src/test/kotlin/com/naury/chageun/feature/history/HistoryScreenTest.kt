@@ -312,6 +312,15 @@ class HistoryScreenTest {
     )
 
     @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneTimelineDark() = screenshot(
+        "history_phone_dark",
+        HistoryUiState(isLoading = false, sections = screenshotSections),
+        isTwoPane = false,
+    )
+
+    @Test
     @Config(qualifiers = ScreenshotDevices.PHONE)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_phoneEmpty() =

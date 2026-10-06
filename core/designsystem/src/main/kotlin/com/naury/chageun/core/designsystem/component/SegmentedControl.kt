@@ -55,7 +55,7 @@ fun SegmentedControl(
         Box(Modifier.matchParentSize()) {
             Surface(
                 shape = THUMB_SHAPE,
-                color = colors.surface,
+                color = colors.surfaceBright,
                 shadowElevation = 1.dp,
                 modifier = Modifier
                     .offset(x = thumbOffset)
