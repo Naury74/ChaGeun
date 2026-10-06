@@ -196,7 +196,17 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
                 date,
                 entry.date?.let { formatDate(it) } ?: stringResource(R.string.history_unknown_date),
             )
-            add(Icons.Filled.Speed, mileage, entry.mileage?.let { km(it.value) })
+            add(
+                Icons.Filled.Speed,
+                mileage,
+                entry.mileage?.let {
+                    if (entry.isMileageEstimated) {
+                        stringResource(R.string.history_km_estimated, formatNumber(it.value))
+                    } else {
+                        km(it.value)
+                    }
+                },
+            )
             add(Icons.Filled.Payments, cost, entry.costWon?.let { won(it) })
             add(Icons.Filled.Store, stringResource(R.string.history_detail_shop), entry.shopName)
             add(Icons.AutoMirrored.Filled.Notes, memo, detail.memo)

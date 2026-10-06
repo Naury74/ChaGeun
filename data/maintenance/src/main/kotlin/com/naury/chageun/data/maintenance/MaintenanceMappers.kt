@@ -3,6 +3,7 @@ package com.naury.chageun.data.maintenance
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -36,6 +37,7 @@ internal fun MaintenanceRuleEntity.asExternalModelOrNull(): MaintenanceRule? {
 internal fun MaintenanceRecordEntity.asServiceRecord() = ServiceRecord(
     date = serviceDate,
     mileage = mileageKm?.let(::Kilometers),
+    isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
 )
 
 internal fun MileageRecordEntity.asExternalModel() = MileageReading(

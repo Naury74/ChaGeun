@@ -10,7 +10,9 @@ import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.InspectionScheduleEntity
+import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -161,6 +163,25 @@ class RoomBackupRepositoryTest {
         val inspection = database.inspectionDao().find("v1")
         assertThat(inspection?.nextDueDate).isEqualTo(LocalDate.of(2027, 3, 10))
         assertThat(inspection?.notifiedStage).isNull()
+    }
+
+    @Test
+    fun import_keepsEstimatedMileageSource() = runTest {
+        database.maintenanceDao().insertRecord(
+            MaintenanceRecordEntity(
+                "r1", "v1", "Tire", LocalDate.of(2026, 4, 1), 36_542, null, null, null,
+                RecordSourceTypes.ESTIMATED, now, now,
+            ),
+        )
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val archive = Uri.fromFile(File(workDir, "out.zip")).toString()
+        repository.export(archive)
+        repository.deleteAll()
+
+        repository.import(archive)
+
+        assertThat(database.maintenanceDao().findLatestRecord("v1", "Tire")?.sourceType)
+            .isEqualTo(RecordSourceTypes.ESTIMATED)
     }
 
     @Test

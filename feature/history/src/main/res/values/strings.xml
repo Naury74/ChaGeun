@@ -118,4 +118,5 @@
     </string-array>
     <string name="history_empty_body">Log maintenance, fuel and repairs to see them here by month.</string>
     <string name="history_empty_filtered_body">Try another filter or search word.</string>
+    <string name="history_km_estimated">About %1$s km (estimated from your average driving)</string>
 </resources>

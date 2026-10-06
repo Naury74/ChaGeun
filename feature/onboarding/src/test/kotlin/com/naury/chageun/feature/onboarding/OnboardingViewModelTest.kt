@@ -184,7 +184,9 @@ class OnboardingViewModelTest {
         assertThat(services.keys).containsExactly(MaintenanceItem.EngineOil, MaintenanceItem.Tire)
         assertThat(services.getValue(MaintenanceItem.EngineOil))
             .isEqualTo(ServiceRecord(LocalDate.of(2026, 3, 10), Kilometers(40_260)))
-        assertThat(services.getValue(MaintenanceItem.Tire)).isEqualTo(ServiceRecord(today.minusMonths(6), null))
+        // 2023년식 42,180 km면 하루 약 30.8 km. 6개월(183일) 전은 약 5,638 km 전이다.
+        assertThat(services.getValue(MaintenanceItem.Tire))
+            .isEqualTo(ServiceRecord(today.minusMonths(6), Kilometers(36_542), isMileageEstimated = true))
     }
 
     @Test
@@ -199,7 +201,7 @@ class OnboardingViewModelTest {
         vm.onAction(OnboardingAction.Finish)
 
         assertThat(repository.registrations.single().knownServices.getValue(MaintenanceItem.Battery))
-            .isEqualTo(ServiceRecord(today.minusMonths(12), null))
+            .isEqualTo(ServiceRecord(today.minusMonths(12), Kilometers(30_934), isMileageEstimated = true))
     }
 
     @Test
