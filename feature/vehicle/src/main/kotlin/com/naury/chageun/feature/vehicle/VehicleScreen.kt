@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -51,8 +52,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -104,6 +107,8 @@ fun VehicleRoute(
     onUpdateMileage: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAlbum: () -> Unit = {},
+    showInspection: Boolean = false,
+    onInspectionShown: () -> Unit = {},
     viewModel: VehicleViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -143,6 +148,8 @@ fun VehicleRoute(
             onEditVehicle = { isEditing = true },
             onOpenAlbum = onOpenAlbum,
             modifier = Modifier.padding(padding),
+            showInspection = showInspection,
+            onInspectionShown = onInspectionShown,
         )
     }
     if (isEditing) VehicleEditHost(isExpanded = isExpandedWidth(), onDismiss = { isEditing = false })
@@ -167,6 +174,8 @@ fun VehicleScreen(
     photoActions: VehiclePhotoActions = VehiclePhotoActions(),
     onEditVehicle: () -> Unit = {},
     onOpenAlbum: () -> Unit = {},
+    showInspection: Boolean = false,
+    onInspectionShown: () -> Unit = {},
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -186,10 +195,19 @@ fun VehicleScreen(
             settingsEntry(onOpenSettings)
         })
     }
+    // 검사 카드는 항상 마지막 칸의 recordsPane 첫 항목이다. 한 칸이면 개요 항목들 뒤에 온다.
+    val recordsState = rememberLazyListState()
+    val currentOnInspectionShown by rememberUpdatedState(onInspectionShown)
+    LaunchedEffect(showInspection) {
+        if (!showInspection) return@LaunchedEffect
+        recordsState.animateScrollToItem(if (isTwoPane) 0 else OVERVIEW_ITEM_COUNT)
+        currentOnInspectionShown()
+    }
     HingeAwarePanes(weights = List(panes.size) { 1f }, modifier = modifier.fillMaxSize()) {
-        panes.forEach { pane ->
+        panes.forEachIndexed { index, pane ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
+                state = if (index == panes.lastIndex) recordsState else rememberLazyListState(),
                 contentPadding = PaddingValues(bottom = spacing.lg),
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 content = pane,
@@ -205,6 +223,7 @@ private fun LazyListScope.overviewPane(
     onEditVehicle: () -> Unit,
     onOpenAlbum: () -> Unit,
 ) {
+    // 항목을 더하거나 빼면 OVERVIEW_ITEM_COUNT도 맞춘다.
     item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
     item(key = "album") { AlbumPreview(state, onOpenAlbum) }
     item(key = "info") { InfoSection(state, onEditVehicle) }
@@ -574,3 +593,6 @@ private fun AlbumPreview(state: VehicleUiState.Content, onOpenAlbum: () -> Unit)
 }
 
 private const val ALBUM_PREVIEW_SLOTS = 4
+
+/** [overviewPane]이 내놓는 항목 수. 한 칸 화면에서 검사 카드의 위치를 정한다. */
+private const val OVERVIEW_ITEM_COUNT = 4

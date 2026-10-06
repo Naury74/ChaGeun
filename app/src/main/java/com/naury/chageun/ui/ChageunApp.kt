@@ -83,6 +83,10 @@ data class AppActions(
     /** 알림이나 다른 탭에서 연 항목. Care 탭이 선택하고 나면 소비된다. */
     val pendingManageItem: MaintenanceItem? = null,
     val onPendingManageItemHandled: () -> Unit = {},
+    /** 알림이나 홈에서 검사를 열면 내 차 탭이 검사 카드까지 내려가 보여 준다. */
+    val onOpenInspection: () -> Unit = {},
+    val pendingInspection: Boolean = false,
+    val onPendingInspectionHandled: () -> Unit = {},
 )
 
 @Composable
@@ -97,6 +101,7 @@ fun ChageunApp(
     var editingServiceId by rememberSaveable { mutableStateOf<String?>(null) }
     var isUpdatingMileage by rememberSaveable { mutableStateOf(false) }
     var openedManageItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
+    var isOpeningInspection by rememberSaveable { mutableStateOf(false) }
     val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val backStack = rememberNavBackStack(TopLevelRoute.Home)
     val currentTopLevel = backStack.firstOrNull() as? TopLevelRoute ?: TopLevelRoute.Home
@@ -131,11 +136,18 @@ fun ChageunApp(
             openedManageItem = null
             onDeepLinkHandled()
         },
+        onOpenInspection = {
+            isOpeningInspection = true
+            navigateTo(TopLevelDestination.Vehicle)
+        },
+        pendingInspection = isOpeningInspection,
+        onPendingInspectionHandled = { isOpeningInspection = false },
     )
     LaunchedEffect(deepLink) {
         when (deepLink) {
             is DeepLink.Maintenance -> navigateTo(TopLevelDestination.Manage)
             DeepLink.Inspection -> {
+                isOpeningInspection = true
                 navigateTo(TopLevelDestination.Vehicle)
                 onDeepLinkHandled()
             }
@@ -257,7 +269,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onUpdateMileage = actions.onUpdateMileage,
             onAskAi = { actions.onAskAi(null) },
             onOpenSettings = actions.onOpenSettings,
-            onOpenInspection = { actions.onNavigate(TopLevelDestination.Vehicle) },
+            onOpenInspection = actions.onOpenInspection,
             onOpenItem = actions.onOpenManageItem,
             onOpenAccount = actions.onOpenAccount,
         )
@@ -276,6 +288,8 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onUpdateMileage = actions.onUpdateMileage,
             onOpenSettings = actions.onOpenSettings,
             onOpenAlbum = actions.onOpenAlbum,
+            showInspection = actions.pendingInspection,
+            onInspectionShown = actions.onPendingInspectionHandled,
         )
     }
 }
