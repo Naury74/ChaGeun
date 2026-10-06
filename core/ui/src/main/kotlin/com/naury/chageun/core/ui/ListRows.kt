@@ -1,6 +1,5 @@
 package com.naury.chageun.core.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -23,11 +22,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.PressStyle
+import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 
@@ -96,7 +99,7 @@ fun ListRow(
 ) {
     val clickModifier = if (onClick != null) {
         Modifier
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .pressable(onClick = onClick, style = PressStyle.Highlight, enabled = enabled)
             .alpha(if (enabled) 1f else DISABLED_ALPHA)
     } else {
         Modifier
@@ -125,6 +128,7 @@ fun ToggleListRow(
     tone: ToneColors = ChageunTheme.colors.unknown,
     enabled: Boolean = true,
 ) {
+    val haptics = LocalHapticFeedback.current
     RowLayout(
         icon,
         title,
@@ -132,7 +136,10 @@ fun ToggleListRow(
         tone,
         Color.Unspecified,
         modifier
-            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
+            .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = {
+                haptics.performHapticFeedback(if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+                onCheckedChange(it)
+            })
             .alpha(if (enabled) 1f else DISABLED_ALPHA),
     ) {
         Switch(checked = checked, onCheckedChange = null)

@@ -6,8 +6,13 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -119,8 +125,13 @@ fun ChageunApp(
         }
     }
 
+    val itemColors = iosStyleItemColors()
     NavigationSuiteScaffold(
         layoutType = navigationSuiteTypeFor(windowSizeClass),
+        navigationSuiteColors = NavigationSuiteDefaults.colors(
+            navigationBarContainerColor = MaterialTheme.colorScheme.surface,
+            navigationRailContainerColor = MaterialTheme.colorScheme.background,
+        ),
         navigationSuiteItems = {
             TopLevelDestination.entries.forEach { destination ->
                 item(
@@ -128,6 +139,7 @@ fun ChageunApp(
                     onClick = { navigateTo(destination) },
                     icon = { Icon(destination.icon, contentDescription = null) },
                     label = { Text(stringResource(destination.labelRes)) },
+                    colors = itemColors,
                 )
             }
         },
@@ -211,4 +223,26 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onOpenSettings = actions.onOpenSettings,
         )
     }
+}
+
+/** iOS 탭 바처럼 선택 표시 알약 없이 아이콘과 글자 색만으로 현재 탭을 나타낸다. */
+@Composable
+private fun iosStyleItemColors(): NavigationSuiteItemColors {
+    val colors = MaterialTheme.colorScheme
+    return NavigationSuiteDefaults.itemColors(
+        navigationBarItemColors = NavigationBarItemDefaults.colors(
+            indicatorColor = Color.Transparent,
+            selectedIconColor = colors.primary,
+            selectedTextColor = colors.primary,
+            unselectedIconColor = colors.onSurfaceVariant,
+            unselectedTextColor = colors.onSurfaceVariant,
+        ),
+        navigationRailItemColors = NavigationRailItemDefaults.colors(
+            indicatorColor = Color.Transparent,
+            selectedIconColor = colors.primary,
+            selectedTextColor = colors.primary,
+            unselectedIconColor = colors.onSurfaceVariant,
+            unselectedTextColor = colors.onSurfaceVariant,
+        ),
+    )
 }

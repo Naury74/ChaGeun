@@ -1,7 +1,6 @@
 package com.naury.chageun.feature.home
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,14 +29,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.icon
+import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.motion.ChageunMotion
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -242,7 +242,7 @@ internal fun MissingInfoRow(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .clickable(role = Role.Button) { onOpenDetail(status.item) }
+            .pressable(onClick = { onOpenDetail(status.item) }, style = PressStyle.Highlight)
             .padding(vertical = ChageunTheme.spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
@@ -286,7 +286,7 @@ internal fun InspectionStatusCard(status: InspectionStatus, onOpen: () -> Unit, 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onOpen),
+            .pressable(onClick = onOpen),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
     ) {
