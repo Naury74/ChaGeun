@@ -20,6 +20,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.RecordTimestamps
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
@@ -289,6 +290,7 @@ class OfflineFirstHistoryRepositoryTest {
                 LocalDate.of(2026, 9, 1),
                 Kilometers(1_200),
                 MileageSource.Correction,
+                RecordTimestamps(Instant.parse("2026-10-01T00:00:00Z"), editedAt = null),
             ),
         )
     }
