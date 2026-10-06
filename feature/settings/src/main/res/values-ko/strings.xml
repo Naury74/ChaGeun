@@ -64,4 +64,6 @@
     <string name="settings_section_privacy">개인정보</string>
     <string name="settings_usage_stats">사용 통계와 오류 보고 보내기</string>
     <string name="settings_usage_stats_body">기록 저장처럼 어떤 기능을 썼는지와 앱이 비정상 종료됐을 때의 오류 정보만 보내 앱 개선에 써요. 차량번호, 기록 내용, 질문은 보내지 않아요.</string>
+    <string name="settings_account">계정·백업</string>
+    <string name="settings_account_body">로그인하면 내 차 기록을 클라우드에 백업할 수 있어요</string>
 </resources>

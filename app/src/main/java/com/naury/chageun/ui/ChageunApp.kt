@@ -32,6 +32,8 @@ import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.notification.DeepLink
+import com.naury.chageun.feature.account.AccountRoute as AccountScreenRoute
+import com.naury.chageun.feature.account.EmailAuthRoute
 import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
 import com.naury.chageun.feature.home.HomeRoute
@@ -43,6 +45,8 @@ import com.naury.chageun.feature.settings.PrivacyNoticeScreen
 import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
 import com.naury.chageun.feature.vehicle.album.AlbumRoute as AlbumScreenRoute
+import com.naury.chageun.navigation.AccountEmailRoute
+import com.naury.chageun.navigation.AccountRoute
 import com.naury.chageun.navigation.AiRoute
 import com.naury.chageun.navigation.AlbumRoute
 import com.naury.chageun.navigation.OpenSourceLicensesRoute
@@ -166,6 +170,20 @@ fun ChageunApp(
                         onBack = { backStack.removeLastOrNull() },
                         onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
                         onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
+                        onOpenAccount = { backStack.add(AccountRoute) },
+                    )
+                }
+                entry(AccountRoute) {
+                    AccountScreenRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenEmail = { backStack.add(AccountEmailRoute) },
+                    )
+                }
+                entry(AccountEmailRoute) {
+                    // 로그인이 끝나면 계정 화면으로 돌아가 로그인한 상태를 보여 준다.
+                    EmailAuthRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onCompleted = { backStack.remove(AccountEmailRoute) },
                     )
                 }
                 entry(OpenSourceLicensesRoute) {
