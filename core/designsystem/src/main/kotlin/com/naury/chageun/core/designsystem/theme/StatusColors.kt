@@ -23,7 +23,8 @@ internal val LightExtendedColors = ChageunExtendedColors(
     critical = ToneColors(LightTokens.Critical, LightTokens.CriticalContainer),
     unknown = ToneColors(LightTokens.Unknown, LightTokens.UnknownContainer),
     ai = ToneColors(LightTokens.AiAccent, LightTokens.AiContainer),
-    heroBackground = LightTokens.Surface,
+    // 그룹 배경 위에 차 그림이 바로 놓이도록 화면 배경과 같게 둔다. 흰 사각 영역이 생기면 모서리가 도드라진다.
+    heroBackground = LightTokens.Background,
 )
 
 internal val DarkExtendedColors = ChageunExtendedColors(
