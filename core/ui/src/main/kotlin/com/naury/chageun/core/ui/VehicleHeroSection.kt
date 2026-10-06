@@ -53,34 +53,43 @@ fun VehicleHeroSection(
             .padding(ChageunTheme.spacing.gutter),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
     ) {
-        val photo = photoPath?.let { rememberFileImage(it).value }
-        // 차만 잘라 낸 사진은 투명 PNG로 저장된다. 실루엣처럼 바닥 그림자 위에 배경 없이 놓는다.
-        if (photo != null && photoPath.endsWith(".png", ignoreCase = true)) {
-            GroundedImage {
+        val photoState = photoPath?.let { rememberFileImageState(it).value } ?: FileImageState.Missing
+        val isCutout = photoPath?.endsWith(".png", ignoreCase = true) == true
+        when (photoState) {
+            // 차만 잘라 낸 사진은 투명 PNG로 저장된다. 실루엣처럼 바닥 그림자 위에 배경 없이 놓는다.
+            is FileImageState.Loaded -> if (isCutout) {
+                GroundedImage {
+                    Image(
+                        bitmap = photoState.image,
+                        contentDescription = stringResource(R.string.vehicle_hero_photo),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.cutoutSize(),
+                    )
+                }
+            } else {
+                // 사용자 사진은 잘리지 않도록 고정 비율 안에 Fit으로 맞춘다 (기획서 13.4).
                 Image(
-                    bitmap = photo,
+                    bitmap = photoState.image,
+                    // 실루엣과 달리 사용자가 찍은 이 차의 사진이므로 TalkBack에 알린다.
                     contentDescription = stringResource(R.string.vehicle_hero_photo),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
-                        .fillMaxWidth(CUTOUT_WIDTH_FRACTION)
-                        .aspectRatio(CUTOUT_ASPECT_RATIO),
+                        .padding(vertical = ChageunTheme.spacing.sm)
+                        .photoSize()
+                        .clip(MaterialTheme.shapes.large),
                 )
             }
-        } else if (photo != null) {
-            // 사용자 사진은 잘리지 않도록 고정 비율 안에 Fit으로 맞춘다 (기획서 13.4).
-            Image(
-                bitmap = photo,
-                // 실루엣과 달리 사용자가 찍은 이 차의 사진이므로 TalkBack에 알린다.
-                contentDescription = stringResource(R.string.vehicle_hero_photo),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
+            // 사진을 읽는 동안 실루엣을 그리면 탭을 오갈 때마다 실루엣과 사진이 번갈아 깜빡인다.
+            // 같은 크기의 빈 자리만 두어 사진이 나타날 때 아래 내용이 밀리지 않게 한다.
+            FileImageState.Loading -> Box(
+                Modifier
                     .fillMaxWidth()
-                    .padding(vertical = ChageunTheme.spacing.sm)
-                    .aspectRatio(PHOTO_ASPECT_RATIO)
-                    .clip(MaterialTheme.shapes.large),
-            )
-        } else {
-            SilhouetteImage(bodyType)
+                    .padding(vertical = ChageunTheme.spacing.sm),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(if (isCutout) Modifier.cutoutSize() else Modifier.photoSize())
+            }
+            FileImageState.Missing -> SilhouetteImage(bodyType)
         }
         Text(
             text = title,
@@ -101,6 +110,10 @@ fun VehicleHeroSection(
         action?.invoke()
     }
 }
+
+private fun Modifier.cutoutSize() = fillMaxWidth(CUTOUT_WIDTH_FRACTION).aspectRatio(CUTOUT_ASPECT_RATIO)
+
+private fun Modifier.photoSize() = fillMaxWidth().aspectRatio(PHOTO_ASPECT_RATIO)
 
 @Composable
 private fun FloorShadow(modifier: Modifier) {
