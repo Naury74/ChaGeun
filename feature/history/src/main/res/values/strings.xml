@@ -123,4 +123,27 @@
     <string name="history_edit">Edit</string>
     <string name="fuel_form_edit_title">Edit fuel record</string>
     <string name="check_form_edit_title">Edit inspection or repair</string>
+    <string name="history_filter">Filter</string>
+    <string name="history_filter_count">Filter %1$d</string>
+    <string name="history_filter_title">Filter records</string>
+    <string name="history_filter_period">Period</string>
+    <string name="history_period_all">Any time</string>
+    <string name="history_period_month">Last month</string>
+    <string name="history_period_3months">Last 3 months</string>
+    <string name="history_period_6months">Last 6 months</string>
+    <string name="history_period_year">This year</string>
+    <string name="history_period_custom">Pick dates</string>
+    <string name="history_filter_range">%1$s – %2$s</string>
+    <string name="history_filter_cost">Cost</string>
+    <string name="history_filter_cost_min">From</string>
+    <string name="history_filter_cost_max">To</string>
+    <string name="history_filter_cost_hint">Records without a cost are hidden when a range is set.</string>
+    <string name="history_filter_cost_reversed">Must be at least the minimum</string>
+    <string name="history_filter_attachments">Only records with photos or receipts</string>
+    <string name="history_filter_reset">Reset</string>
+    <string name="history_filter_apply">Apply</string>
+    <plurals name="history_attachment_count">
+        <item quantity="one">%1$d photo attached</item>
+        <item quantity="other">%1$d photos attached</item>
+    </plurals>
 </resources>

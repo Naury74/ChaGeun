@@ -58,6 +58,7 @@ fun HistoryRoute(
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isTwoPane = isListDetailTwoPane()
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
+    var isFilterOpen by rememberSaveable { mutableStateOf(false) }
     // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
     var editingType by rememberSaveable { mutableStateOf<TimelineEventType?>(null) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -92,11 +93,21 @@ fun HistoryRoute(
             }
         },
         onAdd = { dialog = AddDialog.Chooser },
+        onOpenAdvancedFilter = { isFilterOpen = true },
+        onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
         onAttach = viewModel::attach,
         onDeleteAttachment = viewModel::deleteAttachment,
         onDismissAttachFailure = viewModel::dismissAttachFailure,
     )
 
+    if (isFilterOpen) {
+        AdvancedFilterSheet(
+            current = uiState.advanced,
+            isExpanded = isExpanded,
+            onApply = viewModel::applyAdvancedFilter,
+            onDismiss = { isFilterOpen = false },
+        )
+    }
     when (dialog) {
         AddDialog.Chooser -> AddRecordChooser(onPick = { dialog = it }, onDismiss = { dialog = null })
         AddDialog.MaintenanceItem -> MaintenanceItemPicker(
@@ -132,6 +143,8 @@ fun HistoryScreen(
     onDeleteAttachment: (String) -> Unit,
     onDismissAttachFailure: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAdvancedFilter: () -> Unit = {},
+    onClearAdvancedFilter: () -> Unit = {},
     onEdit: (RecordDetail) -> Unit = {},
 ) {
     val attachments =
@@ -157,7 +170,9 @@ fun HistoryScreen(
                 // 두 칸에서는 같은 기록을 다시 누르면 상세를 닫고 목록을 넓게 되돌린다.
                 { ref -> onSelect(if (isTwoPane && ref == uiState.selected) null else ref) },
                 onAdd,
-                Modifier
+                onOpenAdvancedFilter = onOpenAdvancedFilter,
+                onClearAdvancedFilter = onClearAdvancedFilter,
+                modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)
                     .align(Alignment.TopCenter),

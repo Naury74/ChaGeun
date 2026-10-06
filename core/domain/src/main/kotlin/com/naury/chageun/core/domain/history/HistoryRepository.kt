@@ -9,6 +9,7 @@ import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleId
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 data class TimelineQuery(
@@ -16,6 +17,13 @@ data class TimelineQuery(
     val keyword: String = "",
     /** 현지화된 이름이 [keyword]와 일치하는 정비 항목. locale을 아는 UI 쪽에서 판단한다. */
     val matchingItems: Set<MaintenanceItem> = emptySet(),
+    /** 양 끝 날짜를 포함한다. 기간을 정하면 날짜 없는 기록은 빠진다. */
+    val dateFrom: LocalDate? = null,
+    val dateTo: LocalDate? = null,
+    /** 비용 범위를 정하면 비용을 입력하지 않은 기록은 빠진다. */
+    val minCostWon: Long? = null,
+    val maxCostWon: Long? = null,
+    val withAttachmentsOnly: Boolean = false,
 )
 
 interface HistoryRepository {

@@ -13,6 +13,8 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
+import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +38,7 @@ class HistoryViewModel @Inject constructor(
     private val historyRepository: HistoryRepository,
     private val attachmentRepository: AttachmentRepository,
     private val deleteRecord: DeleteHistoryRecordUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val attachFailedCount = MutableStateFlow(0)
@@ -44,19 +47,27 @@ class HistoryViewModel @Inject constructor(
     private val keyword = savedStateHandle.getStateFlow(KEY_KEYWORD, "")
     private val matchingItems = savedStateHandle.getStateFlow(KEY_MATCHING_ITEMS, arrayListOf<String>())
     private val selected = savedStateHandle.getStateFlow<String?>(KEY_SELECTED, null)
+    private val advanced = savedStateHandle.getStateFlow<String?>(KEY_ADVANCED, null)
 
     val uiState: StateFlow<HistoryUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
         .flatMapLatest { vehicle ->
-            val query = combine(filter, keyword, matchingItems) { filterName, text, items ->
-                HistoryFilter.valueOf(filterName) to TimelineQuery(
+            val query = combine(filter, keyword, matchingItems, advanced) { filterName, text, items, encoded ->
+                val advancedFilter = AdvancedFilter.decode(encoded)
+                val base = TimelineQuery(
                     types = HistoryFilter.valueOf(filterName).types,
                     keyword = text,
                     matchingItems = items.map(MaintenanceItem::valueOf).toSet(),
                 )
+                Triple(
+                    HistoryFilter.valueOf(filterName),
+                    advancedFilter,
+                    advancedFilter.applyTo(base, LocalDate.now(clock)),
+                )
             }
-            val timeline = query.flatMapLatest { (activeFilter, timelineQuery) ->
-                historyRepository.observeTimeline(vehicle.id, timelineQuery).map { items -> activeFilter to items }
+            val timeline = query.flatMapLatest { (activeFilter, advancedFilter, timelineQuery) ->
+                historyRepository.observeTimeline(vehicle.id, timelineQuery)
+                    .map { items -> Triple(activeFilter, advancedFilter, items) }
             }
             val detail = selected.flatMapLatest { key ->
                 key?.toRecordRef()?.let { ref ->
@@ -67,7 +78,7 @@ class HistoryViewModel @Inject constructor(
                 } ?: flowOf(null to emptyList())
             }
             combine(timeline, keyword, detail, attachFailedCount) {
-                    (activeFilter, items),
+                    (activeFilter, advancedFilter, items),
                     text,
                     (record, attachments),
                     failed,
@@ -75,6 +86,7 @@ class HistoryViewModel @Inject constructor(
                 HistoryUiState(
                     isLoading = false,
                     filter = activeFilter,
+                    advanced = advancedFilter,
                     keyword = text,
                     sections = items.groupIntoMonths(),
                     selected = record?.ref,
@@ -85,6 +97,10 @@ class HistoryViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HistoryUiState())
+
+    fun applyAdvancedFilter(filter: AdvancedFilter) {
+        savedStateHandle[KEY_ADVANCED] = filter.encode()
+    }
 
     fun selectFilter(filter: HistoryFilter) {
         savedStateHandle[KEY_FILTER] = filter.name
@@ -138,6 +154,7 @@ class HistoryViewModel @Inject constructor(
         const val KEY_KEYWORD = "history_keyword"
         const val KEY_MATCHING_ITEMS = "history_matching_items"
         const val KEY_SELECTED = "history_selected"
+        const val KEY_ADVANCED = "history_advanced"
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }
