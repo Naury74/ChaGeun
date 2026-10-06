@@ -207,6 +207,15 @@ private fun ContextPreview(uiState: AiHubUiState, promptText: String?, actions: 
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_vehicle), tone = good)
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_mileage), tone = good)
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_maintenance), tone = good)
+        // 기록 상세에서 열었으면 그 기록이 함께 간다는 것을 보낼 정보에 분명히 보여 준다.
+        if (uiState.facts?.focusRecord != null || uiState.options.focusRecord != null) {
+            ListRow(
+                Icons.Filled.Check,
+                stringResource(R.string.ai_included_focus_record),
+                body = stringResource(R.string.ai_included_focus_record_body),
+                tone = good,
+            )
+        }
         GroupDivider()
         ToggleListRow(
             icon = Icons.Filled.History,

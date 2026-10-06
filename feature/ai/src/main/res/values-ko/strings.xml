@@ -57,4 +57,6 @@
     <string name="ai_suggestion_record_service">이번 %1$s 교체 시기가 적절했는지 알려 줘</string>
     <string name="ai_suggestion_record_fuel">이 주유 기록으로 연비를 알 수 있을까?</string>
     <string name="ai_suggestion_record_check">이 기록 이후로 무엇을 신경 쓰면 좋을까?</string>
+    <string name="ai_included_focus_record">이 기록</string>
+    <string name="ai_included_focus_record_body">날짜·종류·주행거리·주유량. 비용은 아래에서 포함할 때만 보내요.</string>
 </resources>
