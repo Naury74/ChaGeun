@@ -83,4 +83,33 @@
     <string name="vehicle_edit_error_plate">Check the format, e.g. 123가4567</string>
     <string name="vehicle_edit_error_plate_unsupported">This plate type isn\'t supported yet</string>
     <string name="vehicle_title">My car</string>
+    <string name="album_title">Car album</string>
+    <string name="album_back">Back</string>
+    <string name="album_add">Add photos</string>
+    <string name="album_empty_title">Keep your car\'s moments</string>
+    <string name="album_empty_body">Save car washes, new parts, road trips or anything else with a note. Photos are grouped by the day they were taken.</string>
+    <string name="album_day">%1$s · %2$d</string>
+    <string name="album_photo_on">Photo from %1$s</string>
+    <string name="album_no_comment">No note yet</string>
+    <string name="album_edit_details">Edit date and note</string>
+    <string name="album_set_cover">Use as my car photo</string>
+    <string name="album_cover_updated">Set as your car photo.</string>
+    <string name="album_delete">Delete</string>
+    <string name="album_delete_title">Delete this photo?</string>
+    <string name="album_delete_body">It is removed from the album and this device.</string>
+    <string name="album_cancel">Cancel</string>
+    <string name="album_close">Close</string>
+    <string name="album_details_title">Date and note</string>
+    <string name="album_details_date">Date taken</string>
+    <string name="album_details_comment">Note</string>
+    <string name="album_details_comment_hint">e.g. New tires before the road trip</string>
+    <string name="album_save">Save</string>
+    <string name="album_later">Later</string>
+    <string name="album_section">Album</string>
+    <string name="album_see_all">See all %1$d</string>
+    <string name="album_open">Open album</string>
+    <plurals name="album_failed">
+        <item quantity="one">%1$d photo couldn\'t be added.</item>
+        <item quantity="other">%1$d photos couldn\'t be added.</item>
+    </plurals>
 </resources>

@@ -2,6 +2,7 @@ package com.naury.chageun.data.history
 
 import android.content.Context
 import com.naury.chageun.core.common.storage.AttachmentDirectory
+import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.domain.history.AttachmentRepository
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
@@ -27,6 +28,9 @@ internal interface HistoryDataModule {
 
     @Binds
     fun bindImageImporter(importer: BitmapImageImporter): ImageImporter
+
+    @Binds
+    fun bindAlbumRepository(repository: OfflineFirstAlbumRepository): AlbumRepository
 
     @Binds
     fun bindSubjectCutter(cutter: IsolatedSubjectCutter): SubjectCutter

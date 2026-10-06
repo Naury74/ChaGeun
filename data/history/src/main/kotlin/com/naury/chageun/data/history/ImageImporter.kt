@@ -9,9 +9,17 @@ import androidx.core.net.toUri
 import androidx.exifinterface.media.ExifInterface
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-internal data class ImportedImage(val file: File, val thumbnail: File, val sizeBytes: Long)
+/** [takenOn]은 원본 EXIF의 촬영일이다. 저장한 파일에는 EXIF를 남기지 않는다. */
+internal data class ImportedImage(
+    val file: File,
+    val thumbnail: File,
+    val sizeBytes: Long,
+    val takenOn: LocalDate? = null,
+)
 
 /** 실제 이미지를 디코딩하지 않고 Repository를 테스트할 수 있도록 추상화했다. */
 /** [ImageImporter]는 항상 JPEG로 다시 인코딩한다. */
@@ -48,7 +56,8 @@ internal class BitmapImageImporter @Inject constructor(@ApplicationContext priva
         }
         val decoded =
             resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: return null
-        val rotation = resolver.openInputStream(uri)?.use { ExifInterface(it).rotationDegrees } ?: 0
+        val exif = resolver.openInputStream(uri)?.use { ExifInterface(it) }
+        val rotation = exif?.rotationDegrees ?: 0
         val image = decoded.scaledTo(maxEdge).rotated(rotation)
 
         target.parentFile?.mkdirs()
@@ -56,7 +65,7 @@ internal class BitmapImageImporter @Inject constructor(@ApplicationContext priva
         thumbnail.outputStream().use {
             image.scaledTo(THUMBNAIL_EDGE_PX).compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it)
         }
-        return ImportedImage(target, thumbnail, target.length())
+        return ImportedImage(target, thumbnail, target.length(), exif?.takenOn())
     }
 
     private fun Bitmap.scaledTo(maxEdge: Int): Bitmap {
@@ -92,3 +101,13 @@ internal object ImageSizing {
         return (width * scale).toInt().coerceAtLeast(1) to (height * scale).toInt().coerceAtLeast(1)
     }
 }
+
+/** 촬영일 "yyyy:MM:dd HH:mm:ss". 형식이 다르거나 없으면 null이다. */
+internal fun ExifInterface.takenOn(): LocalDate? {
+    val value = getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL) ?: getAttribute(ExifInterface.TAG_DATETIME)
+    return value?.take(EXIF_DATE_LENGTH)
+        ?.let { runCatching { LocalDate.parse(it, EXIF_DATE) }.getOrNull() }
+}
+
+private const val EXIF_DATE_LENGTH = 10
+private val EXIF_DATE = DateTimeFormatter.ofPattern("yyyy:MM:dd")

@@ -8,7 +8,9 @@ import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeAlbumRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
@@ -47,8 +49,11 @@ class VehicleViewModelTest {
             notifier,
         ),
         photos,
+        album,
         clock,
     )
+
+    private val album = FakeAlbumRepository()
 
     @Test
     fun exposesNewestMileageAsCurrent() = runTest {
@@ -130,5 +135,20 @@ class VehicleViewModelTest {
         viewModel.removePhoto()
         val removed = viewModel.uiState.first { (it as? VehicleUiState.Content)?.photoPath == null }
         assertThat(removed).isInstanceOf(VehicleUiState.Content::class.java)
+    }
+
+    @Test
+    fun previewsNewestAlbumPhotos() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
+
+        album.add(VehicleId("vehicle-1"), (1..6).map { "content://$it" }, LocalDate.of(2026, 10, 1))
+
+        val state = viewModel.uiState.first {
+            it is VehicleUiState.Content && it.albumCount > 0
+        } as VehicleUiState.Content
+        assertThat(state.albumCount).isEqualTo(6)
+        assertThat(state.albumPreview).hasSize(4)
     }
 }

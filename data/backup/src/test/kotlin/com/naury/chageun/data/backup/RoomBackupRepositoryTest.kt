@@ -7,6 +7,7 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.InspectionScheduleEntity
@@ -163,6 +164,28 @@ class RoomBackupRepositoryTest {
         val inspection = database.inspectionDao().find("v1")
         assertThat(inspection?.nextDueDate).isEqualTo(LocalDate.of(2027, 3, 10))
         assertThat(inspection?.notifiedStage).isNull()
+    }
+
+    @Test
+    fun albumPhotos_roundTripWithImages_andCountAsPhotos() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        File(attachmentDir, "album_p1.jpg").writeText("album")
+        database.albumDao().insert(
+            AlbumPhotoEntity(
+                "p1", "v1", "album_p1.jpg", "album_p1_thumb.jpg", 5, LocalDate.of(2026, 5, 3), "Car wash", now, now,
+            ),
+        )
+        val archive = Uri.fromFile(File(workDir, "album.zip")).toString()
+
+        repository.export(archive)
+        repository.deleteAll()
+        repository.import(archive)
+
+        val restored = database.backupDao().albumPhotos().single()
+        assertThat(restored.takenOn).isEqualTo(LocalDate.of(2026, 5, 3))
+        assertThat(restored.comment).isEqualTo("Car wash")
+        assertThat(File(attachmentDir, "album_p1.jpg").readText()).isEqualTo("album")
+        assertThat(repository.summary().photos).isEqualTo(2)
     }
 
     @Test

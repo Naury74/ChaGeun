@@ -42,7 +42,9 @@ import com.naury.chageun.feature.settings.OpenSourceLicensesRoute
 import com.naury.chageun.feature.settings.PrivacyNoticeScreen
 import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
+import com.naury.chageun.feature.vehicle.album.AlbumRoute as AlbumScreenRoute
 import com.naury.chageun.navigation.AiRoute
+import com.naury.chageun.navigation.AlbumRoute
 import com.naury.chageun.navigation.OpenSourceLicensesRoute
 import com.naury.chageun.navigation.PrivacyNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
@@ -58,6 +60,7 @@ data class AppActions(
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    val onOpenAlbum: () -> Unit = {},
     /** 다른 탭에서 관리 탭의 항목 상세를 연다. */
     val onOpenManageItem: (MaintenanceItem) -> Unit = {},
     /** 알림이나 다른 탭에서 연 항목. Care 탭이 선택하고 나면 소비된다. */
@@ -99,6 +102,7 @@ fun ChageunApp(
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         onOpenSettings = { backStack.add(SettingsRoute) },
+        onOpenAlbum = { backStack.add(AlbumRoute) },
         onOpenManageItem = { item ->
             openedManageItem = item
             navigateTo(TopLevelDestination.Manage)
@@ -167,6 +171,7 @@ fun ChageunApp(
                 entry(OpenSourceLicensesRoute) {
                     OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
                 }
+                entry(AlbumRoute) { AlbumScreenRoute(onBack = { backStack.removeLastOrNull() }) }
                 entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
                 entry<AiRoute> { route ->
                     AiHubRoute(
@@ -221,6 +226,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
         TopLevelDestination.Vehicle -> VehicleRoute(
             onUpdateMileage = actions.onUpdateMileage,
             onOpenSettings = actions.onOpenSettings,
+            onOpenAlbum = actions.onOpenAlbum,
         )
     }
 }

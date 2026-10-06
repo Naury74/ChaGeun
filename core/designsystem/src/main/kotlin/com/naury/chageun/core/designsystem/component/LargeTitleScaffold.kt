@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 fun LargeTitleScaffold(
     title: String?,
     modifier: Modifier = Modifier,
+    /** 탭 위에 쌓인 화면처럼 돌아갈 곳이 있을 때 뒤로 버튼을 둔다. */
+    navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -38,6 +40,7 @@ fun LargeTitleScaffold(
             if (title != null) {
                 LargeTopAppBar(
                     title = { Text(title, modifier = Modifier.semantics { heading() }) },
+                    navigationIcon = navigationIcon,
                     actions = actions,
                     scrollBehavior = scrollBehavior,
                     windowInsets = WindowInsets(0),

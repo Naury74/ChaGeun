@@ -2,6 +2,7 @@
 
 package com.naury.chageun.data.backup
 
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
@@ -181,4 +182,27 @@ internal fun InspectionDto.toEntity() = InspectionScheduleEntity(
     source = source,
     notifiedStage = null,
     updatedAt = Instant.parse(updatedAt),
+)
+
+internal fun AlbumPhotoEntity.toDto() = AlbumPhotoDto(
+    id = id,
+    vehicleId = vehicleId,
+    file = fileName,
+    thumbnail = thumbnailName,
+    sizeBytes = sizeBytes,
+    takenOn = takenOn.toString(),
+    comment = comment,
+    createdAt = createdAt.toString(),
+)
+
+internal fun AlbumPhotoDto.toEntity(now: Instant) = AlbumPhotoEntity(
+    id = id,
+    vehicleId = vehicleId,
+    fileName = file,
+    thumbnailName = thumbnail,
+    sizeBytes = sizeBytes,
+    takenOn = LocalDate.parse(takenOn),
+    comment = comment,
+    createdAt = Instant.parse(createdAt),
+    updatedAt = now,
 )
