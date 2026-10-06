@@ -71,4 +71,5 @@
         <item quantity="other">Show %1$d more</item>
     </plurals>
     <string name="home_missing_less">Show less</string>
+    <string name="home_add_photo">Add a photo of your car</string>
 </resources>
