@@ -9,13 +9,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -48,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.ads.LocalAdConsent
-import com.naury.chageun.core.designsystem.component.ChoicePill
+import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
@@ -155,18 +153,11 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
         ) {
             CardlessSection(R.string.settings_section_theme) {
-                Row(
-                    modifier = Modifier.selectableGroup(),
-                    horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-                ) {
-                    ThemeMode.entries.forEach { mode ->
-                        ChoicePill(
-                            label = stringResource(mode.labelRes),
-                            selected = settings.themeMode == mode,
-                            onClick = { onThemeSelected(mode) },
-                        )
-                    }
-                }
+                SegmentedControl(
+                    options = ThemeMode.entries.map { stringResource(it.labelRes) },
+                    selectedIndex = ThemeMode.entries.indexOf(settings.themeMode),
+                    onSelect = { onThemeSelected(ThemeMode.entries[it]) },
+                )
             }
             CardGroup(stringResource(R.string.settings_section_notifications)) {
                 ToggleListRow(
