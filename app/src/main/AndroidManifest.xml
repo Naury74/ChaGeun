@@ -44,6 +44,15 @@
             </intent-filter>
         </activity>
 
+        <!--
+            ML Kit 모델을 설치 때 미리 받는다. 모듈마다 같은 키를 쓰면 병합이 충돌하므로 여기서 한 번에 적는다.
+            ocr: 계기판 주행거리 읽기(feature:home), subject_segment: 내 차 사진 배경 제거(data:history)
+        -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr,subject_segment"
+            tools:replace="android:value" />
+
         <!-- WorkManager는 ChageunApplication이 Hilt worker factory로 초기화한다. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
