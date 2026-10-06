@@ -82,4 +82,11 @@ class OnboardingScreenshotTest {
                 (MaintenanceItem.EngineOil to QuickServiceInput(QuickServiceMode.HalfYear)),
         ),
     )
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun photoKorean() = screenshot(
+        "onboarding_photo_ko",
+        OnboardingUiState(step = OnboardingStep.Photo, maker = "KG Mobility", model = "Torres"),
+    )
 }

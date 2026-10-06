@@ -52,4 +52,12 @@
     <string name="onboarding_notify_example_mileage">이번 달 주행거리를 알려 주세요</string>
     <string name="onboarding_mileage_estimate">잘 모르겠어요 · %1$d년식 평균 약 %2$s km</string>
     <string name="onboarding_restore_from_backup">백업에서 복원하기</string>
+    <string name="onboarding_photo_title">내 차 사진을 넣어 볼까요?</string>
+    <string name="onboarding_photo_body">홈과 내 차 화면 맨 위에 보여요. 배경은 이 기기 안에서 지워요.</string>
+    <string name="onboarding_photo_pick">사진 고르기</string>
+    <string name="onboarding_photo_change">다른 사진 고르기</string>
+    <string name="onboarding_photo_remove">빼기</string>
+    <string name="onboarding_photo_preview">내 차 사진</string>
+    <string name="onboarding_photo_hint">차가 옆이나 앞에서 크게 나온 사진이 좋아요. 나중에 홈에서 넣어도 돼요.</string>
+    <string name="onboarding_photo_later">나중에 할게요</string>
 </resources>

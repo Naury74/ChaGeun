@@ -20,6 +20,7 @@ internal class OnboardingDraftStore(private val handle: SavedStateHandle) {
         handle[KEY_YEAR] = state.modelYear
         handle[KEY_FUEL] = state.fuelType?.name
         handle[KEY_MILEAGE] = state.mileage
+        handle[KEY_PHOTO] = state.photoUri
         state.quickServices.forEach { (item, input) ->
             handle[quickKey(item, "mode")] = input.mode.name
             handle[quickKey(item, "date")] = input.date?.toEpochDay()
@@ -35,6 +36,7 @@ internal class OnboardingDraftStore(private val handle: SavedStateHandle) {
         modelYear = handle[KEY_YEAR] ?: "",
         fuelType = handle.get<String>(KEY_FUEL)?.let(FuelType::valueOf),
         mileage = handle[KEY_MILEAGE] ?: "",
+        photoUri = handle[KEY_PHOTO],
         quickServices = QUICK_SERVICE_ITEMS.associateWith(::restoreQuickService),
     )
 
@@ -54,5 +56,6 @@ internal class OnboardingDraftStore(private val handle: SavedStateHandle) {
         const val KEY_YEAR = "onboarding_year"
         const val KEY_FUEL = "onboarding_fuel"
         const val KEY_MILEAGE = "onboarding_mileage"
+        const val KEY_PHOTO = "onboarding_photo"
     }
 }

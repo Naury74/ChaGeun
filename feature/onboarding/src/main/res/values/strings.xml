@@ -52,4 +52,12 @@
     <string name="onboarding_notify_example_mileage">Time to update your mileage</string>
     <string name="onboarding_mileage_estimate">Not sure? About %2$s km for a %1$d car</string>
     <string name="onboarding_restore_from_backup">Restore from a backup</string>
+    <string name="onboarding_photo_title">Add a photo of your car</string>
+    <string name="onboarding_photo_body">It appears at the top of Home and My car. We remove the background on this device.</string>
+    <string name="onboarding_photo_pick">Choose a photo</string>
+    <string name="onboarding_photo_change">Choose another</string>
+    <string name="onboarding_photo_remove">Remove</string>
+    <string name="onboarding_photo_preview">Photo of your car</string>
+    <string name="onboarding_photo_hint">A side or front view where the car fills the frame works best. You can also add one later from Home.</string>
+    <string name="onboarding_photo_later">Skip for now</string>
 </resources>

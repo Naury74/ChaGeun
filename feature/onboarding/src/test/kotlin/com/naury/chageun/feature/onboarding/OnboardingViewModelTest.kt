@@ -9,6 +9,7 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
+import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
@@ -26,17 +27,19 @@ class OnboardingViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeVehicleRepository()
+    private val photos = FakeVehiclePhotoRepository()
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private val today = LocalDate.of(2026, 10, 1)
 
     private fun viewModel(handle: SavedStateHandle = SavedStateHandle()) =
-        OnboardingViewModel(handle, repository, RegistrationValidator(clock), clock, analytics)
+        OnboardingViewModel(handle, repository, photos, RegistrationValidator(clock), clock, analytics)
 
     private fun OnboardingViewModel.reachQuickMaintenance(mileage: String = "42180") {
         onAction(OnboardingAction.Start)
         onAction(OnboardingAction.SkipPlate)
         fillVehicleInfo()
         onAction(OnboardingAction.SubmitVehicleInfo)
+        onAction(OnboardingAction.SubmitPhoto)
         onAction(OnboardingAction.MileageChanged(mileage))
         onAction(OnboardingAction.SubmitMileage)
     }
@@ -123,6 +126,7 @@ class OnboardingViewModelTest {
         vm.onAction(OnboardingAction.SubmitPlate)
         vm.fillVehicleInfo()
         vm.onAction(OnboardingAction.SubmitVehicleInfo)
+        vm.onAction(OnboardingAction.SubmitPhoto)
         vm.onAction(OnboardingAction.MileageChanged("42,180"))
         vm.onAction(OnboardingAction.SubmitMileage)
         vm.onAction(OnboardingAction.SubmitQuickMaintenance)
@@ -257,5 +261,52 @@ class OnboardingViewModelTest {
         vm.onAction(OnboardingAction.Back)
 
         assertThat(vm.uiState.value.step).isEqualTo(OnboardingStep.Plate)
+    }
+
+    @Test
+    fun photoStep_comesAfterVehicleInfo_andCanBeSkipped() {
+        val vm = viewModel()
+        vm.onAction(OnboardingAction.Start)
+        vm.onAction(OnboardingAction.SkipPlate)
+        vm.fillVehicleInfo()
+        vm.onAction(OnboardingAction.SubmitVehicleInfo)
+        val onPhoto = vm.uiState.value.step
+        vm.onAction(OnboardingAction.SubmitPhoto)
+
+        assertThat(onPhoto).isEqualTo(OnboardingStep.Photo)
+        assertThat(vm.uiState.value.step).isEqualTo(OnboardingStep.Mileage)
+        assertThat(vm.uiState.value.photoUri).isNull()
+    }
+
+    @Test
+    fun pickedPhoto_survivesRecreation_andIsImportedAfterRegistering() {
+        val handle = SavedStateHandle()
+        val first = viewModel(handle)
+        first.onAction(OnboardingAction.Start)
+        first.onAction(OnboardingAction.SkipPlate)
+        first.fillVehicleInfo()
+        first.onAction(OnboardingAction.SubmitVehicleInfo)
+        first.onAction(OnboardingAction.PhotoPicked("file:///cache/photo_input/car.jpg"))
+
+        val recreated = viewModel(handle)
+        recreated.onAction(OnboardingAction.SubmitPhoto)
+        recreated.onAction(OnboardingAction.MileageChanged("42180"))
+        recreated.onAction(OnboardingAction.SubmitMileage)
+        recreated.onAction(OnboardingAction.SubmitQuickMaintenance)
+        recreated.onAction(OnboardingAction.Finish)
+
+        assertThat(photos.replacedInBackground.map { it.second }).containsExactly("file:///cache/photo_input/car.jpg")
+    }
+
+    @Test
+    fun removedPhoto_isNotImported() {
+        val vm = viewModel()
+        vm.reachQuickMaintenance()
+        vm.onAction(OnboardingAction.PhotoPicked("file:///car.jpg"))
+        vm.onAction(OnboardingAction.RemovePhoto)
+        vm.onAction(OnboardingAction.SubmitQuickMaintenance)
+        vm.onAction(OnboardingAction.Finish)
+
+        assertThat(photos.replacedInBackground).isEmpty()
     }
 }

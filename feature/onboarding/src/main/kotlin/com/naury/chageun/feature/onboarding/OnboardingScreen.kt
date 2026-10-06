@@ -95,6 +95,7 @@ fun OnboardingScreen(
                     OnboardingStep.Intro -> IntroStep()
                     OnboardingStep.Plate -> PlateStep(uiState, onAction)
                     OnboardingStep.VehicleInfo -> VehicleInfoStep(uiState, onAction)
+                    OnboardingStep.Photo -> PhotoStep(uiState, onAction)
                     OnboardingStep.Mileage -> MileageStep(uiState, onAction)
                     OnboardingStep.QuickMaintenance -> QuickMaintenanceStep(uiState, onAction)
                     OnboardingStep.Notifications -> NotificationsStep()
@@ -165,6 +166,17 @@ private fun BottomActions(
         OnboardingStep.Intro -> R.string.onboarding_start to { onAction(OnboardingAction.Start) }
         OnboardingStep.Plate -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitPlate) }
         OnboardingStep.VehicleInfo -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitVehicleInfo) }
+        // 사진은 고르지 않아도 넘어갈 수 있다. 버튼 이름으로 건너뛰는 것임을 알린다.
+        OnboardingStep.Photo -> (
+            if (uiState.photoUri ==
+                null
+            ) {
+                R.string.onboarding_photo_later
+            } else {
+                R.string.onboarding_next
+            }
+            ) to
+            { onAction(OnboardingAction.SubmitPhoto) }
         OnboardingStep.Mileage -> R.string.onboarding_next to { onAction(OnboardingAction.SubmitMileage) }
         OnboardingStep.QuickMaintenance ->
             R.string.onboarding_next to { onAction(OnboardingAction.SubmitQuickMaintenance) }

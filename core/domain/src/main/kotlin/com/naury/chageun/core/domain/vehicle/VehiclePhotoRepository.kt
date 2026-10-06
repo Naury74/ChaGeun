@@ -19,6 +19,12 @@ interface VehiclePhotoRepository {
      */
     suspend fun replace(vehicleId: VehicleId, sourceUri: String): Boolean
 
+    /**
+     * [replace]를 화면 수명과 상관없이 이어서 한다. 온보딩처럼 저장하자마자 화면이 바뀌어
+     * 호출한 쪽의 코루틴이 끊길 수 있을 때 쓴다. 실패하면 사진 없이 남고 나중에 다시 넣을 수 있다.
+     */
+    fun replaceInBackground(vehicleId: VehicleId, sourceUri: String)
+
     /** 배경을 지우지 못한 대표 사진에 다시 시도한다. 이미 진행 중이면 처음부터 다시 한다. */
     fun removeBackground(vehicleId: VehicleId)
 
