@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.material3.adaptive)
     implementation(libs.play.services.mlkit.text.recognition)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)

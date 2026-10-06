@@ -37,6 +37,7 @@ import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
+import com.naury.chageun.core.ui.ModelDownloadCard
 import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.QuickPick
 import com.naury.chageun.core.ui.formatNumber
@@ -63,6 +64,7 @@ fun MileageUpdateHost(
             viewModel::confirmCorrection,
             onDismiss,
             onReadDashboard = photoInput::open,
+            onRetryDashboard = viewModel::retryDashboard,
         )
     }
 }
@@ -75,6 +77,7 @@ internal fun MileageUpdateContent(
     onConfirmCorrection: () -> Unit,
     onDismiss: () -> Unit,
     onReadDashboard: () -> Unit = {},
+    onRetryDashboard: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -110,7 +113,7 @@ internal fun MileageUpdateContent(
             }.orEmpty(),
             errorText = stringResource(R.string.home_mileage_update_required).takeIf { uiState.isMissing },
         )
-        DashboardRead(uiState.dashboard, onReadDashboard, onMileageChanged)
+        DashboardRead(uiState.dashboard, onReadDashboard, onRetryDashboard, onMileageChanged)
         val lowerThan = uiState.lowerThan
         if (lowerThan != null) {
             val tone = StatusTone.Upcoming.colors
@@ -147,7 +150,12 @@ internal fun MileageUpdateContent(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DashboardRead(state: DashboardReadState, onRead: () -> Unit, onPick: (String) -> Unit) {
+private fun DashboardRead(
+    state: DashboardReadState,
+    onRead: () -> Unit,
+    onRetry: () -> Unit,
+    onPick: (String) -> Unit,
+) {
     when (state) {
         DashboardReadState.Reading -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(Modifier.size(DASHBOARD_PROGRESS_SIZE), strokeWidth = 2.dp)
@@ -187,6 +195,17 @@ private fun DashboardRead(state: DashboardReadState, onRead: () -> Unit, onPick:
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.error,
         )
+        is DashboardReadState.DownloadingModel ->
+            ModelDownloadCard(stringResource(R.string.home_dashboard_downloading), state.progress)
+        DashboardReadState.ModelUnavailable -> Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.home_dashboard_model_failed),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.home_dashboard_retry)) }
+        }
         DashboardReadState.Unavailable -> Text(
             stringResource(R.string.home_dashboard_unavailable),
             style = MaterialTheme.typography.bodyMedium,
@@ -194,7 +213,8 @@ private fun DashboardRead(state: DashboardReadState, onRead: () -> Unit, onPick:
         )
         DashboardReadState.Idle -> Unit
     }
-    if (state != DashboardReadState.Reading) {
+    // 읽거나 모델을 내려받는 동안에는 다른 사진을 고르지 않게 한다.
+    if (state != DashboardReadState.Reading && state !is DashboardReadState.DownloadingModel) {
         OutlinedButton(onClick = onRead, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Filled.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
             Text(

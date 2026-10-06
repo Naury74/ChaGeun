@@ -73,7 +73,10 @@ fun CutoutStatusPanel(
                     Text(stringResource(R.string.cutout_remove_background))
                 }
             }
-            is CutoutStatus.DownloadingModel -> Downloading(shown.progress)
+            is CutoutStatus.DownloadingModel -> ModelDownloadCard(
+                stringResource(R.string.cutout_downloading),
+                shown.progress,
+            )
             CutoutStatus.Processing -> StatusCard {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 StatusText(stringResource(R.string.cutout_processing))
@@ -83,9 +86,14 @@ fun CutoutStatusPanel(
     }
 }
 
+/**
+ * 기기 안에서 쓰는 ML 모델을 처음 내려받는 동안 이유와 진행률을 보여 준다.
+ * [progress]는 0~1이며 크기를 아직 모르면 null로 두어 움직이는 막대를 보여 준다.
+ */
 @Composable
-private fun Downloading(progress: Float?) {
+fun ModelDownloadCard(label: String, progress: Float?, modifier: Modifier = Modifier) {
     StatusCard(
+        modifier = modifier,
         footer = {
             val trackColor = MaterialTheme.colorScheme.surfaceVariant
             if (progress == null) {
@@ -101,7 +109,7 @@ private fun Downloading(progress: Float?) {
         },
     ) {
         StatusIcon(Icons.Outlined.CloudDownload, MaterialTheme.colorScheme.primary)
-        StatusText(stringResource(R.string.cutout_downloading), Modifier.weight(1f))
+        StatusText(label, Modifier.weight(1f))
         progress?.let {
             Text(
                 stringResource(R.string.cutout_progress, (it * PERCENT).roundToInt()),
@@ -133,11 +141,15 @@ private fun Failed(reason: CutoutFailure, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun StatusCard(footer: (@Composable () -> Unit)? = null, content: @Composable RowScope.() -> Unit) {
+private fun StatusCard(
+    modifier: Modifier = Modifier,
+    footer: (@Composable () -> Unit)? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
     ) {

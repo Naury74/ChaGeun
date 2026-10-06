@@ -85,4 +85,7 @@
     <string name="home_greeting_night_named">%1$s님, 오늘 하루도 수고했어요</string>
     <string name="home_stat_recent">최근 기록</string>
     <string name="home_stat_recent_none">없음</string>
+    <string name="home_dashboard_downloading">글자 인식 기능을 내려받는 중이에요 (처음 한 번만)</string>
+    <string name="home_dashboard_model_failed">글자 인식 기능을 내려받지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</string>
+    <string name="home_dashboard_retry">다시 시도</string>
 </resources>
