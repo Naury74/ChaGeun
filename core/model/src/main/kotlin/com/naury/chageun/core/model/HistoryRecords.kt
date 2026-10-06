@@ -57,22 +57,42 @@ data class TimelineItem(
 
 sealed interface RecordDetail {
     val ref: RecordRef
+    val timestamps: RecordTimestamps?
 
     data class Maintenance(
         override val ref: RecordRef,
         val item: MaintenanceItem,
         val entry: ServiceHistoryEntry,
         val memo: String?,
+        override val timestamps: RecordTimestamps? = null,
     ) : RecordDetail
 
-    data class Fuel(override val ref: RecordRef, val entry: FuelEntry) : RecordDetail
+    data class Fuel(
+        override val ref: RecordRef,
+        val entry: FuelEntry,
+        override val timestamps: RecordTimestamps? = null,
+    ) : RecordDetail
 
-    data class Check(override val ref: RecordRef, val entry: CheckEntry) : RecordDetail
+    data class Check(
+        override val ref: RecordRef,
+        val entry: CheckEntry,
+        override val timestamps: RecordTimestamps? = null,
+    ) : RecordDetail
 
     data class Mileage(
         override val ref: RecordRef,
         val date: LocalDate,
         val mileage: Kilometers,
         val source: MileageSource,
+        override val timestamps: RecordTimestamps? = null,
     ) : RecordDetail
+}
+
+/** 앱에 기록한 시각. 고친 적이 없으면 [editedAt]은 null이다. */
+data class RecordTimestamps(val createdAt: Instant, val editedAt: Instant?) {
+    companion object {
+        /** 저장할 때 두 값을 같은 시각으로 넣으므로, 다르면 나중에 고친 것이다. */
+        fun of(createdAt: Instant, updatedAt: Instant?) =
+            RecordTimestamps(createdAt, updatedAt?.takeIf { it.isAfter(createdAt) })
+    }
 }
