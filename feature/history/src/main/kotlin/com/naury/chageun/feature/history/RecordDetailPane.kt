@@ -261,7 +261,13 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
     add(
         Icons.Filled.Person,
         stringResource(R.string.history_detail_source),
-        stringResource(R.string.history_source_user),
+        stringResource(
+            if ((detail as? RecordDetail.Maintenance)?.entry?.isMileageEstimated == true) {
+                R.string.history_source_estimated
+            } else {
+                R.string.history_source_user
+            },
+        ),
     )
     return rows.mapNotNull { (icon, label, value) ->
         value?.takeIf { it.isNotBlank() }?.let { Triple(icon, label, it) }
