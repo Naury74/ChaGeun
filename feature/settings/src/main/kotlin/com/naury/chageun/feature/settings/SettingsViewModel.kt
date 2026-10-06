@@ -29,8 +29,13 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setMaintenanceReminderEnabled(enabled: Boolean) {
-        if (enabled) analytics.track(AnalyticsEvent.ReminderEnabled(ReminderKind.MaintenanceAndInspection))
+        if (enabled) analytics.track(AnalyticsEvent.ReminderEnabled(ReminderKind.Maintenance))
         viewModelScope.launch { settingsRepository.setMaintenanceReminderEnabled(enabled) }
+    }
+
+    fun setInspectionReminderEnabled(enabled: Boolean) {
+        if (enabled) analytics.track(AnalyticsEvent.ReminderEnabled(ReminderKind.Inspection))
+        viewModelScope.launch { settingsRepository.setInspectionReminderEnabled(enabled) }
     }
 
     fun setMileageReminderEnabled(enabled: Boolean) {

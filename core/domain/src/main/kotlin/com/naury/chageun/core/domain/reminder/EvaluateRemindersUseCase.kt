@@ -42,7 +42,12 @@ class EvaluateRemindersUseCase @Inject constructor(
         val vehicle = vehicleRepository.observePrimaryVehicle().first() ?: return 0
         val overview = observeOverview(vehicle.id).first()
         var shown = 0
-        if (settings.isMaintenanceReminderEnabled) shown += notifyDueItems(vehicle.id, overview)
+        shown += notifyDueItems(
+            vehicle.id,
+            overview,
+            includeMaintenance = settings.isMaintenanceReminderEnabled,
+            includeInspection = settings.isInspectionReminderEnabled,
+        )
         if (settings.isMileageReminderEnabled && promptMileageUpdate(overview.currentMileage?.date)) shown++
         return shown
     }

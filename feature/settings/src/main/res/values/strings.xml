@@ -6,8 +6,10 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_section_notifications">Notifications</string>
-    <string name="settings_maintenance_reminders">Maintenance and inspection reminders</string>
-    <string name="settings_maintenance_reminders_body">Replacements coming up, due or past due, and the inspection deadline. Home keeps showing status either way.</string>
+    <string name="settings_maintenance_reminders">Maintenance reminders</string>
+    <string name="settings_maintenance_reminders_body">2,000 km and 500 km before a replacement, or 60 and 14 days before for time-based items, and when it\'s due. Home keeps showing status either way.</string>
+    <string name="settings_inspection_reminders">Inspection reminders</string>
+    <string name="settings_inspection_reminders_body">30, 7 and 1 day before the inspection deadline, and if it passes.</string>
     <string name="settings_system_notifications">Notification categories in system settings</string>
     <string name="settings_section_sources">Data sources</string>
     <string name="settings_source_user">Vehicle details, mileage and records: entered by you</string>

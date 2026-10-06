@@ -8,10 +8,11 @@ import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.RecordSourceTypes
+import com.naury.chageun.core.database.entity.ReminderStateEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
+import com.naury.chageun.core.domain.reminder.MaintenanceReminderStage
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
-import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
@@ -160,10 +161,30 @@ class OfflineFirstMaintenanceRepositoryTest {
     fun reminderStates_replaceAndReadBack() = runTest {
         val reminders = RoomReminderRepository(database.reminderDao(), Clock.fixed(now, ZoneOffset.UTC))
 
-        reminders.replaceNotifiedStates(vehicleId, mapOf(MaintenanceItem.EngineOil to MaintenanceState.Due))
-        reminders.replaceNotifiedStates(vehicleId, mapOf(MaintenanceItem.Tire to MaintenanceState.Overdue))
+        reminders.replaceNotifiedStages(vehicleId, mapOf(MaintenanceItem.EngineOil to MaintenanceReminderStage.Due))
+        reminders.replaceNotifiedStages(vehicleId, mapOf(MaintenanceItem.Tire to MaintenanceReminderStage.Near))
 
-        assertThat(reminders.notifiedStates(vehicleId)).containsExactly(MaintenanceItem.Tire, MaintenanceState.Overdue)
+        assertThat(
+            reminders.notifiedStages(vehicleId),
+        ).containsExactly(MaintenanceItem.Tire, MaintenanceReminderStage.Near)
+    }
+
+    @Test
+    fun reminderStates_savedBeforeStages_areReadAsTheClosestStage() = runTest {
+        val reminders = RoomReminderRepository(database.reminderDao(), Clock.fixed(now, ZoneOffset.UTC))
+        database.reminderDao().replaceAll(
+            "v1",
+            listOf("EngineOil" to "Upcoming", "Tire" to "Overdue", "Wiper" to "Somewhere").map { (item, state) ->
+                ReminderStateEntity("v1", item, state, now)
+            },
+        )
+
+        assertThat(reminders.notifiedStages(vehicleId)).containsExactly(
+            MaintenanceItem.EngineOil,
+            MaintenanceReminderStage.Early,
+            MaintenanceItem.Tire,
+            MaintenanceReminderStage.Due,
+        )
     }
 
     @Test
