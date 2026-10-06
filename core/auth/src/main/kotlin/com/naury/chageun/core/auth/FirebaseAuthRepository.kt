@@ -3,6 +3,7 @@ package com.naury.chageun.core.auth
 import android.content.Context
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
@@ -75,7 +76,28 @@ internal class FirebaseAuthRepository(
 
     override suspend fun signOut() {
         auth.signOut()
-        // 다음 Google 로그인에서 계정을 다시 고를 수 있게 기억한 선택을 지운다.
+        clearRememberedCredential()
+    }
+
+    override suspend fun reauthenticateWithPassword(password: String): AuthResult = attempt("reauth_password") {
+        val user = checkNotNull(auth.currentUser)
+        user.reauthenticate(EmailAuthProvider.getCredential(checkNotNull(user.email), password)).await()
+        AuthResult.Success()
+    }
+
+    override suspend fun reauthenticateWithGoogle(idToken: String): AuthResult = attempt("reauth_google") {
+        checkNotNull(auth.currentUser).reauthenticate(GoogleAuthProvider.getCredential(idToken, null)).await()
+        AuthResult.Success()
+    }
+
+    override suspend fun deleteAccount(): AuthResult = attempt("delete_account") {
+        checkNotNull(auth.currentUser).delete().await()
+        clearRememberedCredential()
+        AuthResult.Success()
+    }
+
+    /** 다음 Google 로그인에서 계정을 다시 고를 수 있게 기억한 선택을 지운다. */
+    private suspend fun clearRememberedCredential() {
         runCatching { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
             .onFailure { if (it is CancellationException) throw it }
     }

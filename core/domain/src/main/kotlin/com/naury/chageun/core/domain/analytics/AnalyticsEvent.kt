@@ -88,6 +88,10 @@ sealed interface AnalyticsEvent {
     data object CloudBackupRestored : AnalyticsEvent {
         override val name = "cloud_backup_restored"
     }
+
+    data object AccountDeleted : AnalyticsEvent {
+        override val name = "account_deleted"
+    }
 }
 
 private val AuthMethod.key: String

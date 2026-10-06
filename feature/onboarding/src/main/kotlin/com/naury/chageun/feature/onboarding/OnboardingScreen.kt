@@ -45,13 +45,18 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 
 @Composable
-fun OnboardingRoute(viewModel: OnboardingViewModel = hiltViewModel()) {
+fun OnboardingRoute(onRestoreFromBackup: () -> Unit = {}, viewModel: OnboardingViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    OnboardingScreen(uiState = uiState, onAction = viewModel::onAction)
+    OnboardingScreen(uiState = uiState, onAction = viewModel::onAction, onRestoreFromBackup = onRestoreFromBackup)
 }
 
 @Composable
-fun OnboardingScreen(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit, modifier: Modifier = Modifier) {
+fun OnboardingScreen(
+    uiState: OnboardingUiState,
+    onAction: (OnboardingAction) -> Unit,
+    modifier: Modifier = Modifier,
+    onRestoreFromBackup: () -> Unit = {},
+) {
     BackHandler(enabled = uiState.canGoBack) { onAction(OnboardingAction.Back) }
     val slide = motionSpec<androidx.compose.ui.unit.IntOffset>()
     val fade = motionSpec<Float>()
@@ -106,6 +111,7 @@ fun OnboardingScreen(uiState: OnboardingUiState, onAction: (OnboardingAction) ->
         BottomActions(
             uiState = uiState,
             onAction = onAction,
+            onRestoreFromBackup = onRestoreFromBackup,
             modifier = Modifier
                 .widthIn(max = CONTENT_MAX_WIDTH)
                 .fillMaxWidth()
@@ -151,6 +157,7 @@ private fun StepTopBar(uiState: OnboardingUiState, onBack: () -> Unit) {
 private fun BottomActions(
     uiState: OnboardingUiState,
     onAction: (OnboardingAction) -> Unit,
+    onRestoreFromBackup: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val optInToNotifications = rememberNotificationOptIn { onAction(OnboardingAction.Finish) }
@@ -173,6 +180,12 @@ private fun BottomActions(
                 .heightIn(min = CTA_HEIGHT),
         ) {
             Text(stringResource(labelRes), style = MaterialTheme.typography.titleMedium)
+        }
+        // 새 휴대폰으로 바꾼 사람은 차량을 다시 입력하지 않고 클라우드 백업에서 시작한다.
+        if (uiState.step == OnboardingStep.Intro) {
+            TextButton(onClick = onRestoreFromBackup, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.onboarding_restore_from_backup))
+            }
         }
         if (uiState.step == OnboardingStep.Notifications) {
             TextButton(

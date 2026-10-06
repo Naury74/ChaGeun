@@ -19,4 +19,7 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setUsageStatsEnabled(enabled: Boolean) =
         settings.update { it.copy(isUsageStatsEnabled = enabled) }
+
+    override suspend fun setCloudAutoBackupEnabled(enabled: Boolean) =
+        settings.update { it.copy(isCloudAutoBackupEnabled = enabled) }
 }

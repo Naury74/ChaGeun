@@ -84,7 +84,7 @@ class AccountScreenshotTest {
     fun home_unverifiedEmail_phone() {
         account(AccountUiState(isLoading = false, user = emailUser))
 
-        composeRule.onNodeWithText("이메일 인증이 필요해요").assertExists()
+        composeRule.onNodeWithText("메일함에서 인증을 마쳐 주세요").assertExists()
         composeRule.assertNoClippedText()
         composeRule.captureScreen("account_home_phone")
     }
@@ -131,6 +131,53 @@ class AccountScreenshotTest {
         composeRule.onNodeWithText("백업 목록 · 최근 5개 보관").assertExists()
         composeRule.assertNoClippedText()
         composeRule.captureScreen("account_home_backups_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun restoreMode_listsBackups_phone() {
+        composeRule.setContent {
+            AppFrame {
+                AccountScreen(
+                    uiState = AccountUiState(isLoading = false, user = emailUser.copy(isEmailVerified = true)),
+                    onBack = {},
+                    onContinueWithGoogle = {},
+                    onContinueWithEmail = {},
+                    onOpenPrivacyPolicy = {},
+                    onCheckVerification = {},
+                    onResendVerification = {},
+                    onSignOut = {},
+                    backup = CloudBackupUiState(
+                        isLoaded = true,
+                        backups = listOf(FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z"))),
+                    ),
+                    isRestoreMode = true,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("복원할 백업을 골라 주세요").assertExists()
+        composeRule.onNodeWithText("지금 백업").assertDoesNotExist()
+        composeRule.captureScreen("account_restore_mode_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun deleteAccount_email_phone() {
+        composeRule.setContent {
+            AppFrame {
+                DeleteAccountScreen(
+                    uiState = DeleteAccountUiState(user = emailUser, password = "chageun1"),
+                    onBack = {},
+                    onPasswordChange = {},
+                    onDelete = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("내 Google 드라이브의 백업").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen("account_delete_phone")
     }
 
     @Test

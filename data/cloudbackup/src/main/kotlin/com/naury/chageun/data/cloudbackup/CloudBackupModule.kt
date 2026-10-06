@@ -2,12 +2,8 @@ package com.naury.chageun.data.cloudbackup
 
 import android.content.Context
 import android.os.Build
-import com.google.firebase.FirebaseApp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
-import dagger.Lazy
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,18 +12,17 @@ import dagger.hilt.components.SingletonComponent
 import java.io.File
 import java.time.Clock
 import java.util.UUID
-import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+internal interface AutoBackupModule {
+    @Binds
+    fun bindScheduler(scheduler: PeriodicAutoBackupScheduler): AutoBackupScheduler
+}
 
 @Module
 @InstallIn(SingletonComponent::class)
 internal object CloudBackupModule {
-
-    @Provides
-    fun provideRemote(logger: AppLogger): CloudBackupRemote = FirebaseCloudBackupRemote(
-        firestore = { FirebaseFirestore.getInstance() },
-        storage = { FirebaseStorage.getInstance() },
-        logger = logger,
-    )
 
     @Provides
     fun provideEnvironment(@ApplicationContext context: Context, clock: Clock) = CloudBackupEnvironment(
@@ -36,18 +31,11 @@ internal object CloudBackupModule {
         appVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty(),
         deviceModel = Build.MODEL,
         clock = clock,
-        // Storage 규칙은 영문·숫자·_·-만 받는다.
         newBackupId = { UUID.randomUUID().toString() },
     )
 
+    // 개발자 비용이 생기지 않도록 Firebase 저장소(Firestore·Storage)는 쓰지 않는다(ADR-006).
+    // 사용자 본인 Google 드라이브 연결을 붙이기 전까지는 백업을 쓸 수 없다고 안내한다.
     @Provides
-    @Singleton
-    fun provideRepository(
-        @ApplicationContext context: Context,
-        firebase: Lazy<DefaultCloudBackupRepository>,
-    ): CloudBackupRepository = if (FirebaseApp.getApps(context).isEmpty()) {
-        UnavailableCloudBackupRepository
-    } else {
-        firebase.get()
-    }
+    fun provideRepository(): CloudBackupRepository = UnavailableCloudBackupRepository
 }

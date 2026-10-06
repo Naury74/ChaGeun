@@ -196,7 +196,7 @@ private fun SignUpFields(uiState: EmailAuthUiState, actions: EmailAuthActions, o
 }
 
 @Composable
-private fun PasswordField(
+internal fun PasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
