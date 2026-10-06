@@ -5,6 +5,7 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.UpdateMileageUseCase
 import com.naury.chageun.core.domain.mileage.ReadOdometerUseCase
+import com.naury.chageun.core.domain.mileage.TextReadResult
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
@@ -30,19 +31,38 @@ class MileageUpdateViewModelTest {
     private val maintenance = FakeMaintenanceRepository()
 
     // init에서 저장된 주행거리를 읽으므로 테스트 Dispatcher와 픽스처가 준비된 뒤에 만든다.
-    private val viewModel by lazy {
+    private val viewModel: MileageUpdateViewModel by lazy {
         MileageUpdateViewModel(
             SavedStateHandle(),
             vehicles,
             maintenance,
             UpdateMileageUseCase(maintenance, clock),
             FakeAnalyticsTracker(),
-            ReadOdometerUseCase({ dashboardLines }, clock),
+            ReadOdometerUseCase(
+                { _, onDownloading ->
+                    downloadProgress.forEach(onDownloading)
+                    downloadStates += viewModelDashboardState()
+                    readResults.removeFirstOrNull() ?: dashboardLines?.let { TextReadResult.Read(it) }
+                        ?: TextReadResult.Unavailable
+                },
+                clock,
+            ),
         )
     }
 
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private var dashboardLines: List<String>? = emptyList()
+
+    /** 비어 있지 않으면 [dashboardLines]보다 먼저 차례로 돌려준다. */
+    private val readResults = ArrayDeque<TextReadResult>()
+
+    /** 읽기 전에 모델을 내려받는 것처럼 알릴 진행률. */
+    private var downloadProgress = emptyList<Float?>()
+
+    /** 진행률을 알린 직후의 화면 상태. 내려받는 동안 무엇이 보였는지 확인한다. */
+    private val downloadStates = mutableListOf<DashboardReadState>()
+
+    private fun viewModelDashboardState(): DashboardReadState = viewModel.uiState.value.dashboard
 
     @Before
     fun setUp() = runTest {
@@ -115,5 +135,29 @@ class MileageUpdateViewModelTest {
         viewModel.readDashboard("file:///photo.jpg")
 
         assertThat(viewModel.uiState.value.dashboard).isEqualTo(DashboardReadState.Unavailable)
+    }
+
+    @Test
+    fun dashboardPhoto_showsModelDownloadProgress_thenReads() = runTest {
+        downloadProgress = listOf(null, 0.4f)
+        dashboardLines = listOf("ODO 43,520 km")
+
+        viewModel.readDashboard("file:///photo.jpg")
+
+        assertThat(downloadStates.single()).isEqualTo(DashboardReadState.DownloadingModel(0.4f))
+        assertThat(viewModel.uiState.value.mileage).isEqualTo("43520")
+    }
+
+    @Test
+    fun dashboardPhoto_whenModelDownloadFails_retriesSamePhoto() = runTest {
+        readResults += TextReadResult.ModelUnavailable
+        dashboardLines = listOf("ODO 43,520 km")
+
+        viewModel.readDashboard("file:///photo.jpg")
+        val failed = viewModel.uiState.value.dashboard
+        viewModel.retryDashboard()
+
+        assertThat(failed).isEqualTo(DashboardReadState.ModelUnavailable)
+        assertThat(viewModel.uiState.value.mileage).isEqualTo("43520")
     }
 }

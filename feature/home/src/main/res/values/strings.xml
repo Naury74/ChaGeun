@@ -90,4 +90,7 @@
     <string name="home_greeting_night_named">Hope you had a good day, %1$s</string>
     <string name="home_stat_recent">Last record</string>
     <string name="home_stat_recent_none">None</string>
+    <string name="home_dashboard_downloading">Downloading text recognition (first time only)</string>
+    <string name="home_dashboard_model_failed">Couldn\'t download text recognition. Check your internet connection and try again.</string>
+    <string name="home_dashboard_retry">Try again</string>
 </resources>

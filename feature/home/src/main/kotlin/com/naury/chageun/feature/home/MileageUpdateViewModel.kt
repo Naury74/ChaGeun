@@ -8,6 +8,7 @@ import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.domain.maintenance.UpdateMileageResult
 import com.naury.chageun.core.domain.maintenance.UpdateMileageUseCase
+import com.naury.chageun.core.domain.mileage.OdometerReadResult
 import com.naury.chageun.core.domain.mileage.ReadOdometerUseCase
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.Kilometers
@@ -39,12 +40,18 @@ sealed interface DashboardReadState {
 
     data object Reading : DashboardReadState
 
+    /** 글자 인식 모델을 처음 한 번 내려받는 중이다. [progress]는 0~1이며 크기를 아직 모르면 null이다. */
+    data class DownloadingModel(val progress: Float?) : DashboardReadState
+
     data class Read(val best: Kilometers, val others: List<Kilometers>, val range: Kilometers?) : DashboardReadState
 
     /** 글자는 읽었지만 주행거리로 볼 숫자가 없다. 숫자 부분만 잘라 다시 시도할 수 있다. */
     data object NotFound : DashboardReadState
 
-    /** 이 기기에서 인식기를 쓸 수 없다(모델 없음, 네이티브 오류, 시간 초과). 직접 입력해야 한다. */
+    /** 모델을 내려받지 못했다. 같은 사진으로 다시 시도할 수 있다. */
+    data object ModelUnavailable : DashboardReadState
+
+    /** 이 기기에서 인식기를 쓸 수 없다(네이티브 오류, 시간 초과). 직접 입력해야 한다. */
     data object Unavailable : DashboardReadState
 }
 
@@ -71,22 +78,31 @@ class MileageUpdateViewModel @Inject constructor(
         }
     }
 
+    private var lastDashboardImage: String? = null
+
     /** [imageUri]는 사진 편집기가 남긴 캐시 파일이다. 읽은 값을 입력칸에 채운다. */
     fun readDashboard(imageUri: String) {
+        lastDashboardImage = imageUri
         _uiState.update { it.copy(dashboard = DashboardReadState.Reading) }
         viewModelScope.launch {
-            val candidates = readOdometer(imageUri, previousReading)
-            val best = candidates?.best
-            if (best == null) {
-                val state = if (candidates == null) DashboardReadState.Unavailable else DashboardReadState.NotFound
-                _uiState.update { it.copy(dashboard = state) }
-                return@launch
+            val result = readOdometer(imageUri, previousReading) { progress ->
+                _uiState.update { it.copy(dashboard = DashboardReadState.DownloadingModel(progress)) }
             }
-            onMileageChanged(best.value.toString())
-            _uiState.update {
-                it.copy(dashboard = DashboardReadState.Read(best, candidates.others, candidates.range))
+            val state = when (result) {
+                OdometerReadResult.ModelUnavailable -> DashboardReadState.ModelUnavailable
+                OdometerReadResult.Unavailable -> DashboardReadState.Unavailable
+                is OdometerReadResult.Read -> result.candidates.best?.let { best ->
+                    onMileageChanged(best.value.toString())
+                    DashboardReadState.Read(best, result.candidates.others, result.candidates.range)
+                } ?: DashboardReadState.NotFound
             }
+            _uiState.update { it.copy(dashboard = state) }
         }
+    }
+
+    /** 모델을 내려받지 못했을 때 같은 사진으로 다시 읽는다. */
+    fun retryDashboard() {
+        lastDashboardImage?.let(::readDashboard)
     }
 
     fun onMileageChanged(value: String) {

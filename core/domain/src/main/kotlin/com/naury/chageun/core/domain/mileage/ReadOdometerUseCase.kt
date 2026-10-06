@@ -6,9 +6,24 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 class ReadOdometerUseCase @Inject constructor(private val reader: DashboardTextReader, private val clock: Clock) {
-    /** @return 인식기를 쓸 수 없으면 null. 글자는 읽었지만 맞는 숫자가 없으면 후보가 빈 결과. */
-    suspend operator fun invoke(imageUri: String, previous: MileageReading?): OdometerCandidates? {
-        val lines = reader.read(imageUri) ?: return null
-        return OdometerParser.parse(lines, previous, LocalDate.now(clock))
+    /** 글자는 읽었지만 맞는 숫자가 없으면 후보가 빈 [OdometerReadResult.Read]다. */
+    suspend operator fun invoke(
+        imageUri: String,
+        previous: MileageReading?,
+        onDownloadingModel: (Float?) -> Unit = {},
+    ): OdometerReadResult = when (val result = reader.read(imageUri, onDownloadingModel)) {
+        is TextReadResult.Read -> OdometerReadResult.Read(
+            OdometerParser.parse(result.lines, previous, LocalDate.now(clock)),
+        )
+        TextReadResult.ModelUnavailable -> OdometerReadResult.ModelUnavailable
+        TextReadResult.Unavailable -> OdometerReadResult.Unavailable
     }
+}
+
+sealed interface OdometerReadResult {
+    data class Read(val candidates: OdometerCandidates) : OdometerReadResult
+
+    data object ModelUnavailable : OdometerReadResult
+
+    data object Unavailable : OdometerReadResult
 }
