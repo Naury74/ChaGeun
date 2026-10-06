@@ -53,8 +53,46 @@
     <string name="account_notice_verified">Your email is verified.</string>
     <string name="account_section_backup">Cloud backup</string>
     <string name="account_backup_now">Back up now</string>
-    <string name="account_backup_coming">Opens in the next update</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_sign_out_title">Sign out?</string>
     <string name="account_sign_out_body">Your car and records stay on this phone.</string>
+    <string name="account_backup_last">Last backup: %1$s</string>
+    <string name="account_backup_never">No backups yet</string>
+    <string name="account_backup_needs_verification">Verify your email to back up</string>
+    <string name="account_backup_in_progress">Backing up…</string>
+    <string name="account_backups_title">Backups · last %1$d kept</string>
+    <string name="account_backup_details">%1$s · %2$s · %3$s</string>
+    <string name="account_backup_unknown_device">Unknown device</string>
+    <string name="account_backup_restore">Restore this backup</string>
+    <string name="account_backup_delete">Delete backup</string>
+    <string name="account_backup_delete_title">Delete this backup?</string>
+    <string name="account_backup_delete_body">It\'s removed from the cloud. Data on this phone stays as it is.</string>
+    <string name="account_backup_delete_confirm">Delete</string>
+    <string name="account_restore_title">Replace data with this backup?</string>
+    <string name="account_restore_incoming">Backup</string>
+    <string name="account_restore_current">This phone now</string>
+    <string name="account_restore_body">All data on this phone will be replaced with the backup. Plate numbers come back masked. Settings stay as they are.</string>
+    <string name="account_restore_confirm">Restore</string>
+    <string name="account_restore_downloading">Downloading backup…</string>
+    <string name="account_restore_restoring">Restoring…</string>
+    <string name="account_notice_backed_up">Backed up to the cloud.</string>
+    <string name="account_notice_restored">Restored from the backup.</string>
+    <string name="account_notice_backup_deleted">Backup deleted.</string>
+    <string name="account_notice_needs_update">This backup is from a newer app version. Update Chageun first.</string>
+    <string name="account_notice_restore_failed">Couldn\'t restore. Your data is unchanged.</string>
+    <string name="account_backup_error_no_data">Register your car before backing up.</string>
+    <string name="account_backup_error_too_large">The backup is over 200 MB. Remove some photos and try again.</string>
+    <string name="account_backup_error_unavailable">Cloud backup isn\'t available yet. Try again later.</string>
+    <plurals name="account_count_vehicles">
+        <item quantity="one">%d car</item>
+        <item quantity="other">%d cars</item>
+    </plurals>
+    <plurals name="account_count_records">
+        <item quantity="one">%d record</item>
+        <item quantity="other">%d records</item>
+    </plurals>
+    <plurals name="account_count_photos">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
 </resources>
