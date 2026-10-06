@@ -72,4 +72,11 @@
     </plurals>
     <string name="home_missing_less">Show less</string>
     <string name="home_add_photo">Add a photo of your car</string>
+    <string name="home_dashboard_button">Read from a dashboard photo</string>
+    <string name="home_dashboard_reading">Reading the dashboard…</string>
+    <string name="home_dashboard_read">Read %1$s km from the photo. Check it matches your dashboard before saving.</string>
+    <string name="home_dashboard_range">Range shown: about %1$s km (for reference only, not saved)</string>
+    <string name="home_dashboard_not_found">Couldn\'t find the mileage. Try cropping to the odometer, or type it in.</string>
+    <string name="home_mileage_value">%1$s km</string>
+    <string name="home_dashboard_unavailable">Reading photos isn\'t available on this device right now. Please type the mileage in.</string>
 </resources>
