@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.model.MaintenanceItem
-import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.feature.manage.rule.RuleEditorHost
 
@@ -71,31 +71,34 @@ fun ManageScreen(
     }
     val detail = uiState.detail
     if (isTwoPane) {
-        HingeAwarePanes(
-            weights = listOf(LIST_PANE_WEIGHT, 1f - LIST_PANE_WEIGHT),
-            modifier = modifier.fillMaxSize(),
-        ) {
-            ManageList(
-                uiState = uiState,
-                onFilterSelected = onFilterSelected,
-                onItemSelected = onItemSelected,
-                onEditRule = onEditRule,
-                modifier = Modifier.fillMaxSize(),
-            )
-            val detailModifier = Modifier.fillMaxSize()
-            if (detail != null) {
+        BackHandler(enabled = detail != null) { onItemSelected(null) }
+        AdaptiveListDetail(
+            selected = detail,
+            list = {
+                ManageList(
+                    uiState = uiState,
+                    onFilterSelected = onFilterSelected,
+                    onItemSelected = { item ->
+                        // 같은 항목을 다시 누르면 상세를 닫고 목록을 넓게 되돌린다.
+                        onItemSelected(item.takeIf { it != uiState.selectedItem })
+                    },
+                    onEditRule = onEditRule,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            },
+            detail = {
                 ManageDetailPane(
-                    detail,
-                    onBack = null,
+                    it,
+                    onBack = { onItemSelected(null) },
                     onRecordService = onRecordService,
                     onEditRule = onEditRule,
                     onAskAi = onAskAi,
-                    modifier = detailModifier,
+                    modifier = Modifier.fillMaxSize(),
                 )
-            } else {
-                DetailPlaceholder(detailModifier)
-            }
-        }
+            },
+            emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
+            modifier = modifier,
+        )
     } else if (detail != null) {
         BackHandler { onItemSelected(null) }
         ManageDetailPane(
@@ -110,5 +113,3 @@ fun ManageScreen(
         ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize())
     }
 }
-
-private const val LIST_PANE_WEIGHT = 0.42f
