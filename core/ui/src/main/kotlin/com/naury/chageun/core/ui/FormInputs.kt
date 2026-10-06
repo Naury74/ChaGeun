@@ -35,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -183,7 +185,11 @@ fun OptionalSection(hasValue: Boolean, modifier: Modifier = Modifier, content: @
 @Composable
 fun SaveSuccessMark(modifier: Modifier = Modifier) {
     var isShown by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isShown = true }
+    val haptics = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        isShown = true
+        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+    }
     val scale by animateFloatAsState(
         targetValue = if (isShown) 1f else INITIAL_SCALE,
         animationSpec = motionSpec(ChageunMotion.MEDIUM_MS),

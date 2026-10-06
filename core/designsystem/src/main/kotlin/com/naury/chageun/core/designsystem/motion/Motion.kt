@@ -3,7 +3,9 @@ package com.naury.chageun.core.designsystem.motion
 import android.provider.Settings
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,7 +27,23 @@ fun rememberReduceMotion(): Boolean {
     }
 }
 
-/** Reduce Motion이면 즉시, 아니면 [durationMs] 동안 감속 곡선으로 움직이는 spec. */
+/**
+ * Reduce Motion이면 즉시 끝나는 spec. 지연이 없으면 iOS처럼 살짝 탄력 있는 스프링으로 움직이고,
+ * 순차 등장처럼 [delayMs]가 필요한 경우에는 [durationMs] 동안 감속 곡선으로 움직인다.
+ * 스프링의 길이는 [durationMs]에 비례하도록 강성을 고른다.
+ */
 @Composable
-fun <T> motionSpec(durationMs: Int = ChageunMotion.MEDIUM_MS, delayMs: Int = 0): FiniteAnimationSpec<T> =
-    if (rememberReduceMotion()) snap() else tween(durationMs, delayMs, FastOutSlowInEasing)
+fun <T> motionSpec(durationMs: Int = ChageunMotion.MEDIUM_MS, delayMs: Int = 0): FiniteAnimationSpec<T> = when {
+    rememberReduceMotion() -> snap()
+    delayMs > 0 -> tween(durationMs, delayMs, FastOutSlowInEasing)
+    else -> spring(dampingRatio = SPRING_DAMPING, stiffness = stiffnessFor(durationMs))
+}
+
+// 짧은 전환일수록 단단한 스프링을 써 체감 시간을 비슷하게 맞춘다.
+private fun stiffnessFor(durationMs: Int): Float = when {
+    durationMs <= ChageunMotion.SHORT_MS -> Spring.StiffnessMedium
+    durationMs <= ChageunMotion.MEDIUM_MS -> Spring.StiffnessMediumLow
+    else -> Spring.StiffnessLow
+}
+
+private const val SPRING_DAMPING = 0.85f

@@ -19,6 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,12 +31,16 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 @Composable
 fun ChoicePill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
     val container by animateColorAsState(if (selected) colors.primary else colors.surface, motionSpec(), "pill-bg")
     val content by animateColorAsState(if (selected) colors.onPrimary else colors.onSurface, motionSpec(), "pill-fg")
     Surface(
         modifier = modifier
             .heightIn(min = ChageunTheme.spacing.minTouchTarget)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+            .selectable(selected = selected, role = Role.RadioButton, onClick = {
+                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onClick()
+            }),
         shape = CircleShape,
         color = container,
         contentColor = content,
@@ -56,13 +62,17 @@ fun ChoiceCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val haptics = LocalHapticFeedback.current
     val container by animateColorAsState(
         if (selected) colors.primaryContainer else colors.surface,
         motionSpec(),
         "card-bg",
     )
     Surface(
-        modifier = modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick),
+        modifier = modifier.selectable(selected = selected, role = Role.RadioButton, onClick = {
+            if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+            onClick()
+        }),
         shape = MaterialTheme.shapes.medium,
         color = container,
         border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) colors.primary else colors.outlineVariant),

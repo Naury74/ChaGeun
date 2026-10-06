@@ -29,7 +29,7 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainer = LightTokens.Surface,
     surfaceContainerHigh = LightTokens.SurfaceVariant,
     outline = LightTokens.Outline,
-    outlineVariant = LightTokens.SurfaceVariant,
+    outlineVariant = LightTokens.Separator,
     error = LightTokens.Critical,
     errorContainer = LightTokens.CriticalContainer,
 )
@@ -55,7 +55,7 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainer = DarkTokens.Surface,
     surfaceContainerHigh = DarkTokens.SurfaceVariant,
     outline = DarkTokens.Outline,
-    outlineVariant = DarkTokens.SurfaceVariant,
+    outlineVariant = DarkTokens.Separator,
     error = DarkTokens.Critical,
     errorContainer = DarkTokens.CriticalContainer,
 )
