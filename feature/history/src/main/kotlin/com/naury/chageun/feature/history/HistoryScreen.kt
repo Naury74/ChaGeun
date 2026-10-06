@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
+import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.MaintenanceItem
@@ -84,40 +85,48 @@ fun HistoryRoute(
     }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
 
-    HistoryScreen(
-        uiState = uiState,
-        isTwoPane = isTwoPane,
-        onKeywordChanged = { keyword ->
-            val matching = if (keyword.isBlank()) {
-                emptySet()
-            } else {
-                itemLabels.filterValues {
-                    it.contains(keyword.trim(), ignoreCase = true)
-                }.keys
-            }
-            viewModel.search(keyword, matching)
+    LargeTitleScaffold(
+        title = stringResource(R.string.history_title).takeUnless {
+            !isTwoPane &&
+                uiState.selected != null
         },
-        onFilterSelected = viewModel::selectFilter,
-        onSelect = viewModel::select,
-        onDelete = viewModel::delete,
-        onEdit = { detail ->
-            if (detail is RecordDetail.Maintenance) {
-                onEditService(detail.item, detail.ref.id)
-            } else {
-                editingType = detail.ref.type
-                editingId = detail.ref.id
-            }
-        },
-        onAdd = { dialog = AddDialog.Chooser },
-        onOpenAdvancedFilter = { isFilterOpen = true },
-        onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
-        onAddPhotos = { ref ->
-            photoTarget = "${ref.type.name}:${ref.id}"
-            photoInput.open()
-        },
-        onDeleteAttachment = viewModel::deleteAttachment,
-        onDismissAttachFailure = viewModel::dismissAttachFailure,
-    )
+    ) { padding ->
+        HistoryScreen(
+            uiState = uiState,
+            isTwoPane = isTwoPane,
+            onKeywordChanged = { keyword ->
+                val matching = if (keyword.isBlank()) {
+                    emptySet()
+                } else {
+                    itemLabels.filterValues {
+                        it.contains(keyword.trim(), ignoreCase = true)
+                    }.keys
+                }
+                viewModel.search(keyword, matching)
+            },
+            onFilterSelected = viewModel::selectFilter,
+            onSelect = viewModel::select,
+            onDelete = viewModel::delete,
+            onEdit = { detail ->
+                if (detail is RecordDetail.Maintenance) {
+                    onEditService(detail.item, detail.ref.id)
+                } else {
+                    editingType = detail.ref.type
+                    editingId = detail.ref.id
+                }
+            },
+            onAdd = { dialog = AddDialog.Chooser },
+            onOpenAdvancedFilter = { isFilterOpen = true },
+            onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
+            onAddPhotos = { ref ->
+                photoTarget = "${ref.type.name}:${ref.id}"
+                photoInput.open()
+            },
+            onDeleteAttachment = viewModel::deleteAttachment,
+            onDismissAttachFailure = viewModel::dismissAttachFailure,
+            modifier = Modifier.padding(padding),
+        )
+    }
 
     if (isFilterOpen) {
         AdvancedFilterSheet(

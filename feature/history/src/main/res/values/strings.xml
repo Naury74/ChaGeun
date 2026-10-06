@@ -146,4 +146,5 @@
         <item quantity="one">%1$d photo attached</item>
         <item quantity="other">%1$d photos attached</item>
     </plurals>
+    <string name="history_title">History</string>
 </resources>
