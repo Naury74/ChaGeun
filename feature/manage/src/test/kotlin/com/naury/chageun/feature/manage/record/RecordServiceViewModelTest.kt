@@ -119,6 +119,22 @@ class RecordServiceViewModelTest {
     }
 
     @Test
+    fun asksBeforeRaisingCurrentMileage_thenSavesWithTheChoice() {
+        val vm = viewModel()
+        vm.onMileageChanged("43500")
+        vm.save()
+
+        assertThat(vm.uiState.value.odometerPrompt).isEqualTo(Kilometers(42_891))
+        assertThat(maintenance.recordedServices).isEmpty()
+
+        vm.decideOdometer(update = true)
+
+        assertThat(vm.uiState.value.odometerPrompt).isNull()
+        assertThat(vm.uiState.value.savedResult).isNotNull()
+        assertThat(maintenance.recordedServices.single().second).isTrue()
+    }
+
+    @Test
     fun restoresDraft_afterRecreation() {
         val handle = SavedStateHandle()
         viewModel(handle).apply {
