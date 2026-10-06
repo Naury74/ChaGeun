@@ -212,6 +212,11 @@ private fun LazyListScope.recordsPane(
         OfficialDataSection(state, onInspectionDateSelected, onInspectionCompleted)
     }
     item(key = "mileage-title") { SectionTitle(R.string.vehicle_section_mileage) }
+    MileageTrend.from(state.mileageLog)?.let { trend ->
+        item(key = "mileage-trend") {
+            MileageTrendCard(trend, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+        }
+    }
     item(key = "mileage-log") { MileageLog(state.mileageLog) }
 }
 
