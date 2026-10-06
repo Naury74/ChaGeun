@@ -1,6 +1,5 @@
 package com.naury.chageun.feature.manage
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -28,14 +27,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
+import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
+import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
@@ -125,7 +125,7 @@ internal fun ManageList(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(MaterialTheme.shapes.medium)
-                        .clickable(role = Role.Button) { onEditRule(item) }
+                        .pressable(onClick = { onEditRule(item) }, style = PressStyle.Highlight)
                         .padding(horizontal = ChageunTheme.spacing.xs, vertical = ChageunTheme.spacing.xs)
                         .alpha(DISABLED_ALPHA),
                     horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
@@ -164,7 +164,7 @@ private fun MaintenanceItemCard(
         modifier = modifier
             .fillMaxWidth()
             .semantics { selected = isSelected }
-            .clickable(role = Role.Button, onClick = onClick),
+            .pressable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
     ) {
