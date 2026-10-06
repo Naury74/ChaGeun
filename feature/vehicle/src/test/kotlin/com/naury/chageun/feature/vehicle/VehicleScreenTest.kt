@@ -125,6 +125,27 @@ class VehicleScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "w360dp-h640dp")
+    fun openingInspection_scrollsToTheInspectionCard() {
+        var shown = false
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14)),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                    showInspection = true,
+                    onInspectionShown = { shown = true },
+                )
+            }
+        }
+
+        // 휴대폰에서는 Hero 아래에 있어 처음엔 보이지 않지만, 검사로 들어오면 바로 보여야 한다.
+        composeRule.onNodeWithText("14 days left").assertIsDisplayed()
+        assertThat(shown).isTrue()
+    }
+
+    @Test
     fun inspection_withoutDate_offersEntry() {
         composeRule.setContent {
             ChageunTheme {
