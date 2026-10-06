@@ -123,10 +123,10 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
-    fun attach(ref: RecordRef, sourceUris: List<String>) {
+    fun attach(ref: RecordRef, sourceUris: List<String>, highQuality: Boolean = false) {
         if (sourceUris.isEmpty()) return
         viewModelScope.launch {
-            attachFailedCount.value = attachmentRepository.attach(vehicleId(), ref, sourceUris).failed
+            attachFailedCount.value = attachmentRepository.attach(vehicleId(), ref, sourceUris, highQuality).failed
         }
     }
 
@@ -140,11 +140,6 @@ class HistoryViewModel @Inject constructor(
 
     private suspend fun vehicleId() = vehicleRepository.observePrimaryVehicle().filterNotNull().first().id
 
-    private fun String.toRecordRef(): RecordRef? {
-        val type = substringBefore(':').let { name -> TimelineEventType.entries.firstOrNull { it.name == name } }
-        return type?.let { RecordRef(it, substringAfter(':')) }
-    }
-
     private fun List<TimelineItem>.groupIntoMonths(): List<TimelineSection> =
         groupBy { item -> item.date?.let(YearMonth::from) }
             .map { (month, items) -> TimelineSection(month, items) }
@@ -157,4 +152,10 @@ class HistoryViewModel @Inject constructor(
         const val KEY_ADVANCED = "history_advanced"
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
+}
+
+/** SavedStateHandle과 rememberSaveable에 "종류:ID"로 보관한 기록 참조를 되돌린다. */
+internal fun String.toRecordRef(): RecordRef? {
+    val type = substringBefore(':').let { name -> TimelineEventType.entries.firstOrNull { it.name == name } }
+    return type?.let { RecordRef(it, substringAfter(':')) }
 }

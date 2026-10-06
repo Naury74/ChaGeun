@@ -12,9 +12,14 @@ interface AttachmentRepository {
 
     /**
      * 선택한 이미지를 메타데이터 없이 다시 인코딩해 앱 저장소로 복사한다.
-     * [sourceUris]는 시스템 photo picker가 준 content URI다.
+     * [sourceUris]는 photo picker나 사진 편집기가 준 URI다. [highQuality]면 긴 변을 더 크게 남긴다.
      */
-    suspend fun attach(vehicleId: VehicleId, owner: RecordRef, sourceUris: List<String>): AttachResult
+    suspend fun attach(
+        vehicleId: VehicleId,
+        owner: RecordRef,
+        sourceUris: List<String>,
+        highQuality: Boolean = false,
+    ): AttachResult
 
     suspend fun delete(vehicleId: VehicleId, attachmentId: String)
 

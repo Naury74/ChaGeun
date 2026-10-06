@@ -44,7 +44,12 @@ internal class OfflineFirstVehiclePhotoRepository @Inject constructor(
     override suspend fun replace(vehicleId: VehicleId, sourceUri: String): Boolean = withContext(ioDispatcher) {
         val id = UUID.randomUUID().toString()
         val imported = runCatching {
-            images.importer.import(sourceUri, File(directory, "$id.jpg"), File(directory, "${id}_thumb.jpg"))
+            images.importer.import(
+                sourceUri,
+                File(directory, "$id.jpg"),
+                File(directory, "${id}_thumb.jpg"),
+                ImageImporter.DEFAULT_EDGE_PX,
+            )
         }.onFailure { logger.warn("vehicle_photo_import_failed", error = it) }.getOrNull()
             ?: return@withContext false
         runCatching { images.cutter.cutout(imported.file, File(directory, "$id$CUTOUT_SUFFIX")) }
