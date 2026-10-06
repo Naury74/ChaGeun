@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- 피사체 분리 모델을 설치 시점에 받아 둔다. 처음 사진을 넣을 때 기다리지 않게 하기 위해서다. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="subject_segment" />
+
+        <!-- 피사체 분리 네이티브 코드가 죽어도 앱이 함께 끝나지 않도록 별도 프로세스에서 실행한다. -->
+        <service
+            android:name="com.naury.chageun.data.history.CutoutService"
+            android:exported="false"
+            android:process=":cutout" />
+    </application>
+</manifest>

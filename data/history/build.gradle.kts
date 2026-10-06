@@ -16,6 +16,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.mlkit.subject.segmentation)
 
     testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.androidx.test.core)

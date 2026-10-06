@@ -54,7 +54,19 @@ fun VehicleHeroSection(
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
     ) {
         val photo = photoPath?.let { rememberFileImage(it).value }
-        if (photo != null) {
+        // 차만 잘라 낸 사진은 투명 PNG로 저장된다. 실루엣처럼 바닥 그림자 위에 배경 없이 놓는다.
+        if (photo != null && photoPath.endsWith(".png", ignoreCase = true)) {
+            GroundedImage {
+                Image(
+                    bitmap = photo,
+                    contentDescription = stringResource(R.string.vehicle_hero_photo),
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth(CUTOUT_WIDTH_FRACTION)
+                        .aspectRatio(CUTOUT_ASPECT_RATIO),
+                )
+            }
+        } else if (photo != null) {
             // 사용자 사진은 잘리지 않도록 고정 비율 안에 Fit으로 맞춘다 (기획서 13.4).
             Image(
                 bitmap = photo,
@@ -108,18 +120,7 @@ private fun FloorShadow(modifier: Modifier) {
 
 @Composable
 private fun SilhouetteImage(bodyType: VehicleBodyType) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = ChageunTheme.spacing.sm),
-        contentAlignment = Alignment.Center,
-    ) {
-        FloorShadow(
-            Modifier
-                .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
-                .height(18.dp)
-                .align(Alignment.BottomCenter),
-        )
+    GroundedImage {
         Image(
             painter = painterResource(bodyType.silhouetteRes),
             // 이 차의 사진이 아닌 일반 실루엣이다. 차 이름은 아래 제목에 이미 나온다.
@@ -132,7 +133,28 @@ private fun SilhouetteImage(bodyType: VehicleBodyType) {
     }
 }
 
+/** 차 그림 아래에 바닥 그림자를 깔아 떠 있지 않고 서 있는 것처럼 보이게 한다. */
+@Composable
+private fun GroundedImage(image: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = ChageunTheme.spacing.sm),
+        contentAlignment = Alignment.Center,
+    ) {
+        FloorShadow(
+            Modifier
+                .fillMaxWidth(HERO_IMAGE_WIDTH_FRACTION)
+                .height(18.dp)
+                .align(Alignment.BottomCenter),
+        )
+        image()
+    }
+}
+
 private const val PHOTO_ASPECT_RATIO = 16f / 9f
+private const val CUTOUT_WIDTH_FRACTION = 0.8f
+private const val CUTOUT_ASPECT_RATIO = 2f
 private const val HERO_IMAGE_WIDTH_FRACTION = 0.7f
 private const val HERO_IMAGE_ASPECT_RATIO = 360f / 160f
 
