@@ -98,6 +98,7 @@ internal fun MaintenanceRecordEntity.toDto() = MaintenanceDto(
     shop = shopName,
     memo = memo,
     createdAt = createdAt.toString(),
+    source = sourceType,
 )
 
 internal fun MaintenanceDto.toEntity(now: Instant) = MaintenanceRecordEntity(
@@ -109,7 +110,7 @@ internal fun MaintenanceDto.toEntity(now: Instant) = MaintenanceRecordEntity(
     costWon = costWon,
     shopName = shop,
     memo = memo,
-    sourceType = SOURCE_USER,
+    sourceType = source ?: SOURCE_USER,
     createdAt = Instant.parse(createdAt),
     updatedAt = now,
 )

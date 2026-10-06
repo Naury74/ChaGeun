@@ -225,7 +225,10 @@ private fun HistorySection(history: List<ServiceHistoryEntry>) {
 @Composable
 private fun serviceSummary(entry: ServiceHistoryEntry): String {
     val date = entry.date?.let { formatDate(it) } ?: stringResource(R.string.manage_unknown_date)
-    val mileage = entry.mileage?.let { stringResource(R.string.manage_km, formatNumber(it.value)) }
+    val mileage = entry.mileage?.let {
+        val res = if (entry.isMileageEstimated) R.string.manage_km_estimated else R.string.manage_km
+        stringResource(res, formatNumber(it.value))
+    }
     return mileage?.let { stringResource(R.string.manage_value_or, date, it) } ?: date
 }
 

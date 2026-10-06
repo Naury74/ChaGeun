@@ -7,6 +7,7 @@ import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRuleEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
@@ -81,6 +82,20 @@ class OfflineFirstMaintenanceRepositoryTest {
             ServiceRecord(LocalDate.of(2026, 3, 10), Kilometers(40_260)),
         )
         assertThat(inputs.mileageHistory.single().mileage).isEqualTo(Kilometers(42_180))
+    }
+
+    @Test
+    fun marksEstimatedMileage_inInputsAndHistory() = runTest {
+        database.maintenanceDao().upsertRules(listOf(rule("Tire")))
+        database.maintenanceDao().insertRecord(
+            record("r1", "Tire", LocalDate.of(2026, 4, 1), 36_542).copy(sourceType = RecordSourceTypes.ESTIMATED),
+        )
+
+        val inputs = repository.observeInputs(vehicleId).first()
+        val history = repository.observeServiceHistory(vehicleId, MaintenanceItem.Tire).first()
+
+        assertThat(inputs.lastServices.getValue(MaintenanceItem.Tire).isMileageEstimated).isTrue()
+        assertThat(history.single().isMileageEstimated).isTrue()
     }
 
     @Test

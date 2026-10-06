@@ -85,4 +85,5 @@
         <item quantity="one">%1$d month</item>
         <item quantity="other">%1$d months</item>
     </plurals>
+    <string name="manage_km_estimated">About %1$s km (estimated)</string>
 </resources>

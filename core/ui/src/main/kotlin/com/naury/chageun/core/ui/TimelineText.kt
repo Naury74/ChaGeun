@@ -16,6 +16,13 @@ val TimelineEventType.labelRes: Int
         TimelineEventType.Note -> R.string.timeline_type_note
     }
 
+/** 목록에 보이는 기록의 주행거리. 추정한 값은 그대로 믿지 않도록 '약 … (추정)'으로 쓴다. */
+@Composable
+fun timelineMileage(item: TimelineItem): String? = item.mileage?.let {
+    val res = if (item.isMileageEstimated) R.string.timeline_km_estimated else R.string.timeline_km
+    stringResource(res, formatNumber(it.value))
+}
+
 /** 정비 행은 항목 이름으로 부르고, 주유 행은 주유소를 덧붙이며, 나머지 행은 자체 제목을 쓴다. */
 @Composable
 fun timelineTitle(item: TimelineItem): String {

@@ -55,14 +55,29 @@ internal object QuickServiceForm {
         }
     }
 
-    fun toServiceRecords(inputs: Map<MaintenanceItem, QuickServiceInput>): Map<MaintenanceItem, ServiceRecord> = inputs
+    /**
+     * 날짜만 아는 기록은 교체 당시 주행거리를 추정해 함께 저장한다. 주행거리가 없으면 거리 기준을
+     * 평가하지 못해 항목이 계속 '정보 부족'으로 남기 때문이다. 추정한 값은 표시해 두고 실제 기록이 생기면 대체된다.
+     */
+    fun toServiceRecords(
+        inputs: Map<MaintenanceItem, QuickServiceInput>,
+        currentMileage: Long,
+        modelYear: Int?,
+        today: LocalDate,
+    ): Map<MaintenanceItem, ServiceRecord> = inputs
         .filterValues { it.mode != QuickServiceMode.Unknown }
         .mapValues { (_, input) ->
+            val entered = input.mileage.toLongOrNull()?.takeIf { input.mode == QuickServiceMode.Exact }
+            val date = input.date
+            val estimated = if (entered == null && date != null) {
+                MileageEstimate.mileageAt(date, currentMileage, modelYear, today)
+            } else {
+                null
+            }
             ServiceRecord(
-                date = input.date,
-                mileage = input.mileage.toLongOrNull()?.takeIf {
-                    input.mode == QuickServiceMode.Exact
-                }?.let(::Kilometers),
+                date = date,
+                mileage = (entered ?: estimated)?.let(::Kilometers),
+                isMileageEstimated = estimated != null,
             )
         }
 }

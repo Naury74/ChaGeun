@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.model.Kilometers
@@ -54,6 +55,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
                     mileage = it.mileageKm?.let(::Kilometers),
                     costWon = it.costWon,
                     shopName = it.shopName,
+                    isMileageEstimated = it.sourceType == RecordSourceTypes.ESTIMATED,
                 )
             }
         }

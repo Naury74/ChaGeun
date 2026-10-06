@@ -78,6 +78,8 @@ internal data class MaintenanceDto(
     val shop: String?,
     val memo: String?,
     @SerialName("created_at") val createdAt: String,
+    // 이전 버전 백업에는 없으므로 기본값을 둔다. 없으면 사용자 입력으로 본다.
+    val source: String? = null,
 )
 
 @Serializable

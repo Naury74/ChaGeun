@@ -33,6 +33,7 @@ import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.timelineMileage
 import com.naury.chageun.core.ui.timelineTitle
 
 @Composable
@@ -92,7 +93,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                     Text(timelineTitle(record), style = MaterialTheme.typography.bodyLarge)
                     val meta = listOfNotNull(
                         record.date?.let { formatDate(it) },
-                        record.mileage?.let { stringResource(R.string.home_mileage, formatNumber(it.value)) },
+                        timelineMileage(record),
                     )
                     Text(
                         meta.joinToString(" · "),

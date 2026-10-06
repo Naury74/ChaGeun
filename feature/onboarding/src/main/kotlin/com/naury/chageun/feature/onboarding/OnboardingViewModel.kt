@@ -132,7 +132,12 @@ class OnboardingViewModel @Inject constructor(
         val state = _uiState.value
         val registration = draft(state, state.modelYear.toInt()).copy(
             currentMileage = Kilometers(state.mileage.toLong()),
-            knownServices = QuickServiceForm.toServiceRecords(state.quickServices),
+            knownServices = QuickServiceForm.toServiceRecords(
+                state.quickServices,
+                currentMileage = state.mileage.toLong(),
+                modelYear = state.modelYear.toIntOrNull(),
+                today = LocalDate.now(clock),
+            ),
         )
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
