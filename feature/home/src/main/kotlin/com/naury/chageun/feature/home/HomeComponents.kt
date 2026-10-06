@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -255,7 +256,12 @@ internal fun MissingInfoRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        StatusBadge(tone = status.state.tone, label = stringResource(status.state.labelRes))
+        // '정보가 필요해요' 묶음 안이라 행마다 '정보 부족' 배지를 다는 대신 눌러서 채울 수 있다는 표시만 둔다.
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

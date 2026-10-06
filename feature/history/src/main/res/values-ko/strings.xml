@@ -118,4 +118,5 @@
     <string name="history_empty_body">정비·주유·수리를 기록하면 여기에 달별로 모여요.</string>
     <string name="history_empty_filtered_body">다른 필터나 검색어로 찾아보세요.</string>
     <string name="history_km_estimated">약 %1$s km (평균 주행량으로 추정)</string>
+    <string name="history_source_estimated">대략 입력 (주행거리는 추정)</string>
 </resources>
