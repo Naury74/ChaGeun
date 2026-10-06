@@ -15,7 +15,7 @@
     <string name="ai_excluded">포함되지 않는 정보</string>
     <string name="ai_included_vehicle">모델·연식·연료</string>
     <string name="ai_included_mileage">현재 주행거리</string>
-    <string name="ai_included_maintenance">정비 상태</string>
+    <string name="ai_included_maintenance">정비·검사 상태</string>
     <string name="ai_include_records">최근 기록</string>
     <string name="ai_include_costs">비용</string>
     <string name="ai_excluded_plate">차량번호</string>
@@ -38,6 +38,9 @@
     <string name="ai_prompt_item">- %1$s: %2$s</string>
     <string name="ai_prompt_missing">정보 부족: %1$s</string>
     <string name="ai_prompt_records">최근 기록:</string>
+    <string name="ai_prompt_inspection">다음 정기검사: %1$s (%2$s)</string>
+    <string name="ai_prompt_costs">%1$d년 기록된 비용 (1월 1일~오늘, 앱이 계산한 합계): 정비·수리 %2$s, 주유 %3$s</string>
+    <string name="ai_include_costs_body">올해 정비·주유 비용 합계도 함께 보내요.</string>
     <string name="ai_prompt_footer">차량번호와 소유자 정보는 포함하지 않았어요. 앱이 계산한 값이며 고장 진단이 아니에요.</string>
     <string name="ai_prompt_question">질문: %1$s</string>
     <string name="ai_health_good">특별히 확인할 항목 없음</string>

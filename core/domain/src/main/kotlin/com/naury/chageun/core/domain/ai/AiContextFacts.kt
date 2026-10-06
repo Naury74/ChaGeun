@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.ai
 
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceStatus
@@ -27,7 +28,14 @@ data class AiContextFacts(
     val recentRecords: List<SharedRecord>,
     /** 기록 상세에서 물어볼 때 질문 대상인 기록. 최근 기록 목록에는 다시 넣지 않는다. */
     val focusRecord: SharedRecord? = null,
+    /** 다음 정기검사 일정. 날짜를 모르면 null이다. */
+    val inspection: InspectionStatus? = null,
+    /** 비용을 함께 보낼 때만 채운다. 최근 기록 몇 개로는 합계를 물을 수 없어 앱이 계산해 둔다. */
+    val costTotals: CostTotals? = null,
 )
+
+/** [year] 1월 1일부터 오늘까지 기록된 비용 합계. 비용을 입력하지 않은 기록은 0으로 센다. */
+data class CostTotals(val year: Int, val maintenanceWon: Long, val fuelWon: Long)
 
 /**
  * 질문에 답하는 데 필요한 정보만 남긴 이력 항목. 메모와 주유소 이름은 절대 넣지 않는다.
