@@ -35,9 +35,11 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
+import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.VehicleInfoField
 import com.naury.chageun.core.ui.VehicleInfoFields
 import com.naury.chageun.feature.vehicle.R
+import java.time.LocalDate
 
 /** Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다. 저장하면 스스로 닫힌다. */
 @Composable
@@ -57,6 +59,7 @@ fun VehicleEditHost(isExpanded: Boolean, onDismiss: () -> Unit) {
                 onPlateChanged = viewModel::onPlateChanged,
                 onRemovePlate = viewModel::onRemovePlate,
                 onKeepPlate = viewModel::onKeepPlate,
+                onFirstRegistrationDateChanged = viewModel::onFirstRegistrationDateChanged,
                 onSave = viewModel::save,
                 onDismiss = onDismiss,
             ),
@@ -73,6 +76,7 @@ data class VehicleEditActions(
     val onPlateChanged: (String) -> Unit = {},
     val onRemovePlate: () -> Unit = {},
     val onKeepPlate: () -> Unit = {},
+    val onFirstRegistrationDateChanged: (LocalDate?) -> Unit = {},
     val onSave: () -> Unit = {},
     val onDismiss: () -> Unit = {},
 )
@@ -121,6 +125,7 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth(),
         )
+        FirstRegistrationSection(uiState.firstRegistrationDate, actions.onFirstRegistrationDateChanged)
         PlateSection(uiState, actions)
         Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
             TextButton(onClick = actions.onDismiss, modifier = Modifier.weight(1f)) {
@@ -133,6 +138,29 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
                     .weight(1f)
                     .heightIn(min = ChageunTheme.spacing.minTouchTarget),
             ) { Text(stringResource(R.string.vehicle_edit_save)) }
+        }
+    }
+}
+
+@Composable
+private fun FirstRegistrationSection(date: LocalDate?, onChanged: (LocalDate?) -> Unit) {
+    FormLabel(stringResource(R.string.vehicle_edit_first_registration), Modifier.padding(top = ChageunTheme.spacing.xs))
+    PastDateField(
+        date = date,
+        placeholder = stringResource(R.string.vehicle_edit_first_registration_pick),
+        onDateSelected = onChanged,
+    )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.vehicle_edit_first_registration_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        if (date != null) {
+            TextButton(onClick = { onChanged(null) }) {
+                Text(stringResource(R.string.vehicle_edit_first_registration_clear))
+            }
         }
     }
 }

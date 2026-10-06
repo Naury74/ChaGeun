@@ -42,6 +42,8 @@ data class VehicleProfileUpdate(
     val fuelType: FuelType,
     val trim: String?,
     val plate: PlateChange,
+    /** 자동차등록증의 최초 등록일. null이면 비운다. */
+    val firstRegistrationDate: LocalDate?,
 )
 
 sealed interface PlateChange {
