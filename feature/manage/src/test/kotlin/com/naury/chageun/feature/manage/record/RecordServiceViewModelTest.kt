@@ -13,6 +13,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import com.naury.chageun.core.testing.FakeReminderNotifier
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
@@ -39,7 +40,7 @@ class RecordServiceViewModelTest {
         savedStateHandle = handle,
         vehicleRepository = vehicles,
         maintenanceRepository = maintenance,
-        recordService = RecordServiceUseCase(maintenance, clock, FakeAnalyticsTracker()),
+        recordService = RecordServiceUseCase(maintenance, clock, FakeAnalyticsTracker(), FakeReminderNotifier()),
         clock = clock,
     )
 

@@ -11,6 +11,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import com.naury.chageun.core.testing.FakeReminderNotifier
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -25,10 +26,12 @@ class RecordServiceUseCaseTest {
     private val vehicleId = VehicleId("v1")
     private val repository = FakeMaintenanceRepository()
     private val analytics = FakeAnalyticsTracker()
+    private val notifier = FakeReminderNotifier()
     private val recordService = RecordServiceUseCase(
         repository,
         Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
         analytics,
+        notifier,
     )
 
     @Before
@@ -51,6 +54,21 @@ class RecordServiceUseCaseTest {
 
         assertThat(result).isEqualTo(RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1)))
         assertThat(analytics.events).containsExactly(AnalyticsEvent.MaintenanceRecordAdded(withCost = false))
+    }
+
+    @Test
+    fun clearsItemNotification_whenSaved() = runTest {
+        recordService(vehicleId, entry(42_891))
+
+        assertThat(notifier.cancelledItems).containsExactly(MaintenanceItem.EngineOil)
+    }
+
+    @Test
+    fun keepsNotification_whenNotSaved() = runTest {
+        recordService(vehicleId, entry(42_891, date = today.plusDays(1)))
+        recordService(vehicleId, entry(40_000))
+
+        assertThat(notifier.cancelledItems).isEmpty()
     }
 
     @Test
