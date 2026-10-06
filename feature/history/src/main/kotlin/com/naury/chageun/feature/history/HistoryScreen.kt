@@ -122,6 +122,7 @@ fun HistoryRoute(
             onAdd = { dialog = AddDialog.Chooser },
             onOpenAdvancedFilter = { isFilterOpen = true },
             onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
+            onLoadMore = viewModel::loadMore,
             onAddPhotos = { ref ->
                 photoTarget = "${ref.type.name}:${ref.id}"
                 photoInput.open()
@@ -178,6 +179,7 @@ fun HistoryScreen(
     onOpenAdvancedFilter: () -> Unit = {},
     onClearAdvancedFilter: () -> Unit = {},
     onEdit: (RecordDetail) -> Unit = {},
+    onLoadMore: () -> Unit = {},
 ) {
     val attachments =
         AttachmentsState(
@@ -224,6 +226,7 @@ fun HistoryScreen(
                 onAdd,
                 onOpenAdvancedFilter = onOpenAdvancedFilter,
                 onClearAdvancedFilter = onClearAdvancedFilter,
+                onLoadMore = onLoadMore,
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)

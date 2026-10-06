@@ -9,6 +9,7 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleId
+import java.time.YearMonth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -22,10 +23,22 @@ class FakeHistoryRepository : HistoryRepository {
     val updated = mutableListOf<Pair<String, Any>>()
     var lastQuery: TimelineQuery? = null
 
-    override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery): Flow<List<TimelineItem>> {
+    var lastLimit: Int? = null
+
+    override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery, limit: Int?): Flow<List<TimelineItem>> {
         lastQuery = query
-        return timeline.map { items -> items.filter { it.ref.type in query.types } }
+        lastLimit = limit
+        return timeline.map { items ->
+            items.filter { it.ref.type in query.types }.let { if (limit != null) it.take(limit) else it }
+        }
     }
+
+    override fun observeMonthlyCosts(vehicleId: VehicleId, query: TimelineQuery): Flow<Map<YearMonth?, Long>> =
+        timeline.map { items ->
+            items.filter { it.ref.type in query.types && it.costWon != null }
+                .groupBy { item -> item.date?.let(YearMonth::from) }
+                .mapValues { (_, monthItems) -> monthItems.sumOf { it.costWon ?: 0L } }
+        }
 
     override fun observeRecord(vehicleId: VehicleId, ref: RecordRef): Flow<RecordDetail?> = details.map { it[ref] }
 

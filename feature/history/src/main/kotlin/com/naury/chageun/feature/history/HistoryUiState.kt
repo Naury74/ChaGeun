@@ -15,7 +15,8 @@ enum class HistoryFilter(val types: Set<TimelineEventType>) {
     Other(setOf(TimelineEventType.Note)),
 }
 
-data class TimelineSection(val month: YearMonth?, val items: List<TimelineItem>)
+/** [totalWon]은 불러온 기록이 아니라 조건에 맞는 그 달 전체 기록의 비용 합계다. */
+data class TimelineSection(val month: YearMonth?, val items: List<TimelineItem>, val totalWon: Long = 0)
 
 data class HistoryUiState(
     val isLoading: Boolean = true,
@@ -27,6 +28,8 @@ data class HistoryUiState(
     val detail: RecordDetail? = null,
     val attachments: List<Attachment> = emptyList(),
     val attachFailedCount: Int = 0,
+    /** 아직 불러오지 않은 기록이 더 있다. 목록 끝 근처까지 내리면 다음 페이지를 읽는다. */
+    val hasMore: Boolean = false,
 ) {
     val isEmpty: Boolean get() = !isLoading && sections.isEmpty()
     val isFiltered: Boolean

@@ -25,6 +25,7 @@ import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -216,5 +217,49 @@ class OfflineFirstHistoryRepositoryTest {
             repository.observeTimeline(vehicleId, TimelineQuery(keyword = "Bumper")).first().single().attachmentCount,
         )
             .isEqualTo(1)
+    }
+
+    @Test
+    fun limit_readsNewestFirst_andMonthlyCostsCoverEveryRecord() = runTest {
+        // 9월에 기록 3개, 8월에 1개, 날짜 없는 비용 기록은 없음. 두 개만 읽어도 9월 합계는 세 개 모두다.
+        listOf(
+            LocalDate.of(2026, 9, 20) to 30_000L,
+            LocalDate.of(2026, 9, 10) to 20_000L,
+            LocalDate.of(2026, 9, 1) to 10_000L,
+            LocalDate.of(2026, 8, 15) to 5_000L,
+        ).forEachIndexed { index, (date, cost) ->
+            repository.addCheck(vehicleId, CheckEntry(CheckKind.Repair, date, "R$index", costWon = cost), false)
+        }
+
+        val firstPage = repository.observeTimeline(vehicleId, TimelineQuery(), limit = 2).first()
+        val totals = repository.observeMonthlyCosts(vehicleId, TimelineQuery()).first()
+
+        assertThat(firstPage.map { it.title }).containsExactly("R0", "R1").inOrder()
+        assertThat(totals).containsExactly(YearMonth.of(2026, 9), 60_000L, YearMonth.of(2026, 8), 5_000L)
+    }
+
+    @Test
+    fun monthlyCosts_followTheSameFiltersAsTheTimeline() = runTest {
+        repository.addFuel(vehicleId, fuel, advancesOdometer = false)
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 8, 20), "Bumper", costWon = 120_000),
+            false,
+        )
+        val bumper = repository.observeTimeline(vehicleId, TimelineQuery(keyword = "Bumper")).first().single()
+        database.attachmentDao().insert(
+            AttachmentEntity(
+                "a1", "v1", bumper.ref.type.name, bumper.ref.id, "a1.jpg", "a1_t.jpg", "image/jpeg", 10, now,
+            ),
+        )
+        val august = YearMonth.of(2026, 8)
+
+        fun total(query: TimelineQuery) = repository.observeMonthlyCosts(vehicleId, query).map { it[august] }
+
+        assertThat(total(TimelineQuery()).first()).isEqualTo(190_000L)
+        assertThat(total(TimelineQuery(types = setOf(TimelineEventType.Fuel))).first()).isEqualTo(70_000L)
+        assertThat(total(TimelineQuery(keyword = "Bumper")).first()).isEqualTo(120_000L)
+        assertThat(total(TimelineQuery(withAttachmentsOnly = true)).first()).isEqualTo(120_000L)
+        assertThat(total(TimelineQuery(dateFrom = LocalDate.of(2026, 8, 10))).first()).isEqualTo(120_000L)
     }
 }

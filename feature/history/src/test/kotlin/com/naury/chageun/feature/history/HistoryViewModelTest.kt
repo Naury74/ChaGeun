@@ -155,4 +155,45 @@ class HistoryViewModelTest {
         assertThat(query.withAttachmentsOnly).isTrue()
         assertThat(viewModel(handle).uiState.first { !it.isLoading }.advanced.activeCount).isEqualTo(3)
     }
+
+    @Test
+    fun loadsFiftyAtATime_andRestartsWhenTheFilterChanges() = runTest {
+        // 하루에 하나씩 120개. 모두 같은 종류라 필터를 바꾸면 첫 페이지로 돌아가는지 볼 수 있다.
+        history.timeline.value = List(120) { index ->
+            item(TimelineEventType.Fuel, "fuel-$index", LocalDate.of(2026, 9, 30).minusDays(index.toLong()))
+        }
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        fun loaded() = vm.uiState.value.sections.sumOf { it.items.size }
+
+        val first = vm.uiState.first { !it.isLoading && it.sections.isNotEmpty() }
+        vm.loadMore()
+        val second = vm.uiState.first { state -> state.sections.sumOf { it.items.size } == 100 }
+        vm.loadMore()
+        val last = vm.uiState.first { state -> state.sections.sumOf { it.items.size } == 120 }
+        vm.selectFilter(HistoryFilter.Fuel)
+        vm.uiState.first { state -> state.filter == HistoryFilter.Fuel && state.sections.sumOf { it.items.size } == 50 }
+
+        assertThat(first.sections.sumOf { it.items.size }).isEqualTo(50)
+        assertThat(first.hasMore).isTrue()
+        assertThat(second.hasMore).isTrue()
+        assertThat(last.hasMore).isFalse()
+        assertThat(loaded()).isEqualTo(50)
+    }
+
+    @Test
+    fun monthTotal_countsRecordsNotLoadedYet() = runTest {
+        history.timeline.value = List(60) { index ->
+            item(TimelineEventType.Fuel, "fuel-$index", LocalDate.of(2026, 9, 30).minusDays(index.toLong() / 3))
+        }
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        val sections = vm.uiState.first { !it.isLoading && it.sections.isNotEmpty() }.sections
+
+        // 9월 기록 60개 중 50개만 읽었지만 합계는 60개 모두의 비용이다.
+        assertThat(sections.single().items).hasSize(50)
+        assertThat(sections.single().totalWon).isEqualTo(600_000L)
+    }
 }

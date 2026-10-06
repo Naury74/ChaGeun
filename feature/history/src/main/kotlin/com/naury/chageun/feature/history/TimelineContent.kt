@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.AttachFile
@@ -30,6 +31,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -65,10 +71,25 @@ internal fun TimelineContent(
     modifier: Modifier = Modifier,
     onOpenAdvancedFilter: () -> Unit = {},
     onClearAdvancedFilter: () -> Unit = {},
+    onLoadMore: () -> Unit = {},
 ) {
     val gutter = ChageunTheme.spacing.gutter
+    val listState = rememberLazyListState()
+    // 끝에서 LOAD_MORE_AHEAD줄 전에 미리 다음 페이지를 읽어, 스크롤이 끝에서 멈추지 않게 한다.
+    val isNearEnd by remember {
+        derivedStateOf {
+            val layout = listState.layoutInfo
+            val lastVisible = layout.visibleItemsInfo.lastOrNull()?.index ?: return@derivedStateOf false
+            lastVisible >= layout.totalItemsCount - LOAD_MORE_AHEAD
+        }
+    }
+    val currentOnLoadMore by rememberUpdatedState(onLoadMore)
+    LaunchedEffect(isNearEnd, uiState.hasMore) {
+        if (isNearEnd && uiState.hasMore) currentOnLoadMore()
+    }
     LazyColumn(
         modifier = modifier,
+        state = listState,
         contentPadding = PaddingValues(top = ChageunTheme.spacing.sm, bottom = FAB_CLEARANCE),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
@@ -153,7 +174,7 @@ internal fun TimelineContent(
 
 @Composable
 private fun MonthHeader(section: TimelineSection, modifier: Modifier = Modifier) {
-    val total = section.items.sumOf { it.costWon ?: 0L }
+    val total = section.totalWon
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -311,3 +332,5 @@ private val FAB_CLEARANCE = 88.dp
 private const val AD_AFTER_RECORDS = 8
 
 private val ATTACHMENT_ICON_SIZE = 14.dp
+
+private const val LOAD_MORE_AHEAD = 10

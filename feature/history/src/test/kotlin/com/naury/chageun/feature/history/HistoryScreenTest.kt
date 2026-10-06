@@ -68,23 +68,28 @@ class HistoryScreenTest {
         ),
     )
 
-    private fun show(state: HistoryUiState, onAdd: () -> Unit = {}, onDelete: (RecordRef) -> Unit = {}) =
-        composeRule.setContent {
-            ChageunTheme {
-                HistoryScreen(
-                    uiState = state,
-                    isTwoPane = false,
-                    onKeywordChanged = {},
-                    onFilterSelected = {},
-                    onSelect = {},
-                    onDelete = onDelete,
-                    onAdd = onAdd,
-                    onAddPhotos = {},
-                    onDeleteAttachment = {},
-                    onDismissAttachFailure = {},
-                )
-            }
+    private fun show(
+        state: HistoryUiState,
+        onAdd: () -> Unit = {},
+        onDelete: (RecordRef) -> Unit = {},
+        onLoadMore: () -> Unit = {},
+    ) = composeRule.setContent {
+        ChageunTheme {
+            HistoryScreen(
+                uiState = state,
+                isTwoPane = false,
+                onKeywordChanged = {},
+                onFilterSelected = {},
+                onSelect = {},
+                onDelete = onDelete,
+                onAdd = onAdd,
+                onAddPhotos = {},
+                onDeleteAttachment = {},
+                onDismissAttachFailure = {},
+                onLoadMore = onLoadMore,
+            )
         }
+    }
 
     @Test
     @Config(qualifiers = "w1280dp-h800dp")
@@ -166,6 +171,52 @@ class HistoryScreenTest {
         composeRule.onNodeWithText("Add your first record").performClick()
 
         assertThat(added).isTrue()
+    }
+
+    @Test
+    fun reachingTheEnd_asksForTheNextPage_onlyWhenMoreRemain() {
+        var requests = 0
+        val section = TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 70_000)
+        var state by mutableStateOf(HistoryUiState(isLoading = false, sections = listOf(section), hasMore = true))
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                    onLoadMore = { requests++ },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val whileMoreRemain = requests
+        val july = item.copy(ref = RecordRef(TimelineEventType.Fuel, "fuel-july"), date = LocalDate.of(2026, 7, 3))
+        state =
+            state.copy(
+                hasMore = false,
+                sections = listOf(section, TimelineSection(YearMonth.of(2026, 7), listOf(july))),
+            )
+        composeRule.waitForIdle()
+
+        // 기록이 적어 처음부터 끝이 보이므로 바로 요청하고, 더 없으면 목록이 바뀌어도 다시 요청하지 않는다.
+        // 같은 화면에서 여러 번 요청해도 ViewModel은 불러온 수가 한도에 닿았을 때만 한 페이지를 늘린다.
+        assertThat(whileMoreRemain).isAtLeast(1)
+        assertThat(requests).isEqualTo(whileMoreRemain)
+    }
+
+    @Test
+    fun monthHeader_showsTheWholeMonthsTotal() {
+        val section = TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 250_000)
+        show(HistoryUiState(isLoading = false, sections = listOf(section)))
+
+        composeRule.onNodeWithText("₩250,000 spent").assertIsDisplayed()
     }
 
     @Test
@@ -278,8 +329,9 @@ class HistoryScreenTest {
                     Instant.EPOCH,
                 ),
             ),
+            totalWon = 163_000,
         ),
-        TimelineSection(YearMonth.of(2026, 8), listOf(item)),
+        TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 70_000),
     )
 
     private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean) {
