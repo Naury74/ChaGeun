@@ -66,4 +66,5 @@
         <item quantity="other">%1$d개 더 보기</item>
     </plurals>
     <string name="home_missing_less">접기</string>
+    <string name="home_add_photo">내 차 사진 넣기</string>
 </resources>

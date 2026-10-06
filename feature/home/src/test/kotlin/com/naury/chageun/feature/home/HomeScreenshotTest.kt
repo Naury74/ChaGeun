@@ -57,7 +57,9 @@ class HomeScreenshotTest {
 
     private fun capture(name: String, paneCount: Int) {
         composeRule.setContent {
-            AppFrame { HomeScreen(uiState = state, paneCount = paneCount, actions = HomeActions({}, {}, {})) }
+            AppFrame {
+                HomeScreen(uiState = state, paneCount = paneCount, actions = HomeActions({}, {}, {}, onAddPhoto = {}))
+            }
         }
         composeRule.captureScreen(name)
     }

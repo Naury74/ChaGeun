@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -26,7 +27,7 @@ class HomeViewModel @Inject constructor(
     vehicleRepository: VehicleRepository,
     observeMaintenanceOverview: ObserveMaintenanceOverviewUseCase,
     historyRepository: HistoryRepository,
-    photoRepository: VehiclePhotoRepository,
+    private val photoRepository: VehiclePhotoRepository,
     clock: Clock,
 ) : ViewModel() {
 
@@ -48,6 +49,12 @@ class HomeViewModel @Inject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState.Loading)
+
+    /** [sourceUri]는 Photo Picker가 준 content URI다. 실패해도 홈에서는 실루엣이 그대로 남는다. */
+    fun setPhoto(sourceUri: String) {
+        val vehicle = (uiState.value as? HomeUiState.Content)?.vehicle ?: return
+        viewModelScope.launch { photoRepository.replace(vehicle.id, sourceUri) }
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

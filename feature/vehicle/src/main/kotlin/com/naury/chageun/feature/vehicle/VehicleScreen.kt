@@ -80,6 +80,7 @@ import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.openUriSafely
+import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import java.time.LocalDate
 
 @Composable
@@ -215,6 +216,7 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
                 }
             },
         photoPath = state.photoPath,
+        bodyType = vehicleBodyTypeOf(vehicle.model),
         mileage = current?.let { stringResource(R.string.vehicle_mileage, formatNumber(it.mileage.value)) },
         freshness = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
             ?: stringResource(R.string.vehicle_mileage_none),

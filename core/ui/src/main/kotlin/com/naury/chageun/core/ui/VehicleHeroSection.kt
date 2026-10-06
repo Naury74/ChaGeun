@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +43,7 @@ fun VehicleHeroSection(
     freshness: String?,
     modifier: Modifier = Modifier,
     photoPath: String? = null,
+    bodyType: VehicleBodyType = VehicleBodyType.Sedan,
     action: (@Composable () -> Unit)? = null,
 ) {
     Column(
@@ -66,7 +68,7 @@ fun VehicleHeroSection(
                     .clip(MaterialTheme.shapes.large),
             )
         } else {
-            SilhouetteImage()
+            SilhouetteImage(bodyType)
         }
         Text(
             text = title,
@@ -105,7 +107,7 @@ private fun FloorShadow(modifier: Modifier) {
 }
 
 @Composable
-private fun SilhouetteImage() {
+private fun SilhouetteImage(bodyType: VehicleBodyType) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -119,7 +121,7 @@ private fun SilhouetteImage() {
                 .align(Alignment.BottomCenter),
         )
         Image(
-            painter = painterResource(R.drawable.vehicle_silhouette_suv),
+            painter = painterResource(bodyType.silhouetteRes),
             // 이 차의 사진이 아닌 일반 실루엣이다. 차 이름은 아래 제목에 이미 나온다.
             contentDescription = null,
             contentScale = ContentScale.Fit,

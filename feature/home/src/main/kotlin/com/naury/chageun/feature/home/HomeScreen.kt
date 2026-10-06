@@ -1,7 +1,12 @@
 package com.naury.chageun.feature.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,10 +17,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -23,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -47,6 +55,8 @@ import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.launchExternal
+import com.naury.chageun.core.ui.vehicleBodyTypeOf
 
 @Composable
 fun HomeRoute(
@@ -61,6 +71,10 @@ fun HomeRoute(
 ) {
     val analytics = LocalAnalyticsTracker.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { viewModel.setPhoto(it.toString()) }
+    }
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
         uiState = uiState,
@@ -79,6 +93,11 @@ fun HomeRoute(
             onOpenSettings = onOpenSettings,
             onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
             onOpenItem = onOpenItem,
+            onAddPhoto = {
+                context.launchExternal {
+                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            },
         ),
     )
 }
@@ -96,6 +115,8 @@ data class HomeActions(
     val onOpenSettings: () -> Unit = {},
     val onOpenInspection: () -> Unit = {},
     val onOpenItem: (MaintenanceItem) -> Unit = {},
+    /** null이면 사진 넣기 버튼을 보이지 않는다. */
+    val onAddPhoto: (() -> Unit)? = null,
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -187,7 +208,7 @@ private fun homePanes(
 
 private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {
     item(key = "brand") { BrandAppBar(actions.onOpenSettings) }
-    item(key = "hero") { HomeHero(state, actions.onUpdateMileage) }
+    item(key = "hero") { HomeHero(state, actions.onUpdateMileage, actions.onAddPhoto) }
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -286,8 +307,9 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
     item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit) {
+private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit, onAddPhoto: (() -> Unit)?) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
     val subtitleParts = listOfNotNull(
@@ -301,6 +323,7 @@ private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit) {
             else -> subtitleParts.joinToString()
         },
         photoPath = state.photoPath,
+        bodyType = vehicleBodyTypeOf(vehicle.model),
         mileage = mileage?.let { stringResource(R.string.home_mileage, formatNumber(it.mileage.value)) },
         freshness = when {
             mileage == null -> stringResource(R.string.home_mileage_unknown)
@@ -308,10 +331,23 @@ private fun HomeHero(state: HomeUiState.Content, onUpdateMileage: () -> Unit) {
             else -> stringResource(R.string.home_mileage_as_of, formatDate(mileage.date))
         },
         action = {
-            FilledTonalButton(onClick = onUpdateMileage) {
-                Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(stringResource(R.string.home_mileage_update))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            ) {
+                FilledTonalButton(onClick = onUpdateMileage) {
+                    Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                    Text(stringResource(R.string.home_mileage_update))
+                }
+                // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
+                if (state.photoPath == null && onAddPhoto != null) {
+                    OutlinedButton(onClick = onAddPhoto) {
+                        Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                        Text(stringResource(R.string.home_add_photo))
+                    }
+                }
             }
         },
     )
