@@ -4,9 +4,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,13 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
-import com.naury.chageun.core.ui.HingeAwarePanes
+import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.feature.history.form.CheckFormHost
@@ -117,7 +120,19 @@ fun HistoryScreen(
     val detail = uiState.detail
     val timeline: @Composable (Modifier) -> Unit = { paneModifier ->
         Box(paneModifier) {
-            TimelineContent(uiState, onKeywordChanged, onFilterSelected, onSelect, onAdd, Modifier.fillMaxSize())
+            // 넓은 창에서 목록만 있을 때 한 줄이 너무 길어지지 않도록 가운데에 폭을 제한해 둔다.
+            TimelineContent(
+                uiState,
+                onKeywordChanged,
+                onFilterSelected,
+                // 두 칸에서는 같은 기록을 다시 누르면 상세를 닫고 목록을 넓게 되돌린다.
+                { ref -> onSelect(if (isTwoPane && ref == uiState.selected) null else ref) },
+                onAdd,
+                Modifier
+                    .fillMaxHeight()
+                    .widthIn(max = TIMELINE_MAX_WIDTH)
+                    .align(Alignment.TopCenter),
+            )
             ExtendedFloatingActionButton(
                 onClick = onAdd,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
@@ -129,17 +144,23 @@ fun HistoryScreen(
         }
     }
     when {
-        isTwoPane -> HingeAwarePanes(
-            weights = listOf(LIST_PANE_WEIGHT, 1f - LIST_PANE_WEIGHT),
-            modifier = modifier.fillMaxSize(),
-        ) {
-            timeline(Modifier.fillMaxSize())
-            val detailModifier = Modifier.fillMaxSize()
-            if (detail != null) {
-                RecordDetailPane(detail, attachments, onBack = null, onDelete = onDelete, modifier = detailModifier)
-            } else {
-                DetailPlaceholder(detailModifier)
-            }
+        isTwoPane -> {
+            BackHandler(enabled = detail != null) { onSelect(null) }
+            AdaptiveListDetail(
+                selected = detail,
+                list = { timeline(Modifier.fillMaxSize()) },
+                detail = {
+                    RecordDetailPane(
+                        it,
+                        attachments,
+                        onBack = { onSelect(null) },
+                        onDelete = onDelete,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                },
+                emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
+                modifier = modifier,
+            )
         }
         detail != null -> {
             BackHandler { onSelect(null) }
@@ -208,4 +229,4 @@ private fun <T> OptionDialog(
     )
 }
 
-private const val LIST_PANE_WEIGHT = 0.42f
+private val TIMELINE_MAX_WIDTH = 720.dp

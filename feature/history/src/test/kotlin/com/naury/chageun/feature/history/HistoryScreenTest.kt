@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
@@ -84,6 +85,42 @@ class HistoryScreenTest {
                 )
             }
         }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp")
+    fun twoPane_showsListOnly_untilSelection_thenDetail() {
+        var selected by mutableStateOf<RecordRef?>(null)
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = HistoryUiState(
+                        isLoading = false,
+                        sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item))),
+                        selected = selected,
+                        detail = detail.takeIf { selected != null },
+                    ),
+                    isTwoPane = true,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = { selected = it },
+                    onDelete = {},
+                    onAdd = {},
+                    onAttach = { _, _ -> },
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Select a record to see its details").assertDoesNotExist()
+        composeRule.onNodeWithText("Fuel · S-Oil").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Unit price").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
+        assertThat(selected).isNull()
+    }
 
     @Test
     fun emptyState_offersFirstRecord() {
@@ -244,6 +281,15 @@ class HistoryScreenTest {
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_phoneEmpty() =
         screenshot("history_phone_empty", HistoryUiState(isLoading = false), isTwoPane = false)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.TABLET)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_tabletList() = screenshot(
+        "history_tablet_list",
+        HistoryUiState(isLoading = false, sections = screenshotSections),
+        isTwoPane = true,
+    )
 
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)
