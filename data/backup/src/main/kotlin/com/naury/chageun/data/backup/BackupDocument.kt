@@ -20,7 +20,14 @@ internal data class BackupDocument(
     val attachments: List<AttachmentDto>,
     /** 버전을 올리지 않고 추가한 필드다. 기본값이 있는 선택 항목이라 이전 version-1 파일도 그대로 가져올 수 있다. */
     @SerialName("inspection_schedules") val inspectionSchedules: List<InspectionDto> = emptyList(),
+    /** 버전을 올리지 않고 추가한 필드다. 앨범이 없던 때의 파일도 빈 앨범으로 가져온다. */
+    @SerialName("album_photos") val albumPhotos: List<AlbumPhotoDto> = emptyList(),
 ) {
+    /** ZIP에 함께 담을 이미지 파일 이름. */
+    val imageFiles: List<String>
+        get() = attachments.flatMap { listOf(it.file, it.thumbnail) } +
+            albumPhotos.flatMap { listOf(it.file, it.thumbnail) }
+
     companion object {
         const val SCHEMA_VERSION = 1
     }
@@ -129,4 +136,16 @@ internal data class InspectionDto(
     @SerialName("next_due_date") val nextDueDate: String,
     val source: String,
     @SerialName("updated_at") val updatedAt: String,
+)
+
+@Serializable
+internal data class AlbumPhotoDto(
+    val id: String,
+    @SerialName("vehicle_id") val vehicleId: String,
+    val file: String,
+    val thumbnail: String,
+    @SerialName("size_bytes") val sizeBytes: Long,
+    @SerialName("taken_on") val takenOn: String,
+    val comment: String?,
+    @SerialName("created_at") val createdAt: String,
 )

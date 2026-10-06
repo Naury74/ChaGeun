@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.naury.chageun.core.database.converter.TimeConverters
+import com.naury.chageun.core.database.dao.AlbumDao
 import com.naury.chageun.core.database.dao.AttachmentDao
 import com.naury.chageun.core.database.dao.BackupDao
 import com.naury.chageun.core.database.dao.HistoryDao
@@ -12,6 +13,7 @@ import com.naury.chageun.core.database.dao.MaintenanceDao
 import com.naury.chageun.core.database.dao.MileageRecordDao
 import com.naury.chageun.core.database.dao.ReminderDao
 import com.naury.chageun.core.database.dao.VehicleDao
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
@@ -33,6 +35,7 @@ import com.naury.chageun.core.database.entity.VehicleEntity
         AttachmentEntity::class,
         ReminderStateEntity::class,
         InspectionScheduleEntity::class,
+        AlbumPhotoEntity::class,
     ],
     version = ChageunDatabase.VERSION,
     exportSchema = true,
@@ -55,8 +58,10 @@ abstract class ChageunDatabase : RoomDatabase() {
 
     abstract fun inspectionDao(): InspectionDao
 
+    abstract fun albumDao(): AlbumDao
+
     companion object {
         const val NAME = "chageun.db"
-        const val VERSION = 6
+        const val VERSION = 7
     }
 }

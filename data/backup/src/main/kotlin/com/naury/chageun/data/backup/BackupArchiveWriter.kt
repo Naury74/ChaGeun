@@ -22,8 +22,8 @@ internal object BackupArchiveWriter {
             zip.writeEntry(DATA_ENTRY) {
                 write(json.encodeToString(BackupDocument.serializer(), document).toByteArray(Charsets.UTF_8))
             }
-            document.attachments
-                .flatMap { listOf(File(attachmentDirectory, it.file), File(attachmentDirectory, it.thumbnail)) }
+            document.imageFiles
+                .map { File(attachmentDirectory, it) }
                 .filter(File::isFile)
                 .forEach { file ->
                     zip.writeEntry("$ATTACHMENT_PREFIX${file.name}") { file.inputStream().use { it.copyTo(this) } }

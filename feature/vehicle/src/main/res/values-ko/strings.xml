@@ -81,4 +81,32 @@
     <string name="vehicle_edit_error_plate">형식을 확인해 주세요. 예: 123가4567</string>
     <string name="vehicle_edit_error_plate_unsupported">아직 지원하지 않는 번호판이에요</string>
     <string name="vehicle_title">내 차</string>
+    <string name="album_title">내 차 앨범</string>
+    <string name="album_back">뒤로</string>
+    <string name="album_add">사진 추가</string>
+    <string name="album_empty_title">차와 함께한 순간을 남겨 보세요</string>
+    <string name="album_empty_body">세차, 새 부품, 여행처럼 기억하고 싶은 순간을 메모와 함께 저장해요. 사진은 찍은 날짜별로 정리돼요.</string>
+    <string name="album_day">%1$s · %2$d장</string>
+    <string name="album_photo_on">%1$s에 찍은 사진</string>
+    <string name="album_no_comment">아직 메모가 없어요</string>
+    <string name="album_edit_details">날짜·메모 수정</string>
+    <string name="album_set_cover">내 차 대표 사진으로</string>
+    <string name="album_cover_updated">대표 사진으로 설정했어요.</string>
+    <string name="album_delete">삭제</string>
+    <string name="album_delete_title">이 사진을 삭제할까요?</string>
+    <string name="album_delete_body">앨범과 이 기기에서 지워져요.</string>
+    <string name="album_cancel">취소</string>
+    <string name="album_close">닫기</string>
+    <string name="album_details_title">날짜와 메모</string>
+    <string name="album_details_date">찍은 날</string>
+    <string name="album_details_comment">메모</string>
+    <string name="album_details_comment_hint">예: 여행 전에 타이어 교체</string>
+    <string name="album_save">저장</string>
+    <string name="album_later">나중에</string>
+    <string name="album_section">앨범</string>
+    <string name="album_see_all">%1$d장 모두 보기</string>
+    <string name="album_open">앨범 열기</string>
+    <plurals name="album_failed">
+        <item quantity="other">사진 %1$d장을 넣지 못했어요.</item>
+    </plurals>
 </resources>
