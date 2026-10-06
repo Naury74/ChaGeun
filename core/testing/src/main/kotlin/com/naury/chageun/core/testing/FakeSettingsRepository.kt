@@ -25,4 +25,7 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setCloudAutoBackupEnabled(enabled: Boolean) =
         settings.update { it.copy(isCloudAutoBackupEnabled = enabled) }
+
+    override suspend fun setVehiclePhotoCutoutEnabled(enabled: Boolean) =
+        settings.update { it.copy(isVehiclePhotoCutoutEnabled = enabled) }
 }

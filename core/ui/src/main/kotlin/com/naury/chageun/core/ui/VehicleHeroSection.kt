@@ -32,11 +32,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -257,6 +264,7 @@ private fun HeroImage(photoPath: String?, bodyType: VehicleBodyType) {
                 }
             } else {
                 // 사용자 사진은 잘리지 않도록 고정 비율 안에 Fit으로 맞춘다 (기획서 13.4).
+                // 배경을 지우지 않은 원본은 네모 테두리가 도드라지지 않게 가장자리를 하늘 바탕으로 흐린다.
                 Image(
                     bitmap = shown.image,
                     // 실루엣과 달리 사용자가 찍은 이 차의 사진이므로 TalkBack에 알린다.
@@ -265,7 +273,7 @@ private fun HeroImage(photoPath: String?, bodyType: VehicleBodyType) {
                     modifier = Modifier
                         .padding(vertical = ChageunTheme.spacing.sm)
                         .photoSize()
-                        .clip(MaterialTheme.shapes.large),
+                        .fadedEdges(shown.image.width.toFloat() / shown.image.height),
                 )
             }
             // 같은 크기의 빈 자리를 두어 사진이 나타날 때 아래 내용이 밀리지 않게 한다.
@@ -283,6 +291,45 @@ private fun HeroImage(photoPath: String?, bodyType: VehicleBodyType) {
 }
 
 private fun Modifier.cutoutSize() = fillMaxWidth(CUTOUT_WIDTH_FRACTION).aspectRatio(CUTOUT_ASPECT_RATIO)
+
+/**
+ * 그림이 실제로 그려진 영역(Fit으로 맞춘 자리)의 가장자리를 투명하게 흐린다. 상자 비율과 사진 비율이 달라도
+ * 사진 끝에서부터 흐려지도록 [imageAspectRatio]로 그려진 영역을 다시 계산한다.
+ */
+private fun Modifier.fadedEdges(imageAspectRatio: Float) = graphicsLayer {
+    compositingStrategy = CompositingStrategy.Offscreen
+}.drawWithContent {
+    drawContent()
+    val boxAspect = size.width / size.height
+    val drawn = if (imageAspectRatio > boxAspect) {
+        val height = size.width / imageAspectRatio
+        Rect(0f, (size.height - height) / 2, size.width, (size.height + height) / 2)
+    } else {
+        val width = size.height * imageAspectRatio
+        Rect((size.width - width) / 2, 0f, (size.width + width) / 2, size.height)
+    }
+    val horizontal = edgeFade(Offset(drawn.left, 0f), Offset(drawn.right, 0f), EDGE_FADE_X)
+    val vertical = edgeFade(Offset(0f, drawn.top), Offset(0f, drawn.bottom), EDGE_FADE_Y)
+    drawRect(horizontal, topLeft = drawn.topLeft, size = drawn.size, blendMode = BlendMode.DstIn)
+    drawRect(vertical, topLeft = drawn.topLeft, size = drawn.size, blendMode = BlendMode.DstIn)
+}
+
+/** 양 끝에서 [fade]만큼 투명→불투명으로 바뀐다. 중간에 반투명 지점을 두어 선형보다 부드럽게 녹아든다. */
+private fun edgeFade(from: Offset, to: Offset, fade: Float) = ShaderBrush(
+    LinearGradientShader(
+        from = from,
+        to = to,
+        colors = listOf(
+            Color.Transparent,
+            Color.Black.copy(alpha = EASE_ALPHA),
+            Color.Black,
+            Color.Black,
+            Color.Black.copy(alpha = EASE_ALPHA),
+            Color.Transparent,
+        ),
+        colorStops = listOf(0f, fade * EASE_POINT, fade, 1f - fade, 1f - fade * EASE_POINT, 1f),
+    ),
+)
 
 private fun Modifier.photoSize() = fillMaxWidth().aspectRatio(PHOTO_ASPECT_RATIO)
 
@@ -345,6 +392,12 @@ private const val HERO_IMAGE_ASPECT_RATIO = 360f / 160f
 // 하늘색은 Hero 위쪽 절반에서 화면 배경으로 다 바뀐다. 아래의 요약 카드 주변은 화면 배경과 같아진다.
 private const val SKY_END = 0.62f
 private const val SKY_PEAK = 0.18f
+
+// 원본 사진 가장자리를 흐리는 폭. 위아래는 도로·하늘이 넓게 찍히는 경우가 많아 조금 더 흐린다.
+private const val EDGE_FADE_X = 0.2f
+private const val EDGE_FADE_Y = 0.24f
+private const val EASE_POINT = 0.5f
+private const val EASE_ALPHA = 0.3f
 private const val END_FADE_START = 0.7f
 private const val GLOW_X = 0.85f
 private const val GLOW_RADIUS = 0.75f

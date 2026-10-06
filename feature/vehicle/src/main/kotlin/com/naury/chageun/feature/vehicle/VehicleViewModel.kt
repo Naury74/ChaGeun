@@ -37,6 +37,7 @@ sealed interface VehicleUiState {
         val photoPath: String? = null,
         val isPhotoImportFailed: Boolean = false,
         val cutout: CutoutStatus = CutoutStatus.Idle,
+        val isBackgroundRemovalEnabled: Boolean = true,
         /** 내 차 탭에 미리 보여 줄 최근 앨범 사진. */
         val albumPreview: List<AlbumPhoto> = emptyList(),
         val albumCount: Int = 0,
@@ -77,8 +78,16 @@ class VehicleViewModel @Inject constructor(
                     cutout = cutout,
                 )
             }
-            combine(vehicleState, albumRepository.observe(vehicle.id)) { state, album ->
-                state.copy(albumPreview = album.take(ALBUM_PREVIEW_COUNT), albumCount = album.size)
+            combine(
+                vehicleState,
+                albumRepository.observe(vehicle.id),
+                photoRepository.observeBackgroundRemoval(vehicle.id),
+            ) { state, album, removeBackground ->
+                state.copy(
+                    albumPreview = album.take(ALBUM_PREVIEW_COUNT),
+                    albumCount = album.size,
+                    isBackgroundRemovalEnabled = removeBackground,
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), VehicleUiState.Loading)
@@ -97,10 +106,19 @@ class VehicleViewModel @Inject constructor(
     }
 
     /** [sourceUri]는 Photo Picker가 준 content URI다. */
-    fun setPhoto(sourceUri: String) {
+    /** [removeBackground]는 사진을 넣기 전 확인 시트에서 고른 값이다. */
+    fun setPhoto(sourceUri: String, removeBackground: Boolean) {
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         photoImportFailed.value = false
-        viewModelScope.launch { photoImportFailed.value = !photoRepository.replace(vehicle.id, sourceUri) }
+        viewModelScope.launch {
+            photoImportFailed.value = !photoRepository.replace(vehicle.id, sourceUri, removeBackground)
+        }
+    }
+
+    /** 원본과 배경을 지운 사진 사이를 오간다. 켤 때 아직 지운 사진이 없으면 지우기를 시작한다. */
+    fun setBackgroundRemoval(enabled: Boolean) {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
+        viewModelScope.launch { photoRepository.setBackgroundRemoval(vehicle.id, enabled) }
     }
 
     /** 배경을 지우지 못한 사진에 다시 시도한다. 모델이 없으면 내려받는 것부터 진행 상태로 보여 준다. */

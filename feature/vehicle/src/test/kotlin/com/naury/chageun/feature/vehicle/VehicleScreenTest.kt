@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.core.graphics.applyCanvas
+import androidx.core.net.toUri
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
@@ -26,6 +27,7 @@ import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
@@ -244,5 +246,32 @@ class VehicleScreenTest {
         const val PHOTO_HEIGHT = 600
         const val JPEG_QUALITY = 90
         const val PHOTO_LOAD_TIMEOUT_MS = 5_000L
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_photoConfirmKorean() {
+        val photo = File.createTempFile("pick", ".jpg").apply { deleteOnExit() }
+        val bitmap = Bitmap.createBitmap(PHOTO_WIDTH, PHOTO_HEIGHT, Bitmap.Config.ARGB_8888).applyCanvas {
+            drawColor(Color.rgb(176, 205, 230))
+        }
+        photo.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+
+        composeRule.setContent {
+            AppFrame {
+                VehiclePhotoConfirmSheet(
+                    sourceUri = photo.toUri().toString(),
+                    initialRemoveBackground = true,
+                    isExpanded = true,
+                    onApply = {},
+                    onDismiss = {},
+                )
+            }
+        }
+        composeRule.waitUntil(PHOTO_LOAD_TIMEOUT_MS) {
+            composeRule.onAllNodesWithContentDescription("내 차 사진").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.captureScreen("vehicle_photo_confirm_ko")
     }
 }

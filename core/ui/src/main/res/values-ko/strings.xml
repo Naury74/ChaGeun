@@ -91,4 +91,9 @@
     <string name="hero_inspection_today">D-day</string>
     <string name="hero_inspection_overdue">기한 지남</string>
     <string name="hero_inspection_unset">미정</string>
+    <string name="vehicle_photo_confirm_title">이 사진으로 할까요?</string>
+    <string name="vehicle_photo_remove_background">배경 지우기</string>
+    <string name="vehicle_photo_remove_background_body">차만 남기고 배경을 지워요. 이 기기 안에서 처리해요. 끄면 사진 가장자리를 부드럽게 흐려서 보여 줘요.</string>
+    <string name="vehicle_photo_confirm_cancel">취소</string>
+    <string name="vehicle_photo_confirm_apply">적용</string>
 </resources>

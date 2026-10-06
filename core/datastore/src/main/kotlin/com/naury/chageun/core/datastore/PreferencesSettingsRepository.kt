@@ -26,6 +26,7 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
             isMileageReminderEnabled = prefs[MILEAGE_REMINDER] ?: false,
             isUsageStatsEnabled = prefs[USAGE_STATS] ?: true,
             isCloudAutoBackupEnabled = prefs[CLOUD_AUTO_BACKUP] ?: false,
+            isVehiclePhotoCutoutEnabled = prefs[VEHICLE_PHOTO_CUTOUT] ?: true,
         )
     }
 
@@ -57,6 +58,10 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         dataStore.edit { it[CLOUD_AUTO_BACKUP] = enabled }
     }
 
+    override suspend fun setVehiclePhotoCutoutEnabled(enabled: Boolean) {
+        dataStore.edit { it[VEHICLE_PHOTO_CUTOUT] = enabled }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MAINTENANCE_REMINDER = booleanPreferencesKey("maintenance_reminder_enabled")
@@ -64,5 +69,6 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         val MILEAGE_REMINDER = booleanPreferencesKey("mileage_reminder_enabled")
         val USAGE_STATS = booleanPreferencesKey("usage_stats_enabled")
         val CLOUD_AUTO_BACKUP = booleanPreferencesKey("cloud_auto_backup_enabled")
+        val VEHICLE_PHOTO_CUTOUT = booleanPreferencesKey("vehicle_photo_cutout_enabled")
     }
 }

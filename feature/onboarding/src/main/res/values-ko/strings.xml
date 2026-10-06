@@ -60,4 +60,6 @@
     <string name="onboarding_photo_preview">내 차 사진</string>
     <string name="onboarding_photo_hint">차가 옆이나 앞에서 크게 나온 사진이 좋아요. 나중에 홈에서 넣어도 돼요.</string>
     <string name="onboarding_photo_later">나중에 할게요</string>
+    <string name="onboarding_photo_remove_background">배경 지우기</string>
+    <string name="onboarding_photo_remove_background_body">차만 남겨요. 끄면 사진 가장자리를 부드럽게 흐려서 보여 줘요. 나중에 내 차 탭에서 바꿀 수 있어요.</string>
 </resources>

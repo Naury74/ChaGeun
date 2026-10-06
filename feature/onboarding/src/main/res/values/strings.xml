@@ -60,4 +60,6 @@
     <string name="onboarding_photo_preview">Photo of your car</string>
     <string name="onboarding_photo_hint">A side or front view where the car fills the frame works best. You can also add one later from Home.</string>
     <string name="onboarding_photo_later">Skip for now</string>
+    <string name="onboarding_photo_remove_background">Remove background</string>
+    <string name="onboarding_photo_remove_background_body">Keeps just the car. If off, the photo\'s edges fade softly. You can change this later in My car.</string>
 </resources>

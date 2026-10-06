@@ -10,6 +10,7 @@ import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.model.CutoutFailure
 import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeSettingsRepository
 import java.io.File
 import java.nio.file.Files
 import java.time.Clock
@@ -35,6 +36,7 @@ class OfflineFirstVehiclePhotoRepositoryTest {
     private val directory: File = Files.createTempDirectory("vehicle-photo").toFile()
     private val now = Instant.parse("2026-10-01T00:00:00Z")
     private val vehicleId = VehicleId("v1")
+    private val settings = FakeSettingsRepository()
     private val silentLogger = object : AppLogger {
         override fun debug(event: String, vararg fields: LogField) = Unit
 
@@ -99,7 +101,7 @@ class OfflineFirstVehiclePhotoRepositoryTest {
 
     private fun repository(cutter: SubjectCutter, dispatcher: TestDispatcher) = OfflineFirstVehiclePhotoRepository(
         database.attachmentDao(),
-        VehiclePhotoImages(importer, cutter),
+        VehiclePhotoImages(importer, cutter, settings),
         directory,
         Clock.fixed(now, ZoneOffset.UTC),
         silentLogger,
@@ -168,5 +170,35 @@ class OfflineFirstVehiclePhotoRepositoryTest {
 
         assertThat(repository.observeCutout(vehicleId).first()).isEqualTo(CutoutStatus.Failed(CutoutFailure.NoSubject))
         assertThat(directory.listFiles().orEmpty().filter { it.name.endsWith(".partial") }).isEmpty()
+    }
+
+    @Test
+    fun withoutBackgroundRemoval_keepsTheOriginal_andStartsNothing() = runTest {
+        val cutter = ScriptedCutter(CutoutResult.Success)
+        val repository = repository(cutter, StandardTestDispatcher(testScheduler))
+
+        repository.replace(vehicleId, "content://car", removeBackground = false)
+        testScheduler.advanceUntilIdle()
+
+        assertThat(cutter.seenStatuses).isEmpty()
+        assertThat(repository.observe(vehicleId).first()).endsWith(".jpg")
+        assertThat(repository.observeBackgroundRemoval(vehicleId).first()).isFalse()
+    }
+
+    @Test
+    fun turningBackgroundRemovalOnAndOff_switchesBetweenCutoutAndOriginal() = runTest {
+        val repository = repository(ScriptedCutter(CutoutResult.Success), StandardTestDispatcher(testScheduler))
+        repository.replace(vehicleId, "content://car", removeBackground = false)
+
+        repository.setBackgroundRemoval(vehicleId, enabled = true)
+        testScheduler.advanceUntilIdle()
+        val withCutout = repository.observe(vehicleId).first()
+        repository.setBackgroundRemoval(vehicleId, enabled = false)
+        val original = repository.observe(vehicleId).first()
+
+        assertThat(withCutout).endsWith("_cutout.png")
+        // 지운 파일은 남겨 두어 다시 켜면 곧바로 보인다.
+        assertThat(original).endsWith(".jpg")
+        assertThat(File(withCutout!!).exists()).isTrue()
     }
 }

@@ -16,15 +16,25 @@ class FakeVehiclePhotoRepository : VehiclePhotoRepository {
 
     override fun observeCutout(vehicleId: VehicleId): Flow<CutoutStatus> = cutout
 
-    override suspend fun replace(vehicleId: VehicleId, sourceUri: String): Boolean {
+    val backgroundRemoval = MutableStateFlow(true)
+
+    override fun observeBackgroundRemoval(vehicleId: VehicleId): Flow<Boolean> = backgroundRemoval
+
+    override suspend fun setBackgroundRemoval(vehicleId: VehicleId, enabled: Boolean) {
+        backgroundRemoval.value = enabled
+    }
+
+    override suspend fun replace(vehicleId: VehicleId, sourceUri: String, removeBackground: Boolean): Boolean {
+        backgroundRemoval.value = removeBackground
         if (importSucceeds) photo.value = "/photos/$sourceUri.jpg"
         return importSucceeds
     }
 
     val replacedInBackground = mutableListOf<Pair<VehicleId, String>>()
 
-    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String) {
+    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String, removeBackground: Boolean) {
         replacedInBackground += vehicleId to sourceUri
+        backgroundRemoval.value = removeBackground
     }
 
     override fun removeBackground(vehicleId: VehicleId) {

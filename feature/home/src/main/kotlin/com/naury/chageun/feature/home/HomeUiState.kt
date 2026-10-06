@@ -21,6 +21,7 @@ sealed interface HomeUiState {
         val recentRecords: List<TimelineItem> = emptyList(),
         val photoPath: String? = null,
         val cutout: CutoutStatus = CutoutStatus.Idle,
+        val isBackgroundRemovalEnabled: Boolean = true,
         /** 로그인한 사용자를 부를 이름. 로그인하지 않았으면 이름 없이 인사한다. */
         val greetingName: String? = null,
         val dayPart: DayPart = DayPart.Morning,

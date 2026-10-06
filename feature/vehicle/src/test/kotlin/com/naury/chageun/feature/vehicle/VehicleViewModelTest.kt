@@ -115,20 +115,38 @@ class VehicleViewModelTest {
     }
 
     @Test
+    fun backgroundRemovalChoice_isKeptAndCanBeToggled() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
+        viewModel.uiState.first { it is VehicleUiState.Content }
+
+        viewModel.setPhoto("car", removeBackground = false)
+        val original = viewModel.uiState.first {
+            (it as? VehicleUiState.Content)?.isBackgroundRemovalEnabled == false
+        }
+        viewModel.setBackgroundRemoval(true)
+        val cutout = viewModel.uiState.first { (it as? VehicleUiState.Content)?.isBackgroundRemovalEnabled == true }
+
+        assertThat((original as VehicleUiState.Content).photoPath).isEqualTo("/photos/car.jpg")
+        assertThat(cutout).isInstanceOf(VehicleUiState.Content::class.java)
+    }
+
+    @Test
     fun photo_isShown_andFailedImportIsReported() = runTest {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
         viewModel.uiState.first { it is VehicleUiState.Content }
 
-        viewModel.setPhoto("car")
+        viewModel.setPhoto("car", removeBackground = true)
         val withPhoto = viewModel.uiState.first {
             (it as? VehicleUiState.Content)?.photoPath != null
         } as VehicleUiState.Content
         assertThat(withPhoto.photoPath).isEqualTo("/photos/car.jpg")
 
         photos.importSucceeds = false
-        viewModel.setPhoto("broken")
+        viewModel.setPhoto("broken", removeBackground = true)
         val failed = viewModel.uiState.first { (it as? VehicleUiState.Content)?.isPhotoImportFailed == true }
         assertThat((failed as VehicleUiState.Content).photoPath).isEqualTo("/photos/car.jpg")
 

@@ -18,4 +18,6 @@ interface SettingsRepository {
     suspend fun setUsageStatsEnabled(enabled: Boolean)
 
     suspend fun setCloudAutoBackupEnabled(enabled: Boolean)
+
+    suspend fun setVehiclePhotoCutoutEnabled(enabled: Boolean)
 }

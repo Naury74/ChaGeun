@@ -39,10 +39,14 @@ class HomeViewModel @Inject constructor(
             combine(
                 observeMaintenanceOverview(vehicle.id),
                 historyRepository.observeTimeline(vehicle.id, TimelineQuery(), limit = RECENT_RECORD_COUNT),
-                photoRepository.observe(vehicle.id),
+                combine(
+                    photoRepository.observe(vehicle.id),
+                    photoRepository.observeBackgroundRemoval(vehicle.id),
+                    ::Pair,
+                ),
                 photoRepository.observeCutout(vehicle.id),
                 authRepository.currentUser,
-            ) { overview, recent, photo, cutout, user ->
+            ) { overview, recent, (photo, removeBackground), cutout, user ->
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
@@ -50,6 +54,7 @@ class HomeViewModel @Inject constructor(
                     recentRecords = recent,
                     photoPath = photo,
                     cutout = cutout,
+                    isBackgroundRemovalEnabled = removeBackground,
                     greetingName = user?.greetingName(),
                     dayPart = DayPart.of(LocalTime.now(clock)),
                 )
@@ -58,9 +63,10 @@ class HomeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeUiState.Loading)
 
     /** [sourceUri]는 Photo Picker가 준 content URI다. 실패해도 홈에서는 실루엣이 그대로 남는다. */
-    fun setPhoto(sourceUri: String) {
+    /** [removeBackground]는 사진을 넣기 전 확인 시트에서 고른 값이다. */
+    fun setPhoto(sourceUri: String, removeBackground: Boolean) {
         val vehicle = (uiState.value as? HomeUiState.Content)?.vehicle ?: return
-        viewModelScope.launch { photoRepository.replace(vehicle.id, sourceUri) }
+        viewModelScope.launch { photoRepository.replace(vehicle.id, sourceUri, removeBackground) }
     }
 
     /** 배경을 지우지 못한 사진에 다시 시도한다. 모델이 없으면 내려받는 것부터 진행 상태로 보여 준다. */

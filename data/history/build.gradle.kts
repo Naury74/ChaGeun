@@ -19,6 +19,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.mlkit.subject.segmentation)
 
+    testImplementation(projects.core.testing)
     testImplementation(libs.androidx.room.runtime)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
