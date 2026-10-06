@@ -80,4 +80,5 @@
     <string name="vehicle_edit_error_year">1980년부터 내년 사이로 입력해 주세요</string>
     <string name="vehicle_edit_error_plate">형식을 확인해 주세요. 예: 123가4567</string>
     <string name="vehicle_edit_error_plate_unsupported">아직 지원하지 않는 번호판이에요</string>
+    <string name="vehicle_title">내 차</string>
 </resources>

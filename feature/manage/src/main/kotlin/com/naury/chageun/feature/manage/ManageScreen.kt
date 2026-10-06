@@ -3,6 +3,7 @@ package com.naury.chageun.feature.manage
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -13,8 +14,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.isListDetailTwoPane
@@ -38,15 +41,21 @@ fun ManageRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     var editingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
-    ManageScreen(
-        uiState = uiState,
-        isTwoPane = isListDetailTwoPane(),
-        onFilterSelected = viewModel::selectFilter,
-        onItemSelected = viewModel::selectItem,
-        onRecordService = onRecordService,
-        onEditRule = { editingItem = it },
-        onAskAi = onAskAi,
-    )
+    val isTwoPane = isListDetailTwoPane()
+    // 좁은 화면에서 상세를 열면 상세가 자기 머리글(뒤로 가기)을 가지므로 큰 제목을 숨긴다.
+    val title = stringResource(R.string.manage_title).takeUnless { !isTwoPane && uiState.selectedItem != null }
+    LargeTitleScaffold(title = title) { padding ->
+        ManageScreen(
+            uiState = uiState,
+            isTwoPane = isTwoPane,
+            onFilterSelected = viewModel::selectFilter,
+            onItemSelected = viewModel::selectItem,
+            onRecordService = onRecordService,
+            onEditRule = { editingItem = it },
+            onAskAi = onAskAi,
+            modifier = Modifier.padding(padding),
+        )
+    }
     editingItem?.let { item -> RuleEditorHost(item = item, onDismiss = { editingItem = null }) }
 }
 
