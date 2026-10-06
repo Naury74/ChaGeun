@@ -51,8 +51,7 @@ class FileImageTest {
                     VehicleHeroSection(
                         title = "Kia Sportage",
                         subtitle = "2023",
-                        mileage = null,
-                        freshness = null,
+                        stats = emptyList(),
                         photoPath = file.path,
                     )
                 }

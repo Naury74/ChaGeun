@@ -86,4 +86,11 @@
     <string name="cutout_failed">Couldn\'t remove the background.</string>
     <string name="cutout_retry">Try again</string>
     <string name="cutout_remove_background">Remove background</string>
+    <string name="hero_stat_mileage">Mileage</string>
+    <string name="hero_stat_inspection">Inspection</string>
+    <string name="hero_stat_unknown" translatable="false">—</string>
+    <string name="hero_inspection_days_left">D-%1$d</string>
+    <string name="hero_inspection_today">D-day</string>
+    <string name="hero_inspection_overdue">Overdue</string>
+    <string name="hero_inspection_unset">Not set</string>
 </resources>

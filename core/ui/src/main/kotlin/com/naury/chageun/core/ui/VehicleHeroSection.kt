@@ -7,17 +7,21 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -37,54 +42,173 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 
+/** Hero 아래 요약 카드의 한 칸. [unit]은 값보다 작게 붙는다(예: "42,800" + "km"). */
+data class HeroStat(val label: String, val value: String, val unit: String? = null)
+
 /**
- * 차량을 보여 주는 열린 형태의 Hero 영역이다. 일부러 카드로 감싸지 않는다. 이미지는 중립적인 Hero 배경
- * 위에 놓이고 상태 영역은 그 아래에서 시작한다.
+ * 차량을 보여 주는 열린 형태의 Hero 영역이다. 일부러 카드로 감싸지 않는다.
+ * 위에서 아래로 하늘색이 화면 배경으로 이어지는 바탕 위에 차 이름, 큰 차 사진, 요약 카드를 놓는다.
+ *
+ * @param header 하늘 바탕 맨 위에 함께 놓을 내용(예: 홈의 앱 이름 줄). 바탕이 끊기지 않게 Hero 안에 둔다.
+ * @param stats 요약 카드에 나란히 놓을 값. 비어 있으면 카드를 그리지 않는다.
+ * @param footnote 요약 카드 아래의 기준 안내(예: "2026. 10. 2. 기준").
+ * @param skyFromTop 화면 맨 위에서 시작하면 true. 큰 제목 아래처럼 중간에서 시작하면 false로 두어
+ *   하늘이 위에서 서서히 나타나게 한다. 그러지 않으면 제목 영역과 하늘 사이에 경계선이 보인다.
+ * @param skyFadesAtEnd 옆에 다른 칸이 나란히 있으면 true. 하늘 오른쪽 끝을 화면 배경으로 흐리게 해 세로 경계선을 없앤다.
  */
 @Composable
 fun VehicleHeroSection(
     title: String,
     subtitle: String,
-    mileage: String?,
-    freshness: String?,
+    stats: List<HeroStat>,
     modifier: Modifier = Modifier,
+    footnote: String? = null,
     photoPath: String? = null,
     bodyType: VehicleBodyType = VehicleBodyType.Sedan,
+    header: (@Composable () -> Unit)? = null,
+    skyFromTop: Boolean = true,
+    skyFadesAtEnd: Boolean = false,
     photoStatus: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(ChageunTheme.colors.heroBackground)
-            .padding(ChageunTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
-    ) {
-        HeroImage(photoPath, bodyType)
-        photoStatus?.invoke()
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
-        )
-        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Column(Modifier.semantics(mergeDescendants = true) {}) {
-            mileage?.let { Text(it, style = NumericTextStyles.Hero) }
-            freshness?.let {
+    Column(modifier.fillMaxWidth().skyBackdrop(skyFromTop, skyFadesAtEnd)) {
+        header?.invoke()
+        Column(
+            modifier = Modifier.padding(ChageunTheme.spacing.gutter),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        ) {
+            Column {
                 Text(
-                    it,
-                    style = MaterialTheme.typography.labelMedium,
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            HeroImage(photoPath, bodyType)
+            photoStatus?.invoke()
+            if (stats.isNotEmpty()) HeroStatsCard(stats, footnote)
+            action?.invoke()
         }
-        action?.invoke()
+    }
+}
+
+/** 위는 하늘색, 아래는 화면 배경. 오른쪽 위에 햇빛처럼 은은하게 밝은 부분을 둔다. */
+@Composable
+private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean): Modifier {
+    val colors = ChageunTheme.colors
+    val sky = if (fromTop) {
+        Brush.verticalGradient(0f to colors.heroSky, SKY_END to colors.heroBackground)
+    } else {
+        Brush.verticalGradient(
+            0f to colors.heroBackground,
+            SKY_PEAK to colors.heroSky,
+            SKY_END to colors.heroBackground,
+        )
+    }
+    return drawBehind {
+        drawRect(sky)
+        drawRect(
+            Brush.radialGradient(
+                colors = listOf(colors.heroGlow, Color.Transparent),
+                center = Offset(size.width * GLOW_X, if (fromTop) 0f else size.height * SKY_PEAK),
+                radius = size.width * GLOW_RADIUS,
+            ),
+        )
+        if (fadesAtEnd) {
+            drawRect(
+                if (layoutDirection == LayoutDirection.Rtl) {
+                    Brush.horizontalGradient(0f to colors.heroBackground, 1f - END_FADE_START to Color.Transparent)
+                } else {
+                    Brush.horizontalGradient(END_FADE_START to Color.Transparent, 1f to colors.heroBackground)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HeroStatsCard(stats: List<HeroStat>, footnote: String?) {
+    val colors = ChageunTheme.colors
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = colors.heroCard,
+        contentColor = colors.onHeroCard,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = ChageunTheme.spacing.xs),
+    ) {
+        Column(
+            Modifier.padding(vertical = ChageunTheme.spacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                stats.forEachIndexed { index, stat ->
+                    if (index > 0) {
+                        VerticalDivider(
+                            color = colors.onHeroCard.copy(alpha = DIVIDER_ALPHA),
+                            modifier = Modifier.padding(vertical = ChageunTheme.spacing.xxs),
+                        )
+                    }
+                    HeroStatCell(stat, Modifier.weight(1f))
+                }
+            }
+            footnote?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onHeroCard.copy(alpha = SECONDARY_ALPHA),
+                    modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroStatCell(stat: HeroStat, modifier: Modifier) {
+    // 큰 글꼴에서는 잘리지 않고 두 줄로 넘어가도록 줄 수를 묶지 않는다.
+    Column(
+        modifier = modifier
+            .padding(horizontal = ChageunTheme.spacing.xs)
+            .semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+    ) {
+        Text(
+            stat.label,
+            style = MaterialTheme.typography.labelMedium,
+            color = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            buildAnnotatedString {
+                append(stat.value)
+                stat.unit?.let {
+                    withStyle(SpanStyle(fontSize = MaterialTheme.typography.labelMedium.fontSize)) { append(" $it") }
+                }
+            },
+            style = NumericTextStyles.Hero.copy(fontSize = STAT_VALUE_SIZE),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -213,10 +337,26 @@ private fun GroundedImage(image: @Composable () -> Unit) {
 }
 
 private const val PHOTO_ASPECT_RATIO = 16f / 9f
-private const val CUTOUT_WIDTH_FRACTION = 0.8f
+private const val CUTOUT_WIDTH_FRACTION = 1f
 private const val CUTOUT_ASPECT_RATIO = 2f
-private const val HERO_IMAGE_WIDTH_FRACTION = 0.7f
+private const val HERO_IMAGE_WIDTH_FRACTION = 0.85f
 private const val HERO_IMAGE_ASPECT_RATIO = 360f / 160f
+
+// 하늘색은 Hero 위쪽 절반에서 화면 배경으로 다 바뀐다. 아래의 요약 카드 주변은 화면 배경과 같아진다.
+private const val SKY_END = 0.62f
+private const val SKY_PEAK = 0.18f
+private const val END_FADE_START = 0.7f
+private const val GLOW_X = 0.85f
+private const val GLOW_RADIUS = 0.75f
+private const val DIVIDER_ALPHA = 0.18f
+private const val SECONDARY_ALPHA = 0.7f
+private val STAT_VALUE_SIZE = 20.sp
+
+private val PREVIEW_STATS = listOf(
+    HeroStat("Mileage", "42,180", "km"),
+    HeroStat("Inspection", "D-14"),
+    HeroStat("Last record", "Oct 6"),
+)
 
 @Preview(widthDp = 360)
 @Composable
@@ -225,8 +365,8 @@ private fun VehicleHeroSectionPreview() {
         VehicleHeroSection(
             title = "KG Mobility Torres",
             subtitle = "2023 · Gasoline",
-            mileage = "42,180 km",
-            freshness = "As of today",
+            stats = PREVIEW_STATS,
+            footnote = "As of today",
         )
     }
 }
@@ -238,8 +378,8 @@ private fun VehicleHeroSectionDarkPreview() {
         VehicleHeroSection(
             title = "KG Mobility Torres",
             subtitle = "2023 · Gasoline",
-            mileage = "42,180 km",
-            freshness = "As of today",
+            stats = PREVIEW_STATS,
+            footnote = "As of today",
         )
     }
 }
