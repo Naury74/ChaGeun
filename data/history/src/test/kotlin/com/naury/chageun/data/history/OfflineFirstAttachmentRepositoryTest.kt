@@ -118,14 +118,15 @@ class OfflineFirstAttachmentRepositoryTest {
         assertThat(file.exists()).isFalse()
     }
 
-    private fun photoRepository(dispatcher: TestDispatcher) = OfflineFirstVehiclePhotoRepository(
-        database.attachmentDao(),
-        fakeImporter,
-        directory,
-        Clock.fixed(now, ZoneOffset.UTC),
-        silentLogger,
-        dispatcher,
-    )
+    private fun photoRepository(dispatcher: TestDispatcher, cutter: SubjectCutter = SubjectCutter { _, _ -> false }) =
+        OfflineFirstVehiclePhotoRepository(
+            database.attachmentDao(),
+            VehiclePhotoImages(fakeImporter, cutter),
+            directory,
+            Clock.fixed(now, ZoneOffset.UTC),
+            silentLogger,
+            dispatcher,
+        )
 
     @Test
     fun vehiclePhoto_replaceKeepsOnlyLatest_andStaysOutOfRecords() = runTest {
@@ -155,5 +156,29 @@ class OfflineFirstAttachmentRepositoryTest {
 
         assertThat(photos.observe(vehicleId).first()).isNull()
         assertThat(File(first).exists()).isFalse()
+    }
+
+    @Test
+    fun vehiclePhoto_prefersCutout_andRemovesItWithThePhoto() = runTest {
+        val photos = photoRepository(StandardTestDispatcher(testScheduler)) { _, target ->
+            target.writeText("png")
+            true
+        }
+        photos.replace(vehicleId, "content://car")
+        val path = checkNotNull(photos.observe(vehicleId).first())
+
+        assertThat(path).endsWith("_cutout.png")
+
+        photos.clear(vehicleId)
+
+        assertThat(File(path).exists()).isFalse()
+    }
+
+    @Test
+    fun vehiclePhoto_keepsOriginal_whenCutoutFails() = runTest {
+        val photos = photoRepository(StandardTestDispatcher(testScheduler)) { _, _ -> error("model not ready") }
+
+        assertThat(photos.replace(vehicleId, "content://car")).isTrue()
+        assertThat(photos.observe(vehicleId).first()).endsWith(".jpg")
     }
 }
