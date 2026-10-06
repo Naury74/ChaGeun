@@ -5,8 +5,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
@@ -18,6 +20,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
 
 /** 누를 때의 반응. 따로 떠 있는 카드는 작아지고, 카드 안의 목록 행은 회색으로 강조된다. */
@@ -26,6 +29,9 @@ enum class PressStyle { Scale, Highlight }
 /**
  * Material 물결 대신 iOS처럼 누르는 동안 반응하는 클릭 영역.
  * [haptic]을 주면 확정 동작에 가벼운 진동을 더한다. Reduce Motion이면 크기 변화는 하지 않는다.
+ *
+ * 물결을 끈 대신 키보드로 초점이 오면 테마 색 테두리를 그린다(기획 §28). 터치로 누를 때는 초점을 받지 않아
+ * 나타나지 않는다. 떠 있는 카드([PressStyle.Scale])는 카드 모서리에 맞추고, 카드 안 목록 행은 행 안쪽에 그린다.
  */
 fun Modifier.pressable(
     onClick: () -> Unit,
@@ -37,6 +43,9 @@ fun Modifier.pressable(
 ): Modifier = composed {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
+    val ringColor = MaterialTheme.colorScheme.primary
+    val ringShape = if (style == PressStyle.Scale) MaterialTheme.shapes.large else MaterialTheme.shapes.small
     val haptics = LocalHapticFeedback.current
     val pressedModifier = when (style) {
         PressStyle.Scale -> {
@@ -61,6 +70,7 @@ fun Modifier.pressable(
     }
     this
         .then(pressedModifier)
+        .then(if (focused) Modifier.border(FOCUS_RING_WIDTH, ringColor, ringShape) else Modifier)
         .clickable(
             interactionSource = interaction,
             indication = null,
@@ -73,6 +83,7 @@ fun Modifier.pressable(
         }
 }
 
+private val FOCUS_RING_WIDTH = 2.dp
 private const val PRESSED_SCALE = 0.97f
 private const val PRESS_DAMPING = 0.6f
 private const val HIGHLIGHT_ALPHA = 0.08f
