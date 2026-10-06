@@ -13,8 +13,11 @@ class NotifyDueItemsUseCase @Inject constructor(
 ) {
     /** @return 띄운 알림 수. */
     suspend operator fun invoke(vehicleId: VehicleId, overview: MaintenanceOverview): Int {
-        val plan = ReminderPlanner.plan(overview.statuses, reminderRepository.notifiedStates(vehicleId))
+        val alreadyNotified = reminderRepository.notifiedStates(vehicleId)
+        val plan = ReminderPlanner.plan(overview.statuses, alreadyNotified)
         if (plan.toNotify.isNotEmpty()) notifier.notify(plan.toNotify)
+        // 기록 수정이나 주기 변경처럼 저장 화면을 거치지 않고 정상으로 돌아온 항목도 알림 창에 남기지 않는다.
+        (alreadyNotified.keys - plan.notifiedStates.keys).forEach(notifier::cancel)
         reminderRepository.replaceNotifiedStates(vehicleId, plan.notifiedStates)
 
         val inspectionStage = InspectionReminderStage.next(

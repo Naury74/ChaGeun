@@ -55,6 +55,12 @@ class EvaluateRemindersUseCaseTest {
 
         override fun cancelInspection() = Unit
 
+        val cancelled = mutableListOf<MaintenanceItem>()
+
+        override fun cancel(item: MaintenanceItem) {
+            cancelled += item
+        }
+
         var mileagePrompts = 0
 
         override fun notifyMileagePrompt() {
@@ -95,6 +101,20 @@ class EvaluateRemindersUseCaseTest {
         assertThat(evaluate()).isEqualTo(0)
         assertThat(notifier.shown.single().state).isEqualTo(MaintenanceState.Due)
         assertThat(reminders.states).containsExactly(MaintenanceItem.EngineOil, MaintenanceState.Due)
+    }
+
+    @Test
+    fun clearsNotification_whenItemIsBackToGood() = runTest {
+        givenOilDueSoon()
+        evaluate()
+
+        maintenance.inputs.value = maintenance.inputs.value.copy(
+            lastServices = mapOf(MaintenanceItem.EngineOil to ServiceRecord(today, Kilometers(49_700))),
+        )
+        evaluate()
+
+        assertThat(notifier.cancelled).containsExactly(MaintenanceItem.EngineOil)
+        assertThat(reminders.states).isEmpty()
     }
 
     @Test
