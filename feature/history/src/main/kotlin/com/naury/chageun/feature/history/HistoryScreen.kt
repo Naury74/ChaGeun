@@ -59,6 +59,7 @@ private enum class AddDialog { Chooser, MaintenanceItem, Fuel, Check }
 fun HistoryRoute(
     onRecordService: (MaintenanceItem) -> Unit,
     onEditService: (MaintenanceItem, String) -> Unit = { _, _ -> },
+    onAskAi: ((RecordRef) -> Unit)? = null,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -123,6 +124,7 @@ fun HistoryRoute(
             onOpenAdvancedFilter = { isFilterOpen = true },
             onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
             onLoadMore = viewModel::loadMore,
+            onAskAi = onAskAi,
             onAddPhotos = { ref ->
                 photoTarget = "${ref.type.name}:${ref.id}"
                 photoInput.open()
@@ -180,6 +182,7 @@ fun HistoryScreen(
     onClearAdvancedFilter: () -> Unit = {},
     onEdit: (RecordDetail) -> Unit = {},
     onLoadMore: () -> Unit = {},
+    onAskAi: ((RecordRef) -> Unit)? = null,
 ) {
     val attachments =
         AttachmentsState(
@@ -200,6 +203,7 @@ fun HistoryScreen(
     val currentOnSelect by rememberUpdatedState(onSelect)
     val currentOnDelete by rememberUpdatedState(onDelete)
     val currentOnEdit by rememberUpdatedState(onEdit)
+    val currentOnAskAi by rememberUpdatedState(onAskAi)
     val detailPane = remember {
         movableContentOf { shown: RecordDetail, paneModifier: Modifier ->
             key(shown.ref) {
@@ -210,6 +214,7 @@ fun HistoryScreen(
                     onDelete = currentOnDelete,
                     modifier = paneModifier,
                     onEdit = currentOnEdit,
+                    onAskAi = currentOnAskAi,
                 )
             }
         }

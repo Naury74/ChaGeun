@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FuelAmounts
@@ -212,6 +213,32 @@ class HistoryScreenTest {
     }
 
     @Test
+    fun detail_offersAskingAiAboutThatRecord() {
+        var asked: RecordRef? = null
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = HistoryUiState(isLoading = false, selected = ref, detail = detail),
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                    onAskAi = { asked = it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Ask AI about this record").performScrollTo().performClick()
+
+        assertThat(asked).isEqualTo(ref)
+    }
+
+    @Test
     fun monthHeader_showsTheWholeMonthsTotal() {
         val section = TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 250_000)
         show(HistoryUiState(isLoading = false, sections = listOf(section)))
@@ -400,4 +427,28 @@ class HistoryScreenTest {
         ),
         isTwoPane = true,
     )
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_detailWithAskAiKorean() {
+        composeRule.setContent {
+            AppFrame {
+                HistoryScreen(
+                    uiState = HistoryUiState(isLoading = false, selected = ref, detail = detail),
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                    onAskAi = {},
+                )
+            }
+        }
+        composeRule.captureScreen("history_detail_ask_ai_ko")
+    }
 }

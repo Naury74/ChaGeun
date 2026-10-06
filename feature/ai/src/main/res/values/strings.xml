@@ -48,4 +48,15 @@
     <string name="ai_km">%1$s km</string>
     <string name="ai_won">₩%1$s</string>
     <string name="ai_pick_question">Pick a question</string>
+    <string name="ai_prompt_focus_record">The question is about this record:</string>
+    <string name="ai_litres">%1$s L</string>
+    <string name="ai_won_per_litre">₩%1$s/L</string>
+    <string name="ai_full_tank">full tank</string>
+    <string name="ai_partial_fill">partial fill</string>
+    <string name="ai_suggestion_record_summary">Summarize this record in simple terms</string>
+    <string name="ai_suggestion_record_service">Was this %1$s replacement done at the right time?</string>
+    <string name="ai_suggestion_record_fuel">What can this fuel record tell me about my fuel economy?</string>
+    <string name="ai_suggestion_record_check">What should I keep an eye on after this?</string>
+    <string name="ai_included_focus_record">This record</string>
+    <string name="ai_included_focus_record_body">Date, type, mileage and amounts. Cost only if you include it below.</string>
 </resources>

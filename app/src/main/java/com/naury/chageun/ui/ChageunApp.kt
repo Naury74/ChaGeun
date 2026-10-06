@@ -35,6 +35,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.account.AccountRoute as AccountScreenRoute
 import com.naury.chageun.feature.account.DeleteAccountRoute
@@ -71,6 +73,8 @@ data class AppActions(
     val onNavigate: (TopLevelDestination) -> Unit,
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
+    /** 기록 상세에서 그 기록을 AI에게 묻는다. */
+    val onAskAiAboutRecord: (RecordRef) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
     val onOpenAccount: () -> Unit = {},
     val onOpenAlbum: () -> Unit = {},
@@ -114,6 +118,7 @@ fun ChageunApp(
         onNavigate = navigateTo,
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
+        onAskAiAboutRecord = { ref -> backStack.add(AiRoute(focusRecord = "${ref.type.name}:${ref.id}")) },
         onOpenSettings = { backStack.add(SettingsRoute) },
         onOpenAccount = { backStack.add(AccountRoute) },
         onOpenAlbum = { backStack.add(AlbumRoute) },
@@ -217,6 +222,10 @@ fun ChageunApp(
                             MaintenanceItem.entries.firstOrNull { it.name == name }
                         },
                         onBack = { backStack.removeLastOrNull() },
+                        focusRecord = route.focusRecord?.let { encoded ->
+                            TimelineEventType.entries.firstOrNull { it.name == encoded.substringBefore(':') }
+                                ?.let { type -> RecordRef(type, encoded.substringAfter(':')) }
+                        },
                     )
                 }
             },
@@ -261,6 +270,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
         TopLevelDestination.History -> HistoryRoute(
             onRecordService = actions.onRecordService,
             onEditService = actions.onEditService,
+            onAskAi = actions.onAskAiAboutRecord,
         )
         TopLevelDestination.Vehicle -> VehicleRoute(
             onUpdateMileage = actions.onUpdateMileage,

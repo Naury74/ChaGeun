@@ -20,10 +20,10 @@ sealed interface TopLevelRoute : NavKey {
 
 /**
  * 탭 위에 쌓이는 AI 질문 화면.
- * 정비 항목 상세에서 열면 [focusItem]에 해당 항목 이름이 들어온다.
+ * 정비 항목 상세에서 열면 [focusItem]에 해당 항목 이름이, 기록 상세에서 열면 [focusRecord]에 "종류:ID"가 들어온다.
  */
 @Serializable
-data class AiRoute(val focusItem: String? = null) : NavKey
+data class AiRoute(val focusItem: String? = null, val focusRecord: String? = null) : NavKey
 
 @Serializable
 data object SettingsRoute : NavKey

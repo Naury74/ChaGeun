@@ -10,6 +10,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.ai.AiContextFacts
 import com.naury.chageun.core.domain.ai.AiContextOptions
 import com.naury.chageun.core.domain.ai.BuildAiContextUseCase
+import com.naury.chageun.core.domain.ai.SharedRecord
 import com.naury.chageun.core.domain.maintenance.DrivingPaceEstimator
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
@@ -17,6 +18,7 @@ import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeHistoryRepository
@@ -67,6 +69,7 @@ class AiHubTest {
         val maintenance = FakeMaintenanceRepository()
         return AiHubViewModel(
             focusItem = null,
+            focusRecord = null,
             savedStateHandle = SavedStateHandle(),
             analytics = FakeAnalyticsTracker(),
             buildContext = BuildAiContextUseCase(
@@ -153,5 +156,35 @@ class AiHubTest {
             }
         }
         composeRule.captureScreen("ai_phone")
+    }
+
+    @Test
+    fun focusRecord_isPutFirst_withRecordSuggestions() {
+        val fuel = SharedRecord(
+            type = TimelineEventType.Fuel,
+            date = LocalDate.of(2026, 9, 28),
+            maintenanceItem = null,
+            title = null,
+            mileage = Kilometers(42_000),
+            costWon = null,
+            fuelVolumeMl = 41_176,
+            fuelUnitPriceWon = null,
+            isFullTank = true,
+        )
+        val withRecord = facts.copy(focusRecord = fuel)
+        var prompt = ""
+        composeRule.setContent {
+            ChageunTheme {
+                val state = AiHubUiState(options = AiContextOptions(), facts = withRecord)
+                prompt = aiPromptText(withRecord, "Summarize this")
+                AiHubScreen(uiState = state, promptText = prompt, actions = AiHubActions({}, {}, {}, {}, onShare = {}))
+            }
+        }
+
+        composeRule.onNodeWithText("Summarize this record in simple terms").assertExists()
+        composeRule.onNodeWithText("What can this fuel record tell me about my fuel economy?").assertExists()
+        assertThat(prompt).contains("The question is about this record:")
+        assertThat(prompt).contains("41.18 L")
+        assertThat(prompt).contains("full tank")
     }
 }

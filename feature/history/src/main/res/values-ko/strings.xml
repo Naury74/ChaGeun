@@ -145,4 +145,6 @@
         <item quantity="other">사진 %1$d장 첨부</item>
     </plurals>
     <string name="history_title">기록</string>
+    <string name="history_ask_ai">이 기록을 AI에게 물어보기</string>
+    <string name="history_ask_ai_body">요약을 받거나 궁금한 점을 물어볼 수 있어요. 메모와 정비소 이름은 보내지 않아요.</string>
 </resources>

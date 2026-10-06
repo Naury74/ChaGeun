@@ -48,7 +48,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.ai.SharedRecord
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.CardSubheader
 import com.naury.chageun.core.ui.GroupDivider
@@ -59,9 +62,10 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
 
 @Composable
-fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit) {
-    val viewModel = hiltViewModel<AiHubViewModel, AiHubViewModel.Factory>(key = "ai-${focusItem?.name}") {
-        it.create(focusItem)
+fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: RecordRef? = null) {
+    val key = "ai-${focusItem?.name}-${focusRecord?.let { "${it.type}:${it.id}" }}"
+    val viewModel = hiltViewModel<AiHubViewModel, AiHubViewModel.Factory>(key = key) {
+        it.create(focusItem, focusRecord)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -133,7 +137,7 @@ fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubAction
                 )
             }
             CardGroup(stringResource(R.string.ai_pick_question)) {
-                suggestions(uiState.options.focusItem).forEachIndexed { index, suggestion ->
+                suggestions(uiState.options.focusItem, uiState.facts?.focusRecord).forEachIndexed { index, suggestion ->
                     if (index > 0) GroupDivider()
                     val isSelected = uiState.question == suggestion
                     ListRow(
@@ -203,6 +207,15 @@ private fun ContextPreview(uiState: AiHubUiState, promptText: String?, actions: 
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_vehicle), tone = good)
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_mileage), tone = good)
         ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_maintenance), tone = good)
+        // 기록 상세에서 열었으면 그 기록이 함께 간다는 것을 보낼 정보에 분명히 보여 준다.
+        if (uiState.facts?.focusRecord != null || uiState.options.focusRecord != null) {
+            ListRow(
+                Icons.Filled.Check,
+                stringResource(R.string.ai_included_focus_record),
+                body = stringResource(R.string.ai_included_focus_record_body),
+                tone = good,
+            )
+        }
         GroupDivider()
         ToggleListRow(
             icon = Icons.Filled.History,
@@ -255,15 +268,29 @@ private fun ContextPreview(uiState: AiHubUiState, promptText: String?, actions: 
 }
 
 @Composable
-private fun suggestions(focusItem: MaintenanceItem?): List<String> = if (focusItem != null) {
-    listOf(stringResource(R.string.ai_suggestion_item, stringResource(focusItem.labelRes)))
-} else {
-    listOf(
-        stringResource(R.string.ai_suggestion_status),
-        stringResource(R.string.ai_suggestion_oil),
-        stringResource(R.string.ai_suggestion_trip),
-        stringResource(R.string.ai_suggestion_cost),
-    )
+private fun suggestions(focusItem: MaintenanceItem?, focusRecord: SharedRecord?): List<String> = when {
+    focusRecord != null -> {
+        val recordItem = focusRecord.maintenanceItem
+        listOf(
+            stringResource(R.string.ai_suggestion_record_summary),
+            when {
+                recordItem != null -> stringResource(
+                    R.string.ai_suggestion_record_service,
+                    stringResource(recordItem.labelRes),
+                )
+                focusRecord.type == TimelineEventType.Fuel -> stringResource(R.string.ai_suggestion_record_fuel)
+                else -> stringResource(R.string.ai_suggestion_record_check)
+            },
+        )
+    }
+    focusItem != null -> listOf(stringResource(R.string.ai_suggestion_item, stringResource(focusItem.labelRes)))
+    else ->
+        listOf(
+            stringResource(R.string.ai_suggestion_status),
+            stringResource(R.string.ai_suggestion_oil),
+            stringResource(R.string.ai_suggestion_trip),
+            stringResource(R.string.ai_suggestion_cost),
+        )
 }
 
 private val ICON_SIZE = 20.dp

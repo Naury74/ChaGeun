@@ -8,6 +8,7 @@ import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.remainingText
@@ -29,6 +30,10 @@ internal fun aiPromptText(facts: AiContextFacts, question: String): String = bui
             ?: stringResource(R.string.ai_prompt_mileage_unknown),
     )
     add(stringResource(R.string.ai_prompt_health, stringResource(facts.health.labelRes)))
+    facts.focusRecord?.let { record ->
+        add(stringResource(R.string.ai_prompt_focus_record))
+        add(stringResource(R.string.ai_prompt_item, recordTitle(record), recordDetail(record)))
+    }
     if (facts.maintenance.isNotEmpty()) {
         add(stringResource(R.string.ai_prompt_maintenance))
         facts.maintenance.forEach { status ->
@@ -74,6 +79,9 @@ private fun recordDetail(record: SharedRecord): String = listOfNotNull(
     record.date?.let { formatDate(it) },
     record.mileage?.let { stringResource(R.string.ai_km, formatNumber(it.value)) },
     record.costWon?.let { stringResource(R.string.ai_won, formatNumber(it)) },
+    record.fuelVolumeMl?.let { stringResource(R.string.ai_litres, formatLitres(it)) },
+    record.fuelUnitPriceWon?.let { stringResource(R.string.ai_won_per_litre, formatNumber(it)) },
+    record.isFullTank?.let { stringResource(if (it) R.string.ai_full_tank else R.string.ai_partial_fill) },
 ).joinToString(", ")
 
 private val VehicleHealthLevel.labelRes: Int

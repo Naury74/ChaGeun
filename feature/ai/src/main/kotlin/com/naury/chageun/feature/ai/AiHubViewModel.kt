@@ -9,6 +9,7 @@ import com.naury.chageun.core.domain.ai.BuildAiContextUseCase
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordRef
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -29,6 +30,7 @@ data class AiHubUiState(
 @HiltViewModel(assistedFactory = AiHubViewModel.Factory::class)
 class AiHubViewModel @AssistedInject constructor(
     @Assisted focusItem: MaintenanceItem?,
+    @Assisted focusRecord: RecordRef?,
     private val savedStateHandle: SavedStateHandle,
     buildContext: BuildAiContextUseCase,
     private val analytics: AnalyticsTracker,
@@ -40,7 +42,12 @@ class AiHubViewModel @AssistedInject constructor(
     private val isQuestionMissing = savedStateHandle.getStateFlow(KEY_MISSING, false)
 
     private val options = combine(includeRecords, includeCosts) { records, costs ->
-        AiContextOptions(includeRecords = records, includeCosts = costs, focusItem = focusItem)
+        AiContextOptions(
+            includeRecords = records,
+            includeCosts = costs,
+            focusItem = focusItem,
+            focusRecord = focusRecord,
+        )
     }
 
     val uiState: StateFlow<AiHubUiState> = combine(question, options, buildContext(options), isQuestionMissing) {
@@ -53,7 +60,7 @@ class AiHubViewModel @AssistedInject constructor(
     }.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        AiHubUiState(options = AiContextOptions(focusItem = focusItem)),
+        AiHubUiState(options = AiContextOptions(focusItem = focusItem, focusRecord = focusRecord)),
     )
 
     fun onQuestionChanged(value: String) {
@@ -87,7 +94,7 @@ class AiHubViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(focusItem: MaintenanceItem?): AiHubViewModel
+        fun create(focusItem: MaintenanceItem?, focusRecord: RecordRef?): AiHubViewModel
     }
 
     private companion object {

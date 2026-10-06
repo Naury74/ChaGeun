@@ -6,6 +6,9 @@ import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.model.FuelAmounts
+import com.naury.chageun.core.model.FuelEntry
+import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
@@ -13,8 +16,10 @@ import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MileageReading
 import com.naury.chageun.core.model.PlateNumber
 import com.naury.chageun.core.model.PlateParseResult
+import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
+import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
@@ -131,5 +136,58 @@ class BuildAiContextUseCaseTest {
 
         assertThat(facts.maintenance).isEmpty()
         assertThat(facts.recentRecords).isEmpty()
+    }
+
+    @Test
+    fun focusRecord_fuel_sharesAmountsButNotStationOrMemo() = runTest {
+        val ref = RecordRef(TimelineEventType.Fuel, "f1")
+        history.details.value = mapOf(
+            ref to RecordDetail.Fuel(
+                ref,
+                FuelEntry(
+                    today,
+                    Kilometers(49_700),
+                    FuelAmounts(70_000, 41_176, 1_700, FuelField.Volume),
+                    isFullTank = true,
+                    stationName = "Station near home",
+                    memo = "Picked up kids",
+                ),
+            ),
+        )
+
+        val facts = buildContext(flowOf(AiContextOptions(focusRecord = ref))).first()
+        val withCosts = buildContext(flowOf(AiContextOptions(focusRecord = ref, includeCosts = true))).first()
+
+        val record = facts.focusRecord!!
+        assertThat(record.fuelVolumeMl).isEqualTo(41_176)
+        assertThat(record.isFullTank).isTrue()
+        assertThat(record.costWon).isNull()
+        assertThat(record.fuelUnitPriceWon).isNull()
+        assertThat(withCosts.focusRecord?.costWon).isEqualTo(70_000)
+        assertThat(facts.toString()).doesNotContain("Station near home")
+        assertThat(facts.toString()).doesNotContain("Picked up kids")
+        // 질문 대상 기록은 최근 기록 목록에 다시 넣지 않는다.
+        assertThat(facts.recentRecords.map { it.type }).doesNotContain(TimelineEventType.Fuel)
+    }
+
+    @Test
+    fun focusRecord_maintenance_narrowsToThatItem() = runTest {
+        val ref = RecordRef(TimelineEventType.Maintenance, "m1")
+        history.details.value = mapOf(
+            ref to RecordDetail.Maintenance(
+                ref,
+                MaintenanceItem.Wiper,
+                ServiceHistoryEntry("m1", today.minusMonths(1), null, 30_000, "Blue Hands"),
+                memo = "Front only",
+            ),
+        )
+
+        val facts = buildContext(flowOf(AiContextOptions(focusRecord = ref))).first()
+
+        assertThat(facts.focusRecord?.maintenanceItem).isEqualTo(MaintenanceItem.Wiper)
+        assertThat(facts.maintenance.map { it.item }).containsExactly(MaintenanceItem.Wiper)
+        assertThat(facts.missingInfo).isEmpty()
+        assertThat(facts.toString()).doesNotContain("Blue Hands")
+        assertThat(facts.toString()).doesNotContain("Front only")
     }
 }
