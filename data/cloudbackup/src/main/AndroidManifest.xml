@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 로그인한 사용자가 백업을 요청했을 때만 Firebase로 백업 파일과 요약을 보낸다. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

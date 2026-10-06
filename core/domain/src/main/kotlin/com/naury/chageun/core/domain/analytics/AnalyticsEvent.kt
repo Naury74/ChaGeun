@@ -80,6 +80,14 @@ sealed interface AnalyticsEvent {
         override val name = "login"
         override val params = mapOf("method" to method.key)
     }
+
+    data object CloudBackupCreated : AnalyticsEvent {
+        override val name = "cloud_backup_created"
+    }
+
+    data object CloudBackupRestored : AnalyticsEvent {
+        override val name = "cloud_backup_restored"
+    }
 }
 
 private val AuthMethod.key: String

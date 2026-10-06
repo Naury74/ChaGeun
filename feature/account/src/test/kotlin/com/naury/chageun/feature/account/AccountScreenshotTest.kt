@@ -3,12 +3,19 @@ package com.naury.chageun.feature.account
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.naury.chageun.core.domain.auth.AuthError
+import com.naury.chageun.core.domain.backup.ImportPreview
+import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
+import com.naury.chageun.core.testing.FakeCloudBackupRepository
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
+import java.time.Instant
+import java.util.TimeZone
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +29,19 @@ class AccountScreenshotTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    // 백업 시각은 기기 시간대로 보여 준다. CI(UTC)와 개발 PC에서 같은 그림이 나오게 고정한다.
+    private val originalTimeZone = TimeZone.getDefault()
+
+    @Before
+    fun fixTimeZone() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"))
+    }
+
+    @After
+    fun restoreTimeZone() {
+        TimeZone.setDefault(originalTimeZone)
+    }
 
     private val emailUser = AuthUser("uid", "driver@example.com", null, false, setOf(AuthMethod.Email))
 
@@ -81,6 +101,59 @@ class AccountScreenshotTest {
 
         composeRule.onNodeWithText("Signed in with Google").assertExists()
         composeRule.captureScreen("account_home_dark")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun home_withBackups_phone() {
+        composeRule.setContent {
+            AppFrame {
+                AccountScreen(
+                    uiState = AccountUiState(isLoading = false, user = emailUser.copy(isEmailVerified = true)),
+                    onBack = {},
+                    onContinueWithGoogle = {},
+                    onContinueWithEmail = {},
+                    onOpenPrivacyPolicy = {},
+                    onCheckVerification = {},
+                    onResendVerification = {},
+                    onSignOut = {},
+                    backup = CloudBackupUiState(
+                        isLoaded = true,
+                        backups = listOf(
+                            FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z")),
+                            FakeCloudBackupRepository.backup("b0", Instant.parse("2026-09-29T11:00:00Z"), 10, 2),
+                        ),
+                    ),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("백업 목록 · 최근 5개 보관").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen("account_home_backups_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun restoreConfirm_phone() {
+        val backup = FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z"))
+        composeRule.setContent {
+            AppFrame {
+                CloudBackupDialogs(
+                    CloudBackupUiState(
+                        restore = RestoreStep.Confirming(
+                            backup,
+                            "file:///b1.zip",
+                            ImportPreview.Ready(LocalDataSummary(1, 12, 3), LocalDataSummary(1, 4, 0)),
+                        ),
+                    ),
+                    CloudBackupActions(),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("이 백업으로 바꿀까요?").assertExists()
+        composeRule.captureScreen("account_restore_confirm_phone")
     }
 
     @Test
