@@ -227,7 +227,7 @@ private fun ContextPreview(uiState: AiHubUiState, promptText: String?, actions: 
         ToggleListRow(
             icon = Icons.Filled.Payments,
             title = stringResource(R.string.ai_include_costs),
-            body = null,
+            body = stringResource(R.string.ai_include_costs_body),
             checked = uiState.options.includeCosts && uiState.options.includeRecords,
             onCheckedChange = actions.onIncludeCostsChanged,
             enabled = uiState.options.includeRecords,

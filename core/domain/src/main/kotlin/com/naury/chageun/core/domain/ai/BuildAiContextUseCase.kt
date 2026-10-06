@@ -3,13 +3,18 @@ package com.naury.chageun.core.domain.ai
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
+import com.naury.chageun.core.domain.vehicle.InspectionEvaluator
+import com.naury.chageun.core.domain.vehicle.InspectionRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.LocalDate
+import java.time.YearMonth
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +29,7 @@ class BuildAiContextUseCase @Inject constructor(
     private val vehicleRepository: VehicleRepository,
     private val observeOverview: ObserveMaintenanceOverviewUseCase,
     private val historyRepository: HistoryRepository,
+    private val inspectionRepository: InspectionRepository,
     private val clock: Clock,
 ) {
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,12 +40,14 @@ class BuildAiContextUseCase @Inject constructor(
                 val focused = options.map { it.focusRecord }.distinctUntilChanged().flatMapLatest { ref ->
                     ref?.let { historyRepository.observeRecord(vehicle.id, it) } ?: flowOf(null)
                 }
+                val extras = observeExtras(vehicle.id)
                 combine(
                     observeOverview(vehicle.id),
                     historyRepository.observeTimeline(vehicle.id, TimelineQuery()),
                     options,
                     focused,
-                ) { overview, timeline, opts, record ->
+                    extras,
+                ) { overview, timeline, opts, record, extra ->
                     // 정비 기록을 물으면 그 항목에 대한 질문으로 보고 상태와 이력을 그 항목으로 좁힌다.
                     val focusItem = opts.focusItem ?: (record as? RecordDetail.Maintenance)?.item
                     val relevant = overview.statuses.filter { status ->
@@ -69,6 +77,8 @@ class BuildAiContextUseCase @Inject constructor(
                             emptyList()
                         },
                         focusRecord = record?.toSharedRecord(includeCost = opts.includeCosts),
+                        inspection = extra.inspection,
+                        costTotals = extra.costTotals.takeIf { opts.includeRecords && opts.includeCosts },
                     )
                 }
             }
@@ -121,7 +131,34 @@ class BuildAiContextUseCase @Inject constructor(
         costWon = costWon.takeIf { includeCost },
     )
 
+    private fun observeExtras(vehicleId: VehicleId): Flow<Extras> {
+        val year = LocalDate.now(clock).year
+        return combine(
+            inspectionRepository.observeSchedule(vehicleId),
+            historyRepository.observeMonthlyCosts(vehicleId, TimelineQuery(types = MAINTENANCE_TYPES)),
+            historyRepository.observeMonthlyCosts(vehicleId, TimelineQuery(types = setOf(TimelineEventType.Fuel))),
+        ) { schedule, maintenanceCosts, fuelCosts ->
+            Extras(
+                inspection = schedule?.let { InspectionEvaluator.evaluate(it, LocalDate.now(clock)) },
+                costTotals = CostTotals(year, maintenanceCosts.sumForYear(year), fuelCosts.sumForYear(year)),
+            )
+        }
+    }
+
+    private class Extras(val inspection: InspectionStatus?, val costTotals: CostTotals)
+
+    private fun Map<YearMonth?, Long>.sumForYear(year: Int): Long =
+        entries.sumOf { (month, won) -> if (month?.year == year) won else 0L }
+
     private companion object {
         const val MAX_SHARED_RECORDS = 5
+
+        /** "정비비"에 넣는 기록. 주유는 따로 센다. */
+        val MAINTENANCE_TYPES = setOf(
+            TimelineEventType.Maintenance,
+            TimelineEventType.Inspection,
+            TimelineEventType.Repair,
+            TimelineEventType.Note,
+        )
     }
 }

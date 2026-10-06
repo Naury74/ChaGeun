@@ -30,6 +30,21 @@ internal fun aiPromptText(facts: AiContextFacts, question: String): String = bui
             ?: stringResource(R.string.ai_prompt_mileage_unknown),
     )
     add(stringResource(R.string.ai_prompt_health, stringResource(facts.health.labelRes)))
+    facts.inspection?.let { inspection ->
+        val schedule = inspection.schedule ?: return@let
+        val daysLeft = inspection.daysLeft ?: return@let
+        add(stringResource(R.string.ai_prompt_inspection, formatDate(schedule.nextDueDate), dDay(daysLeft)))
+    }
+    facts.costTotals?.let { totals ->
+        add(
+            stringResource(
+                R.string.ai_prompt_costs,
+                totals.year,
+                stringResource(R.string.ai_won, formatNumber(totals.maintenanceWon)),
+                stringResource(R.string.ai_won, formatNumber(totals.fuelWon)),
+            ),
+        )
+    }
     facts.focusRecord?.let { record ->
         add(stringResource(R.string.ai_prompt_focus_record))
         add(stringResource(R.string.ai_prompt_item, recordTitle(record), recordDetail(record)))
@@ -83,6 +98,13 @@ private fun recordDetail(record: SharedRecord): String = listOfNotNull(
     record.fuelUnitPriceWon?.let { stringResource(R.string.ai_won_per_litre, formatNumber(it)) },
     record.isFullTank?.let { stringResource(if (it) R.string.ai_full_tank else R.string.ai_partial_fill) },
 ).joinToString(", ")
+
+/** AI가 언어와 상관없이 읽을 수 있도록 D-day 표기를 쓴다. */
+private fun dDay(daysLeft: Long): String = when {
+    daysLeft > 0 -> "D-$daysLeft"
+    daysLeft == 0L -> "D-day"
+    else -> "D+${-daysLeft}"
+}
 
 private val VehicleHealthLevel.labelRes: Int
     get() = when (this) {

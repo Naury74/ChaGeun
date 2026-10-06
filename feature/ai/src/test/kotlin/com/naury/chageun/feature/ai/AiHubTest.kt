@@ -82,6 +82,7 @@ class AiHubTest {
                     clock,
                 ),
                 FakeHistoryRepository(),
+                FakeInspectionRepository(),
                 clock,
             ),
         )
