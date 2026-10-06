@@ -15,7 +15,7 @@
     <string name="ai_excluded">Never shared</string>
     <string name="ai_included_vehicle">Model, year and fuel</string>
     <string name="ai_included_mileage">Current mileage</string>
-    <string name="ai_included_maintenance">Maintenance status</string>
+    <string name="ai_included_maintenance">Maintenance and inspection status</string>
     <string name="ai_include_records">Recent records</string>
     <string name="ai_include_costs">Costs</string>
     <string name="ai_excluded_plate">Plate number</string>
@@ -38,6 +38,9 @@
     <string name="ai_prompt_item">- %1$s: %2$s</string>
     <string name="ai_prompt_missing">Not enough data: %1$s</string>
     <string name="ai_prompt_records">Recent records:</string>
+    <string name="ai_prompt_inspection">Next periodic inspection: %1$s (%2$s)</string>
+    <string name="ai_prompt_costs">Costs recorded in %1$d (Jan 1 to today, totals calculated by the app): maintenance and repairs %2$s, fuel %3$s</string>
+    <string name="ai_include_costs_body">Also sends this year\'s maintenance and fuel totals.</string>
     <string name="ai_prompt_footer">Plate number and owner details are not included. Values were calculated by the app and are not a diagnosis.</string>
     <string name="ai_prompt_question">Question: %1$s</string>
     <string name="ai_health_good">nothing needs attention</string>
