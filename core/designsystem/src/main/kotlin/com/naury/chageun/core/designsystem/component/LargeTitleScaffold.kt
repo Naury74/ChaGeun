@@ -110,7 +110,8 @@ private fun LargeTitleBar(
             title,
             style = MaterialTheme.typography.headlineLarge,
             color = colors.onBackground,
-            maxLines = 1,
+            // 'AI에게 물어보기'처럼 긴 제목도 잘리지 않도록 두 줄까지 쓴다.
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
                 .fillMaxWidth()

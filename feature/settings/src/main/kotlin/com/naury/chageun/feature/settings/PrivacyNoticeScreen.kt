@@ -21,16 +21,15 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 /** 앱이 실제로 저장하고 전송하는 내용과 항상 일치해야 한다. 권한이나 SDK를 새로 추가하면 함께 수정한다. */
 @Composable
 fun PrivacyNoticeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(ChageunTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-    ) {
-        SettingsTopBar(R.string.settings_privacy, onBack)
+    SettingsScaffold(R.string.settings_privacy, onBack, modifier) { padding ->
         Column(
-            Modifier.widthIn(max = CONTENT_MAX_WIDTH),
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ChageunTheme.spacing.gutter)
+                .padding(bottom = ChageunTheme.spacing.lg)
+                .widthIn(max = CONTENT_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
         ) {
             NOTICE_SECTIONS.forEach { (title, body) -> NoticeSection(title, body) }
