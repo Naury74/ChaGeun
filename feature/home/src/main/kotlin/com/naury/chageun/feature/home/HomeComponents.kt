@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,13 +9,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +37,8 @@ import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.icon
+import com.naury.chageun.core.designsystem.motion.ChageunMotion
+import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
@@ -167,6 +178,58 @@ private fun progressCaption(status: MaintenanceStatus, rule: MaintenanceRule?): 
         .joinToString(" · ")
         .ifEmpty { null }
 }
+
+/**
+ * 처음 쓰는 사람은 거의 모든 항목이 '정보 부족'이라 목록이 길다. 몇 개만 먼저 보여 주고 나머지는 펼쳐 본다.
+ */
+@Composable
+internal fun MissingInfoCard(
+    statuses: List<MaintenanceStatus>,
+    onOpenDetail: (MaintenanceItem) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+    val shown = if (isExpanded) statuses else statuses.take(MISSING_PREVIEW)
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(motionSpec(ChageunMotion.MEDIUM_MS)),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
+            shown.forEach { status ->
+                MissingInfoRow(status, onOpenDetail, Modifier.padding(horizontal = ChageunTheme.spacing.md))
+            }
+            if (statuses.size > MISSING_PREVIEW) {
+                TextButton(
+                    onClick = { isExpanded = !isExpanded },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = ChageunTheme.spacing.xs),
+                ) {
+                    Text(
+                        if (isExpanded) {
+                            stringResource(R.string.home_missing_less)
+                        } else {
+                            pluralStringResource(
+                                R.plurals.home_missing_more,
+                                statuses.size - MISSING_PREVIEW,
+                                statuses.size - MISSING_PREVIEW,
+                            )
+                        },
+                    )
+                    Icon(
+                        if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                        contentDescription = null,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private const val MISSING_PREVIEW = 3
 
 @Composable
 internal fun MissingInfoRow(

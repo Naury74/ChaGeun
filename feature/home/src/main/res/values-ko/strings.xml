@@ -62,4 +62,8 @@
     <string name="home_progress_km">다음 교체까지 %1$s / %2$s km</string>
     <string name="home_mileage_previous">마지막 기록: %1$s km</string>
     <string name="home_mileage_step">+%1$s km</string>
+    <plurals name="home_missing_more">
+        <item quantity="other">%1$d개 더 보기</item>
+    </plurals>
+    <string name="home_missing_less">접기</string>
 </resources>

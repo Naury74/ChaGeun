@@ -66,4 +66,9 @@
     <string name="home_progress_km">Next replacement in %1$s / %2$s km</string>
     <string name="home_mileage_previous">Last recorded: %1$s km</string>
     <string name="home_mileage_step">+%1$s km</string>
+    <plurals name="home_missing_more">
+        <item quantity="one">Show %1$d more</item>
+        <item quantity="other">Show %1$d more</item>
+    </plurals>
+    <string name="home_missing_less">Show less</string>
 </resources>
