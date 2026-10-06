@@ -5,6 +5,7 @@ import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleId
@@ -26,6 +27,17 @@ interface HistoryRepository {
     suspend fun addFuel(vehicleId: VehicleId, entry: FuelEntry, advancesOdometer: Boolean)
 
     suspend fun addCheck(vehicleId: VehicleId, entry: CheckEntry, advancesOdometer: Boolean)
+
+    /**
+     * 기록을 고친다. 첨부와 생성 시각은 그대로 두고, 이 기록이 만든 주행거리 기록은 지운 뒤
+     * 새 값이 지금 주행거리보다 크면 다시 만든다. 기록이 없으면 아무것도 하지 않는다.
+     */
+    suspend fun updateFuel(vehicleId: VehicleId, id: String, entry: FuelEntry)
+
+    suspend fun updateCheck(vehicleId: VehicleId, id: String, entry: CheckEntry)
+
+    /** 사용자가 값을 확인했으므로 추정 주행거리 표시는 지운다. 정비 항목은 바꾸지 않는다. */
+    suspend fun updateMaintenance(vehicleId: VehicleId, id: String, entry: ServiceEntry)
 
     /** 기록과 함께 생성된 주행거리 기록도 지운다. */
     suspend fun delete(vehicleId: VehicleId, ref: RecordRef)

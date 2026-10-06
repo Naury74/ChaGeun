@@ -34,6 +34,24 @@ data class VehicleRegistration(
     val knownServices: Map<MaintenanceItem, ServiceRecord> = emptyMap(),
 )
 
+/** 등록한 뒤 고칠 수 있는 차량 정보. 주행거리는 주행거리 기록으로 따로 관리한다. */
+data class VehicleProfileUpdate(
+    val maker: String,
+    val model: String,
+    val modelYear: Int,
+    val fuelType: FuelType,
+    val trim: String?,
+    val plate: PlateChange,
+)
+
+sealed interface PlateChange {
+    data object Keep : PlateChange
+
+    data object Remove : PlateChange
+
+    data class Replace(val plate: PlateNumber) : PlateChange
+}
+
 enum class MileageSource { User, Maintenance, Fuel, Check, Correction, Inspection }
 
 data class MileageEntry(val id: String, val date: LocalDate, val mileage: Kilometers, val source: MileageSource)

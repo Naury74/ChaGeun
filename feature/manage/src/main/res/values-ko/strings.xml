@@ -83,4 +83,5 @@
         <item quantity="other">%1$d개월</item>
     </plurals>
     <string name="manage_km_estimated">약 %1$s km (추정)</string>
+    <string name="record_edit_title">%1$s 교체 기록 수정</string>
 </resources>

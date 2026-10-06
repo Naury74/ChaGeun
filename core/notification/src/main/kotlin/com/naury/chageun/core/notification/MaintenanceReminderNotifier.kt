@@ -8,6 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.naury.chageun.core.domain.reminder.ReminderNotifier
 import com.naury.chageun.core.model.InspectionStatus
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.notification.DeepLinks.putInspection
@@ -30,8 +31,10 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
     @SuppressLint("MissingPermission")
     override fun notify(statuses: List<MaintenanceStatus>) {
         NotificationChannels.ensureCreated(context)
-        statuses.forEach { status -> manager.notify(status.item.ordinal + NOTIFICATION_ID_OFFSET, build(status)) }
+        statuses.forEach { status -> manager.notify(status.item.notificationId, build(status)) }
     }
+
+    override fun cancel(item: MaintenanceItem) = manager.cancel(item.notificationId)
 
     @SuppressLint("MissingPermission")
     override fun notifyInspection(status: InspectionStatus) {
@@ -120,6 +123,9 @@ internal class MaintenanceReminderNotifier @Inject constructor(@ApplicationConte
             else -> null
         }
     }
+
+    private val MaintenanceItem.notificationId: Int
+        get() = ordinal + NOTIFICATION_ID_OFFSET
 
     private val MaintenanceState.titleRes: Int
         get() = when (this) {

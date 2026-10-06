@@ -9,10 +9,6 @@
     <string name="onboarding_plate_skip">Register without a plate</string>
 
     <string name="onboarding_vehicle_title">Tell us about your car</string>
-    <string name="onboarding_vehicle_maker">Manufacturer</string>
-    <string name="onboarding_vehicle_model">Model</string>
-    <string name="onboarding_vehicle_year">Model year</string>
-    <string name="onboarding_vehicle_fuel">Fuel</string>
 
     <string name="onboarding_mileage_title">What does the odometer show?</string>
     <string name="onboarding_mileage_body">Maintenance timing is calculated from this value. An approximate number is fine.</string>
@@ -46,9 +42,6 @@
     <string name="onboarding_intro_feature_ai">Ask your favorite AI about your car</string>
     <string name="onboarding_step_progress">%1$d/%2$d</string>
     <string name="onboarding_plate_placeholder_short">123가 4567</string>
-    <string name="onboarding_vehicle_other_maker">Other</string>
-    <string name="onboarding_vehicle_custom">Type it in</string>
-    <string name="onboarding_vehicle_older">Earlier</string>
     <string name="onboarding_mileage_caption">Look for ODO, the total distance, on your dashboard.</string>
     <string name="onboarding_quick_mode_recent">Last 3 months</string>
     <string name="onboarding_quick_mode_half_year">6 months ago</string>

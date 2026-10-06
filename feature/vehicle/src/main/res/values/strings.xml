@@ -66,4 +66,20 @@
     <string name="vehicle_photo_failed">Couldn\'t use this photo. Try another one.</string>
     <string name="vehicle_mileage_show_all">Show all %1$d</string>
     <string name="vehicle_mileage_show_less">Show less</string>
+    <string name="vehicle_edit_open">Edit vehicle details</string>
+    <string name="vehicle_edit_title">Edit vehicle details</string>
+    <string name="vehicle_edit_fuel_changed">Changing the fuel turns off care items that no longer apply and adds the ones that now do. Your records stay as they are.</string>
+    <string name="vehicle_edit_trim">Trim (optional)</string>
+    <string name="vehicle_edit_plate">Plate number</string>
+    <string name="vehicle_edit_plate_new">New plate number</string>
+    <string name="vehicle_edit_plate_hint">Leave empty to keep the current number</string>
+    <string name="vehicle_edit_plate_remove">Remove plate number</string>
+    <string name="vehicle_edit_plate_will_remove">The plate number will be removed when you save.</string>
+    <string name="vehicle_edit_plate_undo">Undo</string>
+    <string name="vehicle_edit_cancel">Cancel</string>
+    <string name="vehicle_edit_save">Save</string>
+    <string name="vehicle_edit_error_required">Required</string>
+    <string name="vehicle_edit_error_year">Enter a year between 1980 and next year</string>
+    <string name="vehicle_edit_error_plate">Check the format, e.g. 123가4567</string>
+    <string name="vehicle_edit_error_plate_unsupported">This plate type isn\'t supported yet</string>
 </resources>

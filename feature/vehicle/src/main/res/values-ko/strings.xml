@@ -64,4 +64,20 @@
     <string name="vehicle_photo_failed">이 사진은 쓸 수 없어요. 다른 사진을 골라 주세요.</string>
     <string name="vehicle_mileage_show_all">전체 %1$d개 보기</string>
     <string name="vehicle_mileage_show_less">접기</string>
+    <string name="vehicle_edit_open">차량 정보 수정</string>
+    <string name="vehicle_edit_title">차량 정보 수정</string>
+    <string name="vehicle_edit_fuel_changed">연료를 바꾸면 해당하지 않는 관리 항목은 꺼지고 새로 해당하는 항목이 추가돼요. 기록은 그대로 남아요.</string>
+    <string name="vehicle_edit_trim">세부 트림 (선택)</string>
+    <string name="vehicle_edit_plate">차량번호</string>
+    <string name="vehicle_edit_plate_new">새 차량번호</string>
+    <string name="vehicle_edit_plate_hint">비워 두면 지금 번호를 그대로 써요</string>
+    <string name="vehicle_edit_plate_remove">차량번호 지우기</string>
+    <string name="vehicle_edit_plate_will_remove">저장하면 차량번호를 지워요.</string>
+    <string name="vehicle_edit_plate_undo">되돌리기</string>
+    <string name="vehicle_edit_cancel">취소</string>
+    <string name="vehicle_edit_save">저장</string>
+    <string name="vehicle_edit_error_required">입력해 주세요</string>
+    <string name="vehicle_edit_error_year">1980년부터 내년 사이로 입력해 주세요</string>
+    <string name="vehicle_edit_error_plate">형식을 확인해 주세요. 예: 123가4567</string>
+    <string name="vehicle_edit_error_plate_unsupported">아직 지원하지 않는 번호판이에요</string>
 </resources>

@@ -75,6 +75,19 @@ class MaintenanceReminderNotifierTest {
     }
 
     @Test
+    fun cancelsOnlyThatItemsNotification() {
+        notifier.notify(listOf(status(MaintenanceState.Due, km = 420)))
+        notifier.notifyMileagePrompt()
+
+        notifier.cancel(MaintenanceItem.EngineOil)
+
+        val remaining = shadowOf(manager).allNotifications
+        assertThat(remaining.map { it.extras.getString(NotificationCompat.EXTRA_TITLE) })
+            .doesNotContain("Time to replace your Engine oil")
+        assertThat(remaining).hasSize(1)
+    }
+
+    @Test
     fun opensCareTabItem_whenTapped() {
         notifier.notify(listOf(status(MaintenanceState.Due, km = 420)))
 

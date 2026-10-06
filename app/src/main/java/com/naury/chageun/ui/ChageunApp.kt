@@ -46,6 +46,8 @@ import com.naury.chageun.navigation.TopLevelRoute
 /** feature 모듈끼리 서로 의존하지 않도록 앱 셸이 처리하는 feature 간 액션. */
 data class AppActions(
     val onRecordService: (MaintenanceItem) -> Unit,
+    /** 저장된 정비 기록을 같은 교체 기록 시트로 고친다. */
+    val onEditService: (MaintenanceItem, String) -> Unit = { _, _ -> },
     val onNavigate: (TopLevelDestination) -> Unit,
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
@@ -66,6 +68,7 @@ fun ChageunApp(
 ) {
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
+    var editingServiceId by rememberSaveable { mutableStateOf<String?>(null) }
     var isUpdatingMileage by rememberSaveable { mutableStateOf(false) }
     var openedManageItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
@@ -78,7 +81,14 @@ fun ChageunApp(
         }
     }
     val actions = AppActions(
-        onRecordService = { recordingItem = it },
+        onRecordService = {
+            editingServiceId = null
+            recordingItem = it
+        },
+        onEditService = { item, recordId ->
+            editingServiceId = recordId
+            recordingItem = item
+        },
         onNavigate = navigateTo,
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
@@ -159,7 +169,15 @@ fun ChageunApp(
     }
 
     recordingItem?.let { item ->
-        RecordServiceHost(item = item, isExpanded = isExpanded, onDismiss = { recordingItem = null })
+        RecordServiceHost(
+            item = item,
+            isExpanded = isExpanded,
+            onDismiss = {
+                recordingItem = null
+                editingServiceId = null
+            },
+            editingRecordId = editingServiceId,
+        )
     }
     if (isUpdatingMileage) {
         MileageUpdateHost(isExpanded = isExpanded, onDismiss = { isUpdatingMileage = false })
@@ -184,7 +202,10 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             pendingSelection = actions.pendingManageItem,
             onPendingSelectionHandled = actions.onPendingManageItemHandled,
         )
-        TopLevelDestination.History -> HistoryRoute(onRecordService = actions.onRecordService)
+        TopLevelDestination.History -> HistoryRoute(
+            onRecordService = actions.onRecordService,
+            onEditService = actions.onEditService,
+        )
         TopLevelDestination.Vehicle -> VehicleRoute(
             onUpdateMileage = actions.onUpdateMileage,
             onOpenSettings = actions.onOpenSettings,

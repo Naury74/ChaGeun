@@ -3,12 +3,15 @@ package com.naury.chageun.core.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.TimelineRow
 import kotlinx.coroutines.flow.Flow
 
+// 기록 종류(정비·주유·점검)마다 조회·추가·수정·삭제 쿼리가 따로 필요하다.
+@Suppress("TooManyFunctions")
 @Dao
 interface HistoryDao {
     /**
@@ -52,8 +55,26 @@ interface HistoryDao {
     @Query("SELECT * FROM maintenance_record WHERE vehicle_id = :vehicleId AND id = :id")
     fun observeMaintenance(vehicleId: String, id: String): Flow<MaintenanceRecordEntity?>
 
+    @Query("SELECT * FROM fuel_record WHERE vehicle_id = :vehicleId AND id = :id")
+    suspend fun findFuel(vehicleId: String, id: String): FuelRecordEntity?
+
+    @Query("SELECT * FROM check_record WHERE vehicle_id = :vehicleId AND id = :id")
+    suspend fun findCheck(vehicleId: String, id: String): CheckRecordEntity?
+
+    @Query("SELECT * FROM maintenance_record WHERE vehicle_id = :vehicleId AND id = :id")
+    suspend fun findMaintenance(vehicleId: String, id: String): MaintenanceRecordEntity?
+
     @Insert
     suspend fun insertFuel(record: FuelRecordEntity)
+
+    @Update
+    suspend fun updateFuel(record: FuelRecordEntity)
+
+    @Update
+    suspend fun updateCheck(record: CheckRecordEntity)
+
+    @Update
+    suspend fun updateMaintenance(record: MaintenanceRecordEntity)
 
     @Insert
     suspend fun insertCheck(record: CheckRecordEntity)

@@ -34,6 +34,10 @@ class AddHistoryRecordUseCase @Inject constructor(
         return errors
     }
 
+    /** 입력 폼의 주행거리 기본값. */
+    suspend fun currentMileage(vehicleId: VehicleId): Kilometers? =
+        maintenanceRepository.findCurrentMileage(vehicleId)?.mileage
+
     private fun dateErrors(date: LocalDate) =
         if (date.isAfter(LocalDate.now(clock))) setOf(HistoryEntryError.FutureDate) else emptySet()
 

@@ -2,6 +2,7 @@ package com.naury.chageun.core.domain.maintenance
 
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.reminder.ReminderNotifier
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.VehicleId
@@ -24,7 +25,11 @@ class RecordServiceUseCase @Inject constructor(
     private val repository: MaintenanceRepository,
     private val clock: Clock,
     private val analytics: AnalyticsTracker,
+    private val notifier: ReminderNotifier,
 ) {
+    /** 입력 폼의 주행거리 기본값. */
+    suspend fun currentMileage(vehicleId: VehicleId): Kilometers? = repository.findCurrentMileage(vehicleId)?.mileage
+
     suspend operator fun invoke(
         vehicleId: VehicleId,
         entry: ServiceEntry,
@@ -45,6 +50,7 @@ class RecordServiceUseCase @Inject constructor(
         val advancesOdometer = currentMileage == null || entry.mileage > currentMileage
         repository.recordService(vehicleId, entry, advancesOdometer)
         analytics.track(AnalyticsEvent.MaintenanceRecordAdded(withCost = entry.costWon != null))
+        notifier.cancel(entry.item)
 
         val rule = repository.findRule(vehicleId, entry.item)
         return RecordServiceResult.Saved(

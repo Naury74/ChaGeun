@@ -3,9 +3,14 @@ package com.naury.chageun.feature.history.form
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.history.AddHistoryRecordUseCase
+import com.naury.chageun.core.domain.history.EditHistoryRecordUseCase
+import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.RecordDetail
+import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeHistoryRepository
@@ -14,6 +19,7 @@ import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -33,6 +39,7 @@ class CheckFormViewModelTest {
         handle,
         vehicles,
         AddHistoryRecordUseCase(history, FakeMaintenanceRepository(), clock),
+        EditHistoryRecordUseCase(history, clock),
         FakeAnalyticsTracker(),
         clock,
     )
@@ -77,5 +84,24 @@ class CheckFormViewModelTest {
 
         assertThat(restored.kind).isEqualTo(CheckKind.Note)
         assertThat(restored.title).isEqualTo("Car wash")
+    }
+
+    @Test
+    fun editing_updatesSameRecord() = runTest {
+        val ref = RecordRef(TimelineEventType.Repair, "c1")
+        val saved = CheckEntry(CheckKind.Repair, LocalDate.of(2026, 9, 1), "Bumper", Kilometers(41_000), 120_000)
+        history.details.value = mapOf(ref to RecordDetail.Check(ref, saved))
+        val vm = viewModel()
+
+        vm.startEditing(ref)
+        assertThat(vm.uiState.value.title).isEqualTo("Bumper")
+        vm.onCostChanged("150000")
+        vm.save()
+
+        val (id, entry) = history.updated.single()
+        assertThat(id).isEqualTo("c1")
+        assertThat((entry as CheckEntry).costWon).isEqualTo(150_000)
+        assertThat(entry.kind).isEqualTo(CheckKind.Repair)
+        assertThat(history.addedChecks).isEmpty()
     }
 }
