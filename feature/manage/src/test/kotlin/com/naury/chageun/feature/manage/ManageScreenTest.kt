@@ -158,6 +158,20 @@ class ManageScreenTest {
         composeRule.captureScreen("care_phone")
     }
 
+    /** 펼친 폴더블의 목록 칸처럼 좁은 너비에서는 배지가 이름 아래로 내려간다. */
+    @Test
+    @Config(qualifiers = "w300dp-h800dp-hdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_narrowList() {
+        composeRule.setContent {
+            AppFrame {
+                ManageScreen(screenshotState(null), isTwoPane = false, onFilterSelected = {
+                }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
+            }
+        }
+        composeRule.captureScreen("care_narrow")
+    }
+
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
