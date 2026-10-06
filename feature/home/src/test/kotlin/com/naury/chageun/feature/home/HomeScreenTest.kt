@@ -46,6 +46,30 @@ class HomeScreenTest {
     }
 
     @Test
+    fun longMissingList_showsFirstThree_thenExpands() {
+        val items = listOf(
+            MaintenanceItem.BrakePad,
+            MaintenanceItem.BrakeFluid,
+            MaintenanceItem.Tire,
+            MaintenanceItem.Coolant,
+            MaintenanceItem.Wiper,
+        )
+        show(
+            content(
+                VehicleHealthLevel.InsufficientData,
+                emptyList(),
+                *items.map { status(it, MaintenanceState.Unknown, missing = setOf(MissingInput.LastService)) }
+                    .toTypedArray(),
+            ),
+        )
+
+        composeRule.onNodeWithText("Tires").assertIsDisplayed()
+        composeRule.onNodeWithText("Wipers").assertDoesNotExist()
+        composeRule.onNodeWithText("Show 2 more").performClick()
+        composeRule.onNodeWithText("Wipers").assertIsDisplayed()
+    }
+
+    @Test
     fun goodState_showsNothingToCheck() {
         show(content(VehicleHealthLevel.Good, emptyList(), status(MaintenanceItem.EngineOil, MaintenanceState.Good)))
 

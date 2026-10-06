@@ -264,8 +264,12 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeA
             Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
     }
-    items(state.missingInfo, key = { "missing-${it.item}" }) { status ->
-        MissingInfoRow(status, actions.onOpenItem, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+    item(key = "missing-list") {
+        MissingInfoCard(
+            state.missingInfo,
+            actions.onOpenItem,
+            Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+        )
     }
 }
 
