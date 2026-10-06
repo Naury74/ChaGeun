@@ -47,6 +47,7 @@ import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.formatYearMonth
+import com.naury.chageun.core.ui.timelineMileage
 import com.naury.chageun.core.ui.timelineTitle
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -197,7 +198,7 @@ private fun TimelineRow(
                     Text(timelineTitle(item), style = MaterialTheme.typography.titleSmall)
                     val meta = listOfNotNull(
                         item.date?.let { formatDate(it) },
-                        item.mileage?.let { stringResource(R.string.history_km, formatNumber(it.value)) },
+                        timelineMileage(item),
                     )
                     Text(
                         meta.joinToString(" · "),

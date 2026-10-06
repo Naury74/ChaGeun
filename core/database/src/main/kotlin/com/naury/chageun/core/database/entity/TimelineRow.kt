@@ -13,4 +13,5 @@ data class TimelineRow(
     @ColumnInfo(name = "mileage_km") val mileageKm: Long?,
     @ColumnInfo(name = "cost_won") val costWon: Long?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
+    @ColumnInfo(name = "source_type") val sourceType: String,
 )

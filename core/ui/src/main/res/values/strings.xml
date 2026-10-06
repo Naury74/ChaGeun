@@ -55,4 +55,6 @@
     <string name="date_other">Pick a date</string>
     <string name="form_more_details">More details (optional)</string>
     <string name="form_fewer_details">Hide details</string>
+    <string name="timeline_km">%1$s km</string>
+    <string name="timeline_km_estimated">About %1$s km (estimated)</string>
 </resources>

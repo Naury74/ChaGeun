@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
@@ -86,7 +87,7 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
                     costWon = null,
                     shopName = null,
                     memo = null,
-                    sourceType = SOURCE_USER,
+                    sourceType = if (record.isMileageEstimated) RecordSourceTypes.ESTIMATED else SOURCE_USER,
                     createdAt = now,
                     updatedAt = now,
                 )

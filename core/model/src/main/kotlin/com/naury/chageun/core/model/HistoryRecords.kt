@@ -49,6 +49,8 @@ data class TimelineItem(
     val costWon: Long?,
     val source: RecordSource,
     val createdAt: Instant,
+    /** 주행거리를 평균 주행량으로 추정한 정비 기록이다. */
+    val isMileageEstimated: Boolean = false,
 )
 
 sealed interface RecordDetail {

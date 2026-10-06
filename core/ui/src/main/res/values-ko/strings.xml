@@ -53,4 +53,6 @@
     <string name="date_other">날짜 선택</string>
     <string name="form_more_details">더 입력하기 (선택)</string>
     <string name="form_fewer_details">접기</string>
+    <string name="timeline_km">%1$s km</string>
+    <string name="timeline_km_estimated">약 %1$s km (추정)</string>
 </resources>

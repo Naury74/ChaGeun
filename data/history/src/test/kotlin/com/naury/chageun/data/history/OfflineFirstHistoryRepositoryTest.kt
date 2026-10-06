@@ -4,6 +4,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.model.CheckEntry
@@ -100,5 +102,21 @@ class OfflineFirstHistoryRepositoryTest {
 
         assertThat(notes.map { it.title }).containsExactly("Car wash")
         assertThat(wash.map { it.title }).containsExactly("Car wash")
+    }
+
+    @Test
+    fun marksEstimatedMileage_inTimelineAndDetail() = runTest {
+        val now = Instant.parse("2026-10-01T00:00:00Z")
+        database.maintenanceDao().insertRecord(
+            MaintenanceRecordEntity(
+                "r1", "v1", "Tire", LocalDate.of(2026, 4, 1), 36_542, null, null, null,
+                RecordSourceTypes.ESTIMATED, now, now,
+            ),
+        )
+
+        val item = repository.observeTimeline(vehicleId, TimelineQuery()).first().single()
+        val detail = repository.observeRecord(vehicleId, item.ref).first() as RecordDetail.Maintenance
+        assertThat(item.isMileageEstimated).isTrue()
+        assertThat(detail.entry.isMileageEstimated).isTrue()
     }
 }

@@ -6,6 +6,7 @@ import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
+import com.naury.chageun.core.database.entity.RecordSourceTypes
 import com.naury.chageun.core.database.entity.TimelineRow
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
@@ -155,6 +156,7 @@ private fun TimelineRow.asTimelineItem(): TimelineItem? {
         costWon = costWon,
         source = RecordSource.User,
         createdAt = createdAt,
+        isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
     )
 }
 
@@ -163,7 +165,14 @@ private fun MaintenanceRecordEntity.asDetail(ref: RecordRef): RecordDetail? {
     return RecordDetail.Maintenance(
         ref = ref,
         item = item,
-        entry = ServiceHistoryEntry(id, serviceDate, mileageKm?.let(::Kilometers), costWon, shopName),
+        entry = ServiceHistoryEntry(
+            id,
+            serviceDate,
+            mileageKm?.let(::Kilometers),
+            costWon,
+            shopName,
+            isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
+        ),
         memo = memo,
     )
 }

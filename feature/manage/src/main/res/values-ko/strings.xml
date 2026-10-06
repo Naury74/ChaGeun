@@ -82,4 +82,5 @@
     <plurals name="rule_months_pick">
         <item quantity="other">%1$d개월</item>
     </plurals>
+    <string name="manage_km_estimated">약 %1$s km (추정)</string>
 </resources>
