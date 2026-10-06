@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.model.MileageEntry
@@ -95,19 +96,22 @@ fun VehicleRoute(
     val photoInput = rememberPhotoInputState()
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::setPhoto) })
     var isEditing by rememberSaveable { mutableStateOf(false) }
-    VehicleScreen(
-        uiState,
-        isTwoPane,
-        onUpdateMileage,
-        onOpenSettings = onOpenSettings,
-        onInspectionDateSelected = viewModel::setInspectionDate,
-        onInspectionCompleted = { viewModel.completeInspection(it, inspectionTitle) },
-        photoActions = VehiclePhotoActions(
-            onPick = photoInput::open,
-            onRemove = viewModel::removePhoto,
-        ),
-        onEditVehicle = { isEditing = true },
-    )
+    LargeTitleScaffold(title = stringResource(R.string.vehicle_title)) { padding ->
+        VehicleScreen(
+            uiState,
+            isTwoPane,
+            onUpdateMileage,
+            onOpenSettings = onOpenSettings,
+            onInspectionDateSelected = viewModel::setInspectionDate,
+            onInspectionCompleted = { viewModel.completeInspection(it, inspectionTitle) },
+            photoActions = VehiclePhotoActions(
+                onPick = photoInput::open,
+                onRemove = viewModel::removePhoto,
+            ),
+            onEditVehicle = { isEditing = true },
+            modifier = Modifier.padding(padding),
+        )
+    }
     if (isEditing) VehicleEditHost(isExpanded = isExpandedWidth(), onDismiss = { isEditing = false })
 }
 

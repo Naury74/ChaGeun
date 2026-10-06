@@ -144,4 +144,5 @@
     <plurals name="history_attachment_count">
         <item quantity="other">사진 %1$d장 첨부</item>
     </plurals>
+    <string name="history_title">기록</string>
 </resources>

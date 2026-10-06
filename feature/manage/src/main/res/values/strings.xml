@@ -87,4 +87,5 @@
     </plurals>
     <string name="manage_km_estimated">About %1$s km (estimated)</string>
     <string name="record_edit_title">Edit %1$s replacement</string>
+    <string name="manage_title">Care</string>
 </resources>
