@@ -261,12 +261,19 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
     add(
         Icons.Filled.Person,
         stringResource(R.string.history_detail_source),
-        stringResource(R.string.history_source_user),
+        stringResource(detail.sourceLabelRes),
     )
     return rows.mapNotNull { (icon, label, value) ->
         value?.takeIf { it.isNotBlank() }?.let { Triple(icon, label, it) }
     }
 }
+
+private val RecordDetail.sourceLabelRes: Int
+    get() = if ((this as? RecordDetail.Maintenance)?.entry?.isMileageEstimated == true) {
+        R.string.history_source_estimated
+    } else {
+        R.string.history_source_user
+    }
 
 @Composable
 private fun km(value: Long) = stringResource(R.string.history_km, formatNumber(value))

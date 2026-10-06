@@ -20,6 +20,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
+import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.uitesting.AppFrame
@@ -114,6 +115,28 @@ class HistoryScreenTest {
         composeRule.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
 
         assertThat(deleted).isEqualTo(ref)
+    }
+
+    @Test
+    fun detail_marksEstimatedMileageAndSource() {
+        val maintenanceRef = RecordRef(TimelineEventType.Maintenance, "oil")
+        val estimated = RecordDetail.Maintenance(
+            maintenanceRef,
+            MaintenanceItem.EngineOil,
+            ServiceHistoryEntry(
+                "oil",
+                LocalDate.of(2026, 4, 6),
+                Kilometers(39_007),
+                null,
+                null,
+                isMileageEstimated = true,
+            ),
+            memo = null,
+        )
+        show(HistoryUiState(isLoading = false, selected = maintenanceRef, detail = estimated))
+
+        composeRule.onNodeWithText("About 39,007 km (estimated from your average driving)").assertIsDisplayed()
+        composeRule.onNodeWithText("Rough entry (mileage estimated)").assertIsDisplayed()
     }
 
     @Test
