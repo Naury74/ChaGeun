@@ -323,6 +323,7 @@ private val HistoryFilter.labelRes: Int
         HistoryFilter.Fuel -> R.string.history_filter_fuel
         HistoryFilter.Check -> R.string.history_filter_check
         HistoryFilter.Other -> R.string.history_filter_other
+        HistoryFilter.Mileage -> R.string.history_filter_mileage
     }
 
 private val LINE_WIDTH = 2.dp

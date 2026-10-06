@@ -102,6 +102,14 @@ class BuildAiContextUseCase @Inject constructor(
             mileage = entry.mileage,
             costWon = entry.costWon.takeIf { includeCost },
         )
+        is RecordDetail.Mileage -> SharedRecord(
+            type = ref.type,
+            date = date,
+            maintenanceItem = null,
+            title = null,
+            mileage = mileage,
+            costWon = null,
+        )
     }
 
     private fun TimelineItem.toSharedRecord(includeCost: Boolean) = SharedRecord(

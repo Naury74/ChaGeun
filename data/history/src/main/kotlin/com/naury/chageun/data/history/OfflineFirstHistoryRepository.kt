@@ -17,6 +17,7 @@ import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
@@ -79,6 +80,22 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
         TimelineEventType.Fuel -> historyDao.observeFuel(vehicleId.value, ref.id).map { it?.asDetail(ref) }
         TimelineEventType.Inspection, TimelineEventType.Repair, TimelineEventType.Note ->
             historyDao.observeCheck(vehicleId.value, ref.id).map { it?.asDetail(ref) }
+        TimelineEventType.Mileage -> historyDao.observeMileageRecord(vehicleId.value, ref.id).map { row ->
+            row?.let {
+                RecordDetail.Mileage(
+                    ref = ref,
+                    date = it.recordedOn,
+                    mileage = Kilometers(it.mileageKm),
+                    source = if (it.sourceType ==
+                        MILEAGE_SOURCE_CORRECTION
+                    ) {
+                        MileageSource.Correction
+                    } else {
+                        MileageSource.User
+                    },
+                )
+            }
+        }
     }
 
     override suspend fun addFuel(vehicleId: VehicleId, entry: FuelEntry, advancesOdometer: Boolean) {
@@ -209,6 +226,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
                 TimelineEventType.Fuel -> historyDao.deleteFuel(vehicleId.value, ref.id)
                 TimelineEventType.Inspection, TimelineEventType.Repair, TimelineEventType.Note ->
                     historyDao.deleteCheck(vehicleId.value, ref.id)
+                TimelineEventType.Mileage -> historyDao.deleteMileageRecord(vehicleId.value, ref.id)
             }
             historyDao.deleteMileageCreatedBy(vehicleId.value, ref.id)
         }
@@ -240,6 +258,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
         const val SOURCE_FUEL = "FUEL"
         const val SOURCE_CHECK = "CHECK"
         const val SOURCE_MAINTENANCE = "MAINTENANCE"
+        const val MILEAGE_SOURCE_CORRECTION = "CORRECTION"
 
         // SQLite에서 LIMIT -1은 제한 없음이다.
         const val NO_LIMIT = -1

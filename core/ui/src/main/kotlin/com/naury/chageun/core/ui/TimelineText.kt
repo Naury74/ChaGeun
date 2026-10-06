@@ -14,6 +14,7 @@ val TimelineEventType.labelRes: Int
         TimelineEventType.Inspection -> R.string.timeline_type_inspection
         TimelineEventType.Repair -> R.string.timeline_type_repair
         TimelineEventType.Note -> R.string.timeline_type_note
+        TimelineEventType.Mileage -> R.string.timeline_type_mileage
     }
 
 /** 목록에 보이는 기록의 주행거리. 추정한 값은 그대로 믿지 않도록 '약 … (추정)'으로 쓴다. */

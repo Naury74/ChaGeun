@@ -5,6 +5,7 @@
     <string name="history_filter_fuel">주유</string>
     <string name="history_filter_check">점검</string>
     <string name="history_filter_other">기타</string>
+    <string name="history_filter_mileage">주행거리</string>
     <string name="history_empty">아직 기록이 없어요</string>
     <string name="history_empty_action">첫 기록 추가</string>
     <string name="history_empty_filtered">조건에 맞는 기록이 없어요</string>
@@ -14,6 +15,7 @@
     <string name="history_back">뒤로</string>
 
     <string name="history_source_user">사용자 입력</string>
+    <string name="history_source_correction">계기판 교정</string>
     <string name="history_km">%1$skm</string>
     <string name="history_won">%1$s원</string>
     <string name="history_month_total">%1$s원 지출</string>

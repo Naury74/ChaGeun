@@ -14,7 +14,8 @@ import java.time.YearMonth
 import kotlinx.coroutines.flow.Flow
 
 data class TimelineQuery(
-    val types: Set<TimelineEventType> = TimelineEventType.entries.toSet(),
+    /** 기본값은 주행거리를 뺀 모든 기록이다. 홈·AI의 "최근 기록"에 주행거리 입력이 섞이지 않게 한다. */
+    val types: Set<TimelineEventType> = TimelineEventType.entries.toSet() - TimelineEventType.Mileage,
     val keyword: String = "",
     /** 현지화된 이름이 [keyword]와 일치하는 정비 항목. locale을 아는 UI 쪽에서 판단한다. */
     val matchingItems: Set<MaintenanceItem> = emptySet(),

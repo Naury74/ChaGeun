@@ -17,6 +17,7 @@ import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
@@ -261,5 +262,48 @@ class OfflineFirstHistoryRepositoryTest {
         assertThat(total(TimelineQuery(keyword = "Bumper")).first()).isEqualTo(120_000L)
         assertThat(total(TimelineQuery(withAttachmentsOnly = true)).first()).isEqualTo(120_000L)
         assertThat(total(TimelineQuery(dateFrom = LocalDate.of(2026, 8, 10))).first()).isEqualTo(120_000L)
+    }
+
+    @Test
+    fun mileageReadings_showOnlyWhenEnteredDirectly_andOnlyWhenAsked() = runTest {
+        // 주유 기록이 남긴 주행거리(FUEL)는 그 주유 기록과 겹치므로 Timeline에 따로 나오지 않는다.
+        repository.addFuel(vehicleId, fuel, advancesOdometer = true)
+        database.mileageRecordDao().insert(
+            MileageRecordEntity("m-user", "v1", 44_000, LocalDate.of(2026, 8, 10), "USER", null, now),
+        )
+        database.mileageRecordDao().insert(
+            MileageRecordEntity("m-fix", "v1", 1_200, LocalDate.of(2026, 9, 1), "CORRECTION", null, now),
+        )
+        val withMileage = TimelineQuery(types = TimelineEventType.entries.toSet())
+
+        val all = repository.observeTimeline(vehicleId, withMileage).first()
+        val byDefault = repository.observeTimeline(vehicleId, TimelineQuery()).first()
+        val correction = repository.observeRecord(vehicleId, RecordRef(TimelineEventType.Mileage, "m-fix")).first()
+
+        assertThat(all.filter { it.ref.type == TimelineEventType.Mileage }.map { it.ref.id })
+            .containsExactly("m-fix", "m-user").inOrder()
+        assertThat(byDefault.map { it.ref.type }).containsExactly(TimelineEventType.Fuel)
+        assertThat(correction).isEqualTo(
+            RecordDetail.Mileage(
+                RecordRef(TimelineEventType.Mileage, "m-fix"),
+                LocalDate.of(2026, 9, 1),
+                Kilometers(1_200),
+                MileageSource.Correction,
+            ),
+        )
+    }
+
+    @Test
+    fun deletingAMileageReading_removesOnlyThatReading() = runTest {
+        database.mileageRecordDao().insert(
+            MileageRecordEntity("m1", "v1", 44_000, LocalDate.of(2026, 8, 10), "USER", null, now),
+        )
+        database.mileageRecordDao().insert(
+            MileageRecordEntity("m2", "v1", 45_000, LocalDate.of(2026, 9, 10), "USER", null, now),
+        )
+
+        repository.delete(vehicleId, RecordRef(TimelineEventType.Mileage, "m2"))
+
+        assertThat(database.mileageRecordDao().findLatest("v1")?.id).isEqualTo("m1")
     }
 }
