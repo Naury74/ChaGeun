@@ -17,6 +17,9 @@ val admobTestAppId = "ca-app-pub-3940256099942544~3347511713"
 val admobAppId = providers.gradleProperty("chageun.admob.appId").orElse(admobTestAppId).get()
 val admobNativeUnitId = providers.gradleProperty("chageun.admob.nativeUnitId").orNull
 
+// SECURITY: 업로드 키와 비밀번호는 저장소에 두지 않는다. 속성이 없으면(CI 등) 서명하지 않은 release를 만든다.
+val releaseStoreFile = providers.gradleProperty("chageun.signing.storeFile").orNull
+
 android {
     namespace = "com.naury.chageun"
 
@@ -26,6 +29,17 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         manifestPlaceholders["admobAppId"] = admobTestAppId
+    }
+
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.gradleProperty("chageun.signing.storePassword").get()
+                keyAlias = providers.gradleProperty("chageun.signing.keyAlias").get()
+                keyPassword = providers.gradleProperty("chageun.signing.keyPassword").get()
+            }
+        }
     }
 
     buildTypes {
@@ -44,6 +58,7 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             manifestPlaceholders["admobAppId"] = admobAppId
+            signingConfig = signingConfigs.findByName("release")
             // 광고 단위 ID 기본값(테스트)은 core:ads 리소스에 있고 여기서 덮어쓴다.
             admobNativeUnitId?.let { resValue("string", "admob_native_unit_id", it) }
         }
