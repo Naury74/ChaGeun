@@ -87,16 +87,28 @@ class ManageScreenTest {
     }
 
     @Test
-    fun twoPane_showsPlaceholderUntilSelection() {
+    @Config(qualifiers = "w1280dp-h800dp")
+    fun twoPane_listUsesFullWidth_untilSelection_thenDetailSlidesIn() {
+        var selected by mutableStateOf<MaintenanceItem?>(null)
         composeRule.setContent {
             ChageunTheme {
-                ManageScreen(stateFor(null), isTwoPane = true, onFilterSelected = {
-                }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
+                ManageScreen(stateFor(selected), isTwoPane = true, onFilterSelected = {
+                }, onItemSelected = { selected = it }, onRecordService = {}, onEditRule = {})
             }
         }
 
+        // 선택 전에는 빈 상세 칸 없이 목록만 보인다.
         composeRule.onNodeWithText("All 1").assertIsDisplayed()
-        composeRule.onNodeWithText("Select an item to see why it has this status").assertIsDisplayed()
+        composeRule.onNodeWithText("Select an item to see why it has this status").assertDoesNotExist()
+
+        composeRule.onNodeWithText("Engine oil").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Edit interval").assertIsDisplayed()
+
+        // 상세의 뒤로 가기는 상세를 닫고 목록을 다시 넓힌다.
+        composeRule.onNodeWithContentDescription("Back").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Edit interval").assertDoesNotExist()
     }
 
     @Test
@@ -170,6 +182,20 @@ class ManageScreenTest {
             }
         }
         composeRule.captureScreen("care_narrow")
+    }
+
+    /** 넓은 창에서 아무것도 고르지 않으면 카드가 여러 열로 놓인다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.TABLET)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_tabletGrid() {
+        composeRule.setContent {
+            AppFrame {
+                ManageScreen(screenshotState(null), isTwoPane = true, onFilterSelected = {
+                }, onItemSelected = {}, onRecordService = {}, onEditRule = {})
+            }
+        }
+        composeRule.captureScreen("care_tablet_grid")
     }
 
     @Test
