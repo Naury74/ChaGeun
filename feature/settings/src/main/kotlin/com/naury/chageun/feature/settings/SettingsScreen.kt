@@ -2,6 +2,7 @@ package com.naury.chageun.feature.settings
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -51,6 +53,7 @@ import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.ui.BackupShare
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.ChageunLinks
 import com.naury.chageun.core.ui.GroupDivider
@@ -66,6 +69,7 @@ fun SettingsRoute(
     onOpenLicenses: () -> Unit,
     onOpenPrivacy: () -> Unit,
     onOpenAccount: () -> Unit,
+    onOpenDriveBackup: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
@@ -107,9 +111,24 @@ fun SettingsRoute(
                 },
                 onImport = { context.launchExternal { importLauncher.launch(arrayOf(ZIP_MIME_TYPE)) } },
                 onRequestDelete = backupViewModel::requestDeleteAll,
+                onShare = {
+                    val file = BackupShare.newFile(context)
+                    backupViewModel.exportForShare(
+                        Uri.fromFile(file).toString(),
+                        BackupShare.contentUri(context, file).toString(),
+                    )
+                },
+                onOpenDriveBackup = onOpenDriveBackup,
             )
         },
     )
+    val shareTitle = stringResource(R.string.settings_share)
+    LaunchedEffect(dataState.readyToShare) {
+        dataState.readyToShare?.let { uri ->
+            context.launchExternal { context.startActivity(BackupShare.chooser(Uri.parse(uri), shareTitle)) }
+            backupViewModel.onShared()
+        }
+    }
     dataState.pendingDeletion?.let { summary ->
         DeleteAllDialog(
             summary,

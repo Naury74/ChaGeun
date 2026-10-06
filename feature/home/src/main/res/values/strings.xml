@@ -46,7 +46,6 @@
     <string name="home_ai_title">Ask about your car</string>
     <string name="home_ai_body">Send your car\'s status to ChatGPT, Claude or Gemini and ask in your own words.</string>
     <string name="home_brand">Chageun</string>
-    <string name="home_tagline">Take care of your car, one step at a time</string>
     <string name="home_open_settings">Settings</string>
     <string name="home_inspection_title">Vehicle inspection</string>
     <string name="home_inspection_overdue">Overdue</string>
@@ -79,4 +78,14 @@
     <string name="home_dashboard_not_found">Couldn\'t find the mileage. Try cropping to the odometer, or type it in.</string>
     <string name="home_mileage_value">%1$s km</string>
     <string name="home_dashboard_unavailable">Reading photos isn\'t available on this device right now. Please type the mileage in.</string>
+    <string name="home_open_account">Account</string>
+    <string name="home_open_account_named">Account: %1$s</string>
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_morning_named">Good morning, %1$s</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_afternoon_named">Good afternoon, %1$s</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_evening_named">Good evening, %1$s</string>
+    <string name="home_greeting_night">Hope you had a good day</string>
+    <string name="home_greeting_night_named">Hope you had a good day, %1$s</string>
 </resources>

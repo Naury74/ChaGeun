@@ -34,6 +34,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.account.AccountRoute as AccountScreenRoute
 import com.naury.chageun.feature.account.DeleteAccountRoute
+import com.naury.chageun.feature.account.DriveBackupRoute as DriveBackupScreenRoute
 import com.naury.chageun.feature.account.EmailAuthRoute
 import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
@@ -51,6 +52,7 @@ import com.naury.chageun.navigation.AccountEmailRoute
 import com.naury.chageun.navigation.AccountRoute
 import com.naury.chageun.navigation.AiRoute
 import com.naury.chageun.navigation.AlbumRoute
+import com.naury.chageun.navigation.DriveBackupRoute
 import com.naury.chageun.navigation.OpenSourceLicensesRoute
 import com.naury.chageun.navigation.PrivacyNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
@@ -66,6 +68,7 @@ data class AppActions(
     val onUpdateMileage: () -> Unit = {},
     val onAskAi: (MaintenanceItem?) -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    val onOpenAccount: () -> Unit = {},
     val onOpenAlbum: () -> Unit = {},
     /** 다른 탭에서 관리 탭의 항목 상세를 연다. */
     val onOpenManageItem: (MaintenanceItem) -> Unit = {},
@@ -108,6 +111,7 @@ fun ChageunApp(
         onUpdateMileage = { isUpdatingMileage = true },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         onOpenSettings = { backStack.add(SettingsRoute) },
+        onOpenAccount = { backStack.add(AccountRoute) },
         onOpenAlbum = { backStack.add(AlbumRoute) },
         onOpenManageItem = { item ->
             openedManageItem = item
@@ -173,8 +177,10 @@ fun ChageunApp(
                         onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
                         onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
                         onOpenAccount = { backStack.add(AccountRoute) },
+                        onOpenDriveBackup = { backStack.add(DriveBackupRoute) },
                     )
                 }
+                entry(DriveBackupRoute) { DriveBackupScreenRoute(onBack = { backStack.removeLastOrNull() }) }
                 entry(AccountRoute) {
                     AccountScreenRoute(
                         onBack = { backStack.removeLastOrNull() },
@@ -239,6 +245,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onOpenSettings = actions.onOpenSettings,
             onOpenInspection = { actions.onNavigate(TopLevelDestination.Vehicle) },
             onOpenItem = actions.onOpenManageItem,
+            onOpenAccount = actions.onOpenAccount,
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,

@@ -2,6 +2,7 @@ package com.naury.chageun.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
@@ -10,6 +11,7 @@ import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +30,7 @@ class HomeViewModel @Inject constructor(
     observeMaintenanceOverview: ObserveMaintenanceOverviewUseCase,
     historyRepository: HistoryRepository,
     private val photoRepository: VehiclePhotoRepository,
+    authRepository: AuthRepository,
     clock: Clock,
 ) : ViewModel() {
 
@@ -39,7 +42,8 @@ class HomeViewModel @Inject constructor(
                 historyRepository.observeTimeline(vehicle.id, TimelineQuery()).map { it.take(RECENT_RECORD_COUNT) },
                 photoRepository.observe(vehicle.id),
                 photoRepository.observeCutout(vehicle.id),
-            ) { overview, recent, photo, cutout ->
+                authRepository.currentUser,
+            ) { overview, recent, photo, cutout, user ->
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
@@ -47,6 +51,8 @@ class HomeViewModel @Inject constructor(
                     recentRecords = recent,
                     photoPath = photo,
                     cutout = cutout,
+                    greetingName = user?.greetingName(),
+                    dayPart = DayPart.of(LocalTime.now(clock)),
                 )
             }
         }

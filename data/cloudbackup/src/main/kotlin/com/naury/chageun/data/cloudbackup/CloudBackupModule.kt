@@ -33,9 +33,15 @@ internal object CloudBackupModule {
         clock = clock,
         newBackupId = { UUID.randomUUID().toString() },
     )
+}
 
-    // 개발자 비용이 생기지 않도록 Firebase 저장소(Firestore·Storage)는 쓰지 않는다(ADR-006).
-    // 사용자 본인 Google 드라이브 연결을 붙이기 전까지는 백업을 쓸 수 없다고 안내한다.
-    @Provides
-    fun provideRepository(): CloudBackupRepository = UnavailableCloudBackupRepository
+@Module
+@InstallIn(SingletonComponent::class)
+internal interface CloudBackupBindings {
+    // 개발자 비용이 생기지 않도록 Firebase 저장소 대신 사용자 본인 Google 드라이브를 쓴다(ADR-006).
+    @Binds
+    fun bindRemote(remote: DriveCloudBackupRemote): CloudBackupRemote
+
+    @Binds
+    fun bindRepository(repository: DefaultCloudBackupRepository): CloudBackupRepository
 }

@@ -38,6 +38,7 @@ androidxWindow = "1.5.1"
 androidxWork = "2.12.0"
 kotlinxCoroutines = "1.11.0"
 googleId = "1.2.1"
+playServicesAuth = "21.6.0"
 mlkitSubjectSegmentation = "16.0.0-beta1"
 kotlinxSerialization = "1.11.0"
 
@@ -130,6 +131,7 @@ firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidxCredentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidxCredentials" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleId" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "androidxSplashscreen" }
 

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
     <cache-path name="photo_input" path="photo_input/" />
+    <!-- 다른 기기로 보낼 백업 ZIP. 공유 창으로 넘길 때만 읽기 권한을 준다. -->
+    <cache-path name="backup_share" path="backup_share/" />
 </paths>

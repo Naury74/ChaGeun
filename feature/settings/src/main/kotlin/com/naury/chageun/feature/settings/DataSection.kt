@@ -3,8 +3,10 @@ package com.naury.chageun.feature.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddToDrive
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -21,14 +23,38 @@ import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 
 @Composable
-internal fun DataSection(state: DataUiState, onExport: () -> Unit, onImport: () -> Unit, onRequestDelete: () -> Unit) {
+internal fun DataSection(
+    state: DataUiState,
+    onExport: () -> Unit,
+    onImport: () -> Unit,
+    onRequestDelete: () -> Unit,
+    onShare: () -> Unit = {},
+    onOpenDriveBackup: () -> Unit = {},
+) {
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         CardGroup(stringResource(R.string.settings_section_data)) {
+            ListRow(
+                icon = Icons.Filled.AddToDrive,
+                title = stringResource(R.string.settings_drive_backup),
+                body = stringResource(R.string.settings_drive_backup_body),
+                tone = ChageunTheme.colors.good,
+                onClick = onOpenDriveBackup,
+                enabled = !state.isWorking,
+            )
+            GroupDivider()
+            ListRow(
+                icon = Icons.Filled.Share,
+                title = stringResource(R.string.settings_share),
+                body = stringResource(R.string.settings_share_body),
+                tone = ChageunTheme.colors.upcoming,
+                onClick = onShare,
+                enabled = !state.isWorking,
+            )
+            GroupDivider()
             ListRow(
                 icon = Icons.Filled.Upload,
                 title = stringResource(R.string.settings_export),
                 body = stringResource(R.string.settings_export_body),
-                tone = ChageunTheme.colors.good,
                 onClick = onExport,
                 enabled = !state.isWorking,
             )

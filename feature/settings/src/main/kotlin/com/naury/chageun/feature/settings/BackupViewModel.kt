@@ -23,6 +23,8 @@ data class DataUiState(
     val pendingImport: PendingImport? = null,
     val message: DataMessage? = null,
     val isWorking: Boolean = false,
+    /** 내보내기를 마친 공유용 파일. 화면이 공유 창을 띄운 뒤 비운다. */
+    val readyToShare: String? = null,
 )
 
 /** 설정 > 데이터의 내보내기·가져오기·전체 삭제. 환경설정과 나눠 각 ViewModel의 책임을 좁힌다. */
@@ -44,6 +46,23 @@ class BackupViewModel @Inject constructor(private val backupRepository: BackupRe
             }
         }
     }
+
+    /** [destinationUri]에 ZIP을 만들고, 성공하면 [shareUri]로 공유 창을 띄우게 한다. */
+    fun exportForShare(destinationUri: String, shareUri: String) {
+        _dataState.update { it.copy(isWorking = true, message = null) }
+        viewModelScope.launch {
+            val succeeded = backupRepository.export(destinationUri)
+            _dataState.update {
+                it.copy(
+                    isWorking = false,
+                    readyToShare = shareUri.takeIf { succeeded },
+                    message = if (succeeded) null else DataMessage.ExportFailed,
+                )
+            }
+        }
+    }
+
+    fun onShared() = _dataState.update { it.copy(readyToShare = null) }
 
     fun previewImport(sourceUri: String) {
         _dataState.update { it.copy(isWorking = true, message = null) }

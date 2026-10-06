@@ -19,6 +19,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
@@ -44,6 +45,7 @@ class HomeViewModelTest {
     private val maintenance = FakeMaintenanceRepository()
     private val history = FakeHistoryRepository()
     private val photos = FakeVehiclePhotoRepository()
+    private val auth = FakeAuthRepository()
     private val viewModel = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
@@ -55,6 +57,7 @@ class HomeViewModelTest {
         ),
         historyRepository = history,
         photoRepository = photos,
+        authRepository = auth,
         clock = clock,
     )
 
@@ -126,5 +129,25 @@ class HomeViewModelTest {
 
         assertThat(state.recentRecords.map { it.title }).containsExactly("Note 0", "Note 1", "Note 2").inOrder()
         assertThat(state.needsMileageUpdate).isTrue()
+    }
+
+    @Test
+    fun greetsVerifiedUserByName_atTimeOfDay() = runTest {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Kia", "Sportage", 2023, FuelType.Hybrid, Kilometers(40_000)))
+        assertThat((viewModel.uiState.first { it is HomeUiState.Content } as HomeUiState.Content).greetingName).isNull()
+
+        auth.signUpWithEmail("naury@example.com", "chageun1")
+        // 인증 전에는 아직 가입 전이라 이름을 부르지 않는다.
+        assertThat((viewModel.uiState.value as HomeUiState.Content).greetingName).isNull()
+
+        auth.verifyEmailOutside("naury@example.com")
+        auth.reload()
+        val content = viewModel.uiState.first {
+            (it as? HomeUiState.Content)?.greetingName != null
+        } as HomeUiState.Content
+        assertThat(content.greetingName).isEqualTo("naury")
+        // 고정 시각 UTC 00:00은 밤이다.
+        assertThat(content.dayPart).isEqualTo(DayPart.Night)
     }
 }

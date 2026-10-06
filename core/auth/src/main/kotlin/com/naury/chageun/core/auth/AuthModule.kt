@@ -19,6 +19,9 @@ internal interface AuthModule {
     @Binds
     fun bindGoogleIdTokenSource(source: CredentialGoogleIdTokenSource): GoogleIdTokenSource
 
+    @Binds
+    fun bindGoogleDriveAccess(access: PlayServicesGoogleDriveAccess): GoogleDriveAccess
+
     companion object {
         @Provides
         @Singleton

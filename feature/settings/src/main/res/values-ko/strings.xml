@@ -55,7 +55,7 @@
     <string name="privacy_security_title">보호 방법</string>
     <string name="privacy_security_body">차량번호는 Android Keystore의 키로 암호화해 저장하고 화면에는 마스킹해서 보여줘요. 사진을 첨부할 때 위치와 카메라 정보를 지워요. 앱 데이터는 Android 자동 백업과 기기 이전에 포함되지 않고, 직접 내보낸 ZIP 파일이나 직접 켠 Google 드라이브 백업으로만 기기 밖에 나가요.</string>
     <string name="privacy_control_title">내가 할 수 있는 것</string>
-    <string name="privacy_control_body">설정 › 데이터에서 전체 데이터를 ZIP 파일로 내보내거나, 가져오거나, 모두 삭제할 수 있어요. 설정 › 계정·백업에서 계정을 삭제하면 이메일과 사용자 ID가 지워져요. Google 드라이브 백업은 내 드라이브에 남고 Google 드라이브 › 설정 › 앱 관리에서 지울 수 있어요. 앱을 삭제하면 이 기기의 데이터가 지워져요.</string>
+    <string name="privacy_control_body">설정 › 데이터에서 전체 데이터를 ZIP 파일로 내보내거나, 다른 기기로 보내거나, 가져오거나, 모두 삭제할 수 있고 Google 드라이브 백업을 켜고 끌 수 있어요. 설정 › 계정에서 계정을 삭제하면 이메일과 사용자 ID가 지워져요. Google 드라이브 백업은 내 드라이브에 남고 Google 드라이브 › 설정 › 앱 관리에서 지울 수 있어요. 앱을 삭제하면 이 기기의 데이터가 지워져요.</string>
     <string name="privacy_disclaimer_title">안내 정보에 대해</string>
     <string name="privacy_disclaimer_body">정비 주기는 직접 바꾸지 않았다면 제조사 공식값이 아닌 일반적인 권장 기준이에요. 외부 AI의 답변은 틀릴 수 있어요. 안전과 관련된 판단은 차량 취급설명서와 정비 전문가의 안내를 따라 주세요.</string>
     <string name="settings_mileage_reminders">주행거리 입력 알림 (월 1회)</string>
@@ -64,6 +64,10 @@
     <string name="settings_section_privacy">개인정보</string>
     <string name="settings_usage_stats">사용 통계와 오류 보고 보내기</string>
     <string name="settings_usage_stats_body">기록 저장처럼 어떤 기능을 썼는지와 앱이 비정상 종료됐을 때의 오류 정보만 보내 앱 개선에 써요. 차량번호, 기록 내용, 질문은 보내지 않아요.</string>
-    <string name="settings_account">계정·백업</string>
-    <string name="settings_account_body">로그인하면 내 차 기록을 클라우드에 백업할 수 있어요</string>
+    <string name="settings_account">계정</string>
+    <string name="settings_account_body">이메일이나 Google 계정으로 로그인해요</string>
+    <string name="settings_drive_backup">Google 드라이브 백업</string>
+    <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요.</string>
+    <string name="settings_share">다른 기기로 보내기</string>
+    <string name="settings_share_body">백업 파일을 Quick Share·메일·메신저로 보내요. 새 휴대폰의 첫 화면에서 “백업에서 복원하기”로 열어요.</string>
 </resources>

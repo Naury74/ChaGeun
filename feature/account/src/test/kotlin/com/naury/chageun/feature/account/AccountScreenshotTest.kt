@@ -103,62 +103,65 @@ class AccountScreenshotTest {
         composeRule.captureScreen("account_home_dark")
     }
 
-    @Test
-    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
-    fun home_withBackups_phone() {
-        composeRule.setContent {
-            AppFrame {
-                AccountScreen(
-                    uiState = AccountUiState(isLoading = false, user = emailUser.copy(isEmailVerified = true)),
-                    onBack = {},
-                    onContinueWithGoogle = {},
-                    onContinueWithEmail = {},
-                    onOpenPrivacyPolicy = {},
-                    onCheckVerification = {},
-                    onResendVerification = {},
-                    onSignOut = {},
-                    backup = CloudBackupUiState(
-                        isLoaded = true,
-                        backups = listOf(
-                            FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z")),
-                            FakeCloudBackupRepository.backup("b0", Instant.parse("2026-09-29T11:00:00Z"), 10, 2),
-                        ),
-                    ),
-                )
-            }
-        }
+    private val backups = listOf(
+        FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z")),
+        FakeCloudBackupRepository.backup("b0", Instant.parse("2026-09-29T11:00:00Z"), 10, 2),
+    )
 
-        composeRule.onNodeWithText("백업 목록 · 최근 5개 보관").assertExists()
-        composeRule.assertNoClippedText()
-        composeRule.captureScreen("account_home_backups_phone")
+    private fun drive(connected: Boolean, isRestoreMode: Boolean = false) = composeRule.setContent {
+        AppFrame {
+            DriveBackupScreen(
+                connection = DriveConnectionUiState(isConnected = connected),
+                backup = CloudBackupUiState(isLoaded = true, backups = backups, isAutoBackupEnabled = true),
+                actions = CloudBackupActions(),
+                onBack = {},
+                onConnect = {},
+                onDisconnect = {},
+                isRestoreMode = isRestoreMode,
+            )
+        }
     }
 
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
-    fun restoreMode_listsBackups_phone() {
-        composeRule.setContent {
-            AppFrame {
-                AccountScreen(
-                    uiState = AccountUiState(isLoading = false, user = emailUser.copy(isEmailVerified = true)),
-                    onBack = {},
-                    onContinueWithGoogle = {},
-                    onContinueWithEmail = {},
-                    onOpenPrivacyPolicy = {},
-                    onCheckVerification = {},
-                    onResendVerification = {},
-                    onSignOut = {},
-                    backup = CloudBackupUiState(
-                        isLoaded = true,
-                        backups = listOf(FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z"))),
-                    ),
-                    isRestoreMode = true,
-                )
-            }
-        }
+    fun drive_beforeConnecting_phone() {
+        drive(connected = false)
+
+        composeRule.onNodeWithText("Google 드라이브 연결").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen("drive_intro_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun drive_connected_withBackups_phone() {
+        drive(connected = true)
+
+        composeRule.onNodeWithText("백업 목록 · 최근 5개 보관").assertExists()
+        composeRule.onNodeWithText("Google 드라이브 연결 해제").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen("drive_backups_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun drive_restoreMode_phone() {
+        drive(connected = true, isRestoreMode = true)
 
         composeRule.onNodeWithText("복원할 백업을 골라 주세요").assertExists()
         composeRule.onNodeWithText("지금 백업").assertDoesNotExist()
-        composeRule.captureScreen("account_restore_mode_phone")
+        composeRule.captureScreen("drive_restore_mode_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun restoreStart_phone() {
+        composeRule.setContent {
+            AppFrame { RestoreStartScreen(FileRestoreUiState(), onBack = {}, onPickFile = {}, onOpenDrive = {}) }
+        }
+
+        composeRule.onNodeWithText("백업 파일로 복원").assertExists()
+        composeRule.captureScreen("restore_start_phone")
     }
 
     @Test

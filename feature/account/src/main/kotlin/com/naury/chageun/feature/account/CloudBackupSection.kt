@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.domain.cloudbackup.CloudBackup
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
@@ -53,13 +54,12 @@ data class CloudBackupActions(
 
 /** AC05 지금 백업과 AC06 백업 목록. 목록은 최대 다섯 개라 따로 화면을 두지 않는다. */
 @Composable
-internal fun CloudBackupSection(state: CloudBackupUiState, canBackUp: Boolean, actions: CloudBackupActions) {
+internal fun CloudBackupSection(state: CloudBackupUiState, actions: CloudBackupActions) {
     CardGroup(stringResource(R.string.account_section_backup)) {
         ListRow(
             icon = Icons.Filled.CloudUpload,
             title = stringResource(R.string.account_backup_now),
             body = when {
-                !canBackUp -> stringResource(R.string.account_backup_needs_verification)
                 state.isBackingUp -> stringResource(R.string.account_backup_in_progress)
                 state.lastBackup != null ->
                     stringResource(
@@ -71,7 +71,7 @@ internal fun CloudBackupSection(state: CloudBackupUiState, canBackUp: Boolean, a
             },
             tone = ChageunTheme.colors.good,
             onClick = actions.onBackUpNow,
-            enabled = canBackUp && !state.isWorking,
+            enabled = !state.isWorking,
             trailing = if (state.isBackingUp) {
                 { CircularProgressIndicator(Modifier.size(PROGRESS_SIZE), strokeWidth = 2.dp) }
             } else {
@@ -85,7 +85,6 @@ internal fun CloudBackupSection(state: CloudBackupUiState, canBackUp: Boolean, a
             body = stringResource(R.string.account_auto_backup_body),
             checked = state.isAutoBackupEnabled,
             onCheckedChange = actions.onAutoBackupChange,
-            enabled = canBackUp,
         )
     }
     if (state.backups.isNotEmpty()) {
@@ -182,34 +181,42 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
     when (val step = state.restore) {
         is RestoreStep.Downloading -> ProgressDialog(stringResource(R.string.account_restore_downloading))
         is RestoreStep.Restoring -> ProgressDialog(stringResource(R.string.account_restore_restoring))
-        is RestoreStep.Confirming -> AlertDialog(
-            onDismissRequest = actions.onCloseDialog,
-            title = { Text(stringResource(R.string.account_restore_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    Text(stringResource(R.string.account_restore_incoming), style = MaterialTheme.typography.titleSmall)
-                    Text(summaryLine(step.preview.incoming))
-                    Text(stringResource(R.string.account_restore_current), style = MaterialTheme.typography.titleSmall)
-                    Text(summaryLine(step.preview.current))
-                    Text(stringResource(R.string.account_restore_body))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = actions.onConfirmRestore) {
-                    Text(stringResource(R.string.account_restore_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = actions.onCloseDialog) { Text(stringResource(R.string.account_cancel)) }
-            },
+        is RestoreStep.Confirming -> RestoreConfirmDialog(
+            preview = step.preview,
+            onConfirm = actions.onConfirmRestore,
+            onDismiss = actions.onCloseDialog,
         )
         null -> Unit
     }
 }
 
+/** 백업과 지금 휴대폰의 데이터를 나란히 보여 주고 전체 교체를 확인받는다. 드라이브와 파일 복원이 함께 쓴다. */
+@Composable
+internal fun RestoreConfirmDialog(preview: ImportPreview.Ready, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.account_restore_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                Text(stringResource(R.string.account_restore_incoming), style = MaterialTheme.typography.titleSmall)
+                Text(summaryLine(preview.incoming))
+                Text(stringResource(R.string.account_restore_current), style = MaterialTheme.typography.titleSmall)
+                Text(summaryLine(preview.current))
+                Text(stringResource(R.string.account_restore_body))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.account_restore_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.account_cancel)) }
+        },
+    )
+}
+
 /** 내려받기·교체 중에는 닫을 수 없다. 교체가 반쯤 된 상태로 화면을 떠나지 않게 한다. */
 @Composable
-private fun ProgressDialog(message: String) {
+internal fun ProgressDialog(message: String) {
     AlertDialog(
         onDismissRequest = {},
         properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
@@ -264,10 +271,9 @@ internal fun backupNoticeMessage(notice: BackupNotice): String = stringResource(
             CloudBackupError.Network -> R.string.account_error_network
             CloudBackupError.NoData -> R.string.account_backup_error_no_data
             CloudBackupError.TooLarge -> R.string.account_backup_error_too_large
-            CloudBackupError.EmailNotVerified -> R.string.account_backup_needs_verification
-            CloudBackupError.NotSignedIn,
-            CloudBackupError.Unavailable,
-            -> R.string.account_backup_error_unavailable
+            CloudBackupError.StorageFull -> R.string.drive_error_storage_full
+            CloudBackupError.NotConnected -> R.string.drive_error_not_connected
+            CloudBackupError.Unavailable -> R.string.drive_error_unavailable
             CloudBackupError.Unknown -> R.string.account_error_unknown
         }
     },

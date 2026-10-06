@@ -20,8 +20,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.notification.DeepLink
-import com.naury.chageun.feature.account.AccountRoute
-import com.naury.chageun.feature.account.EmailAuthRoute
+import com.naury.chageun.feature.account.DriveBackupRoute
+import com.naury.chageun.feature.account.RestoreStartRoute
 import com.naury.chageun.feature.onboarding.OnboardingRoute
 
 @Composable
@@ -56,29 +56,28 @@ fun ChageunRoot(
     }
 }
 
-/** 온보딩 중 "백업에서 복원하기"로 들어가는 로그인·복원 화면. 복원으로 차량이 생기면 AppEntry가 Main으로 바뀐다. */
-private enum class RestoreScreen { None, Account, Email }
+/**
+ * 온보딩 중 "백업에서 복원하기"로 들어가는 화면. ZIP 파일이나 내 Google 드라이브에서 복원하며,
+ * 복원으로 차량이 생기면 AppEntry가 Main으로 바뀐다. 로그인은 필요 없다.
+ */
+private enum class RestoreScreen { None, Start, Drive }
 
 @Composable
 private fun OnboardingEntry() {
     var screen by rememberSaveable { mutableStateOf(RestoreScreen.None) }
     BackHandler(enabled = screen != RestoreScreen.None) {
-        screen = if (screen == RestoreScreen.Email) RestoreScreen.Account else RestoreScreen.None
+        screen = if (screen == RestoreScreen.Drive) RestoreScreen.Start else RestoreScreen.None
     }
-    // 온보딩은 스스로 시스템 영역을 비운다. 계정 화면은 앱 셸이 비워 주던 것을 여기서 대신한다.
+    // 온보딩은 스스로 시스템 영역을 비운다. 복원 화면은 앱 셸이 비워 주던 것을 여기서 대신한다.
     val insets = if (screen == RestoreScreen.None) Modifier else Modifier.safeDrawingPadding()
     Box(Modifier.fillMaxSize().then(insets)) {
         when (screen) {
-            RestoreScreen.None -> OnboardingRoute(onRestoreFromBackup = { screen = RestoreScreen.Account })
-            RestoreScreen.Account -> AccountRoute(
+            RestoreScreen.None -> OnboardingRoute(onRestoreFromBackup = { screen = RestoreScreen.Start })
+            RestoreScreen.Start -> RestoreStartRoute(
                 onBack = { screen = RestoreScreen.None },
-                onOpenEmail = { screen = RestoreScreen.Email },
-                isRestoreMode = true,
+                onOpenDrive = { screen = RestoreScreen.Drive },
             )
-            RestoreScreen.Email -> EmailAuthRoute(
-                onBack = { screen = RestoreScreen.Account },
-                onCompleted = { screen = RestoreScreen.Account },
-            )
+            RestoreScreen.Drive -> DriveBackupRoute(onBack = { screen = RestoreScreen.Start }, isRestoreMode = true)
         }
     }
 }
