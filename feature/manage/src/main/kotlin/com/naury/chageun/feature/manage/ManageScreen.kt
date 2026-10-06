@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -83,6 +84,8 @@ fun ManageScreen(
         return
     }
     val detail = uiState.detail
+    // 휴대폰에서 상세를 열면 목록이 컴포지션에서 빠지므로, 돌아왔을 때 보던 자리를 잇도록 여기서 기억한다.
+    val gridState = rememberLazyGridState()
     // 접거나 펼쳐 한 칸·두 칸이 바뀌어도 상세를 상태째 옮겨 스크롤 위치 등을 이어서 쓴다.
     val currentOnItemSelected by rememberUpdatedState(onItemSelected)
     val currentOnRecordService by rememberUpdatedState(onRecordService)
@@ -116,6 +119,7 @@ fun ManageScreen(
                     },
                     onEditRule = onEditRule,
                     modifier = Modifier.fillMaxSize(),
+                    gridState = gridState,
                 )
             },
             detail = { detailPane(it, Modifier.fillMaxSize()) },
@@ -126,6 +130,6 @@ fun ManageScreen(
         BackHandler { onItemSelected(null) }
         detailPane(detail, modifier.fillMaxSize())
     } else {
-        ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize())
+        ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize(), gridState)
     }
 }

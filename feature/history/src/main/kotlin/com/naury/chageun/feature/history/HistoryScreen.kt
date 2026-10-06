@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -219,6 +220,8 @@ fun HistoryScreen(
             }
         }
     }
+    // 휴대폰에서 상세를 열면 목록이 컴포지션에서 빠지므로, 돌아왔을 때 보던 자리를 잇도록 여기서 기억한다.
+    val timelineState = rememberLazyListState()
     val timeline: @Composable (Modifier) -> Unit = { paneModifier ->
         Box(paneModifier) {
             // 넓은 창에서 목록만 있을 때 한 줄이 너무 길어지지 않도록 가운데에 폭을 제한해 둔다.
@@ -232,6 +235,7 @@ fun HistoryScreen(
                 onOpenAdvancedFilter = onOpenAdvancedFilter,
                 onClearAdvancedFilter = onClearAdvancedFilter,
                 onLoadMore = onLoadMore,
+                listState = timelineState,
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)

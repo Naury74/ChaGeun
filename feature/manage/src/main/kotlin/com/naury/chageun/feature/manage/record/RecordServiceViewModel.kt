@@ -114,13 +114,24 @@ class RecordServiceViewModel @AssistedInject constructor(
         _uiState.update { it.copy(alsoReplaced = selected) }
     }
 
-    fun save() = submit(isLowerMileageConfirmed = false)
+    // 낮은 값을 확인한 다음 주행거리 갱신까지 물을 수 있어, 앞의 확인을 기억해 둔다.
+    private var isLowerMileageConfirmed = false
 
-    fun confirmLowerMileage() = submit(isLowerMileageConfirmed = true)
+    fun save() {
+        isLowerMileageConfirmed = false
+        submit()
+    }
+
+    fun confirmLowerMileage() {
+        isLowerMileageConfirmed = true
+        submit()
+    }
 
     fun dismissLowerMileageWarning() = _uiState.update { it.copy(lowerMileageWarning = null) }
 
-    private fun submit(isLowerMileageConfirmed: Boolean) {
+    fun decideOdometer(update: Boolean) = submit(updateOdometer = update)
+
+    private fun submit(updateOdometer: Boolean? = null) {
         val state = _uiState.value
         val mileage = state.mileage.toLongOrNull()
         if (mileage == null) {
@@ -135,14 +146,18 @@ class RecordServiceViewModel @AssistedInject constructor(
             shopName = state.shopName,
             memo = state.memo,
         )
-        _uiState.update { it.copy(isSaving = true, lowerMileageWarning = null, hasSaveFailed = false) }
+        _uiState.update {
+            it.copy(isSaving = true, lowerMileageWarning = null, odometerPrompt = null, hasSaveFailed = false)
+        }
         if (editingRecordId != null) {
             saveEdit(editingRecordId, entry)
             return
         }
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-            runCatching { recordService(vehicle.id, entry, isLowerMileageConfirmed, state.alsoReplaced) }
+            runCatching {
+                recordService(vehicle.id, entry, isLowerMileageConfirmed, state.alsoReplaced, updateOdometer)
+            }
                 .onSuccess(::applyResult)
                 .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
         }
@@ -184,6 +199,8 @@ class RecordServiceViewModel @AssistedInject constructor(
                     )
                 is RecordServiceResult.NeedsConfirmation ->
                     state.copy(isSaving = false, lowerMileageWarning = result.previousMileage)
+                is RecordServiceResult.NeedsOdometerDecision ->
+                    state.copy(isSaving = false, odometerPrompt = result.currentMileage)
                 is RecordServiceResult.Rejected -> state.copy(
                     isSaving = false,
                     errors = result.errors.associate { error ->

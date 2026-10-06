@@ -10,6 +10,8 @@ import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.model.InspectionSchedule
+import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
@@ -44,17 +46,19 @@ class BuildAiContextUseCaseTest {
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
     private val history = FakeHistoryRepository()
+    private val inspections = FakeInspectionRepository()
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private val buildContext = BuildAiContextUseCase(
         vehicles,
         ObserveMaintenanceOverviewUseCase(
             maintenance,
-            FakeInspectionRepository(),
+            inspections,
             RuleBasedMaintenanceEngine(DrivingPaceEstimator()),
             VehicleHealthAggregator(),
             clock,
         ),
         history,
+        inspections,
         clock,
     )
 
@@ -119,6 +123,36 @@ class BuildAiContextUseCaseTest {
 
         val withCosts = buildContext(flowOf(AiContextOptions(includeCosts = true))).first()
         assertThat(withCosts.recentRecords.map { it.costWon }).containsExactly(70_000L, 120_000L)
+    }
+
+    @Test
+    fun costTotals_coverThisYearOnly_andOnlyWhenCostsAreShared() = runTest {
+        history.timeline.value += TimelineItem(
+            RecordRef(TimelineEventType.Maintenance, "last-year"),
+            LocalDate.of(2025, 12, 20),
+            null,
+            MaintenanceItem.EngineOil,
+            Kilometers(45_000),
+            90_000,
+            RecordSource.User,
+            Instant.EPOCH,
+        )
+
+        assertThat(buildContext(flowOf(AiContextOptions())).first().costTotals).isNull()
+        val totals = buildContext(flowOf(AiContextOptions(includeCosts = true))).first().costTotals
+        // 작년 엔진오일은 빼고, 수리는 정비 쪽에, 주유는 따로 센다.
+        assertThat(totals).isEqualTo(CostTotals(year = 2026, maintenanceWon = 120_000, fuelWon = 70_000))
+        val recordsOff = AiContextOptions(includeCosts = true, includeRecords = false)
+        assertThat(buildContext(flowOf(recordsOff)).first().costTotals).isNull()
+    }
+
+    @Test
+    fun sharesInspectionSchedule_whenKnown() = runTest {
+        assertThat(buildContext(flowOf(AiContextOptions())).first().inspection).isNull()
+
+        inspections.schedule.value = InspectionSchedule(today.plusDays(20), InspectionSource.User)
+
+        assertThat(buildContext(flowOf(AiContextOptions())).first().inspection?.daysLeft).isEqualTo(20)
     }
 
     @Test

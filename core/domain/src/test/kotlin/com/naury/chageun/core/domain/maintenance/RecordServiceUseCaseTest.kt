@@ -50,7 +50,7 @@ class RecordServiceUseCaseTest {
 
     @Test
     fun savesAndReturnsNextDue_fromRule() = runTest {
-        val result = recordService(vehicleId, entry(42_891))
+        val result = recordService(vehicleId, entry(42_891), updateOdometer = true)
 
         assertThat(result).isEqualTo(RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1)))
         assertThat(analytics.events).containsExactly(AnalyticsEvent.MaintenanceRecordAdded(withCost = false))
@@ -58,7 +58,7 @@ class RecordServiceUseCaseTest {
 
     @Test
     fun clearsItemNotification_whenSaved() = runTest {
-        recordService(vehicleId, entry(42_891))
+        recordService(vehicleId, entry(42_891), updateOdometer = true)
 
         assertThat(notifier.cancelledItems).containsExactly(MaintenanceItem.EngineOil)
     }
@@ -73,16 +73,32 @@ class RecordServiceUseCaseTest {
 
     @Test
     fun advancesOdometer_onlyWhenEntryIsAheadOfCurrentMileage() = runTest {
-        recordService(vehicleId, entry(42_891))
+        recordService(vehicleId, entry(42_891), updateOdometer = true)
         recordService(vehicleId, entry(41_000), isLowerMileageConfirmed = true)
 
         assertThat(repository.recordedServices.map { it.second }).containsExactly(true, false).inOrder()
     }
 
     @Test
+    fun asksBeforeRaisingCurrentMileage_andKeepsItWhenDeclined() = runTest {
+        assertThat(recordService(vehicleId, entry(42_891)))
+            .isEqualTo(RecordServiceResult.NeedsOdometerDecision(Kilometers(42_000)))
+        assertThat(repository.recordedServices).isEmpty()
+
+        recordService(vehicleId, entry(42_891), updateOdometer = false)
+
+        assertThat(repository.recordedServices.single().second).isFalse()
+    }
+
+    @Test
+    fun doesNotAsk_whenEqualToCurrentMileage() = runTest {
+        assertThat(recordService(vehicleId, entry(42_000))).isInstanceOf(RecordServiceResult.Saved::class.java)
+    }
+
+    @Test
     fun acceptsTodayButRejectsFutureDate() = runTest {
         assertThat(
-            recordService(vehicleId, entry(42_500, date = today)),
+            recordService(vehicleId, entry(42_000, date = today)),
         ).isInstanceOf(RecordServiceResult.Saved::class.java)
         assertThat(recordService(vehicleId, entry(42_600, date = today.plusDays(1))))
             .isEqualTo(RecordServiceResult.Rejected(setOf(ServiceEntryError.FutureDate)))
@@ -93,7 +109,7 @@ class RecordServiceUseCaseTest {
         assertThat(recordService(vehicleId, entry(42_500, cost = -1)))
             .isEqualTo(RecordServiceResult.Rejected(setOf(ServiceEntryError.NegativeCost)))
         assertThat(
-            recordService(vehicleId, entry(42_500, cost = 0)),
+            recordService(vehicleId, entry(42_000, cost = 0)),
         ).isInstanceOf(RecordServiceResult.Saved::class.java)
     }
 
@@ -119,6 +135,7 @@ class RecordServiceUseCaseTest {
             vehicleId,
             entry(42_891, cost = 80_000).copy(shopName = "Blue Hands", memo = "Synthetic"),
             alsoReplaced = setOf(MaintenanceItem.OilFilter, MaintenanceItem.EngineOil),
+            updateOdometer = true,
         )
 
         val (oil, filter) = repository.recordedServices
