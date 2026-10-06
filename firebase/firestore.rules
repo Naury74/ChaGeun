@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// 클라우드 백업 메타데이터. 백업 파일 자체는 Storage에 있고, 여기에는 목록에 보여 줄 요약만 둔다.
+// 사용자는 자기 uid 아래만 읽고 쓸 수 있다. 그 밖의 경로는 모두 거부한다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['createdAt', 'lastBackupAt'])
+        && (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp)
+        && (!('lastBackupAt' in request.resource.data) || request.resource.data.lastBackupAt is timestamp);
+
+      // 백업은 업로드가 끝난 뒤 한 번 기록하고 바꾸지 않는다. 오래된 백업은 삭제로 정리한다.
+      match /backups/{backupId} {
+        allow read, delete: if isOwner(uid);
+        allow create: if isOwner(uid) && isValidBackup(request.resource.data);
+        allow update: if false;
+      }
+    }
+
+    function isValidBackup(data) {
+      return data.keys().hasOnly([
+          'createdAt', 'sizeBytes', 'schemaVersion', 'appVersion',
+          'deviceModel', 'vehicleLabel', 'recordCount', 'photoCount',
+        ])
+        && data.keys().hasAll(['createdAt', 'sizeBytes', 'schemaVersion', 'appVersion', 'recordCount', 'photoCount'])
+        && data.createdAt is timestamp
+        && data.sizeBytes is int && data.sizeBytes > 0 && data.sizeBytes < 200 * 1024 * 1024
+        && data.schemaVersion is int && data.schemaVersion > 0
+        && data.appVersion is string && data.appVersion.size() <= 32
+        && (!('deviceModel' in data) || (data.deviceModel is string && data.deviceModel.size() <= 64))
+        && (!('vehicleLabel' in data) || (data.vehicleLabel is string && data.vehicleLabel.size() <= 64))
+        && data.recordCount is int && data.recordCount >= 0
+        && data.photoCount is int && data.photoCount >= 0;
+    }
+  }
+}
