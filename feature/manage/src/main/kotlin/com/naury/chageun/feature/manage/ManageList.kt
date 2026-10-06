@@ -2,6 +2,7 @@ package com.naury.chageun.feature.manage
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -159,34 +160,42 @@ private fun MaintenanceItemCard(
         shape = MaterialTheme.shapes.large,
         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
     ) {
-        Column(
-            modifier = Modifier.padding(ChageunTheme.spacing.md),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
-            ) {
-                MaintenanceItemIcon(status.item)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
-                    Text(stringResource(status.item.labelRes), style = MaterialTheme.typography.titleMedium)
-                    val supporting = if (status.state == MaintenanceState.Unknown) {
-                        missingInputText(status)
-                    } else {
-                        remainingText(status)
-                    }
-                    supporting?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+        // 펼친 폴더블의 목록 칸처럼 좁은 곳에서는 배지가 이름 자리를 빼앗지 않도록 이름 아래로 내린다.
+        BoxWithConstraints(Modifier.padding(ChageunTheme.spacing.md)) {
+            val isNarrow = maxWidth < NARROW_CARD_WIDTH
+            val badge = @Composable {
                 StatusBadge(tone = status.state.tone, label = stringResource(status.state.labelRes))
             }
-            usedFraction(status, rule)?.let { fraction ->
-                MaintenanceProgressBar(fraction, status.state.tone.colors.content)
+            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+                ) {
+                    MaintenanceItemIcon(status.item)
+                    Column(
+                        Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+                    ) {
+                        Text(stringResource(status.item.labelRes), style = MaterialTheme.typography.titleMedium)
+                        val supporting = if (status.state == MaintenanceState.Unknown) {
+                            missingInputText(status)
+                        } else {
+                            remainingText(status)
+                        }
+                        supporting?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (isNarrow) badge()
+                    }
+                    if (!isNarrow) badge()
+                }
+                usedFraction(status, rule)?.let { fraction ->
+                    MaintenanceProgressBar(fraction, status.state.tone.colors.content)
+                }
             }
         }
     }
@@ -200,3 +209,6 @@ private val ManageFilter.labelRes: Int
     }
 
 private const val DISABLED_ALPHA = 0.6f
+
+// 아이콘·이름·배지가 한 줄에 들어가려면 이 정도 너비가 필요하다.
+private val NARROW_CARD_WIDTH = 320.dp
