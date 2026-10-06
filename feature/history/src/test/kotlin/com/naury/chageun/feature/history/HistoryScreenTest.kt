@@ -26,6 +26,7 @@ import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
+import com.naury.chageun.core.model.RecordTimestamps
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
@@ -313,6 +314,15 @@ class HistoryScreenTest {
 
         composeRule.onNodeWithText("Fuel · S-Oil").assertIsDisplayed()
         composeRule.onNodeWithText("₩70,000").assertIsDisplayed()
+    }
+
+    @Test
+    fun detail_showsWhenItWasRecordedAndEdited() {
+        val times = RecordTimestamps(Instant.parse("2026-08-03T05:00:00Z"), Instant.parse("2026-08-05T05:00:00Z"))
+        show(HistoryUiState(isLoading = false, selected = ref, detail = detail.copy(timestamps = times)))
+
+        composeRule.onNodeWithText("Recorded", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("edited", substring = true).assertIsDisplayed()
     }
 
     @Test
