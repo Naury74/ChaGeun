@@ -13,10 +13,12 @@ internal object LightTokens {
     val OnSurfaceVariant = Color(0xFF5E5E66)
     val Outline = Color(0xFFC6C6C8)
     val Separator = Color(0xFFE0E0E5)
-    val Primary = Color(0xFF2864F0)
+
+    // 대표 색은 Hero 요약 카드와 같은 계열의 남색이다.
+    val Primary = Color(0xFF24345A)
     val OnPrimary = Color(0xFFFFFFFF)
-    val PrimaryContainer = Color(0xFFE3ECFF)
-    val OnPrimaryContainer = Color(0xFF0B2E80)
+    val PrimaryContainer = Color(0xFFE4E9F3)
+    val OnPrimaryContainer = Color(0xFF16213B)
     val TonalContainer = PrimaryContainer
     val OnTonalContainer = OnPrimaryContainer
     val AiAccent = Color(0xFF6B4EE6)
@@ -42,14 +44,16 @@ internal object DarkTokens {
     val OnSurfaceVariant = Color(0xFFA1A1A6)
     val Outline = Color(0xFF48484A)
     val Separator = Color(0xFF38383A)
-    val Primary = Color(0xFF8AB0FF)
-    val OnPrimary = Color(0xFF0A2A73)
-    val PrimaryContainer = Color(0xFF1C3A8F)
-    val OnPrimaryContainer = Color(0xFFDCE6FF)
 
-    // 버튼·선택된 칩처럼 누르는 것은 검은 바탕에서 탁해 보이지 않도록 더 밝은 파랑에 흰 글자를 쓴다.
+    // 검은 바탕에서 읽히도록 남색을 밝힌 색을 쓴다.
+    val Primary = Color(0xFFA8BBE8)
+    val OnPrimary = Color(0xFF14203A)
+    val PrimaryContainer = Color(0xFF1F2C4A)
+    val OnPrimaryContainer = Color(0xFFDCE4F7)
+
+    // 버튼·선택된 칩처럼 누르는 것은 검은 바탕에서 묻히지 않도록 선택 배경보다 밝은 남색에 흰 글자를 쓴다.
     // 선택된 카드 배경(PrimaryContainer)은 회색 보조 글자의 대비를 지키려고 어둡게 둔다.
-    val TonalContainer = Color(0xFF2B57CC)
+    val TonalContainer = Color(0xFF2E4170)
     val OnTonalContainer = Color(0xFFFFFFFF)
     val AiAccent = Color(0xFFC5B6FF)
     val AiContainer = Color(0xFF2E2650)
