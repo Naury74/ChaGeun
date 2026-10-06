@@ -67,4 +67,6 @@
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_usage_stats">Send usage statistics and crash reports</string>
     <string name="settings_usage_stats_body">Only which features you use, like saving a record, and error details when the app crashes, to improve the app. Plate number, record details and questions are never sent.</string>
+    <string name="settings_account">Account &amp; backup</string>
+    <string name="settings_account_body">Sign in to back up your car to the cloud</string>
 </resources>

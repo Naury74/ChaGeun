@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Calculate
@@ -51,6 +52,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunLinks
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
@@ -63,6 +65,7 @@ fun SettingsRoute(
     onBack: () -> Unit,
     onOpenLicenses: () -> Unit,
     onOpenPrivacy: () -> Unit,
+    onOpenAccount: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
@@ -92,7 +95,8 @@ fun SettingsRoute(
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
-        onOpenPrivacyPolicy = { uriHandler.openUriSafely(context, PRIVACY_POLICY_URL) },
+        onOpenAccount = onOpenAccount,
+        onOpenPrivacyPolicy = { uriHandler.openUriSafely(context, ChageunLinks.PRIVACY_POLICY) },
         isAdPrivacyRequired = isAdPrivacyRequired,
         onOpenAdPrivacy = { activity?.let(adConsent::showPrivacyOptions) },
         dataSection = {
@@ -135,6 +139,7 @@ fun SettingsScreen(
     onUsageStatsChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenAccount: () -> Unit = {},
     onOpenPrivacyPolicy: () -> Unit = {},
     isAdPrivacyRequired: Boolean = false,
     onOpenAdPrivacy: () -> Unit = {},
@@ -152,6 +157,15 @@ fun SettingsScreen(
             Modifier.widthIn(max = CONTENT_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
         ) {
+            CardGroup(title = null) {
+                ListRow(
+                    icon = Icons.Filled.AccountCircle,
+                    title = stringResource(R.string.settings_account),
+                    body = stringResource(R.string.settings_account_body),
+                    tone = ChageunTheme.colors.good,
+                    onClick = onOpenAccount,
+                )
+            }
             CardlessSection(R.string.settings_section_theme) {
                 SegmentedControl(
                     options = ThemeMode.entries.map { stringResource(it.labelRes) },
@@ -280,4 +294,3 @@ private val CONTENT_MAX_WIDTH = 640.dp
 private const val ZIP_MIME_TYPE = "application/zip"
 
 // Play 스토어에 등록한 주소와 같아야 한다.
-private const val PRIVACY_POLICY_URL = "https://naury74.github.io/chageun/privacy/"

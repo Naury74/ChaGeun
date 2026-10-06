@@ -1,5 +1,7 @@
 package com.naury.chageun.core.domain.analytics
 
+import com.naury.chageun.core.model.AuthMethod
+
 /**
  * 기획서 29.1 제품 이벤트.
  *
@@ -67,7 +69,24 @@ sealed interface AnalyticsEvent {
         override val name = "ai_share_completed"
         override val params = mapOf("target" to target.key)
     }
+
+    /** GA4 권장 이벤트 이름을 그대로 쓴다. 이메일·UID는 보내지 않는다. */
+    data class SignUp(val method: AuthMethod) : AnalyticsEvent {
+        override val name = "sign_up"
+        override val params = mapOf("method" to method.key)
+    }
+
+    data class Login(val method: AuthMethod) : AnalyticsEvent {
+        override val name = "login"
+        override val params = mapOf("method" to method.key)
+    }
 }
+
+private val AuthMethod.key: String
+    get() = when (this) {
+        AuthMethod.Email -> "email"
+        AuthMethod.Google -> "google"
+    }
 
 enum class HomeAction(val key: String) {
     RecordService("record_service"),
