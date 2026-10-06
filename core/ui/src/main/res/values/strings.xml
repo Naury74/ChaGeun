@@ -78,4 +78,12 @@
     <string name="photo_source_title">Add photo</string>
     <string name="photo_source_camera">Take a photo</string>
     <string name="photo_source_gallery">Choose from photos</string>
+    <string name="cutout_downloading">Downloading background removal (first time only)</string>
+    <string name="cutout_progress">%1$d%%</string>
+    <string name="cutout_processing">Removing the background…</string>
+    <string name="cutout_failed_download">Couldn\'t download background removal. Check your internet connection and try again.</string>
+    <string name="cutout_failed_no_car">Couldn\'t find the car in this photo. Try a photo where the car looks bigger.</string>
+    <string name="cutout_failed">Couldn\'t remove the background.</string>
+    <string name="cutout_retry">Try again</string>
+    <string name="cutout_remove_background">Remove background</string>
 </resources>
