@@ -3,20 +3,34 @@ package com.naury.chageun.core.designsystem.theme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.sp
 
 private const val TABULAR_FIGURES = "tnum"
 
+// 한국어는 띄어쓰기 단위로 줄을 바꿔야 자연스럽다. 기본값은 글자 단위라 '채 / 울 수'처럼 단어 중간에서 끊긴다.
+private val KoreanLineBreak = LineBreak.Paragraph.copy(wordBreak = LineBreak.WordBreak.Phrase)
+private val KoreanHeadingBreak = LineBreak.Heading.copy(wordBreak = LineBreak.WordBreak.Phrase)
+
 internal val ChageunTypography = Typography().run {
     copy(
-        displaySmall = displaySmall.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = TABULAR_FIGURES),
-        headlineLarge = headlineLarge.copy(fontWeight = FontWeight.Bold),
-        headlineMedium = headlineMedium.copy(fontWeight = FontWeight.Bold),
-        headlineSmall = headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-        titleLarge = titleLarge.copy(fontWeight = FontWeight.Bold),
-        titleMedium = titleMedium.copy(fontWeight = FontWeight.SemiBold),
-        titleSmall = titleSmall.copy(fontWeight = FontWeight.SemiBold),
-        labelLarge = labelLarge.copy(fontWeight = FontWeight.SemiBold),
+        displaySmall = displaySmall.copy(
+            fontWeight = FontWeight.Bold,
+            fontFeatureSettings = TABULAR_FIGURES,
+            lineBreak = KoreanHeadingBreak,
+        ),
+        headlineLarge = headlineLarge.copy(fontWeight = FontWeight.Bold, lineBreak = KoreanHeadingBreak),
+        headlineMedium = headlineMedium.copy(fontWeight = FontWeight.Bold, lineBreak = KoreanHeadingBreak),
+        headlineSmall = headlineSmall.copy(fontWeight = FontWeight.SemiBold, lineBreak = KoreanHeadingBreak),
+        titleLarge = titleLarge.copy(fontWeight = FontWeight.Bold, lineBreak = KoreanHeadingBreak),
+        titleMedium = titleMedium.copy(fontWeight = FontWeight.SemiBold, lineBreak = KoreanHeadingBreak),
+        titleSmall = titleSmall.copy(fontWeight = FontWeight.SemiBold, lineBreak = KoreanHeadingBreak),
+        bodyLarge = bodyLarge.copy(lineBreak = KoreanLineBreak),
+        bodyMedium = bodyMedium.copy(lineBreak = KoreanLineBreak),
+        bodySmall = bodySmall.copy(lineBreak = KoreanLineBreak),
+        labelLarge = labelLarge.copy(fontWeight = FontWeight.SemiBold, lineBreak = KoreanHeadingBreak),
+        labelMedium = labelMedium.copy(lineBreak = KoreanHeadingBreak),
+        labelSmall = labelSmall.copy(lineBreak = KoreanHeadingBreak),
     )
 }
 
