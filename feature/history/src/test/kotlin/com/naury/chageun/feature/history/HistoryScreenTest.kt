@@ -142,7 +142,7 @@ class HistoryScreenTest {
                     onSelect = {},
                     onDelete = {},
                     onAdd = {},
-                    onAttach = { _, _ -> },
+                    onAddPhotos = {},
                     onDeleteAttachment = {},
                     onDismissAttachFailure = {},
                 )
