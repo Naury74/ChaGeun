@@ -122,6 +122,41 @@ class HistoryScreenTest {
         assertThat(selected).isNull()
     }
 
+    /** 폴더블을 접고 펴 한 칸·두 칸이 바뀌어도 상세 안의 삭제 확인 창이 그대로 남는다. */
+    @Test
+    @Config(qualifiers = "w1280dp-h2000dp")
+    fun deleteConfirmation_survivesPaneLayoutChange() {
+        var twoPane by mutableStateOf(false)
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = HistoryUiState(
+                        isLoading = false,
+                        sections = listOf(TimelineSection(YearMonth.of(2026, 8), listOf(item))),
+                        selected = ref,
+                        detail = detail,
+                    ),
+                    isTwoPane = twoPane,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAttach = { _, _ -> },
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.onNodeWithText("Delete this record?").assertIsDisplayed()
+
+        twoPane = true
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Delete this record?").assertIsDisplayed()
+    }
+
     @Test
     fun emptyState_offersFirstRecord() {
         var added = false

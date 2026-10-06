@@ -8,7 +8,11 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,6 +74,25 @@ fun ManageScreen(
         return
     }
     val detail = uiState.detail
+    // 접거나 펼쳐 한 칸·두 칸이 바뀌어도 상세를 상태째 옮겨 스크롤 위치 등을 이어서 쓴다.
+    val currentOnItemSelected by rememberUpdatedState(onItemSelected)
+    val currentOnRecordService by rememberUpdatedState(onRecordService)
+    val currentOnEditRule by rememberUpdatedState(onEditRule)
+    val currentOnAskAi by rememberUpdatedState(onAskAi)
+    val detailPane = remember {
+        movableContentOf { shown: ManageDetail, paneModifier: Modifier ->
+            key(shown.status.item) {
+                ManageDetailPane(
+                    shown,
+                    onBack = { currentOnItemSelected(null) },
+                    onRecordService = currentOnRecordService,
+                    onEditRule = currentOnEditRule,
+                    onAskAi = currentOnAskAi,
+                    modifier = paneModifier,
+                )
+            }
+        }
+    }
     if (isTwoPane) {
         BackHandler(enabled = detail != null) { onItemSelected(null) }
         AdaptiveListDetail(
@@ -86,29 +109,13 @@ fun ManageScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
             },
-            detail = {
-                ManageDetailPane(
-                    it,
-                    onBack = { onItemSelected(null) },
-                    onRecordService = onRecordService,
-                    onEditRule = onEditRule,
-                    onAskAi = onAskAi,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            },
+            detail = { detailPane(it, Modifier.fillMaxSize()) },
             emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
             modifier = modifier,
         )
     } else if (detail != null) {
         BackHandler { onItemSelected(null) }
-        ManageDetailPane(
-            detail,
-            onBack = { onItemSelected(null) },
-            onRecordService = onRecordService,
-            onEditRule = onEditRule,
-            onAskAi = onAskAi,
-            modifier = modifier.fillMaxSize(),
-        )
+        detailPane(detail, modifier.fillMaxSize())
     } else {
         ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize())
     }
