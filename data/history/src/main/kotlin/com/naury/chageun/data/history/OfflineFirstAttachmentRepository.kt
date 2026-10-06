@@ -37,36 +37,45 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
             rows.mapNotNull { it.asExternalModel() }
         }
 
-    override suspend fun attach(vehicleId: VehicleId, owner: RecordRef, sourceUris: List<String>): AttachResult =
-        withContext(ioDispatcher) {
-            val room = MAX_ATTACHMENTS_PER_RECORD - attachmentDao.count(vehicleId.value, owner.type.name, owner.id)
-            var added = 0
-            sourceUris.take(room.coerceAtLeast(0)).forEach { uri ->
-                val id = UUID.randomUUID().toString()
-                val imported = runCatching {
-                    importer.import(uri, File(directory, "$id.jpg"), File(directory, "${id}_thumb.jpg"))
-                }.onFailure { logger.warn("attachment_import_failed", error = it) }.getOrNull()
-                if (imported != null) {
-                    attachmentDao.insert(
-                        AttachmentEntity(
-                            id = id,
-                            vehicleId = vehicleId.value,
-                            ownerType = owner.type.name,
-                            ownerId = owner.id,
-                            fileName = imported.file.name,
-                            thumbnailName = imported.thumbnail.name,
-                            mimeType = MIME_JPEG,
-                            sizeBytes = imported.sizeBytes,
-                            createdAt = clock.instant(),
-                        ),
-                    )
-                    added++
-                }
-            }
-            AttachResult(added = added, failed = sourceUris.size - added).also {
-                logger.debug("attachment_added", LogField.Success(it.failed == 0))
+    override suspend fun attach(
+        vehicleId: VehicleId,
+        owner: RecordRef,
+        sourceUris: List<String>,
+        highQuality: Boolean,
+    ): AttachResult = withContext(ioDispatcher) {
+        val room = MAX_ATTACHMENTS_PER_RECORD - attachmentDao.count(vehicleId.value, owner.type.name, owner.id)
+        var added = 0
+        sourceUris.take(room.coerceAtLeast(0)).forEach { uri ->
+            val id = UUID.randomUUID().toString()
+            val imported = runCatching {
+                importer.import(
+                    uri,
+                    File(directory, "$id.jpg"),
+                    File(directory, "${id}_thumb.jpg"),
+                    if (highQuality) ImageImporter.HIGH_QUALITY_EDGE_PX else ImageImporter.DEFAULT_EDGE_PX,
+                )
+            }.onFailure { logger.warn("attachment_import_failed", error = it) }.getOrNull()
+            if (imported != null) {
+                attachmentDao.insert(
+                    AttachmentEntity(
+                        id = id,
+                        vehicleId = vehicleId.value,
+                        ownerType = owner.type.name,
+                        ownerId = owner.id,
+                        fileName = imported.file.name,
+                        thumbnailName = imported.thumbnail.name,
+                        mimeType = MIME_JPEG,
+                        sizeBytes = imported.sizeBytes,
+                        createdAt = clock.instant(),
+                    ),
+                )
+                added++
             }
         }
+        AttachResult(added = added, failed = sourceUris.size - added).also {
+            logger.debug("attachment_added", LogField.Success(it.failed == 0))
+        }
+    }
 
     override suspend fun delete(vehicleId: VehicleId, attachmentId: String) = withContext(ioDispatcher) {
         attachmentDao.find(vehicleId.value, attachmentId)?.let { row ->

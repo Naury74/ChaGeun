@@ -1,8 +1,5 @@
 package com.naury.chageun.feature.history
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -41,23 +37,18 @@ import androidx.compose.ui.window.Dialog
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.Attachment
-import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.rememberFileImage
 
 @Composable
 internal fun AttachmentSection(
     attachments: List<Attachment>,
     failedCount: Int,
-    onAttach: (List<String>) -> Unit,
+    onAdd: () -> Unit,
     onDelete: (String) -> Unit,
     onDismissFailure: () -> Unit,
 ) {
     var viewingId by rememberSaveable { mutableStateOf<String?>(null) }
     val remaining = MAX_ATTACHMENTS_PER_RECORD - attachments.size
-    val context = LocalContext.current
-    val picker = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickMultipleVisualMedia(MAX_ATTACHMENTS_PER_RECORD),
-    ) { uris -> onAttach(uris.take(remaining).map { it.toString() }) }
 
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         Text(
@@ -84,11 +75,7 @@ internal fun AttachmentSection(
             }
         }
         OutlinedButton(
-            onClick = {
-                context.launchExternal {
-                    picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
-            },
+            onClick = onAdd,
             enabled = remaining > 0,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD)) }

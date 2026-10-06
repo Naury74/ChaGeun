@@ -1,8 +1,5 @@
 package com.naury.chageun.feature.vehicle
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,8 +76,9 @@ import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.isExpandedWidth
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
-import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.openUriSafely
+import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
 import java.time.LocalDate
@@ -94,10 +92,8 @@ fun VehicleRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = isListDetailTwoPane()
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
-    val context = LocalContext.current
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let { viewModel.setPhoto(it.toString()) }
-    }
+    val photoInput = rememberPhotoInputState()
+    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::setPhoto) })
     var isEditing by rememberSaveable { mutableStateOf(false) }
     VehicleScreen(
         uiState,
@@ -107,11 +103,7 @@ fun VehicleRoute(
         onInspectionDateSelected = viewModel::setInspectionDate,
         onInspectionCompleted = { viewModel.completeInspection(it, inspectionTitle) },
         photoActions = VehiclePhotoActions(
-            onPick = {
-                context.launchExternal {
-                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
-            },
+            onPick = photoInput::open,
             onRemove = viewModel::removePhoto,
         ),
         onEditVehicle = { isEditing = true },

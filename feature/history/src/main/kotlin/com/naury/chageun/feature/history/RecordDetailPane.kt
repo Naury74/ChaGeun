@@ -114,7 +114,7 @@ internal fun RecordDetailPane(
             AttachmentSection(
                 attachments = attachments.items,
                 failedCount = attachments.failedCount,
-                onAttach = { attachments.onAttach(detail.ref, it) },
+                onAdd = { attachments.onAdd(detail.ref) },
                 onDelete = attachments.onDelete,
                 onDismissFailure = attachments.onDismissFailure,
             )
@@ -171,7 +171,7 @@ internal fun RecordDetailPane(
 internal data class AttachmentsState(
     val items: List<Attachment>,
     val failedCount: Int,
-    val onAttach: (RecordRef, List<String>) -> Unit,
+    val onAdd: (RecordRef) -> Unit,
     val onDelete: (String) -> Unit,
     val onDismissFailure: () -> Unit,
 )

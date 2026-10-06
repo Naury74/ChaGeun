@@ -18,7 +18,15 @@ internal data class ImportedImage(val file: File, val thumbnail: File, val sizeB
 internal const val MIME_JPEG = "image/jpeg"
 
 internal fun interface ImageImporter {
-    fun import(sourceUri: String, target: File, thumbnail: File): ImportedImage?
+    /** [maxEdge]는 저장할 이미지의 긴 변 최대 픽셀이다. */
+    fun import(sourceUri: String, target: File, thumbnail: File, maxEdge: Int): ImportedImage?
+
+    companion object {
+        const val DEFAULT_EDGE_PX = 2_048
+
+        /** 영수증의 작은 글씨를 읽을 수 있을 만큼. 사진 편집기의 최대 크기와 같다. */
+        const val HIGH_QUALITY_EDGE_PX = 4_096
+    }
 }
 
 /**
@@ -28,7 +36,7 @@ internal fun interface ImageImporter {
 internal class BitmapImageImporter @Inject constructor(@ApplicationContext private val context: Context) :
     ImageImporter {
 
-    override fun import(sourceUri: String, target: File, thumbnail: File): ImportedImage? {
+    override fun import(sourceUri: String, target: File, thumbnail: File, maxEdge: Int): ImportedImage? {
         val uri = sourceUri.toUri()
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -36,12 +44,12 @@ internal class BitmapImageImporter @Inject constructor(@ApplicationContext priva
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
 
         val options = BitmapFactory.Options().apply {
-            inSampleSize = ImageSizing.sampleSize(bounds.outWidth, bounds.outHeight, MAX_EDGE_PX)
+            inSampleSize = ImageSizing.sampleSize(bounds.outWidth, bounds.outHeight, maxEdge)
         }
         val decoded =
             resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) } ?: return null
         val rotation = resolver.openInputStream(uri)?.use { ExifInterface(it).rotationDegrees } ?: 0
-        val image = decoded.scaledTo(MAX_EDGE_PX).rotated(rotation)
+        val image = decoded.scaledTo(maxEdge).rotated(rotation)
 
         target.parentFile?.mkdirs()
         target.outputStream().use { image.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
@@ -63,7 +71,6 @@ internal class BitmapImageImporter @Inject constructor(@ApplicationContext priva
     }
 
     private companion object {
-        const val MAX_EDGE_PX = 2_048
         const val THUMBNAIL_EDGE_PX = 320
         const val JPEG_QUALITY = 85
     }
