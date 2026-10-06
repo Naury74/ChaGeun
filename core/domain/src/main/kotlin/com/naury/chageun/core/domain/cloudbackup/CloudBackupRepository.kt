@@ -17,17 +17,20 @@ data class CloudBackup(
 
 /** 화면에서 따로 안내하는 클라우드 백업 실패. */
 enum class CloudBackupError {
-    NotSignedIn,
-    EmailNotVerified,
+    /** Google 드라이브를 연결하지 않았거나 권한이 풀렸다. */
+    NotConnected,
 
     /** 백업할 차량이 없다. */
     NoData,
     Network,
 
-    /** 백업 파일이 규칙의 크기 한도(200MB)를 넘는다. */
+    /** 백업 파일이 한도(200MB)를 넘는다. */
     TooLarge,
 
-    /** 콘솔에서 Firestore·Storage를 아직 만들지 않았거나 규칙이 막는다. */
+    /** 사용자 드라이브 저장 공간이 부족하다. */
+    StorageFull,
+
+    /** Drive API를 쓸 수 없다. 콘솔 설정이 빠졌거나 Google Play 서비스가 없다. */
     Unavailable,
     Unknown,
 }
@@ -39,7 +42,7 @@ sealed interface CloudResult<out T> {
 }
 
 /**
- * 로그인한 사용자의 클라우드 백업. 백업 파일은 기존 내보내기 ZIP과 같은 형식이라
+ * 사용자 본인 Google 드라이브의 앱 전용 폴더에 두는 백업(ADR-006). 백업 파일은 기존 내보내기 ZIP과 같은 형식이라
  * 복원은 [download]로 받은 파일을 BackupRepository의 가져오기에 넘기면 된다.
  */
 interface CloudBackupRepository {

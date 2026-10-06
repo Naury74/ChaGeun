@@ -4,13 +4,11 @@ import android.net.Uri
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.LocalDataSummary
-import com.naury.chageun.core.domain.cloudbackup.CloudBackup
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.domain.cloudbackup.CloudResult
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.VehicleRegistration
-import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import java.io.File
@@ -18,6 +16,7 @@ import java.nio.file.Files
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -31,11 +30,11 @@ import org.robolectric.RobolectricTestRunner
 class DefaultCloudBackupRepositoryTest {
 
     private val directory: File = Files.createTempDirectory("cloud").toFile()
-    private val auth = FakeAuthRepository()
+    private val drive = FakeDriveAccess()
     private val local = FakeBackupRepository().apply { summary = LocalDataSummary(1, 12, 3) }
     private val vehicles = FakeVehicleRepository()
     private val remote = FakeRemote()
-    private var nextId = 0
+    private var nextName = 0
     private var now = Instant.parse("2026-10-06T00:00:00Z")
 
     /** 실제 내보내기처럼 받은 URI의 파일에 내용을 쓴다. */
@@ -53,7 +52,7 @@ class DefaultCloudBackupRepositoryTest {
     }
 
     private fun TestScope.repository() = DefaultCloudBackupRepository(
-        auth = auth,
+        drive = drive,
         local = writingLocal,
         vehicles = vehicles,
         remote = remote,
@@ -63,53 +62,32 @@ class DefaultCloudBackupRepositoryTest {
             deviceModel = "Pixel 9 Pro Fold",
             clock = object : Clock() {
                 override fun instant() = now
+
                 override fun getZone() = ZoneOffset.UTC
-                override fun withZone(zone: java.time.ZoneId?) = this
+
+                override fun withZone(zone: ZoneId?) = this
             },
-            newBackupId = { "b${nextId++}" },
+            newBackupId = { "b${nextName++}" },
         ),
         ioDispatcher = StandardTestDispatcher(testScheduler),
     )
 
-    private suspend fun signIn(verified: Boolean = true) {
-        auth.signUpWithEmail("driver@example.com", "chageun1")
-        if (verified) {
-            auth.verifyEmailOutside("driver@example.com")
-            auth.reload()
-        }
-    }
-
     @Test
-    fun backUp_uploadsThenWritesSummary_andCleansLocalFile() = runTest {
-        signIn()
+    fun backUp_uploadsWithSummary_andCleansLocalFile() = runTest {
         vehicles.register(VehicleRegistration("Kia", "Sportage", 2023, FuelType.Hybrid, Kilometers(40_000)))
 
-        val result = repository().backUpNow()
+        val backup = (repository().backUpNow() as CloudResult.Success).value
 
-        val backup = (result as CloudResult.Success).value
-        assertThat(remote.calls).containsExactly("upload b0", "metadata b0", "touch", "list").inOrder()
+        assertThat(remote.calls).containsExactly("upload b0", "list").inOrder()
+        assertThat(backup.id).isEqualTo("drive-0")
         assertThat(backup.vehicleLabel).isEqualTo("Kia Sportage")
         assertThat(backup.recordCount).isEqualTo(12)
-        assertThat(backup.photoCount).isEqualTo(3)
         assertThat(backup.sizeBytes).isEqualTo(3)
         assertThat(directory.listFiles().orEmpty()).isEmpty()
     }
 
     @Test
-    fun failedSummary_removesUploadedFile() = runTest {
-        signIn()
-        remote.failOn = "metadata"
-
-        val result = repository().backUpNow()
-
-        assertThat(result).isEqualTo(CloudResult.Failure(CloudBackupError.Network))
-        assertThat(remote.archives).isEmpty()
-        assertThat(remote.calls).contains("delete_archive b0")
-    }
-
-    @Test
     fun keepsOnlyFiveNewest() = runTest {
-        signIn()
         val repository = repository()
 
         repeat(7) {
@@ -118,82 +96,46 @@ class DefaultCloudBackupRepositoryTest {
         }
 
         val ids = (repository.list() as CloudResult.Success).value.map { it.id }
-        assertThat(ids).containsExactly("b6", "b5", "b4", "b3", "b2").inOrder()
-        assertThat(remote.archives.keys).containsExactly("b6", "b5", "b4", "b3", "b2")
+        assertThat(ids).containsExactly("drive-6", "drive-5", "drive-4", "drive-3", "drive-2").inOrder()
     }
 
     @Test
-    fun guardsSignInVerificationAndEmptyData() = runTest {
+    fun needsConnection_andVehicle() = runTest {
         val repository = repository()
-        assertThat(repository.backUpNow()).isEqualTo(CloudResult.Failure(CloudBackupError.NotSignedIn))
+        drive.disconnect()
+        assertThat(repository.backUpNow()).isEqualTo(CloudResult.Failure(CloudBackupError.NotConnected))
 
-        signIn(verified = false)
-        assertThat(repository.backUpNow()).isEqualTo(CloudResult.Failure(CloudBackupError.EmailNotVerified))
-        assertThat(repository.list()).isInstanceOf(CloudResult.Success::class.java)
-
-        auth.verifyEmailOutside("driver@example.com")
-        auth.reload()
+        drive.isConnected.value = true
         local.summary = LocalDataSummary(0, 0, 0)
-        remote.calls.clear()
         assertThat(repository.backUpNow()).isEqualTo(CloudResult.Failure(CloudBackupError.NoData))
         assertThat(remote.calls).isEmpty()
     }
 
     @Test
-    fun download_returnsLocalFileUri_andDeleteRemovesBoth() = runTest {
-        signIn()
-        val repository = repository()
-        repository.backUpNow()
+    fun expiredPermission_disconnects() = runTest {
+        remote.failOn = "list"
+        remote.failWith = CloudBackupError.NotConnected
 
-        val uri = (repository.download("b0") as CloudResult.Success).value
-        repository.delete("b0")
-
-        assertThat(File(checkNotNull(Uri.parse(uri).path)).readText()).isEqualTo("zip")
-        assertThat(remote.archives).isEmpty()
-        assertThat(remote.metadata).isEmpty()
+        assertThat(repository().list()).isEqualTo(CloudResult.Failure(CloudBackupError.NotConnected))
+        assertThat(drive.isConnected.value).isFalse()
     }
 
-    private class FakeRemote : CloudBackupRemote {
-        val archives = mutableMapOf<String, String>()
-        val metadata = mutableMapOf<String, CloudBackup>()
-        val calls = mutableListOf<String>()
-        var failOn: String? = null
+    @Test
+    fun pruneFailure_stillReportsBackup() = runTest {
+        remote.failOn = "list"
 
-        private fun record(call: String) {
-            calls += call
-            if (failOn != null && call.startsWith(failOn!!)) throw CloudBackupException(CloudBackupError.Network)
-        }
+        assertThat(repository().backUpNow()).isInstanceOf(CloudResult.Success::class.java)
+    }
 
-        override suspend fun uploadArchive(uid: String, backupId: String, file: File) {
-            record("upload $backupId")
-            archives[backupId] = file.readText()
-        }
+    @Test
+    fun download_returnsLocalFileUri_andDeleteRemoves() = runTest {
+        val repository = repository()
+        val id = (repository.backUpNow() as CloudResult.Success).value.id
 
-        override suspend fun writeMetadata(uid: String, backup: CloudBackup) {
-            record("metadata ${backup.id}")
-            metadata[backup.id] = backup
-        }
+        val uri = (repository.download(id) as CloudResult.Success).value
+        repository.delete(id)
 
-        override suspend fun touchUser(uid: String, backedUpAt: Instant) = record("touch")
-
-        override suspend fun listMetadata(uid: String): List<CloudBackup> {
-            record("list")
-            return metadata.values.sortedByDescending { it.createdAt }
-        }
-
-        override suspend fun downloadArchive(uid: String, backupId: String, target: File) {
-            record("download $backupId")
-            target.writeText(archives.getValue(backupId))
-        }
-
-        override suspend fun deleteArchive(uid: String, backupId: String) {
-            record("delete_archive $backupId")
-            archives -= backupId
-        }
-
-        override suspend fun deleteMetadata(uid: String, backupId: String) {
-            record("delete_metadata $backupId")
-            metadata -= backupId
-        }
+        assertThat(File(checkNotNull(Uri.parse(uri).path)).readText()).isEqualTo("zip")
+        assertThat(remote.files).isEmpty()
     }
 }

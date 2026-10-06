@@ -55,10 +55,10 @@ class HomeScreenshotTest {
         ),
     )
 
-    private fun capture(name: String, paneCount: Int) {
+    private fun capture(name: String, paneCount: Int, uiState: HomeUiState.Content = state) {
         composeRule.setContent {
             AppFrame {
-                HomeScreen(uiState = state, paneCount = paneCount, actions = HomeActions({}, {}, {}, onAddPhoto = {}))
+                HomeScreen(uiState = uiState, paneCount = paneCount, actions = HomeActions({}, {}, {}, onAddPhoto = {}))
             }
         }
         composeRule.captureScreen(name)
@@ -71,6 +71,12 @@ class HomeScreenshotTest {
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
     fun phoneDark() = capture("home_phone_dark", paneCount = 1)
+
+    /** 로그인한 사용자는 이름으로 인사하고 계정 버튼에 첫 글자를 보여 준다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun phoneSignedIn_ko() =
+        capture("home_phone_signed_in_ko", paneCount = 1, state.copy(greetingName = "나우리", dayPart = DayPart.Evening))
 
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)

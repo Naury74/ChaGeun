@@ -2,9 +2,9 @@ package com.naury.chageun.feature.account
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.naury.chageun.core.auth.GoogleDriveAccess
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
-import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.cloudbackup.CloudBackup
@@ -65,10 +65,10 @@ data class CloudBackupUiState(
     val isWorking: Boolean get() = isBackingUp || restore != null
 }
 
-/** 계정 화면의 클라우드 백업(AC05)과 백업 목록(AC06). 창 상태도 여기 두어 폴드를 접고 펴도 남는다. */
+/** Google 드라이브 백업 화면의 지금 백업·자동 백업·목록·복원. 창 상태도 여기 두어 폴드를 접고 펴도 남는다. */
 @HiltViewModel
 class CloudBackupViewModel @Inject constructor(
-    authRepository: AuthRepository,
+    driveAccess: GoogleDriveAccess,
     private val cloudBackups: CloudBackupRepository,
     private val localBackup: BackupRepository,
     private val settingsRepository: SettingsRepository,
@@ -79,11 +79,11 @@ class CloudBackupViewModel @Inject constructor(
     val uiState: StateFlow<CloudBackupUiState> = state.asStateFlow()
 
     init {
-        // 다른 계정으로 바꾸거나 로그아웃하면 앞 계정의 목록을 지운다.
+        // 연결을 끊거나 다른 Google 계정으로 다시 연결하면 앞 목록을 지운다.
         viewModelScope.launch {
-            authRepository.currentUser.map { it?.uid }.distinctUntilChanged().collect { uid ->
+            driveAccess.isConnected.collect { connected ->
                 state.update { CloudBackupUiState(isAutoBackupEnabled = it.isAutoBackupEnabled) }
-                if (uid != null) refresh()
+                if (connected) refresh()
             }
         }
         viewModelScope.launch {

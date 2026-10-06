@@ -71,7 +71,13 @@ internal fun CenteredColumn(modifier: Modifier = Modifier, content: @Composable 
  * Google 브랜드 가이드의 밝은 버튼. 흰 바탕, 회색 테두리, 왼쪽 G 로고를 지킨다. 다크 테마에서도 같은 모양을 쓴다.
  */
 @Composable
-internal fun GoogleButton(onClick: () -> Unit, enabled: Boolean, isBusy: Boolean, modifier: Modifier = Modifier) {
+internal fun GoogleButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    isBusy: Boolean,
+    modifier: Modifier = Modifier,
+    label: String = stringResource(R.string.account_continue_google),
+) {
     OutlinedButton(
         onClick = onClick,
         enabled = enabled && !isBusy,
@@ -97,7 +103,7 @@ internal fun GoogleButton(onClick: () -> Unit, enabled: Boolean, isBusy: Boolean
                 )
             }
             Spacer(Modifier.width(ChageunTheme.spacing.sm))
-            Text(stringResource(R.string.account_continue_google))
+            Text(label)
         }
     }
 }

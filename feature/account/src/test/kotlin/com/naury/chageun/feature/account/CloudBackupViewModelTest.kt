@@ -6,7 +6,6 @@ import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
-import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeCloudBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
@@ -21,13 +20,13 @@ class CloudBackupViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val auth = FakeAuthRepository()
+    private val drive = FakeDriveAccess()
     private val cloud = FakeCloudBackupRepository()
     private val local = FakeBackupRepository()
     private val analytics = FakeAnalyticsTracker()
     private val settings = FakeSettingsRepository()
 
-    private fun viewModel() = CloudBackupViewModel(auth, cloud, local, settings, analytics)
+    private fun viewModel() = CloudBackupViewModel(drive, cloud, local, settings, analytics)
 
     @Test
     fun autoBackupSwitch_isStoredInSettings() = runTest {
@@ -40,11 +39,11 @@ class CloudBackupViewModelTest {
     }
 
     @Test
-    fun loadsAfterSignIn_backsUp_andClearsOnSignOut() = runTest {
+    fun loadsAfterConnecting_backsUp_andClearsOnDisconnect() = runTest {
         val viewModel = viewModel()
         assertThat(viewModel.uiState.value.isLoaded).isFalse()
 
-        auth.signInWithGoogle("token")
+        drive.connect()
         viewModel.uiState.first { it.isLoaded }
         viewModel.backUpNow()
 
@@ -53,13 +52,13 @@ class CloudBackupViewModelTest {
         assertThat(backedUp.lastBackup?.id).isEqualTo("b0")
         assertThat(analytics.events).containsExactly(AnalyticsEvent.CloudBackupCreated)
 
-        auth.signOut()
+        drive.disconnect()
         assertThat(viewModel.uiState.first { !it.isLoaded }.backups).isEmpty()
     }
 
     @Test
     fun backupFailure_isReported() = runTest {
-        auth.signInWithGoogle("token")
+        drive.connect()
         val viewModel = viewModel()
         viewModel.uiState.first { it.isLoaded }
 
@@ -73,7 +72,7 @@ class CloudBackupViewModelTest {
 
     @Test
     fun restore_downloadsPreviewsThenReplaces() = runTest {
-        auth.signInWithGoogle("token")
+        drive.connect()
         cloud.backups += FakeCloudBackupRepository.backup("b9", java.time.Instant.parse("2026-10-01T00:00:00Z"))
         local.importPreview = ImportPreview.Ready(LocalDataSummary(1, 10, 2), LocalDataSummary(1, 12, 3))
         val viewModel = viewModel()
@@ -93,7 +92,7 @@ class CloudBackupViewModelTest {
 
     @Test
     fun newerBackup_asksForUpdate_withoutReplacing() = runTest {
-        auth.signInWithGoogle("token")
+        drive.connect()
         cloud.backups += FakeCloudBackupRepository.backup("b9", java.time.Instant.parse("2026-10-01T00:00:00Z"))
         local.importPreview = ImportPreview.UnsupportedVersion(2)
         val viewModel = viewModel()
@@ -107,7 +106,7 @@ class CloudBackupViewModelTest {
 
     @Test
     fun delete_confirmsFirst_thenRemovesFromList() = runTest {
-        auth.signInWithGoogle("token")
+        drive.connect()
         cloud.backups += FakeCloudBackupRepository.backup("b9", java.time.Instant.parse("2026-10-01T00:00:00Z"))
         val viewModel = viewModel()
         val backup = viewModel.uiState.first { it.backups.isNotEmpty() }.backups.single()

@@ -10,9 +10,9 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.naury.chageun.core.auth.GoogleDriveAccess
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
-import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
 import com.naury.chageun.core.domain.cloudbackup.CloudResult
@@ -68,18 +68,15 @@ internal class PeriodicAutoBackupScheduler @Inject constructor(@ApplicationConte
     }
 }
 
-/**
- * 자동 백업 스위치와 로그인 상태를 보고 예약을 맞춘다. 켜져 있어도 로그아웃했거나 이메일 인증 전이면
- * 돌려도 실패하므로 예약하지 않는다.
- */
+/** 자동 백업 스위치와 드라이브 연결 상태를 보고 예약을 맞춘다. 연결이 끊기면 돌려도 실패하므로 예약하지 않는다. */
 class AutoBackupSync @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val authRepository: AuthRepository,
+    private val driveAccess: GoogleDriveAccess,
     private val scheduler: AutoBackupScheduler,
 ) {
     fun start(scope: CoroutineScope) {
-        combine(settingsRepository.settings, authRepository.currentUser) { settings, user ->
-            settings.isCloudAutoBackupEnabled && user != null && !user.needsEmailVerification
+        combine(settingsRepository.settings, driveAccess.isConnected) { settings, connected ->
+            settings.isCloudAutoBackupEnabled && connected
         }
             .distinctUntilChanged()
             .onEach { shouldRun -> if (shouldRun) scheduler.schedule() else scheduler.cancel() }
@@ -87,7 +84,7 @@ class AutoBackupSync @Inject constructor(
     }
 }
 
-/** 다시 시도해도 될 실패인지. 네트워크처럼 지나가는 문제만 다시 하고, 설정·데이터 문제는 다음 주기를 기다린다. */
+/** 다시 시도해도 될 실패인지. 네트워크처럼 지나가는 문제만 다시 하고, 연결·용량·데이터 문제는 다음 주기를 기다린다. */
 internal fun CloudBackupError.isWorthRetrying(): Boolean =
     this == CloudBackupError.Network || this == CloudBackupError.Unknown
 

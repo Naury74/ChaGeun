@@ -44,7 +44,6 @@
     <string name="home_ai_title">내 차에 대해 물어보세요</string>
     <string name="home_ai_body">내 차 상태를 ChatGPT·Claude·Gemini에 보내 편하게 물어볼 수 있어요.</string>
     <string name="home_brand">차근</string>
-    <string name="home_tagline">내 차를 차근차근 관리해요</string>
     <string name="home_open_settings">설정</string>
     <string name="home_inspection_title">자동차 검사</string>
     <string name="home_inspection_overdue">기한 초과</string>
@@ -74,4 +73,14 @@
     <string name="home_dashboard_not_found">주행거리를 찾지 못했어요. 숫자 부분만 잘라서 다시 찍거나 직접 입력해 주세요.</string>
     <string name="home_mileage_value">%1$s km</string>
     <string name="home_dashboard_unavailable">지금 이 기기에서는 사진으로 읽을 수 없어요. 주행거리를 직접 입력해 주세요.</string>
+    <string name="home_open_account">계정</string>
+    <string name="home_open_account_named">계정: %1$s</string>
+    <string name="home_greeting_morning">좋은 아침이에요</string>
+    <string name="home_greeting_morning_named">%1$s님, 좋은 아침이에요</string>
+    <string name="home_greeting_afternoon">좋은 오후예요</string>
+    <string name="home_greeting_afternoon_named">%1$s님, 좋은 오후예요</string>
+    <string name="home_greeting_evening">편안한 저녁이에요</string>
+    <string name="home_greeting_evening_named">%1$s님, 편안한 저녁이에요</string>
+    <string name="home_greeting_night">오늘 하루도 수고했어요</string>
+    <string name="home_greeting_night_named">%1$s님, 오늘 하루도 수고했어요</string>
 </resources>

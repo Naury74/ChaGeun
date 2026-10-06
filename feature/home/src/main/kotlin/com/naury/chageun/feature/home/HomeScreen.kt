@@ -65,6 +65,7 @@ fun HomeRoute(
     onOpenSettings: () -> Unit,
     onOpenInspection: () -> Unit,
     onOpenItem: (MaintenanceItem) -> Unit = {},
+    onOpenAccount: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val analytics = LocalAnalyticsTracker.current
@@ -87,6 +88,7 @@ fun HomeRoute(
             onOpenHistory = analytics.tracking(HomeAction.OpenHistory, onOpenHistory),
             onAskAi = analytics.tracking(HomeAction.AskAi, onAskAi),
             onOpenSettings = onOpenSettings,
+            onOpenAccount = onOpenAccount,
             onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
             onOpenItem = onOpenItem,
             onAddPhoto = photoInput::open,
@@ -106,6 +108,7 @@ data class HomeActions(
     val onOpenHistory: () -> Unit,
     val onAskAi: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
+    val onOpenAccount: () -> Unit = {},
     val onOpenInspection: () -> Unit = {},
     val onOpenItem: (MaintenanceItem) -> Unit = {},
     /** null이면 사진 넣기 버튼을 보이지 않는다. */
@@ -201,7 +204,15 @@ private fun homePanes(
 }
 
 private fun LazyListScope.summaryPane(state: HomeUiState.Content, actions: HomeActions) {
-    item(key = "brand") { BrandAppBar(actions.onOpenSettings) }
+    item(key = "brand") {
+        HomeGreetingBar(
+            name = state.greetingName,
+            dayPart = state.dayPart,
+            today = state.today,
+            onOpenAccount = actions.onOpenAccount,
+            onOpenSettings = actions.onOpenSettings,
+        )
+    }
     item(key = "hero") { HomeHero(state, actions) }
     item(key = "health") {
         VehicleStatusSummary(

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="account_title">Account &amp; backup</string>
+    <string name="account_title">Account</string>
     <string name="account_back">Back</string>
-    <string name="account_start_headline">Keep your car\'s history safe</string>
-    <string name="account_benefit_backup">Back up records, photos, and the album to the cloud</string>
-    <string name="account_benefit_restore">Restore everything on a new phone</string>
+    <string name="account_start_headline">Create your Chageun account</string>
+    <string name="account_benefit_backup">Sign in with your email, and recover your password by email</string>
+    <string name="account_benefit_restore">Only verified emails can sign up, keeping your account safe</string>
     <string name="account_benefit_optional">Every feature still works without an account</string>
     <string name="account_continue_google">Continue with Google</string>
     <string name="account_google_unavailable">Google sign-in is coming soon. You can use email for now.</string>
@@ -51,14 +51,13 @@
     <string name="account_notice_verification_sent">Verification email sent.</string>
     <string name="account_notice_not_verified">Not verified yet. Check your inbox.</string>
     <string name="account_notice_verified">You\'re signed up.</string>
-    <string name="account_section_backup">Cloud backup</string>
+    <string name="account_section_backup">Backup</string>
     <string name="account_backup_now">Back up now</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_sign_out_title">Sign out?</string>
     <string name="account_sign_out_body">Your car and records stay on this phone.</string>
     <string name="account_backup_last">Last backup: %1$s</string>
     <string name="account_backup_never">No backups yet</string>
-    <string name="account_backup_needs_verification">Verify your email to back up</string>
     <string name="account_backup_in_progress">Backing up…</string>
     <string name="account_backups_title">Backups · last %1$d kept</string>
     <string name="account_backup_details">%1$s · %2$s · %3$s</string>
@@ -82,7 +81,6 @@
     <string name="account_notice_restore_failed">Couldn\'t restore. Your data is unchanged.</string>
     <string name="account_backup_error_no_data">Register your car before backing up.</string>
     <string name="account_backup_error_too_large">The backup is over 200 MB. Remove some photos and try again.</string>
-    <string name="account_backup_error_unavailable">Cloud backup isn\'t available yet. Try again later.</string>
     <plurals name="account_count_vehicles">
         <item quantity="one">%d car</item>
         <item quantity="other">%d cars</item>
@@ -117,4 +115,22 @@
     <string name="account_delete_kept_drive">Backups in your Google Drive</string>
     <string name="account_delete_kept_drive_body">They stay in your Drive. Delete them in Google Drive › Settings › Manage apps.</string>
     <string name="account_verify_start_over">Sign up with a different email</string>
+    <string name="drive_title">Google Drive backup</string>
+    <string name="drive_intro_title">Back up to your own Google Drive</string>
+    <string name="drive_intro_hidden_folder">Saved in a hidden app folder in your Drive</string>
+    <string name="drive_intro_private">Only you can see it. Chageun\'s operator can\'t access it.</string>
+    <string name="drive_intro_storage">Uses your Drive storage. Only the 5 most recent backups are kept.</string>
+    <string name="drive_connect">Connect Google Drive</string>
+    <string name="drive_intro_zip_hint">You can also move data without Drive: Settings › Data › Send to another device.</string>
+    <string name="drive_connect_failed">Couldn\'t connect Google Drive. Try again.</string>
+    <string name="drive_disconnect">Disconnect Google Drive</string>
+    <string name="drive_disconnect_body">Backups stay in your Drive. Delete them in Google Drive › Settings › Manage apps.</string>
+    <string name="drive_error_storage_full">Your Google Drive is full. Free up space and try again.</string>
+    <string name="drive_error_not_connected">Google Drive is disconnected. Connect it again.</string>
+    <string name="drive_error_unavailable">Google Drive isn\'t available right now. Try again later.</string>
+    <string name="restore_start_body">Bring your records from your previous phone. Everything on this phone will be replaced with the backup.</string>
+    <string name="restore_start_file">Restore from a backup file</string>
+    <string name="restore_start_file_body">Choose the Chageun ZIP file you sent from your old phone</string>
+    <string name="restore_start_drive">Restore from Google Drive</string>
+    <string name="restore_start_drive_body">Bring back a backup saved in your Drive</string>
 </resources>

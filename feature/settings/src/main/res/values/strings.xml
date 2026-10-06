@@ -58,7 +58,7 @@
     <string name="privacy_security_title">How it is protected</string>
     <string name="privacy_security_body">The plate number is encrypted with a key kept in the Android Keystore and is shown masked. Location and camera details are removed from photos when they are attached. App data is not included in Android\'s automatic backup or device transfer; it leaves the device only as a ZIP file you export or a Google Drive backup you turn on.</string>
     <string name="privacy_control_title">Your control</string>
-    <string name="privacy_control_body">Settings › Data lets you export everything to a ZIP file, restore it, or delete it all. Settings › Account &amp; backup lets you delete your account, which removes your email and user ID. Google Drive backups stay in your Drive; delete them in Google Drive › Settings › Manage apps. Uninstalling the app removes the data on this device.</string>
+    <string name="privacy_control_body">Settings › Data lets you export everything to a ZIP file, send it to another device, restore it, or delete it all, and turn Google Drive backup on or off. Settings › Account lets you delete your account, which removes your email and user ID. Google Drive backups stay in your Drive; delete them in Google Drive › Settings › Manage apps. Uninstalling the app removes the data on this device.</string>
     <string name="privacy_disclaimer_title">About the guidance</string>
     <string name="privacy_disclaimer_body">Maintenance intervals are general recommendations, not manufacturer values, unless you changed them. Answers from external AI apps can be wrong. Follow your owner\'s manual and a qualified mechanic for safety decisions.</string>
     <string name="settings_mileage_reminders">Monthly mileage reminder</string>
@@ -67,6 +67,10 @@
     <string name="settings_section_privacy">Privacy</string>
     <string name="settings_usage_stats">Send usage statistics and crash reports</string>
     <string name="settings_usage_stats_body">Only which features you use, like saving a record, and error details when the app crashes, to improve the app. Plate number, record details and questions are never sent.</string>
-    <string name="settings_account">Account &amp; backup</string>
-    <string name="settings_account_body">Sign in to back up your car to the cloud</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_account_body">Sign in with your email or Google account</string>
+    <string name="settings_drive_backup">Google Drive backup</string>
+    <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it.</string>
+    <string name="settings_share">Send to another device</string>
+    <string name="settings_share_body">Send a backup file with Quick Share, email, or a messenger. On the new phone, choose “Restore from a backup” on the first screen.</string>
 </resources>

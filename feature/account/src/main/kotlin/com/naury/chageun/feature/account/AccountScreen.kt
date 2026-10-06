@@ -13,15 +13,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -63,23 +61,10 @@ import com.naury.chageun.core.ui.openUriSafely
 fun AccountRoute(
     onBack: () -> Unit,
     onOpenEmail: () -> Unit,
-    isRestoreMode: Boolean = false,
     onOpenDeleteAccount: () -> Unit = {},
     viewModel: AccountViewModel = hiltViewModel(),
-    backupViewModel: CloudBackupViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val backupState by backupViewModel.uiState.collectAsStateWithLifecycle()
-    val backupActions = CloudBackupActions(
-        onBackUpNow = backupViewModel::backUpNow,
-        onAutoBackupChange = backupViewModel::setAutoBackupEnabled,
-        onSelect = backupViewModel::select,
-        onRestore = backupViewModel::startRestore,
-        onConfirmRestore = backupViewModel::confirmRestore,
-        onCloseDialog = backupViewModel::closeDialog,
-        onRequestDelete = backupViewModel::requestDelete,
-        onConfirmDelete = backupViewModel::confirmDelete,
-    )
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     var isSignOutConfirming by rememberSaveable { mutableStateOf(false) }
@@ -93,14 +78,9 @@ fun AccountRoute(
         onResendVerification = viewModel::resendVerification,
         onSignOut = { isSignOutConfirming = true },
         onNoticeShown = viewModel::dismissNotice,
-        backup = backupState,
-        backupActions = backupActions,
-        onBackupNoticeShown = backupViewModel::dismissNotice,
-        isRestoreMode = isRestoreMode,
         onDeleteAccount = onOpenDeleteAccount,
         onStartOver = viewModel::startOver,
     )
-    CloudBackupDialogs(backupState, backupActions)
     if (isSignOutConfirming) {
         AlertDialog(
             onDismissRequest = { isSignOutConfirming = false },
@@ -131,10 +111,6 @@ fun AccountScreen(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
     onNoticeShown: () -> Unit = {},
-    backup: CloudBackupUiState = CloudBackupUiState(),
-    backupActions: CloudBackupActions = CloudBackupActions(),
-    onBackupNoticeShown: () -> Unit = {},
-    isRestoreMode: Boolean = false,
     onDeleteAccount: () -> Unit = {},
     onStartOver: () -> Unit = {},
 ) {
@@ -146,16 +122,9 @@ fun AccountScreen(
             onNoticeShown()
         }
     }
-    val backupNoticeText = backup.notice?.let { backupNoticeMessage(it) }
-    LaunchedEffect(backup.notice) {
-        if (backupNoticeText != null) {
-            snackbar.showSnackbar(backupNoticeText)
-            onBackupNoticeShown()
-        }
-    }
     Box(modifier.fillMaxSize()) {
         LargeTitleScaffold(
-            title = stringResource(if (isRestoreMode) R.string.account_restore_mode_title else R.string.account_title),
+            title = stringResource(R.string.account_title),
             navigationIcon = { BackButton(onBack) },
         ) { padding ->
             val user = uiState.user
@@ -183,14 +152,6 @@ fun AccountScreen(
                         isBusy = uiState.isBusy,
                         onSignOut = onSignOut,
                         onDeleteAccount = onDeleteAccount,
-                        isRestoreMode = isRestoreMode,
-                        backup = {
-                            if (isRestoreMode) {
-                                RestorePicker(backup, backupActions, onStartFresh = onBack)
-                            } else {
-                                CloudBackupSection(backup, canBackUp = true, backupActions)
-                            }
-                        },
                     )
                 }
             }
@@ -221,7 +182,7 @@ private fun ColumnScope.AccountStart(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                Icons.Filled.CloudDone,
+                Icons.Filled.AccountCircle,
                 contentDescription = null,
                 tint = tone.content,
                 modifier = Modifier.size(36.dp),
@@ -237,13 +198,13 @@ private fun ColumnScope.AccountStart(
     }
     CardGroup(title = null) {
         ListRow(
-            Icons.Filled.CloudUpload,
+            Icons.Filled.Mail,
             stringResource(R.string.account_benefit_backup),
             tone = ChageunTheme.colors.good,
         )
         GroupDivider()
         ListRow(
-            Icons.Filled.Devices,
+            Icons.Filled.VerifiedUser,
             stringResource(R.string.account_benefit_restore),
             tone = ChageunTheme.colors.upcoming,
         )
@@ -338,14 +299,7 @@ private fun ColumnScope.VerifyEmail(
 
 /** AC05 계정 화면. */
 @Composable
-private fun AccountHome(
-    user: AuthUser,
-    isBusy: Boolean,
-    onSignOut: () -> Unit,
-    onDeleteAccount: () -> Unit,
-    isRestoreMode: Boolean,
-    backup: @Composable () -> Unit,
-) {
+private fun AccountHome(user: AuthUser, isBusy: Boolean, onSignOut: () -> Unit, onDeleteAccount: () -> Unit) {
     CardGroup(stringResource(R.string.account_section_account)) {
         ListRow(
             icon = Icons.Filled.AccountCircle,
@@ -360,7 +314,6 @@ private fun AccountHome(
             tone = ChageunTheme.colors.good,
         )
     }
-    backup()
     CardGroup(title = null) {
         ListRow(
             Icons.AutoMirrored.Filled.Logout,
@@ -370,16 +323,14 @@ private fun AccountHome(
             enabled = !isBusy,
             trailing = {},
         )
-        if (!isRestoreMode) {
-            GroupDivider()
-            ListRow(
-                Icons.Filled.PersonRemove,
-                stringResource(R.string.account_delete),
-                titleColor = MaterialTheme.colorScheme.error,
-                onClick = onDeleteAccount,
-                enabled = !isBusy,
-            )
-        }
+        GroupDivider()
+        ListRow(
+            Icons.Filled.PersonRemove,
+            stringResource(R.string.account_delete),
+            titleColor = MaterialTheme.colorScheme.error,
+            onClick = onDeleteAccount,
+            enabled = !isBusy,
+        )
     }
 }
 

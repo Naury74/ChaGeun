@@ -10,7 +10,6 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
-import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeCloudBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -23,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 class AutoBackupTest {
 
     private val settings = FakeSettingsRepository()
-    private val auth = FakeAuthRepository()
+    private val drive = FakeDriveAccess(connected = false)
     private val cloud = FakeCloudBackupRepository()
     private val silentLogger = object : AppLogger {
         override fun debug(event: String, vararg fields: LogField) = Unit
@@ -34,20 +33,18 @@ class AutoBackupTest {
     }
 
     @Test
-    fun sync_schedulesOnlyWhenEnabledAndVerified() = runTest(UnconfinedTestDispatcher()) {
+    fun sync_schedulesOnlyWhenEnabledAndConnected() = runTest(UnconfinedTestDispatcher()) {
         val scheduler = RecordingScheduler()
-        AutoBackupSync(settings, auth, scheduler).start(backgroundScope)
+        AutoBackupSync(settings, drive, scheduler).start(backgroundScope)
         assertThat(scheduler.calls).containsExactly("cancel")
 
         settings.setCloudAutoBackupEnabled(true)
-        auth.signUpWithEmail("driver@example.com", "chageun1")
         assertThat(scheduler.calls.last()).isEqualTo("cancel")
 
-        auth.verifyEmailOutside("driver@example.com")
-        auth.reload()
+        drive.connect()
         assertThat(scheduler.calls.last()).isEqualTo("schedule")
 
-        auth.signOut()
+        drive.disconnect()
         assertThat(scheduler.calls).containsExactly("cancel", "schedule", "cancel").inOrder()
     }
 
