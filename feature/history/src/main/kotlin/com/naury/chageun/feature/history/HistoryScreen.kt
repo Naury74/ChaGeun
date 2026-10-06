@@ -23,7 +23,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -188,6 +192,26 @@ fun HistoryScreen(
         return
     }
     val detail = uiState.detail
+    // 접거나 펼쳐 한 칸·두 칸이 바뀌면 상세가 컴포지션의 다른 자리로 간다. 상태째 옮겨야 삭제 확인 같은
+    // 상세 안의 상태가 사라지지 않는다. 다른 기록을 열면 key로 상태를 새로 시작한다.
+    val currentAttachments by rememberUpdatedState(attachments)
+    val currentOnSelect by rememberUpdatedState(onSelect)
+    val currentOnDelete by rememberUpdatedState(onDelete)
+    val currentOnEdit by rememberUpdatedState(onEdit)
+    val detailPane = remember {
+        movableContentOf { shown: RecordDetail, paneModifier: Modifier ->
+            key(shown.ref) {
+                RecordDetailPane(
+                    shown,
+                    currentAttachments,
+                    onBack = { currentOnSelect(null) },
+                    onDelete = currentOnDelete,
+                    modifier = paneModifier,
+                    onEdit = currentOnEdit,
+                )
+            }
+        }
+    }
     val timeline: @Composable (Modifier) -> Unit = { paneModifier ->
         Box(paneModifier) {
             // 넓은 창에서 목록만 있을 때 한 줄이 너무 길어지지 않도록 가운데에 폭을 제한해 둔다.
@@ -221,30 +245,14 @@ fun HistoryScreen(
             AdaptiveListDetail(
                 selected = detail,
                 list = { timeline(Modifier.fillMaxSize()) },
-                detail = {
-                    RecordDetailPane(
-                        it,
-                        attachments,
-                        onBack = { onSelect(null) },
-                        onDelete = onDelete,
-                        modifier = Modifier.fillMaxSize(),
-                        onEdit = onEdit,
-                    )
-                },
+                detail = { detailPane(it, Modifier.fillMaxSize()) },
                 emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
                 modifier = modifier,
             )
         }
         detail != null -> {
             BackHandler { onSelect(null) }
-            RecordDetailPane(
-                detail = detail,
-                attachments = attachments,
-                onBack = { onSelect(null) },
-                onDelete = onDelete,
-                modifier = modifier.fillMaxSize(),
-                onEdit = onEdit,
-            )
+            detailPane(detail, modifier.fillMaxSize())
         }
         else -> timeline(modifier.fillMaxSize())
     }
