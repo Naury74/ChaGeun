@@ -156,6 +156,7 @@ private fun TimelineRow.asTimelineItem(): TimelineItem? {
         costWon = costWon,
         source = RecordSource.User,
         createdAt = createdAt,
+        isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
     )
 }
 

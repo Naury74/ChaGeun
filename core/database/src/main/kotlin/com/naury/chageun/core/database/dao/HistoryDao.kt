@@ -17,17 +17,17 @@ interface HistoryDao {
      */
     @Query(
         """
-        SELECT event_type, id, occurred_on, title, item_type, mileage_km, cost_won, created_at FROM (
+        SELECT event_type, id, occurred_on, title, item_type, mileage_km, cost_won, created_at, source_type FROM (
             SELECT 'Maintenance' AS event_type, id, service_date AS occurred_on, NULL AS title, item_type,
-                mileage_km, cost_won, created_at,
+                mileage_km, cost_won, created_at, source_type,
                 COALESCE(shop_name, '') || ' ' || COALESCE(memo, '') AS search_text
             FROM maintenance_record WHERE vehicle_id = :vehicleId
             UNION ALL
-            SELECT 'Fuel', id, fuel_date, station_name, NULL, mileage_km, total_price_won, created_at,
+            SELECT 'Fuel', id, fuel_date, station_name, NULL, mileage_km, total_price_won, created_at, 'USER',
                 COALESCE(station_name, '') || ' ' || COALESCE(memo, '')
             FROM fuel_record WHERE vehicle_id = :vehicleId
             UNION ALL
-            SELECT kind, id, check_date, title, NULL, mileage_km, cost_won, created_at,
+            SELECT kind, id, check_date, title, NULL, mileage_km, cost_won, created_at, 'USER',
                 title || ' ' || COALESCE(memo, '')
             FROM check_record WHERE vehicle_id = :vehicleId
         )
