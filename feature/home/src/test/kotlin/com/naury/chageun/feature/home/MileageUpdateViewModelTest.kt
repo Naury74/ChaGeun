@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.UpdateMileageUseCase
+import com.naury.chageun.core.domain.mileage.ReadOdometerUseCase
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageReading
@@ -34,10 +35,14 @@ class MileageUpdateViewModelTest {
             SavedStateHandle(),
             vehicles,
             maintenance,
-            UpdateMileageUseCase(maintenance, Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)),
+            UpdateMileageUseCase(maintenance, clock),
             FakeAnalyticsTracker(),
+            ReadOdometerUseCase({ dashboardLines }, clock),
         )
     }
+
+    private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
+    private var dashboardLines: List<String>? = emptyList()
 
     @Before
     fun setUp() = runTest {
@@ -78,5 +83,37 @@ class MileageUpdateViewModelTest {
 
         assertThat(viewModel.uiState.value.isSaved).isTrue()
         assertThat(maintenance.mileageCorrections.single().mileage).isEqualTo(Kilometers(1_200))
+    }
+
+    @Test
+    fun dashboardPhoto_fillsBestCandidate_withoutSaving() = runTest {
+        dashboardLines = listOf("12:30", "DTE 410 km", "ODO 43,520 km")
+
+        viewModel.readDashboard("file:///photo.jpg")
+
+        val state = viewModel.uiState.value
+        assertThat(state.mileage).isEqualTo("43520")
+        assertThat(state.dashboard).isEqualTo(DashboardReadState.Read(Kilometers(43_520), emptyList(), Kilometers(410)))
+        assertThat(state.isSaved).isFalse()
+    }
+
+    @Test
+    fun dashboardPhoto_withoutUsableNumber_keepsManualInput() = runTest {
+        viewModel.onMileageChanged("43000")
+        dashboardLines = listOf("READY")
+
+        viewModel.readDashboard("file:///photo.jpg")
+
+        assertThat(viewModel.uiState.value.dashboard).isEqualTo(DashboardReadState.NotFound)
+        assertThat(viewModel.uiState.value.mileage).isEqualTo("43000")
+    }
+
+    @Test
+    fun dashboardPhoto_whenRecognizerUnavailable_asksForManualInput() = runTest {
+        dashboardLines = null
+
+        viewModel.readDashboard("file:///photo.jpg")
+
+        assertThat(viewModel.uiState.value.dashboard).isEqualTo(DashboardReadState.Unavailable)
     }
 }

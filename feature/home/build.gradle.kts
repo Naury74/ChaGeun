@@ -10,9 +10,11 @@ android {
 
 dependencies {
     implementation(projects.core.ads)
+    implementation(projects.core.common)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.material3.adaptive)
+    implementation(libs.play.services.mlkit.text.recognition)
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)

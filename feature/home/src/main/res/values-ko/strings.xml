@@ -67,4 +67,11 @@
     </plurals>
     <string name="home_missing_less">접기</string>
     <string name="home_add_photo">내 차 사진 넣기</string>
+    <string name="home_dashboard_button">계기판 사진으로 읽기</string>
+    <string name="home_dashboard_reading">계기판을 읽는 중이에요…</string>
+    <string name="home_dashboard_read">사진에서 %1$s km를 읽었어요. 계기판과 같은지 확인하고 저장해 주세요.</string>
+    <string name="home_dashboard_range">주행 가능 거리 약 %1$s km (참고용, 저장하지 않아요)</string>
+    <string name="home_dashboard_not_found">주행거리를 찾지 못했어요. 숫자 부분만 잘라서 다시 찍거나 직접 입력해 주세요.</string>
+    <string name="home_mileage_value">%1$s km</string>
+    <string name="home_dashboard_unavailable">지금 이 기기에서는 사진으로 읽을 수 없어요. 주행거리를 직접 입력해 주세요.</string>
 </resources>
