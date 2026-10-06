@@ -59,4 +59,20 @@ class DrivingPaceEstimatorTest {
 
         assertThat(pace?.confidence).isEqualTo(Confidence.Medium)
     }
+
+    @Test
+    fun lifetimeEstimate_usesAverageSinceModelYear_withLowConfidence() {
+        val pace = estimator.lifetimeEstimate(Kilometers(36_500), 2025, LocalDate.of(2026, 1, 1))
+
+        assertThat(pace).isEqualTo(DrivingPace(100.0, Confidence.Low))
+    }
+
+    @Test
+    fun lifetimeEstimate_skipsNewCarsAndMissingInputs() {
+        val today = LocalDate.of(2026, 3, 1)
+
+        assertThat(estimator.lifetimeEstimate(Kilometers(3_000), 2026, today)).isNull()
+        assertThat(estimator.lifetimeEstimate(null, 2020, today)).isNull()
+        assertThat(estimator.lifetimeEstimate(Kilometers(3_000), null, today)).isNull()
+    }
 }
