@@ -233,6 +233,8 @@ fun HistoryScreen(
                 onClick = onAdd,
                 icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.history_add)) },
+                // 다른 주요 버튼(Tonal)과 같은 색을 써서 다크 모드에서도 같은 무게로 보이게 한다.
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(ChageunTheme.spacing.gutter),

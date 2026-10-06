@@ -270,4 +270,24 @@ class SettingsTest {
         }
         composeRule.captureScreen("settings_phone")
     }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneDark() {
+        composeRule.setContent {
+            AppFrame {
+                SettingsScreen(
+                    settings = UserSettings(),
+                    versionName = "0.1.0",
+                    onBack = {},
+                    onThemeSelected = {},
+                    onRemindersChanged = {},
+                    onOpenSystemNotifications = {},
+                    dataSection = { DataSection(DataUiState(), onExport = {}, onImport = {}, onRequestDelete = {}) },
+                )
+            }
+        }
+        composeRule.captureScreen("settings_phone_dark")
+    }
 }

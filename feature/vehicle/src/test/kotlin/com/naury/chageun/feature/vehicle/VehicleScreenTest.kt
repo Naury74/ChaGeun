@@ -179,6 +179,18 @@ class VehicleScreenTest {
     }
 
     @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_phoneDark() {
+        composeRule.setContent {
+            AppFrame {
+                VehicleScreen(VehicleUiState.Content(vehicle, log, dueIn(14)), isTwoPane = false, onUpdateMileage = {})
+            }
+        }
+        composeRule.captureScreen("vehicle_phone_dark")
+    }
+
+    @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun screenshot_tablet() {
