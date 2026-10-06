@@ -27,6 +27,9 @@ internal interface HistoryDataModule {
 
     @Binds
     fun bindImageImporter(importer: BitmapImageImporter): ImageImporter
+
+    @Binds
+    fun bindSubjectCutter(cutter: IsolatedSubjectCutter): SubjectCutter
 }
 
 @Module
