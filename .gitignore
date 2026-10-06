@@ -44,6 +44,3 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Firebase 규칙 테스트
-firebase/test/node_modules/
-firebase/**/*.log

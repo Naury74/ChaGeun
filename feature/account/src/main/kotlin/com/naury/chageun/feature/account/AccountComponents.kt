@@ -130,6 +130,7 @@ internal fun authErrorMessage(error: AuthError): String = stringResource(
         AuthError.InvalidCredentials -> R.string.account_error_invalid_credentials
         AuthError.TooManyRequests -> R.string.account_error_too_many
         AuthError.UserDisabled -> R.string.account_error_disabled
+        AuthError.RecentLoginRequired -> R.string.account_error_recent_login
         AuthError.NoGoogleAccount -> R.string.account_error_no_google
         AuthError.Unavailable -> R.string.account_error_unavailable
         AuthError.Unknown -> R.string.account_error_unknown

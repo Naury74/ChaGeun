@@ -16,9 +16,10 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.MarkEmailUnread
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.AlertDialog
@@ -63,6 +64,7 @@ fun AccountRoute(
     onBack: () -> Unit,
     onOpenEmail: () -> Unit,
     isRestoreMode: Boolean = false,
+    onOpenDeleteAccount: () -> Unit = {},
     viewModel: AccountViewModel = hiltViewModel(),
     backupViewModel: CloudBackupViewModel = hiltViewModel(),
 ) {
@@ -95,6 +97,8 @@ fun AccountRoute(
         backupActions = backupActions,
         onBackupNoticeShown = backupViewModel::dismissNotice,
         isRestoreMode = isRestoreMode,
+        onDeleteAccount = onOpenDeleteAccount,
+        onStartOver = viewModel::startOver,
     )
     CloudBackupDialogs(backupState, backupActions)
     if (isSignOutConfirming) {
@@ -131,6 +135,8 @@ fun AccountScreen(
     backupActions: CloudBackupActions = CloudBackupActions(),
     onBackupNoticeShown: () -> Unit = {},
     isRestoreMode: Boolean = false,
+    onDeleteAccount: () -> Unit = {},
+    onStartOver: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { noticeMessage(it) }
@@ -163,18 +169,26 @@ fun AccountScreen(
                         onContinueWithEmail = onContinueWithEmail,
                         onOpenPrivacyPolicy = onOpenPrivacyPolicy,
                     )
-                    else -> AccountHome(
-                        user = user,
+                    // 이메일 인증을 마쳐야 가입이 끝난다. 그 전에는 인증 안내만 보여 준다(ADR-006).
+                    user.needsEmailVerification -> VerifyEmail(
+                        email = user.email.orEmpty(),
                         isBusy = uiState.isBusy,
                         onCheckVerification = onCheckVerification,
                         onResendVerification = onResendVerification,
+                        onStartOver = onStartOver,
                         onSignOut = onSignOut,
+                    )
+                    else -> AccountHome(
+                        user = user,
+                        isBusy = uiState.isBusy,
+                        onSignOut = onSignOut,
+                        onDeleteAccount = onDeleteAccount,
                         isRestoreMode = isRestoreMode,
                         backup = {
                             if (isRestoreMode) {
                                 RestorePicker(backup, backupActions, onStartFresh = onBack)
                             } else {
-                                CloudBackupSection(backup, canBackUp = !user.needsEmailVerification, backupActions)
+                                CloudBackupSection(backup, canBackUp = true, backupActions)
                             }
                         },
                     )
@@ -253,42 +267,85 @@ private fun ColumnScope.AccountStart(
     }
 }
 
-/** AC05 계정 화면과 AC04 인증 안내. */
+/** AC04. 인증 메일의 링크를 누르고 돌아와 확인을 눌러야 가입이 끝난다. */
+@Composable
+private fun ColumnScope.VerifyEmail(
+    email: String,
+    isBusy: Boolean,
+    onCheckVerification: () -> Unit,
+    onResendVerification: () -> Unit,
+    onStartOver: () -> Unit,
+    onSignOut: () -> Unit,
+) {
+    val tone = ChageunTheme.colors.upcoming
+    Box(
+        Modifier
+            .size(HERO_ICON_BOX)
+            .background(tone.container, CircleShape)
+            .align(Alignment.CenterHorizontally),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Filled.MarkEmailUnread,
+            contentDescription = null,
+            tint = tone.content,
+            modifier = Modifier.size(36.dp),
+        )
+    }
+    Text(
+        stringResource(R.string.account_verify_title),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { heading() },
+    )
+    Text(
+        stringResource(R.string.account_verify_body, email),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Button(onClick = onCheckVerification, enabled = !isBusy, modifier = ButtonHeight) {
+        ButtonContent(stringResource(R.string.account_verify_check), isBusy = isBusy)
+    }
+    CardGroup(title = null) {
+        ListRow(
+            Icons.Filled.Refresh,
+            stringResource(R.string.account_verify_resend),
+            onClick = onResendVerification,
+            enabled = !isBusy,
+        )
+        GroupDivider()
+        ListRow(
+            Icons.Filled.Edit,
+            stringResource(R.string.account_verify_start_over),
+            onClick = onStartOver,
+            enabled = !isBusy,
+        )
+        GroupDivider()
+        ListRow(
+            Icons.AutoMirrored.Filled.Logout,
+            stringResource(R.string.account_sign_out),
+            onClick = onSignOut,
+            enabled = !isBusy,
+            trailing = {},
+        )
+    }
+}
+
+/** AC05 계정 화면. */
 @Composable
 private fun AccountHome(
     user: AuthUser,
     isBusy: Boolean,
-    onCheckVerification: () -> Unit,
-    onResendVerification: () -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
     isRestoreMode: Boolean,
     backup: @Composable () -> Unit,
 ) {
-    // 복원은 인증 없이도 된다. 새 기기에서 복원하러 온 사람에게 인증 안내는 방해가 된다.
-    if (user.needsEmailVerification && !isRestoreMode) {
-        CardGroup(title = null) {
-            ListRow(
-                icon = Icons.Filled.MarkEmailUnread,
-                title = stringResource(R.string.account_verify_title),
-                body = stringResource(R.string.account_verify_body, user.email.orEmpty()),
-                tone = ChageunTheme.colors.upcoming,
-            )
-            GroupDivider()
-            ListRow(
-                Icons.Filled.MarkEmailRead,
-                stringResource(R.string.account_verify_check),
-                onClick = onCheckVerification,
-                enabled = !isBusy,
-            )
-            GroupDivider()
-            ListRow(
-                Icons.Filled.Refresh,
-                stringResource(R.string.account_verify_resend),
-                onClick = onResendVerification,
-                enabled = !isBusy,
-            )
-        }
-    }
     CardGroup(stringResource(R.string.account_section_account)) {
         ListRow(
             icon = Icons.Filled.AccountCircle,
@@ -313,6 +370,16 @@ private fun AccountHome(
             enabled = !isBusy,
             trailing = {},
         )
+        if (!isRestoreMode) {
+            GroupDivider()
+            ListRow(
+                Icons.Filled.PersonRemove,
+                stringResource(R.string.account_delete),
+                titleColor = MaterialTheme.colorScheme.error,
+                onClick = onDeleteAccount,
+                enabled = !isBusy,
+            )
+        }
     }
 }
 

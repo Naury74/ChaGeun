@@ -15,6 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -107,15 +108,9 @@ class EmailAuthViewModel @Inject constructor(
             }
             when (result) {
                 is AuthResult.Success -> {
-                    analytics.track(
-                        if (current.isSignUp) {
-                            AnalyticsEvent.SignUp(
-                                AuthMethod.Email,
-                            )
-                        } else {
-                            AnalyticsEvent.Login(AuthMethod.Email)
-                        },
-                    )
+                    // 가입은 인증을 마칠 때(AccountViewModel) 센다. 로그인은 인증된 계정일 때만 센다.
+                    val verified = authRepository.currentUser.first()?.needsEmailVerification == false
+                    if (!current.isSignUp && verified) analytics.track(AnalyticsEvent.Login(AuthMethod.Email))
                     state.update { it.copy(isBusy = false, password = "", passwordConfirm = "", isCompleted = true) }
                 }
                 is AuthResult.Failure -> state.update { it.copy(isBusy = false, error = result.error) }

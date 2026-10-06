@@ -76,6 +76,7 @@ class AccountViewModelTest {
         viewModel.checkVerification()
         val verified = viewModel.uiState.first { it.notice == AccountNotice.Verified }
         assertThat(verified.user?.needsEmailVerification).isFalse()
+        assertThat(analytics.events).containsExactly(AnalyticsEvent.SignUp(AuthMethod.Email))
 
         viewModel.signOut()
         assertThat(viewModel.uiState.first { it.user == null && !it.isBusy }.user).isNull()
@@ -96,6 +97,26 @@ class AccountViewModelTest {
         viewModel.resendVerification()
         assertThat(viewModel.uiState.first { it.notice != null }.notice).isEqualTo(AccountNotice.VerificationSent)
         assertThat(auth.verificationMails).isEqualTo(2)
+    }
+}
+
+@RunWith(RobolectricTestRunner::class)
+class AccountStartOverTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun startOver_deletesUnverifiedAccount() = runTest {
+        val auth = FakeAuthRepository()
+        auth.signUpWithEmail("typo@example.com", "chageun1")
+        val viewModel = AccountViewModel(auth, FakeGoogleIdTokens(), FakeAnalyticsTracker())
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.startOver()
+
+        assertThat(viewModel.uiState.first { it.user == null && !it.isLoading }.user).isNull()
+        assertThat(auth.deletedAccounts).isEqualTo(1)
     }
 }
 

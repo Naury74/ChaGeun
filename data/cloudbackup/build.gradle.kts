@@ -12,9 +12,6 @@ android {
 dependencies {
     implementation(projects.core.common)
     implementation(projects.core.domain)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)

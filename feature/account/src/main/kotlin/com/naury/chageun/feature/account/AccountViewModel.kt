@@ -86,6 +86,8 @@ class AccountViewModel @Inject constructor(
         notice.value = when (val result = authRepository.reload()) {
             is AuthResult.Failure -> AccountNotice.Failed(result.error)
             is AuthResult.Success -> if (authRepository.currentUser.first()?.needsEmailVerification == false) {
+                // 인증을 마친 이때가 가입 완료다.
+                analytics.track(AnalyticsEvent.SignUp(AuthMethod.Email))
                 AccountNotice.Verified
             } else {
                 AccountNotice.NotVerifiedYet
@@ -94,6 +96,11 @@ class AccountViewModel @Inject constructor(
     }
 
     fun signOut() = run { authRepository.signOut() }
+
+    /** 인증 전 계정을 지우고 처음부터 다시 가입한다. 지우지 못하면 로그아웃만 한다. */
+    fun startOver() = run {
+        if (authRepository.deleteAccount() is AuthResult.Failure) authRepository.signOut()
+    }
 
     fun dismissNotice() {
         notice.value = null

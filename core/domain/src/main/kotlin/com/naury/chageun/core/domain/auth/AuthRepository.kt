@@ -11,6 +11,9 @@ enum class AuthError {
     InvalidCredentials,
     TooManyRequests,
     UserDisabled,
+
+    /** 계정 삭제처럼 민감한 작업 전에 다시 로그인해야 한다. */
+    RecentLoginRequired,
     NoGoogleAccount,
     Unavailable,
     Unknown,
@@ -60,4 +63,13 @@ interface AuthRepository {
 
     /** 로그아웃해도 기기에 있는 차량·기록은 그대로 둔다. */
     suspend fun signOut()
+
+    /** 이메일 계정을 비밀번호로 다시 확인한다. 계정 삭제 직전에 쓴다. */
+    suspend fun reauthenticateWithPassword(password: String): AuthResult
+
+    /** Google 계정을 다시 골라 확인한다. 다른 계정을 고르면 [AuthError.InvalidCredentials]다. */
+    suspend fun reauthenticateWithGoogle(idToken: String): AuthResult
+
+    /** 로그인 정보를 지운다. 클라우드 데이터는 먼저 지워야 한다. 성공하면 로그아웃 상태가 된다. */
+    suspend fun deleteAccount(): AuthResult
 }

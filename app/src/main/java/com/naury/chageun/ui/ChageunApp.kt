@@ -33,6 +33,7 @@ import com.naury.chageun.R
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.feature.account.AccountRoute as AccountScreenRoute
+import com.naury.chageun.feature.account.DeleteAccountRoute
 import com.naury.chageun.feature.account.EmailAuthRoute
 import com.naury.chageun.feature.ai.AiHubRoute
 import com.naury.chageun.feature.history.HistoryRoute
@@ -45,6 +46,7 @@ import com.naury.chageun.feature.settings.PrivacyNoticeScreen
 import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
 import com.naury.chageun.feature.vehicle.album.AlbumRoute as AlbumScreenRoute
+import com.naury.chageun.navigation.AccountDeleteRoute
 import com.naury.chageun.navigation.AccountEmailRoute
 import com.naury.chageun.navigation.AccountRoute
 import com.naury.chageun.navigation.AiRoute
@@ -177,6 +179,13 @@ fun ChageunApp(
                     AccountScreenRoute(
                         onBack = { backStack.removeLastOrNull() },
                         onOpenEmail = { backStack.add(AccountEmailRoute) },
+                        onOpenDeleteAccount = { backStack.add(AccountDeleteRoute) },
+                    )
+                }
+                entry(AccountDeleteRoute) {
+                    DeleteAccountRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onDeleted = { backStack.remove(AccountDeleteRoute) },
                     )
                 }
                 entry(AccountEmailRoute) {

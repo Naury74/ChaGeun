@@ -1,6 +1,6 @@
 # ADR-005 선택 계정과 Firebase 클라우드 백업
 
-Status: Accepted
+Status: Accepted (저장소 부분은 ADR-006으로 대체)
 
 ## Context
 

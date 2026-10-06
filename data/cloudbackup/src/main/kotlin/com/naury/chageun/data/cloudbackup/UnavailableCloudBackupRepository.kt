@@ -4,7 +4,7 @@ import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
 import com.naury.chageun.core.domain.cloudbackup.CloudResult
 
-/** google-services.json 없이 빌드해 Firebase가 없을 때. */
+/** 백업 저장소를 쓸 수 없을 때. Google 드라이브 연결을 붙이기 전까지 이 구현을 쓴다. */
 internal object UnavailableCloudBackupRepository : CloudBackupRepository {
     private val unavailable = CloudResult.Failure(CloudBackupError.Unavailable)
 

@@ -211,11 +211,12 @@ class SettingsTest {
     }
 
     @Test
-    fun privacyNotice_statesVehicleDataIsNeverSent() {
+    fun privacyNotice_statesVehicleDataStaysUnlessBackedUp() {
         composeRule.setContent { ChageunTheme { PrivacyNoticeScreen(onBack = {}) } }
 
         composeRule.onNodeWithText("What leaves the device").assertExists()
-        composeRule.onNodeWithText("Your vehicle details and records are never sent", substring = true).assertExists()
+        composeRule.onNodeWithText("records are not sent to Chageun", substring = true).assertExists()
+        composeRule.onNodeWithText("delete your account", substring = true).assertExists()
     }
 
     @Test

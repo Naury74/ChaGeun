@@ -24,7 +24,7 @@
     <string name="account_privacy_agree">개인정보처리방침에 동의해요</string>
     <string name="account_privacy_view">보기</string>
     <string name="account_submit_sign_in">로그인</string>
-    <string name="account_submit_sign_up">가입하기</string>
+    <string name="account_submit_sign_up">가입하고 인증 메일 받기</string>
     <string name="account_forgot_password">비밀번호를 잊었어요</string>
     <string name="account_reset_title">비밀번호 재설정</string>
     <string name="account_reset_body">새 비밀번호를 정할 수 있는 링크를 메일로 보내 드려요.</string>
@@ -33,7 +33,7 @@
     <string name="account_close">닫기</string>
     <string name="account_cancel">취소</string>
     <string name="account_error_network">인터넷 연결을 확인하고 다시 시도해 주세요.</string>
-    <string name="account_error_email_in_use">이미 가입한 이메일이에요. 로그인하거나 Google로 계속해 주세요.</string>
+    <string name="account_error_email_in_use">이미 가입했거나 인증을 기다리는 이메일이에요. 로그인해서 이어 가거나 Google로 계속해 주세요.</string>
     <string name="account_error_weak_password">영문과 숫자를 섞어 8자 이상으로 정해 주세요.</string>
     <string name="account_error_invalid_credentials">이메일이나 비밀번호가 맞지 않아요.</string>
     <string name="account_error_too_many">시도가 너무 많아요. 잠시 뒤 다시 시도해 주세요.</string>
@@ -44,13 +44,13 @@
     <string name="account_section_account">계정</string>
     <string name="account_signed_in_google">Google로 로그인함</string>
     <string name="account_signed_in_email">이메일로 로그인함</string>
-    <string name="account_verify_title">이메일 인증이 필요해요</string>
-    <string name="account_verify_body">%1$s(으)로 보낸 메일의 링크를 눌러 주세요. 인증하면 백업할 수 있어요.</string>
+    <string name="account_verify_title">메일함에서 인증을 마쳐 주세요</string>
+    <string name="account_verify_body">%1$s(으)로 인증 메일을 보냈어요. 메일의 링크를 누른 뒤 아래 버튼을 눌러야 가입이 끝나요.</string>
     <string name="account_verify_check">인증을 마쳤어요</string>
     <string name="account_verify_resend">메일 다시 보내기</string>
     <string name="account_notice_verification_sent">인증 메일을 보냈어요.</string>
     <string name="account_notice_not_verified">아직 인증되지 않았어요. 메일함을 확인해 주세요.</string>
-    <string name="account_notice_verified">이메일 인증을 마쳤어요.</string>
+    <string name="account_notice_verified">가입을 마쳤어요.</string>
     <string name="account_section_backup">클라우드 백업</string>
     <string name="account_backup_now">지금 백업</string>
     <string name="account_sign_out">로그아웃</string>
@@ -99,4 +99,19 @@
     <string name="account_restore_empty_title">이 계정에 백업이 없어요</string>
     <string name="account_restore_empty_body">백업한 계정으로 로그인했는지 확인하거나 처음부터 시작해 주세요.</string>
     <string name="account_restore_start_fresh">처음부터 시작하기</string>
+    <string name="account_delete">계정 삭제</string>
+    <string name="account_delete_title">계정 삭제</string>
+    <string name="account_delete_removed">지워지는 것</string>
+    <string name="account_delete_removed_account">차근 계정과 로그인 정보</string>
+    <string name="account_delete_kept">이 휴대폰에 남는 것</string>
+    <string name="account_delete_kept_data">차량·기록·사진·앨범</string>
+    <string name="account_delete_kept_body">계정 없이 지금처럼 계속 쓸 수 있어요.</string>
+    <string name="account_delete_password">확인을 위해 비밀번호를 입력해 주세요</string>
+    <string name="account_delete_google_confirm">삭제를 누르면 확인을 위해 Google 계정을 한 번 더 골라 주세요.</string>
+    <string name="account_delete_confirm">계정 삭제</string>
+    <string name="account_delete_done">계정을 삭제했어요.</string>
+    <string name="account_error_recent_login">안전을 위해 다시 로그인한 뒤 시도해 주세요.</string>
+    <string name="account_delete_kept_drive">내 Google 드라이브의 백업</string>
+    <string name="account_delete_kept_drive_body">내 드라이브에 그대로 남아요. Google 드라이브 › 설정 › 앱 관리에서 지울 수 있어요.</string>
+    <string name="account_verify_start_over">다른 이메일로 가입하기</string>
 </resources>
