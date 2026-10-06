@@ -10,6 +10,7 @@ import com.naury.chageun.core.domain.maintenance.RecordServiceUseCase
 import com.naury.chageun.core.domain.maintenance.ServiceEntryError
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
@@ -49,6 +50,9 @@ class RecordServiceViewModel @AssistedInject constructor(
             cost = savedStateHandle[KEY_COST] ?: "",
             shopName = savedStateHandle[KEY_SHOP] ?: "",
             memo = savedStateHandle[KEY_MEMO] ?: "",
+            alsoReplaced = savedStateHandle.get<ArrayList<String>>(KEY_ALSO_REPLACED).orEmpty()
+                .mapNotNull { name -> MaintenanceItem.entries.firstOrNull { it.name == name } }
+                .toSet(),
             isEditing = editingRecordId != null,
         ),
     )
@@ -57,9 +61,12 @@ class RecordServiceViewModel @AssistedInject constructor(
     init {
         if (editingRecordId != null) {
             loadEditingRecord(editingRecordId)
-        } else if (_uiState.value.mileage.isEmpty()) {
+        } else {
             viewModelScope.launch {
                 val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
+                val candidates = recordService.companionCandidates(vehicle.id, item)
+                _uiState.update { it.copy(companionCandidates = candidates) }
+                if (_uiState.value.mileage.isNotEmpty()) return@launch
                 val current = recordService.currentMileage(vehicle.id) ?: return@launch
                 if (_uiState.value.mileage.isEmpty()) onMileageChanged(current.value.toString())
             }
@@ -101,6 +108,12 @@ class RecordServiceViewModel @AssistedInject constructor(
 
     fun onMemoChanged(value: String) = edit(null) { copy(memo = value.take(MAX_TEXT_LENGTH)) }
 
+    fun toggleAlsoReplaced(companion: MaintenanceItem) {
+        val selected = _uiState.value.alsoReplaced.let { if (companion in it) it - companion else it + companion }
+        savedStateHandle[KEY_ALSO_REPLACED] = ArrayList(selected.map { it.name })
+        _uiState.update { it.copy(alsoReplaced = selected) }
+    }
+
     fun save() = submit(isLowerMileageConfirmed = false)
 
     fun confirmLowerMileage() = submit(isLowerMileageConfirmed = true)
@@ -129,7 +142,7 @@ class RecordServiceViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
-            runCatching { recordService(vehicle.id, entry, isLowerMileageConfirmed) }
+            runCatching { recordService(vehicle.id, entry, isLowerMileageConfirmed, state.alsoReplaced) }
                 .onSuccess(::applyResult)
                 .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
         }
@@ -165,7 +178,10 @@ class RecordServiceViewModel @AssistedInject constructor(
         _uiState.update { state ->
             when (result) {
                 is RecordServiceResult.Saved ->
-                    state.copy(isSaving = false, savedResult = SavedResult(result.nextDistanceDue, result.nextDateDue))
+                    state.copy(
+                        isSaving = false,
+                        savedResult = SavedResult(result.nextDistanceDue, result.nextDateDue, result.alsoReplaced),
+                    )
                 is RecordServiceResult.NeedsConfirmation ->
                     state.copy(isSaving = false, lowerMileageWarning = result.previousMileage)
                 is RecordServiceResult.Rejected -> state.copy(
@@ -206,6 +222,7 @@ class RecordServiceViewModel @AssistedInject constructor(
         const val KEY_COST = "record_cost"
         const val KEY_SHOP = "record_shop"
         const val KEY_MEMO = "record_memo"
+        const val KEY_ALSO_REPLACED = "record_also_replaced"
         const val KEY_EDIT_LOADED = "record_edit_loaded"
         const val MAX_DIGITS = 9
         const val MAX_TEXT_LENGTH = 200

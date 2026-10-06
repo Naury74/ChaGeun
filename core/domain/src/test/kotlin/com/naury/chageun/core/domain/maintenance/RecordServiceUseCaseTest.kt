@@ -112,4 +112,54 @@ class RecordServiceUseCaseTest {
         assertThat(result).isInstanceOf(RecordServiceResult.Saved::class.java)
         assertThat(repository.recordedServices.single().second).isFalse()
     }
+
+    @Test
+    fun alsoReplaced_savesEachItemOnTheSameDay_withCostOnlyOnce() = runTest {
+        val result = recordService(
+            vehicleId,
+            entry(42_891, cost = 80_000).copy(shopName = "Blue Hands", memo = "Synthetic"),
+            alsoReplaced = setOf(MaintenanceItem.OilFilter, MaintenanceItem.EngineOil),
+        )
+
+        val (oil, filter) = repository.recordedServices
+        assertThat(repository.recordedServices).hasSize(2)
+        assertThat(oil.first.costWon).isEqualTo(80_000)
+        assertThat(filter.first.item).isEqualTo(MaintenanceItem.OilFilter)
+        assertThat(filter.first.date).isEqualTo(today)
+        assertThat(filter.first.mileage).isEqualTo(Kilometers(42_891))
+        assertThat(filter.first.shopName).isEqualTo("Blue Hands")
+        assertThat(filter.first.costWon).isNull()
+        assertThat(filter.first.memo).isNull()
+        // 주행거리 기록은 첫 항목에서 한 번만 남긴다.
+        assertThat(filter.second).isFalse()
+        assertThat(notifier.cancelledItems).containsExactly(MaintenanceItem.EngineOil, MaintenanceItem.OilFilter)
+        assertThat((result as RecordServiceResult.Saved).alsoReplaced).containsExactly(MaintenanceItem.OilFilter)
+    }
+
+    @Test
+    fun alsoReplaced_isNotSaved_whenTheMainEntryNeedsConfirmation() = runTest {
+        val result = recordService(vehicleId, entry(40_000), alsoReplaced = setOf(MaintenanceItem.OilFilter))
+
+        assertThat(result).isInstanceOf(RecordServiceResult.NeedsConfirmation::class.java)
+        assertThat(repository.recordedServices).isEmpty()
+    }
+
+    @Test
+    fun companionCandidates_putUsualPartnersFirst_andSkipDisabledItems() = runTest {
+        repository.inputs.value = repository.inputs.value.copy(
+            rules = listOf(
+                MaintenanceRule(MaintenanceItem.EngineOil, intervalKm = 10_000, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.AirFilter, intervalKm = 20_000, intervalMonths = 24),
+                MaintenanceRule(MaintenanceItem.Wiper, intervalKm = null, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.OilFilter, intervalKm = 10_000, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.Tire, intervalKm = 50_000, intervalMonths = 48, isEnabled = false),
+            ),
+        )
+
+        assertThat(recordService.companionCandidates(vehicleId, MaintenanceItem.EngineOil)).containsExactly(
+            MaintenanceItem.OilFilter,
+            MaintenanceItem.AirFilter,
+            MaintenanceItem.Wiper,
+        ).inOrder()
+    }
 }

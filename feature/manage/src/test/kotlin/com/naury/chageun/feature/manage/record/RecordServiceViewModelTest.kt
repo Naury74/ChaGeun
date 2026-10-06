@@ -165,4 +165,30 @@ class RecordServiceViewModelTest {
         assertThat(id).isEqualTo("r1")
         assertThat((entry as ServiceEntry).costWon).isEqualTo(95_000)
     }
+
+    @Test
+    fun alsoReplaced_isOffered_savedTogether_andSurvivesRecreation() = runTest {
+        maintenance.inputs.value = maintenance.inputs.value.copy(
+            rules = maintenance.inputs.value.rules +
+                MaintenanceRule(MaintenanceItem.OilFilter, intervalKm = 10_000, intervalMonths = 12) +
+                MaintenanceRule(MaintenanceItem.Wiper, intervalKm = null, intervalMonths = 12),
+        )
+        val handle = SavedStateHandle()
+        val first = viewModel(handle)
+
+        first.toggleAlsoReplaced(MaintenanceItem.OilFilter)
+        val recreated = viewModel(handle)
+        recreated.save()
+
+        assertThat(recreated.uiState.value.companionCandidates)
+            .containsExactly(MaintenanceItem.OilFilter, MaintenanceItem.Wiper).inOrder()
+        assertThat(maintenance.recordedServices.map { it.first.item })
+            .containsExactly(MaintenanceItem.EngineOil, MaintenanceItem.OilFilter).inOrder()
+        assertThat(recreated.uiState.value.savedResult?.alsoReplaced).containsExactly(MaintenanceItem.OilFilter)
+    }
+
+    @Test
+    fun editing_doesNotOfferAlsoReplaced() {
+        assertThat(viewModel(editingRecordId = "r1").uiState.value.companionCandidates).isEmpty()
+    }
 }

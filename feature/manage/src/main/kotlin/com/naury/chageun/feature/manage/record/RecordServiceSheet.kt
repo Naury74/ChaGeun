@@ -2,15 +2,22 @@ package com.naury.chageun.feature.manage.record
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -23,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.StatusTone
@@ -69,6 +77,7 @@ fun RecordServiceHost(
                 onCostChanged = viewModel::onCostChanged,
                 onShopNameChanged = viewModel::onShopNameChanged,
                 onMemoChanged = viewModel::onMemoChanged,
+                onToggleAlsoReplaced = viewModel::toggleAlsoReplaced,
                 onSave = viewModel::save,
                 onConfirmLowerMileage = viewModel::confirmLowerMileage,
                 onEditLowerMileage = viewModel::dismissLowerMileageWarning,
@@ -89,6 +98,7 @@ data class RecordServiceActions(
     val onConfirmLowerMileage: () -> Unit,
     val onEditLowerMileage: () -> Unit,
     val onDismiss: () -> Unit,
+    val onToggleAlsoReplaced: (MaintenanceItem) -> Unit = {},
 )
 
 @Composable
@@ -128,7 +138,12 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
             errorText = uiState.errors[RecordServiceField.Cost]?.let { stringResource(it.messageRes) },
             supportingText = stringResource(R.string.record_cost_hint),
         )
-        OptionalSection(hasValue = uiState.shopName.isNotEmpty() || uiState.memo.isNotEmpty()) {
+        OptionalSection(
+            hasValue = uiState.shopName.isNotEmpty() || uiState.memo.isNotEmpty() || uiState.alsoReplaced.isNotEmpty(),
+        ) {
+            if (uiState.companionCandidates.isNotEmpty()) {
+                AlsoReplacedPicker(uiState.companionCandidates, uiState.alsoReplaced, actions.onToggleAlsoReplaced)
+            }
             OutlinedTextField(
                 value = uiState.shopName,
                 onValueChange = actions.onShopNameChanged,
@@ -167,6 +182,45 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
     }
 }
 
+/**
+ * 같은 날 함께 바꾼 항목을 여러 개 고른다. 고른 항목마다 같은 날짜·주행거리로 교체 기록이 따로 남는다.
+ * 비용·메모는 처음 항목에만 들어간다는 것을 미리 알려 지출이 두 번 잡히지 않는다는 점을 분명히 한다.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AlsoReplacedPicker(
+    candidates: List<MaintenanceItem>,
+    selected: Set<MaintenanceItem>,
+    onToggle: (MaintenanceItem) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        FormLabel(stringResource(R.string.record_also_replaced))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        ) {
+            candidates.forEach { candidate ->
+                val isSelected = candidate in selected
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { onToggle(candidate) },
+                    label = { Text(stringResource(candidate.labelRes)) },
+                    leadingIcon = if (isSelected) {
+                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                    } else {
+                        null
+                    },
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.record_also_replaced_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
 @Composable
 private fun SavedContent(itemName: String, saved: SavedResult, onDone: () -> Unit) {
     Column(
@@ -188,7 +242,13 @@ private fun SavedContent(itemName: String, saved: SavedResult, onDone: () -> Uni
             date != null -> stringResource(R.string.record_saved_next_date, date)
             else -> null
         }
-        message?.let {
+        val companions = saved.alsoReplaced.takeIf { it.isNotEmpty() }?.let { items ->
+            stringResource(
+                R.string.record_saved_also_replaced,
+                items.map { stringResource(it.labelRes) }.joinToString(", "),
+            )
+        }
+        listOfNotNull(message, companions).forEach {
             Text(
                 it,
                 style = MaterialTheme.typography.bodyLarge,

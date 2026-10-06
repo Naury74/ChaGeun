@@ -88,4 +88,7 @@
     <string name="manage_km_estimated">About %1$s km (estimated)</string>
     <string name="record_edit_title">Edit %1$s replacement</string>
     <string name="manage_title">Care</string>
+    <string name="record_also_replaced">Also replaced that day</string>
+    <string name="record_also_replaced_hint">Each one gets its own record with the same date and mileage. Cost and notes stay on this record only.</string>
+    <string name="record_saved_also_replaced">Also saved: %1$s</string>
 </resources>
