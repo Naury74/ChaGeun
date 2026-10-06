@@ -7,6 +7,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
+import dagger.Binds
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -17,6 +18,13 @@ import java.io.File
 import java.time.Clock
 import java.util.UUID
 import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+internal interface AutoBackupModule {
+    @Binds
+    fun bindScheduler(scheduler: PeriodicAutoBackupScheduler): AutoBackupScheduler
+}
 
 @Module
 @InstallIn(SingletonComponent::class)

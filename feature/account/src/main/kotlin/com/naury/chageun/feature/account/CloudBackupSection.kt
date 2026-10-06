@@ -2,15 +2,20 @@ package com.naury.chageun.feature.account
 
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -29,6 +34,7 @@ import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
+import com.naury.chageun.core.ui.ToggleListRow
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -36,13 +42,13 @@ import java.time.format.FormatStyle
 
 data class CloudBackupActions(
     val onBackUpNow: () -> Unit = {},
+    val onAutoBackupChange: (Boolean) -> Unit = {},
     val onSelect: (CloudBackup?) -> Unit = {},
     val onRestore: (CloudBackup) -> Unit = {},
     val onConfirmRestore: () -> Unit = {},
-    val onCancelRestore: () -> Unit = {},
+    val onCloseDialog: () -> Unit = {},
     val onRequestDelete: (CloudBackup) -> Unit = {},
     val onConfirmDelete: () -> Unit = {},
-    val onCancelDelete: () -> Unit = {},
 )
 
 /** AC05 지금 백업과 AC06 백업 목록. 목록은 최대 다섯 개라 따로 화면을 두지 않는다. */
@@ -72,6 +78,15 @@ internal fun CloudBackupSection(state: CloudBackupUiState, canBackUp: Boolean, a
                 null
             },
         )
+        GroupDivider()
+        ToggleListRow(
+            icon = Icons.Filled.Schedule,
+            title = stringResource(R.string.account_auto_backup),
+            body = stringResource(R.string.account_auto_backup_body),
+            checked = state.isAutoBackupEnabled,
+            onCheckedChange = actions.onAutoBackupChange,
+            enabled = canBackUp,
+        )
     }
     if (state.backups.isNotEmpty()) {
         CardGroup(stringResource(R.string.account_backups_title, CloudBackupRepository.MAX_BACKUPS)) {
@@ -82,6 +97,43 @@ internal fun CloudBackupSection(state: CloudBackupUiState, canBackUp: Boolean, a
                     title = formatDateTime(backup.createdAt),
                     body = backupDetails(backup),
                     onClick = { actions.onSelect(backup) },
+                    enabled = !state.isWorking,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 새 기기 온보딩에서 들어온 복원 모드. 이 기기에는 아직 백업할 데이터가 없으므로 지금 백업은 숨기고,
+ * 백업을 누르면 바로 복원 미리보기로 간다.
+ */
+@Composable
+internal fun RestorePicker(state: CloudBackupUiState, actions: CloudBackupActions, onStartFresh: () -> Unit) {
+    when {
+        !state.isLoaded -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(Modifier.size(PROGRESS_SIZE * 2))
+        }
+        state.backups.isEmpty() -> {
+            CardGroup(title = null) {
+                ListRow(
+                    icon = Icons.Filled.CloudOff,
+                    title = stringResource(R.string.account_restore_empty_title),
+                    body = stringResource(R.string.account_restore_empty_body),
+                )
+            }
+            OutlinedButton(onClick = onStartFresh, modifier = ButtonHeight) {
+                Text(stringResource(R.string.account_restore_start_fresh))
+            }
+        }
+        else -> CardGroup(stringResource(R.string.account_restore_pick)) {
+            state.backups.forEachIndexed { index, backup ->
+                if (index > 0) GroupDivider()
+                ListRow(
+                    icon = Icons.Filled.History,
+                    title = formatDateTime(backup.createdAt),
+                    body = backupDetails(backup),
+                    onClick = { actions.onRestore(backup) },
                     enabled = !state.isWorking,
                 )
             }
@@ -111,7 +163,7 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
     }
     state.pendingDelete?.let {
         AlertDialog(
-            onDismissRequest = actions.onCancelDelete,
+            onDismissRequest = actions.onCloseDialog,
             title = { Text(stringResource(R.string.account_backup_delete_title)) },
             text = { Text(stringResource(R.string.account_backup_delete_body)) },
             confirmButton = {
@@ -123,7 +175,7 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
                 }
             },
             dismissButton = {
-                TextButton(onClick = actions.onCancelDelete) { Text(stringResource(R.string.account_cancel)) }
+                TextButton(onClick = actions.onCloseDialog) { Text(stringResource(R.string.account_cancel)) }
             },
         )
     }
@@ -131,7 +183,7 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
         is RestoreStep.Downloading -> ProgressDialog(stringResource(R.string.account_restore_downloading))
         is RestoreStep.Restoring -> ProgressDialog(stringResource(R.string.account_restore_restoring))
         is RestoreStep.Confirming -> AlertDialog(
-            onDismissRequest = actions.onCancelRestore,
+            onDismissRequest = actions.onCloseDialog,
             title = { Text(stringResource(R.string.account_restore_title)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
@@ -148,7 +200,7 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
                 }
             },
             dismissButton = {
-                TextButton(onClick = actions.onCancelRestore) { Text(stringResource(R.string.account_cancel)) }
+                TextButton(onClick = actions.onCloseDialog) { Text(stringResource(R.string.account_cancel)) }
             },
         )
         null -> Unit

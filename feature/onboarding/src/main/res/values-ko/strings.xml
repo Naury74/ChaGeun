@@ -51,4 +51,5 @@
     <string name="onboarding_notify_example_inspection">자동차 검사 기한이 30일 남았어요</string>
     <string name="onboarding_notify_example_mileage">이번 달 주행거리를 알려 주세요</string>
     <string name="onboarding_mileage_estimate">잘 모르겠어요 · %1$d년식 평균 약 %2$s km</string>
+    <string name="onboarding_restore_from_backup">백업에서 복원하기</string>
 </resources>

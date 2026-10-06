@@ -92,4 +92,11 @@
     <plurals name="account_count_photos">
         <item quantity="other">사진 %d장</item>
     </plurals>
+    <string name="account_auto_backup">자동 백업</string>
+    <string name="account_auto_backup_body">주 1회, Wi-Fi에 연결되어 충전 중일 때</string>
+    <string name="account_restore_mode_title">백업에서 복원</string>
+    <string name="account_restore_pick">복원할 백업을 골라 주세요</string>
+    <string name="account_restore_empty_title">이 계정에 백업이 없어요</string>
+    <string name="account_restore_empty_body">백업한 계정으로 로그인했는지 확인하거나 처음부터 시작해 주세요.</string>
+    <string name="account_restore_start_fresh">처음부터 시작하기</string>
 </resources>

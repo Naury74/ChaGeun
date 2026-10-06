@@ -35,9 +35,12 @@ class PreferencesSettingsRepositoryTest {
     fun persistsChanges() = scope.runTest {
         repository.setThemeMode(ThemeMode.Dark)
         repository.setMaintenanceReminderEnabled(false)
+        repository.setCloudAutoBackupEnabled(true)
 
         assertThat(
             repository.settings.first(),
-        ).isEqualTo(UserSettings(ThemeMode.Dark, isMaintenanceReminderEnabled = false))
+        ).isEqualTo(
+            UserSettings(ThemeMode.Dark, isMaintenanceReminderEnabled = false, isCloudAutoBackupEnabled = true),
+        )
     }
 }

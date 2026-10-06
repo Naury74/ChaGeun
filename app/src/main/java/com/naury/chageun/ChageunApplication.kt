@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.naury.chageun.core.notification.ReminderScheduler
+import com.naury.chageun.data.cloudbackup.AutoBackupSync
 import com.naury.chageun.logging.UsageStatsSync
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -24,6 +25,8 @@ class ChageunApplication :
 
     @Inject lateinit var usageStatsSync: UsageStatsSync
 
+    @Inject lateinit var autoBackupSync: AutoBackupSync
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override val workManagerConfiguration: Configuration
@@ -35,6 +38,7 @@ class ChageunApplication :
         if (!isMainProcess()) return
         reminderScheduler.schedule()
         usageStatsSync.start(appScope)
+        autoBackupSync.start(appScope)
     }
 
     private fun isMainProcess(): Boolean {

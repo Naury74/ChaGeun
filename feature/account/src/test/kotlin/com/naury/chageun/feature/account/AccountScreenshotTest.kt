@@ -135,6 +135,35 @@ class AccountScreenshotTest {
 
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun restoreMode_listsBackups_phone() {
+        composeRule.setContent {
+            AppFrame {
+                AccountScreen(
+                    uiState = AccountUiState(isLoading = false, user = emailUser),
+                    onBack = {},
+                    onContinueWithGoogle = {},
+                    onContinueWithEmail = {},
+                    onOpenPrivacyPolicy = {},
+                    onCheckVerification = {},
+                    onResendVerification = {},
+                    onSignOut = {},
+                    backup = CloudBackupUiState(
+                        isLoaded = true,
+                        backups = listOf(FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z"))),
+                    ),
+                    isRestoreMode = true,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("복원할 백업을 골라 주세요").assertExists()
+        composeRule.onNodeWithText("이메일 인증이 필요해요").assertDoesNotExist()
+        composeRule.onNodeWithText("지금 백업").assertDoesNotExist()
+        composeRule.captureScreen("account_restore_mode_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     fun restoreConfirm_phone() {
         val backup = FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z"))
         composeRule.setContent {

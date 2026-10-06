@@ -62,6 +62,7 @@ import com.naury.chageun.core.ui.openUriSafely
 fun AccountRoute(
     onBack: () -> Unit,
     onOpenEmail: () -> Unit,
+    isRestoreMode: Boolean = false,
     viewModel: AccountViewModel = hiltViewModel(),
     backupViewModel: CloudBackupViewModel = hiltViewModel(),
 ) {
@@ -69,13 +70,13 @@ fun AccountRoute(
     val backupState by backupViewModel.uiState.collectAsStateWithLifecycle()
     val backupActions = CloudBackupActions(
         onBackUpNow = backupViewModel::backUpNow,
+        onAutoBackupChange = backupViewModel::setAutoBackupEnabled,
         onSelect = backupViewModel::select,
         onRestore = backupViewModel::startRestore,
         onConfirmRestore = backupViewModel::confirmRestore,
-        onCancelRestore = backupViewModel::cancelRestore,
+        onCloseDialog = backupViewModel::closeDialog,
         onRequestDelete = backupViewModel::requestDelete,
         onConfirmDelete = backupViewModel::confirmDelete,
-        onCancelDelete = backupViewModel::cancelDelete,
     )
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -93,6 +94,7 @@ fun AccountRoute(
         backup = backupState,
         backupActions = backupActions,
         onBackupNoticeShown = backupViewModel::dismissNotice,
+        isRestoreMode = isRestoreMode,
     )
     CloudBackupDialogs(backupState, backupActions)
     if (isSignOutConfirming) {
@@ -128,6 +130,7 @@ fun AccountScreen(
     backup: CloudBackupUiState = CloudBackupUiState(),
     backupActions: CloudBackupActions = CloudBackupActions(),
     onBackupNoticeShown: () -> Unit = {},
+    isRestoreMode: Boolean = false,
 ) {
     val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { noticeMessage(it) }
@@ -146,7 +149,7 @@ fun AccountScreen(
     }
     Box(modifier.fillMaxSize()) {
         LargeTitleScaffold(
-            title = stringResource(R.string.account_title),
+            title = stringResource(if (isRestoreMode) R.string.account_restore_mode_title else R.string.account_title),
             navigationIcon = { BackButton(onBack) },
         ) { padding ->
             val user = uiState.user
@@ -166,8 +169,13 @@ fun AccountScreen(
                         onCheckVerification = onCheckVerification,
                         onResendVerification = onResendVerification,
                         onSignOut = onSignOut,
+                        isRestoreMode = isRestoreMode,
                         backup = {
-                            CloudBackupSection(backup, canBackUp = !user.needsEmailVerification, backupActions)
+                            if (isRestoreMode) {
+                                RestorePicker(backup, backupActions, onStartFresh = onBack)
+                            } else {
+                                CloudBackupSection(backup, canBackUp = !user.needsEmailVerification, backupActions)
+                            }
                         },
                     )
                 }
@@ -253,9 +261,11 @@ private fun AccountHome(
     onCheckVerification: () -> Unit,
     onResendVerification: () -> Unit,
     onSignOut: () -> Unit,
+    isRestoreMode: Boolean,
     backup: @Composable () -> Unit,
 ) {
-    if (user.needsEmailVerification) {
+    // 복원은 인증 없이도 된다. 새 기기에서 복원하러 온 사람에게 인증 안내는 방해가 된다.
+    if (user.needsEmailVerification && !isRestoreMode) {
         CardGroup(title = null) {
             ListRow(
                 icon = Icons.Filled.MarkEmailUnread,
