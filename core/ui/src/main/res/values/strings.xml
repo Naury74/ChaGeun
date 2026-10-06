@@ -57,4 +57,11 @@
     <string name="form_fewer_details">Hide details</string>
     <string name="timeline_km">%1$s km</string>
     <string name="timeline_km_estimated">About %1$s km (estimated)</string>
+    <string name="vehicle_field_maker">Manufacturer</string>
+    <string name="vehicle_field_model">Model</string>
+    <string name="vehicle_field_year">Model year</string>
+    <string name="vehicle_field_fuel">Fuel</string>
+    <string name="vehicle_field_other_maker">Other</string>
+    <string name="vehicle_field_custom">Type it in</string>
+    <string name="vehicle_field_older">Earlier</string>
 </resources>

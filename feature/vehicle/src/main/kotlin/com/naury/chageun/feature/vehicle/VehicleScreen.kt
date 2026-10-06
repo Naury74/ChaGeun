@@ -76,10 +76,12 @@ import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
+import com.naury.chageun.core.ui.isExpandedWidth
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.openUriSafely
+import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
 import java.time.LocalDate
 
 @Composable
@@ -95,6 +97,7 @@ fun VehicleRoute(
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let { viewModel.setPhoto(it.toString()) }
     }
+    var isEditing by rememberSaveable { mutableStateOf(false) }
     VehicleScreen(
         uiState,
         isTwoPane,
@@ -110,7 +113,9 @@ fun VehicleRoute(
             },
             onRemove = viewModel::removePhoto,
         ),
+        onEditVehicle = { isEditing = true },
     )
+    if (isEditing) VehicleEditHost(isExpanded = isExpandedWidth(), onDismiss = { isEditing = false })
 }
 
 data class VehiclePhotoActions(val onPick: () -> Unit = {}, val onRemove: () -> Unit = {})
@@ -125,6 +130,7 @@ fun VehicleScreen(
     onInspectionDateSelected: (LocalDate?) -> Unit = {},
     onInspectionCompleted: (InspectionCompletion) -> Unit = {},
     photoActions: VehiclePhotoActions = VehiclePhotoActions(),
+    onEditVehicle: () -> Unit = {},
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -133,13 +139,13 @@ fun VehicleScreen(
     }
     val spacing = ChageunTheme.spacing
     val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
-        listOf({ overviewPane(state, onUpdateMileage, photoActions) }, {
+        listOf({ overviewPane(state, onUpdateMileage, photoActions, onEditVehicle) }, {
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
     } else {
         listOf({
-            overviewPane(state, onUpdateMileage, photoActions)
+            overviewPane(state, onUpdateMileage, photoActions, onEditVehicle)
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
@@ -160,9 +166,10 @@ private fun LazyListScope.overviewPane(
     state: VehicleUiState.Content,
     onUpdateMileage: () -> Unit,
     photoActions: VehiclePhotoActions,
+    onEditVehicle: () -> Unit,
 ) {
     item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
-    item(key = "info") { InfoSection(state) }
+    item(key = "info") { InfoSection(state, onEditVehicle) }
     item(key = "sources") {
         val res = if (state.vehicle.registrationMode == RegistrationMode.Manual) {
             R.string.vehicle_sources_manual
@@ -260,7 +267,7 @@ private fun ButtonIcon(icon: ImageVector) {
 }
 
 @Composable
-private fun InfoSection(state: VehicleUiState.Content) {
+private fun InfoSection(state: VehicleUiState.Content, onEditVehicle: () -> Unit) {
     val vehicle = state.vehicle
     val rows = listOf(
         Triple(Icons.Filled.Pin, R.string.vehicle_plate, vehicle.plateMasked),
@@ -298,6 +305,8 @@ private fun InfoSection(state: VehicleUiState.Content) {
             if (index > 0) GroupDivider()
             InfoListRow(icon, stringResource(labelRes), value)
         }
+        GroupDivider()
+        ListRow(Icons.Filled.Edit, stringResource(R.string.vehicle_edit_open), onClick = onEditVehicle)
     }
 }
 

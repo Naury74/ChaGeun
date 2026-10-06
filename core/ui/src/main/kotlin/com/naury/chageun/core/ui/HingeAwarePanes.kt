@@ -36,13 +36,14 @@ fun currentSeparatingHinge(): Hinge? = currentWindowAdaptiveInfo().windowPosture
         }
     }
 
+/** Expanded 폭 이상인 창. 입력 시트를 Bottom Sheet 대신 Dialog로 띄울지 정할 때 쓴다. */
+@Composable
+fun isExpandedWidth(): Boolean = currentWindowAdaptiveInfo().windowSizeClass
+    .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+
 /** 목록-상세 화면은 Expanded 폭부터, 또는 세로 Hinge가 창을 나눌 때마다 Pane 두 개를 쓴다. */
 @Composable
-fun isListDetailTwoPane(): Boolean {
-    val wide = currentWindowAdaptiveInfo().windowSizeClass
-        .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
-    return wide || currentSeparatingHinge()?.isVertical == true
-}
+fun isListDetailTwoPane(): Boolean = isExpandedWidth() || currentSeparatingHinge()?.isVertical == true
 
 /**
  * 각 자식을 Pane으로 배치한다. 나란히 놓거나, [stacked]이면 위아래로 쌓는다.

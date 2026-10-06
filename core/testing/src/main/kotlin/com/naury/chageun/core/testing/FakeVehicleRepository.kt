@@ -2,9 +2,11 @@ package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.MileageEntry
+import com.naury.chageun.core.model.PlateChange
 import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.model.VehicleProfileUpdate
 import com.naury.chageun.core.model.VehicleRegistration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,5 +43,21 @@ class FakeVehicleRepository : VehicleRepository {
             isPrimary = true,
         )
         return id
+    }
+
+    override suspend fun updateProfile(vehicleId: VehicleId, update: VehicleProfileUpdate) {
+        val current = checkNotNull(primary.value?.takeIf { it.id == vehicleId })
+        primary.value = current.copy(
+            maker = update.maker,
+            model = update.model,
+            modelYear = update.modelYear,
+            fuelType = update.fuelType,
+            trim = update.trim,
+            plateMasked = when (val plate = update.plate) {
+                PlateChange.Keep -> current.plateMasked
+                PlateChange.Remove -> null
+                is PlateChange.Replace -> plate.plate.masked
+            },
+        )
     }
 }
