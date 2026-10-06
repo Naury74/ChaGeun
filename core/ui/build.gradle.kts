@@ -7,6 +7,8 @@ dependencies {
     api(projects.core.model)
     api(projects.core.domain)
     implementation(libs.androidx.material3.adaptive)
+    implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.activity.compose)
     api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(libs.truth)

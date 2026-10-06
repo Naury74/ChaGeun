@@ -62,4 +62,18 @@
     <string name="vehicle_field_other_maker">기타</string>
     <string name="vehicle_field_custom">직접 입력</string>
     <string name="vehicle_field_older">이전 연식</string>
+    <string name="photo_editor_title">사진 편집</string>
+    <string name="photo_editor_cancel">취소</string>
+    <string name="photo_editor_done">완료</string>
+    <string name="photo_editor_rotate">90° 회전</string>
+    <string name="photo_editor_crop_area">자르기 영역. 모서리를 끌어 크기를 바꾸고 안쪽을 끌어 옮겨요.</string>
+    <string name="photo_editor_aspect_free">자유</string>
+    <string name="photo_editor_aspect_square">1:1</string>
+    <string name="photo_editor_aspect_4_3">4:3</string>
+    <string name="photo_editor_aspect_16_9">16:9</string>
+    <string name="photo_editor_high_quality">고화질로 저장</string>
+    <string name="photo_editor_high_quality_hint">영수증이나 작은 글씨가 잘 보이게 더 크게 저장해요. 용량을 더 써요.</string>
+    <string name="photo_source_title">사진 추가</string>
+    <string name="photo_source_camera">사진 찍기</string>
+    <string name="photo_source_gallery">앨범에서 고르기</string>
 </resources>

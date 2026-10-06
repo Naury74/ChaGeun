@@ -1,8 +1,5 @@
 package com.naury.chageun.feature.home
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -30,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -55,7 +51,8 @@ import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
-import com.naury.chageun.core.ui.launchExternal
+import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 
 @Composable
@@ -71,10 +68,8 @@ fun HomeRoute(
 ) {
     val analytics = LocalAnalyticsTracker.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let { viewModel.setPhoto(it.toString()) }
-    }
+    val photoInput = rememberPhotoInputState()
+    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::setPhoto) })
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
         uiState = uiState,
@@ -93,11 +88,7 @@ fun HomeRoute(
             onOpenSettings = onOpenSettings,
             onOpenInspection = analytics.tracking(HomeAction.OpenInspection, onOpenInspection),
             onOpenItem = onOpenItem,
-            onAddPhoto = {
-                context.launchExternal {
-                    photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                }
-            },
+            onAddPhoto = photoInput::open,
         ),
     )
 }

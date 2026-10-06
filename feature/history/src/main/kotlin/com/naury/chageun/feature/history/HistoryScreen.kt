@@ -39,6 +39,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
@@ -46,6 +47,8 @@ import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
 
@@ -63,6 +66,19 @@ fun HistoryRoute(
     val isTwoPane = isListDetailTwoPane()
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
     var isFilterOpen by rememberSaveable { mutableStateOf(false) }
+    // 상세는 한 칸·두 칸 배치에 따라 컴포지션 위치가 달라 접거나 펼 때 상태가 사라진다.
+    // 사진 선택·편집은 배치와 상관없는 이 자리에 두어, 편집 도중 접어도 이어지게 한다.
+    val photoInput = rememberPhotoInputState()
+    var photoTarget by rememberSaveable { mutableStateOf<String?>(null) }
+    PhotoInput(
+        state = photoInput,
+        maxItems = (MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size).coerceAtLeast(1),
+        // 영수증의 작은 글씨를 남길 수 있게 첨부에서는 고화질 저장을 고르게 한다.
+        showQualityOption = true,
+        onPhotos = { uris, highQuality ->
+            photoTarget?.toRecordRef()?.let { viewModel.attach(it, uris, highQuality) }
+        },
+    )
     // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
     var editingType by rememberSaveable { mutableStateOf<TimelineEventType?>(null) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -99,7 +115,10 @@ fun HistoryRoute(
         onAdd = { dialog = AddDialog.Chooser },
         onOpenAdvancedFilter = { isFilterOpen = true },
         onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
-        onAttach = viewModel::attach,
+        onAddPhotos = { ref ->
+            photoTarget = "${ref.type.name}:${ref.id}"
+            photoInput.open()
+        },
         onDeleteAttachment = viewModel::deleteAttachment,
         onDismissAttachFailure = viewModel::dismissAttachFailure,
     )
@@ -143,7 +162,7 @@ fun HistoryScreen(
     onSelect: (RecordRef?) -> Unit,
     onDelete: (RecordRef) -> Unit,
     onAdd: () -> Unit,
-    onAttach: (RecordRef, List<String>) -> Unit,
+    onAddPhotos: (RecordRef) -> Unit,
     onDeleteAttachment: (String) -> Unit,
     onDismissAttachFailure: () -> Unit,
     modifier: Modifier = Modifier,
@@ -155,7 +174,7 @@ fun HistoryScreen(
         AttachmentsState(
             uiState.attachments,
             uiState.attachFailedCount,
-            onAttach,
+            onAddPhotos,
             onDeleteAttachment,
             onDismissAttachFailure,
         )

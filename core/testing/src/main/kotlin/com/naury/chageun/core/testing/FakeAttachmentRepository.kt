@@ -17,7 +17,15 @@ class FakeAttachmentRepository : AttachmentRepository {
     override fun observe(vehicleId: VehicleId, owner: RecordRef): Flow<List<Attachment>> =
         attachments.map { list -> list.filter { it.owner == owner } }
 
-    override suspend fun attach(vehicleId: VehicleId, owner: RecordRef, sourceUris: List<String>): AttachResult {
+    var lastHighQuality: Boolean? = null
+
+    override suspend fun attach(
+        vehicleId: VehicleId,
+        owner: RecordRef,
+        sourceUris: List<String>,
+        highQuality: Boolean,
+    ): AttachResult {
+        lastHighQuality = highQuality
         attachments.update { current ->
             current + sourceUris.mapIndexed { index, uri ->
                 Attachment("${owner.id}-${current.size + index}", owner, uri, uri, Instant.EPOCH)

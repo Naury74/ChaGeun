@@ -79,7 +79,7 @@ class HistoryScreenTest {
                     onSelect = {},
                     onDelete = onDelete,
                     onAdd = onAdd,
-                    onAttach = { _, _ -> },
+                    onAddPhotos = {},
                     onDeleteAttachment = {},
                     onDismissAttachFailure = {},
                 )
@@ -105,7 +105,7 @@ class HistoryScreenTest {
                     onSelect = { selected = it },
                     onDelete = {},
                     onAdd = {},
-                    onAttach = { _, _ -> },
+                    onAddPhotos = {},
                     onDeleteAttachment = {},
                     onDismissAttachFailure = {},
                 )
@@ -228,7 +228,7 @@ class HistoryScreenTest {
                     onSelect = {},
                     onDelete = {},
                     onAdd = {},
-                    onAttach = { _, _ -> },
+                    onAddPhotos = {},
                     onDeleteAttachment = {},
                     onDismissAttachFailure = {},
                 )
@@ -293,7 +293,7 @@ class HistoryScreenTest {
                     onSelect = {},
                     onDelete = {},
                     onAdd = {},
-                    onAttach = { _, _ -> },
+                    onAddPhotos = {},
                     onDeleteAttachment = {},
                     onDismissAttachFailure = {},
                 )
