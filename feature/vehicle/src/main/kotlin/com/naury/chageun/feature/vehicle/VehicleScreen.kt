@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,6 +26,7 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EditNote
@@ -41,6 +43,7 @@ import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -89,6 +92,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.openUriSafely
 import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
@@ -106,7 +110,21 @@ fun VehicleRoute(
     val isTwoPane = isListDetailTwoPane()
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
     val photoInput = rememberPhotoInputState()
-    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::setPhoto) })
+    // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
+    var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })
+    pendingPhoto?.let { uri ->
+        VehiclePhotoConfirmSheet(
+            sourceUri = uri,
+            initialRemoveBackground = (uiState as? VehicleUiState.Content)?.isBackgroundRemovalEnabled ?: true,
+            isExpanded = isExpandedWidth(),
+            onApply = { removeBackground ->
+                viewModel.setPhoto(uri, removeBackground)
+                pendingPhoto = null
+            },
+            onDismiss = { pendingPhoto = null },
+        )
+    }
     var isEditing by rememberSaveable { mutableStateOf(false) }
     LargeTitleScaffold(title = stringResource(R.string.vehicle_title)) { padding ->
         VehicleScreen(
@@ -120,6 +138,7 @@ fun VehicleRoute(
                 onPick = photoInput::open,
                 onRemove = viewModel::removePhoto,
                 onRemoveBackground = viewModel::removeBackground,
+                onBackgroundRemovalChanged = viewModel::setBackgroundRemoval,
             ),
             onEditVehicle = { isEditing = true },
             onOpenAlbum = onOpenAlbum,
@@ -133,6 +152,7 @@ data class VehiclePhotoActions(
     val onPick: () -> Unit = {},
     val onRemove: () -> Unit = {},
     val onRemoveBackground: () -> Unit = {},
+    val onBackgroundRemovalChanged: (Boolean) -> Unit = {},
 )
 
 @Composable
@@ -250,7 +270,7 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
             {
                 CutoutStatusPanel(
                     status = state.cutout,
-                    canRemoveBackground = !path.endsWith(".png", ignoreCase = true),
+                    canRemoveBackground = state.isBackgroundRemovalEnabled && !path.endsWith(".png", ignoreCase = true),
                     onRemoveBackground = photoActions.onRemoveBackground,
                 )
             }
@@ -291,6 +311,18 @@ private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoAct
         Text(stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change))
     }
     if (state.photoPath != null) {
+        // 사진을 넣은 뒤에도 원본과 배경을 지운 모습을 바로 바꿔 볼 수 있다.
+        FilterChip(
+            selected = state.isBackgroundRemovalEnabled,
+            onClick = { actions.onBackgroundRemovalChanged(!state.isBackgroundRemovalEnabled) },
+            label = { Text(stringResource(R.string.vehicle_photo_background_toggle)) },
+            leadingIcon = if (state.isBackgroundRemovalEnabled) {
+                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+            } else {
+                null
+            },
+            modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+        )
         TextButton(onClick = actions.onRemove) { Text(stringResource(R.string.vehicle_photo_remove)) }
     }
 }

@@ -116,4 +116,5 @@
     <string name="vehicle_mileage_trend_average">About %1$s km a month</string>
     <string name="vehicle_mileage_trend_change">+%1$s km</string>
     <string name="vehicle_mileage_trend_summary">From %1$s (%2$s km) to %3$s (%4$s km).</string>
+    <string name="vehicle_photo_background_toggle">Remove background</string>
 </resources>

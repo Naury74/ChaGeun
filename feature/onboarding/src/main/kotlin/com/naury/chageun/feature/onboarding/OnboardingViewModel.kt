@@ -66,6 +66,8 @@ class OnboardingViewModel @Inject constructor(
             OnboardingAction.SubmitVehicleInfo -> submitVehicleInfo()
             is OnboardingAction.PhotoPicked -> edit(null) { copy(photoUri = action.uri) }
             OnboardingAction.RemovePhoto -> edit(null) { copy(photoUri = null) }
+            is OnboardingAction.PhotoBackgroundRemovalChanged ->
+                edit(null) { copy(removePhotoBackground = action.enabled) }
             OnboardingAction.SubmitPhoto -> moveTo(OnboardingStep.Mileage)
             is OnboardingAction.MileageChanged ->
                 edit(OnboardingField.Mileage) {
@@ -149,7 +151,9 @@ class OnboardingViewModel @Inject constructor(
             runCatching { vehicleRepository.register(registration) }
                 .onSuccess { vehicleId ->
                     // 등록되면 바로 홈으로 넘어가 이 화면이 사라지므로, 사진 가져오기와 배경 지우기는 뒤에서 잇는다.
-                    state.photoUri?.let { photoRepository.replaceInBackground(vehicleId, it) }
+                    state.photoUri?.let {
+                        photoRepository.replaceInBackground(vehicleId, it, state.removePhotoBackground)
+                    }
                     analytics.track(AnalyticsEvent.ManualRegistrationUsed)
                     analytics.track(
                         AnalyticsEvent.OnboardingCompleted(

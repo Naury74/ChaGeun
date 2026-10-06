@@ -7,6 +7,7 @@ import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.database.dao.AttachmentDao
 import com.naury.chageun.core.database.entity.AttachmentEntity
+import com.naury.chageun.core.domain.settings.SettingsRepository
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.model.CutoutFailure
 import com.naury.chageun.core.model.CutoutStatus
@@ -61,56 +62,75 @@ internal class OfflineFirstVehiclePhotoRepository @Inject constructor(
     override fun observe(vehicleId: VehicleId): Flow<String?> = combine(
         attachmentDao.observe(vehicleId.value, OWNER_TYPE, vehicleId.value),
         cutoutStatus.map { it[vehicleId] },
-    ) { rows, _ ->
+        observeBackgroundRemoval(vehicleId),
+    ) { rows, _, removeBackground ->
         rows.maxByOrNull { it.createdAt }?.let { row ->
             val cutout = row.cutoutFile()
-            (if (cutout.exists()) cutout else File(directory, row.fileName)).absolutePath
+            (if (removeBackground && cutout.exists()) cutout else File(directory, row.fileName)).absolutePath
         }
     }
         .distinctUntilChanged()
         .flowOn(ioDispatcher)
 
+    // 배경 지우기를 꺼 두었으면 지난 실패 안내도 보이지 않게 한다.
     override fun observeCutout(vehicleId: VehicleId): Flow<CutoutStatus> =
-        cutoutStatus.map { it[vehicleId] ?: CutoutStatus.Idle }.distinctUntilChanged()
+        combine(cutoutStatus.map { it[vehicleId] ?: CutoutStatus.Idle }, observeBackgroundRemoval(vehicleId)) {
+                status,
+                enabled,
+            ->
+            if (enabled) status else CutoutStatus.Idle
+        }.distinctUntilChanged()
 
-    override suspend fun replace(vehicleId: VehicleId, sourceUri: String): Boolean = withContext(ioDispatcher) {
-        val id = UUID.randomUUID().toString()
-        val imported = runCatching {
-            images.importer.import(
-                sourceUri,
-                File(directory, "$id.jpg"),
-                File(directory, "${id}_thumb.jpg"),
-                ImageImporter.DEFAULT_EDGE_PX,
-            )
-        }.onFailure { logger.warn("vehicle_photo_import_failed", error = it) }.getOrNull()
-            ?: return@withContext false
-        cutoutJobs.remove(vehicleId)?.cancel()
-        val previous = attachmentDao.findFor(vehicleId.value, OWNER_TYPE, vehicleId.value)
-        attachmentDao.insert(
-            AttachmentEntity(
-                id = id,
-                vehicleId = vehicleId.value,
-                ownerType = OWNER_TYPE,
-                ownerId = vehicleId.value,
-                fileName = imported.file.name,
-                thumbnailName = imported.thumbnail.name,
-                mimeType = MIME_JPEG,
-                sizeBytes = imported.sizeBytes,
-                createdAt = clock.instant(),
-            ),
-        )
-        previous.forEach { row ->
-            attachmentDao.delete(vehicleId.value, row.id)
-            row.deleteFiles()
-        }
-        removeBackground(vehicleId)
-        true
+    // 지금은 차량이 하나라 앱 설정 하나로 둔다. 여러 대를 다루게 되면 차량별로 나눈다.
+    override fun observeBackgroundRemoval(vehicleId: VehicleId): Flow<Boolean> =
+        images.settings.settings.map { it.isVehiclePhotoCutoutEnabled }.distinctUntilChanged()
+
+    override suspend fun setBackgroundRemoval(vehicleId: VehicleId, enabled: Boolean) {
+        images.settings.setVehiclePhotoCutoutEnabled(enabled)
+        if (enabled) removeBackground(vehicleId) else cutoutJobs.remove(vehicleId)?.cancel()
     }
 
-    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String) {
+    override suspend fun replace(vehicleId: VehicleId, sourceUri: String, removeBackground: Boolean): Boolean =
+        withContext(ioDispatcher) {
+            val id = UUID.randomUUID().toString()
+            val imported = runCatching {
+                images.importer.import(
+                    sourceUri,
+                    File(directory, "$id.jpg"),
+                    File(directory, "${id}_thumb.jpg"),
+                    ImageImporter.DEFAULT_EDGE_PX,
+                )
+            }.onFailure { logger.warn("vehicle_photo_import_failed", error = it) }.getOrNull()
+                ?: return@withContext false
+            cutoutJobs.remove(vehicleId)?.cancel()
+            val previous = attachmentDao.findFor(vehicleId.value, OWNER_TYPE, vehicleId.value)
+            attachmentDao.insert(
+                AttachmentEntity(
+                    id = id,
+                    vehicleId = vehicleId.value,
+                    ownerType = OWNER_TYPE,
+                    ownerId = vehicleId.value,
+                    fileName = imported.file.name,
+                    thumbnailName = imported.thumbnail.name,
+                    mimeType = MIME_JPEG,
+                    sizeBytes = imported.sizeBytes,
+                    createdAt = clock.instant(),
+                ),
+            )
+            previous.forEach { row ->
+                attachmentDao.delete(vehicleId.value, row.id)
+                row.deleteFiles()
+            }
+            // 사진을 넣을 때 고른 값을 앞으로의 보기 방식으로도 쓴다.
+            images.settings.setVehiclePhotoCutoutEnabled(removeBackground)
+            if (removeBackground) removeBackground(vehicleId)
+            true
+        }
+
+    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String, removeBackground: Boolean) {
         scope.launch {
             // 앱 전체 수명의 scope라 예외가 새면 앱이 끝난다. 실패는 기록만 하고 사진 없이 둔다.
-            runCatching { replace(vehicleId, sourceUri) }
+            runCatching { replace(vehicleId, sourceUri, removeBackground) }
                 .onFailure { logger.warn("vehicle_photo_background_import_failed", error = it) }
         }
     }
@@ -179,5 +199,9 @@ internal class OfflineFirstVehiclePhotoRepository @Inject constructor(
     }
 }
 
-/** 차량 사진을 가져와 배경을 잘라 내는 두 단계를 묶는다. */
-internal class VehiclePhotoImages @Inject constructor(val importer: ImageImporter, val cutter: SubjectCutter)
+/** 차량 사진을 가져와 배경을 잘라 내는 두 단계와, 잘라 낸 모습으로 볼지에 대한 사용자 설정을 묶는다. */
+internal class VehiclePhotoImages @Inject constructor(
+    val importer: ImageImporter,
+    val cutter: SubjectCutter,
+    val settings: SettingsRepository,
+)

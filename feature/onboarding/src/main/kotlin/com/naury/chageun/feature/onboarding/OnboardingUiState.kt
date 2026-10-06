@@ -25,6 +25,8 @@ data class OnboardingUiState(
     val fuelType: FuelType? = null,
     /** 대표 사진으로 쓸 이미지. 사진 편집기가 앱 캐시에 남긴 파일이라 프로세스가 다시 떠도 읽을 수 있다. */
     val photoUri: String? = null,
+    /** 고른 사진의 배경을 지울지. 등록 뒤 내 차 탭에서도 바꿀 수 있다. */
+    val removePhotoBackground: Boolean = true,
     val mileage: String = "",
     /** 계기판을 볼 수 없을 때 고를 수 있는 연식 기준 대략값. 연식을 모르면 null이다. */
     val mileageEstimate: Long? = null,
@@ -54,6 +56,7 @@ sealed interface OnboardingAction {
     data object SubmitVehicleInfo : OnboardingAction
     data class PhotoPicked(val uri: String) : OnboardingAction
     data object RemovePhoto : OnboardingAction
+    data class PhotoBackgroundRemovalChanged(val enabled: Boolean) : OnboardingAction
     data object SubmitPhoto : OnboardingAction
     data class MileageChanged(val value: String) : OnboardingAction
     data object SubmitMileage : OnboardingAction

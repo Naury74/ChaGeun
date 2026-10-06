@@ -11,6 +11,7 @@ import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
+import com.naury.chageun.core.testing.FakeSettingsRepository
 import java.io.File
 import java.nio.file.Files
 import java.time.Clock
@@ -33,6 +34,7 @@ class OfflineFirstAttachmentRepositoryTest {
     private val directory: File = Files.createTempDirectory("attachments").toFile()
     private val now = Instant.parse("2026-10-01T00:00:00Z")
     private val vehicleId = VehicleId("v1")
+    private val settings = FakeSettingsRepository()
     private val owner = RecordRef(TimelineEventType.Fuel, "fuel-1")
     private val silentLogger = object : AppLogger {
         override fun debug(event: String, vararg fields: LogField) = Unit
@@ -125,7 +127,7 @@ class OfflineFirstAttachmentRepositoryTest {
         },
     ) = OfflineFirstVehiclePhotoRepository(
         database.attachmentDao(),
-        VehiclePhotoImages(fakeImporter, cutter),
+        VehiclePhotoImages(fakeImporter, cutter, settings),
         directory,
         Clock.fixed(now, ZoneOffset.UTC),
         silentLogger,

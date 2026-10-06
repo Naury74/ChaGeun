@@ -94,4 +94,9 @@
     <string name="hero_inspection_today">D-day</string>
     <string name="hero_inspection_overdue">Overdue</string>
     <string name="hero_inspection_unset">Not set</string>
+    <string name="vehicle_photo_confirm_title">Use this photo?</string>
+    <string name="vehicle_photo_remove_background">Remove background</string>
+    <string name="vehicle_photo_remove_background_body">Keeps just the car, processed on this device. If off, the photo\'s edges fade softly instead.</string>
+    <string name="vehicle_photo_confirm_cancel">Cancel</string>
+    <string name="vehicle_photo_confirm_apply">Use photo</string>
 </resources>

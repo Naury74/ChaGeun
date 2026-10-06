@@ -14,4 +14,6 @@ data class UserSettings(
     val isUsageStatsEnabled: Boolean = true,
     /** 로그인한 사용자가 켜면 주 1회 Wi-Fi·충전 중에 클라우드에 백업한다. */
     val isCloudAutoBackupEnabled: Boolean = false,
+    /** 내 차 사진의 배경을 지운 모습으로 보여 줄지. 끄면 원본을 가장자리만 흐리게 해서 보여 준다. */
+    val isVehiclePhotoCutoutEnabled: Boolean = true,
 )

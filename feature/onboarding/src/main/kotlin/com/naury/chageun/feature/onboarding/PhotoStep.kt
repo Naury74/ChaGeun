@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,6 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.photo.PhotoFiles
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
@@ -74,6 +77,18 @@ internal fun PhotoStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxWidth(SILHOUETTE_WIDTH_FRACTION),
+                )
+            }
+        }
+        if (photo != null) {
+            CardGroup(null) {
+                ToggleListRow(
+                    icon = Icons.Outlined.AutoFixHigh,
+                    title = stringResource(R.string.onboarding_photo_remove_background),
+                    body = stringResource(R.string.onboarding_photo_remove_background_body),
+                    checked = uiState.removePhotoBackground,
+                    onCheckedChange = { onAction(OnboardingAction.PhotoBackgroundRemovalChanged(it)) },
+                    tone = ChageunTheme.colors.ai,
                 )
             }
         }

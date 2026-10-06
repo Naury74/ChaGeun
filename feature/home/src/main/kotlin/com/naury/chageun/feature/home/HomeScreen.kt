@@ -30,6 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,6 +64,7 @@ import com.naury.chageun.core.ui.inspectionHeroStat
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 
@@ -80,7 +83,22 @@ fun HomeRoute(
     val analytics = LocalAnalyticsTracker.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val photoInput = rememberPhotoInputState()
-    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::setPhoto) })
+    // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
+    var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })
+    pendingPhoto?.let { uri ->
+        VehiclePhotoConfirmSheet(
+            sourceUri = uri,
+            initialRemoveBackground = (uiState as? HomeUiState.Content)?.isBackgroundRemovalEnabled ?: true,
+            isExpanded = currentWindowAdaptiveInfo().windowSizeClass
+                .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND),
+            onApply = { removeBackground ->
+                viewModel.setPhoto(uri, removeBackground)
+                pendingPhoto = null
+            },
+            onDismiss = { pendingPhoto = null },
+        )
+    }
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     HomeScreen(
         uiState = uiState,
@@ -343,7 +361,7 @@ private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideByS
             {
                 CutoutStatusPanel(
                     status = state.cutout,
-                    canRemoveBackground = !path.endsWith(".png", ignoreCase = true),
+                    canRemoveBackground = state.isBackgroundRemovalEnabled && !path.endsWith(".png", ignoreCase = true),
                     onRemoveBackground = actions.onRemoveBackground,
                 )
             }
