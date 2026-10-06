@@ -37,6 +37,8 @@ object DefaultMaintenanceRules {
         FuelType.Diesel to setOf(MaintenanceItem.SparkPlug),
     )
 
+    fun isApplicable(item: MaintenanceItem, fuelType: FuelType): Boolean = item !in NOT_APPLICABLE[fuelType].orEmpty()
+
     fun forFuel(fuelType: FuelType): List<MaintenanceRule> {
         val excluded = NOT_APPLICABLE[fuelType].orEmpty()
         return GENERIC.filterNot { it.item in excluded }
