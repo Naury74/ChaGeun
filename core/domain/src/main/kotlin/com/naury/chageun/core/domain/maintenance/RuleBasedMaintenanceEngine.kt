@@ -85,6 +85,7 @@ class RuleBasedMaintenanceEngine @Inject constructor(private val paceEstimator: 
         input: MaintenanceEvaluationInput,
     ): DueEstimate? {
         val pace = paceEstimator.estimate(input.mileageHistory, input.today)
+            ?: paceEstimator.lifetimeEstimate(input.currentMileage(), input.modelYear, input.today)
         val predicted = if (remainingKm != null && pace != null) {
             val days = if (remainingKm <= 0) 0L else ceil(remainingKm / pace.kmPerDay).toLong()
             DueEstimate(input.today.plusDays(days), pace.confidence)

@@ -34,7 +34,8 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
         maintenanceDao.observeRules(vehicleId.value),
         maintenanceDao.observeLatestRecords(vehicleId.value),
         mileageRecordDao.observeAll(vehicleId.value),
-    ) { rules, latestRecords, mileage ->
+        database.vehicleDao().observe(vehicleId.value),
+    ) { rules, latestRecords, mileage, vehicle ->
         MaintenanceInputs(
             rules = rules.mapNotNull { it.asExternalModelOrNull() },
             lastServices = latestRecords
@@ -43,6 +44,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
                 }
                 .toMap(),
             mileageHistory = mileage.map { it.asExternalModel() },
+            modelYear = vehicle?.modelYear,
         )
     }
 
