@@ -2,7 +2,6 @@ package com.naury.chageun.feature.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.RawRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,11 +27,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
+import com.naury.chageun.core.designsystem.component.PressStyle
+import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -62,23 +62,30 @@ fun OpenSourceLicensesScreen(libraries: List<OpenSourceLibrary>?, onBack: () -> 
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val selected = libraries?.firstOrNull { it.id == selectedId }
     BackHandler(enabled = selected != null) { selectedId = null }
-    Column(modifier.fillMaxSize().padding(horizontal = ChageunTheme.spacing.gutter)) {
-        SettingsTopBar(
-            titleRes = R.string.settings_licenses,
-            onBack = { if (selected != null) selectedId = null else onBack() },
-        )
-        when {
-            libraries == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-            selected != null -> LicenseDetail(selected)
-            else -> LazyColumn(
-                modifier = Modifier.widthIn(max = CONTENT_MAX_WIDTH),
-                contentPadding = PaddingValues(vertical = ChageunTheme.spacing.sm),
-            ) {
-                items(libraries, key = { it.id }) { library ->
-                    LibraryRow(library, onClick = { selectedId = library.id })
-                    HorizontalDivider()
+    SettingsScaffold(
+        titleRes = R.string.settings_licenses,
+        onBack = { if (selected != null) selectedId = null else onBack() },
+        modifier = modifier,
+    ) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = ChageunTheme.spacing.gutter),
+        ) {
+            when {
+                libraries == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+                selected != null -> LicenseDetail(selected)
+                else -> LazyColumn(
+                    modifier = Modifier.widthIn(max = CONTENT_MAX_WIDTH),
+                    contentPadding = PaddingValues(vertical = ChageunTheme.spacing.sm),
+                ) {
+                    items(libraries, key = { it.id }) { library ->
+                        LibraryRow(library, onClick = { selectedId = library.id })
+                        HorizontalDivider()
+                    }
                 }
             }
         }
@@ -90,7 +97,7 @@ private fun LibraryRow(library: OpenSourceLibrary, onClick: () -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
+            .pressable(onClick = onClick, style = PressStyle.Highlight)
             .padding(vertical = ChageunTheme.spacing.sm),
     ) {
         Text(library.name, style = MaterialTheme.typography.bodyLarge)

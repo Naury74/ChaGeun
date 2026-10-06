@@ -43,11 +43,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.CardGroup
@@ -102,93 +101,96 @@ data class AiHubActions(
 @Composable
 fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubActions, modifier: Modifier = Modifier) {
     val ai = ChageunTheme.colors.ai
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(ChageunTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-    ) {
-        IconButton(onClick = actions.onBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ai_back))
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+    LargeTitleScaffold(
+        title = stringResource(R.string.ai_title),
+        modifier = modifier,
+        navigationIcon = {
+            IconButton(onClick = actions.onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ai_back))
+            }
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ChageunTheme.spacing.gutter)
+                .padding(bottom = ChageunTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
         ) {
-            ItemIconBadge(Icons.Filled.AutoAwesome, ai, size = 52.dp)
-            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
-                Text(
-                    stringResource(R.string.ai_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.semantics { heading() },
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                ItemIconBadge(Icons.Filled.AutoAwesome, ai, size = 44.dp)
                 Text(
                     stringResource(R.string.ai_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
                 )
             }
-        }
-        CardGroup(stringResource(R.string.ai_pick_question)) {
-            suggestions(uiState.options.focusItem).forEachIndexed { index, suggestion ->
-                if (index > 0) GroupDivider()
-                val isSelected = uiState.question == suggestion
-                ListRow(
-                    icon = Icons.AutoMirrored.Filled.Chat,
-                    title = suggestion,
-                    tone = if (isSelected) ai else ChageunTheme.colors.unknown,
-                    onClick = { actions.onQuestionChanged(suggestion) },
-                    trailing = {
-                        if (isSelected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = ai.content)
-                    },
-                )
-            }
-        }
-        OutlinedTextField(
-            value = uiState.question,
-            onValueChange = actions.onQuestionChanged,
-            label = { Text(stringResource(R.string.ai_question_label)) },
-            isError = uiState.isQuestionMissing,
-            supportingText = stringResource(R.string.ai_question_required)
-                .takeIf { uiState.isQuestionMissing }
-                ?.let { { Text(it) } },
-            minLines = 2,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        ContextPreview(uiState, promptText, actions)
-        Text(stringResource(R.string.ai_send_with), style = MaterialTheme.typography.titleMedium)
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        ) {
-            AiProvider.entries.forEach { provider ->
-                FilledTonalButton(
-                    onClick = { actions.onShare(provider) },
-                    enabled = promptText != null,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = ai.container,
-                        contentColor = ai.content,
-                    ),
-                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Send,
-                        contentDescription = null,
-                        modifier = Modifier.size(ICON_SIZE),
+            CardGroup(stringResource(R.string.ai_pick_question)) {
+                suggestions(uiState.options.focusItem).forEachIndexed { index, suggestion ->
+                    if (index > 0) GroupDivider()
+                    val isSelected = uiState.question == suggestion
+                    ListRow(
+                        icon = Icons.AutoMirrored.Filled.Chat,
+                        title = suggestion,
+                        tone = if (isSelected) ai else ChageunTheme.colors.unknown,
+                        onClick = { actions.onQuestionChanged(suggestion) },
+                        trailing = {
+                            if (isSelected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = ai.content)
+                        },
                     )
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(provider.label ?: stringResource(R.string.ai_other_app))
                 }
             }
+            OutlinedTextField(
+                value = uiState.question,
+                onValueChange = actions.onQuestionChanged,
+                label = { Text(stringResource(R.string.ai_question_label)) },
+                isError = uiState.isQuestionMissing,
+                supportingText = stringResource(R.string.ai_question_required)
+                    .takeIf { uiState.isQuestionMissing }
+                    ?.let { { Text(it) } },
+                minLines = 2,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            ContextPreview(uiState, promptText, actions)
+            Text(stringResource(R.string.ai_send_with), style = MaterialTheme.typography.titleMedium)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            ) {
+                AiProvider.entries.forEach { provider ->
+                    FilledTonalButton(
+                        onClick = { actions.onShare(provider) },
+                        enabled = promptText != null,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = ai.container,
+                            contentColor = ai.content,
+                        ),
+                        modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null,
+                            modifier = Modifier.size(ICON_SIZE),
+                        )
+                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                        Text(provider.label ?: stringResource(R.string.ai_other_app))
+                    }
+                }
+            }
+            Text(
+                stringResource(R.string.ai_disclaimer),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            stringResource(R.string.ai_disclaimer),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 

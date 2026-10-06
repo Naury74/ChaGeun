@@ -145,97 +145,100 @@ fun SettingsScreen(
     onOpenAdPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(ChageunTheme.spacing.gutter),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-    ) {
-        SettingsTopBar(R.string.settings_title, onBack)
+    SettingsScaffold(R.string.settings_title, onBack, modifier) { padding ->
         Column(
-            Modifier.widthIn(max = CONTENT_MAX_WIDTH),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ChageunTheme.spacing.gutter)
+                .padding(bottom = ChageunTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
         ) {
-            CardGroup(title = null) {
-                ListRow(
-                    icon = Icons.Filled.AccountCircle,
-                    title = stringResource(R.string.settings_account),
-                    body = stringResource(R.string.settings_account_body),
-                    tone = ChageunTheme.colors.good,
-                    onClick = onOpenAccount,
-                )
-            }
-            CardlessSection(R.string.settings_section_theme) {
-                SegmentedControl(
-                    options = ThemeMode.entries.map { stringResource(it.labelRes) },
-                    selectedIndex = ThemeMode.entries.indexOf(settings.themeMode),
-                    onSelect = { onThemeSelected(ThemeMode.entries[it]) },
-                )
-            }
-            CardGroup(stringResource(R.string.settings_section_notifications)) {
-                ToggleListRow(
-                    icon = Icons.Filled.NotificationsActive,
-                    title = stringResource(R.string.settings_maintenance_reminders),
-                    body = stringResource(R.string.settings_maintenance_reminders_body),
-                    checked = settings.isMaintenanceReminderEnabled,
-                    onCheckedChange = onRemindersChanged,
-                    tone = ChageunTheme.colors.upcoming,
-                )
-                GroupDivider()
-                ToggleListRow(
-                    icon = Icons.Filled.Speed,
-                    title = stringResource(R.string.settings_mileage_reminders),
-                    body = stringResource(R.string.settings_mileage_reminders_body),
-                    checked = settings.isMileageReminderEnabled,
-                    onCheckedChange = onMileageRemindersChanged,
-                )
-                GroupDivider()
-                ListRow(
-                    icon = Icons.Filled.Tune,
-                    title = stringResource(R.string.settings_system_notifications),
-                    onClick = onOpenSystemNotifications,
-                    trailing = { ExternalIcon() },
-                )
-            }
-            dataSection()
-            CardGroup(stringResource(R.string.settings_section_privacy)) {
-                ToggleListRow(
-                    icon = Icons.Filled.BarChart,
-                    title = stringResource(R.string.settings_usage_stats),
-                    body = stringResource(R.string.settings_usage_stats_body),
-                    checked = settings.isUsageStatsEnabled,
-                    onCheckedChange = onUsageStatsChanged,
-                    tone = ChageunTheme.colors.ai,
-                )
-            }
-            CardGroup(stringResource(R.string.settings_section_sources)) {
-                SOURCES.forEachIndexed { index, (icon, res) ->
-                    if (index > 0) GroupDivider()
-                    ListRow(icon = icon, title = stringResource(res))
-                }
-            }
-            CardGroup(stringResource(R.string.settings_section_about)) {
-                ListRow(Icons.Filled.Info, stringResource(R.string.settings_version, versionName))
-                GroupDivider()
-                ListRow(Icons.Filled.Shield, stringResource(R.string.settings_privacy), onClick = onOpenPrivacy)
-                GroupDivider()
-                ListRow(
-                    Icons.Filled.Policy,
-                    stringResource(R.string.settings_privacy_policy),
-                    onClick = onOpenPrivacyPolicy,
-                    trailing = { ExternalIcon() },
-                )
-                if (isAdPrivacyRequired) {
-                    GroupDivider()
+            Column(
+                Modifier.widthIn(max = CONTENT_MAX_WIDTH),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
+            ) {
+                CardGroup(title = null) {
                     ListRow(
-                        Icons.Filled.AdsClick,
-                        stringResource(R.string.settings_ad_privacy),
-                        onClick = onOpenAdPrivacy,
+                        icon = Icons.Filled.AccountCircle,
+                        title = stringResource(R.string.settings_account),
+                        body = stringResource(R.string.settings_account_body),
+                        tone = ChageunTheme.colors.good,
+                        onClick = onOpenAccount,
                     )
                 }
-                GroupDivider()
-                ListRow(Icons.Filled.Code, stringResource(R.string.settings_licenses), onClick = onOpenLicenses)
+                CardlessSection(R.string.settings_section_theme) {
+                    SegmentedControl(
+                        options = ThemeMode.entries.map { stringResource(it.labelRes) },
+                        selectedIndex = ThemeMode.entries.indexOf(settings.themeMode),
+                        onSelect = { onThemeSelected(ThemeMode.entries[it]) },
+                    )
+                }
+                CardGroup(stringResource(R.string.settings_section_notifications)) {
+                    ToggleListRow(
+                        icon = Icons.Filled.NotificationsActive,
+                        title = stringResource(R.string.settings_maintenance_reminders),
+                        body = stringResource(R.string.settings_maintenance_reminders_body),
+                        checked = settings.isMaintenanceReminderEnabled,
+                        onCheckedChange = onRemindersChanged,
+                        tone = ChageunTheme.colors.upcoming,
+                    )
+                    GroupDivider()
+                    ToggleListRow(
+                        icon = Icons.Filled.Speed,
+                        title = stringResource(R.string.settings_mileage_reminders),
+                        body = stringResource(R.string.settings_mileage_reminders_body),
+                        checked = settings.isMileageReminderEnabled,
+                        onCheckedChange = onMileageRemindersChanged,
+                    )
+                    GroupDivider()
+                    ListRow(
+                        icon = Icons.Filled.Tune,
+                        title = stringResource(R.string.settings_system_notifications),
+                        onClick = onOpenSystemNotifications,
+                        trailing = { ExternalIcon() },
+                    )
+                }
+                dataSection()
+                CardGroup(stringResource(R.string.settings_section_privacy)) {
+                    ToggleListRow(
+                        icon = Icons.Filled.BarChart,
+                        title = stringResource(R.string.settings_usage_stats),
+                        body = stringResource(R.string.settings_usage_stats_body),
+                        checked = settings.isUsageStatsEnabled,
+                        onCheckedChange = onUsageStatsChanged,
+                        tone = ChageunTheme.colors.ai,
+                    )
+                }
+                CardGroup(stringResource(R.string.settings_section_sources)) {
+                    SOURCES.forEachIndexed { index, (icon, res) ->
+                        if (index > 0) GroupDivider()
+                        ListRow(icon = icon, title = stringResource(res))
+                    }
+                }
+                CardGroup(stringResource(R.string.settings_section_about)) {
+                    ListRow(Icons.Filled.Info, stringResource(R.string.settings_version, versionName))
+                    GroupDivider()
+                    ListRow(Icons.Filled.Shield, stringResource(R.string.settings_privacy), onClick = onOpenPrivacy)
+                    GroupDivider()
+                    ListRow(
+                        Icons.Filled.Policy,
+                        stringResource(R.string.settings_privacy_policy),
+                        onClick = onOpenPrivacyPolicy,
+                        trailing = { ExternalIcon() },
+                    )
+                    if (isAdPrivacyRequired) {
+                        GroupDivider()
+                        ListRow(
+                            Icons.Filled.AdsClick,
+                            stringResource(R.string.settings_ad_privacy),
+                            onClick = onOpenAdPrivacy,
+                        )
+                    }
+                    GroupDivider()
+                    ListRow(Icons.Filled.Code, stringResource(R.string.settings_licenses), onClick = onOpenLicenses)
+                }
             }
         }
     }
