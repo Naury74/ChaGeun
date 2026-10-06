@@ -35,6 +35,7 @@ class ObserveMaintenanceOverviewUseCase @Inject constructor(
                         lastService = inputs.lastServices[rule.item],
                         mileageHistory = inputs.mileageHistory,
                         today = today,
+                        modelYear = inputs.modelYear,
                     ),
                 )
             }

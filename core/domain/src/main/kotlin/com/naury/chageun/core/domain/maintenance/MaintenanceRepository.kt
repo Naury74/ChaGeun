@@ -14,6 +14,8 @@ data class MaintenanceInputs(
     val rules: List<MaintenanceRule>,
     val lastServices: Map<MaintenanceItem, ServiceRecord>,
     val mileageHistory: List<MileageReading>,
+    /** 주행 기록이 적을 때 연식부터의 평균 주행 속도를 구하는 데 쓴다. */
+    val modelYear: Int? = null,
 )
 
 interface MaintenanceRepository {
