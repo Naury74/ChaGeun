@@ -21,6 +21,12 @@ class FakeVehiclePhotoRepository : VehiclePhotoRepository {
         return importSucceeds
     }
 
+    val replacedInBackground = mutableListOf<Pair<VehicleId, String>>()
+
+    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String) {
+        replacedInBackground += vehicleId to sourceUri
+    }
+
     override fun removeBackground(vehicleId: VehicleId) {
         removeBackgroundCalls++
     }

@@ -4,7 +4,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.MaintenanceItem
 import java.time.LocalDate
 
-enum class OnboardingStep { Intro, Plate, VehicleInfo, Mileage, QuickMaintenance, Notifications }
+enum class OnboardingStep { Intro, Plate, VehicleInfo, Photo, Mileage, QuickMaintenance, Notifications }
 
 enum class FieldError {
     Required,
@@ -23,6 +23,8 @@ data class OnboardingUiState(
     val model: String = "",
     val modelYear: String = "",
     val fuelType: FuelType? = null,
+    /** 대표 사진으로 쓸 이미지. 사진 편집기가 앱 캐시에 남긴 파일이라 프로세스가 다시 떠도 읽을 수 있다. */
+    val photoUri: String? = null,
     val mileage: String = "",
     /** 계기판을 볼 수 없을 때 고를 수 있는 연식 기준 대략값. 연식을 모르면 null이다. */
     val mileageEstimate: Long? = null,
@@ -50,6 +52,9 @@ sealed interface OnboardingAction {
     data class ModelYearChanged(val value: String) : OnboardingAction
     data class FuelTypeSelected(val value: FuelType) : OnboardingAction
     data object SubmitVehicleInfo : OnboardingAction
+    data class PhotoPicked(val uri: String) : OnboardingAction
+    data object RemovePhoto : OnboardingAction
+    data object SubmitPhoto : OnboardingAction
     data class MileageChanged(val value: String) : OnboardingAction
     data object SubmitMileage : OnboardingAction
     data class QuickServiceModeSelected(val item: MaintenanceItem, val mode: QuickServiceMode) : OnboardingAction

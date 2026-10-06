@@ -107,6 +107,14 @@ internal class OfflineFirstVehiclePhotoRepository @Inject constructor(
         true
     }
 
+    override fun replaceInBackground(vehicleId: VehicleId, sourceUri: String) {
+        scope.launch {
+            // 앱 전체 수명의 scope라 예외가 새면 앱이 끝난다. 실패는 기록만 하고 사진 없이 둔다.
+            runCatching { replace(vehicleId, sourceUri) }
+                .onFailure { logger.warn("vehicle_photo_background_import_failed", error = it) }
+        }
+    }
+
     override fun removeBackground(vehicleId: VehicleId) {
         cutoutJobs.remove(vehicleId)?.cancel()
         cutoutJobs[vehicleId] = scope.launch {

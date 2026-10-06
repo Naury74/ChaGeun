@@ -7,6 +7,7 @@ import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.vehicle.RegistrationError
 import com.naury.chageun.core.domain.vehicle.RegistrationValidator
+import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val vehicleRepository: VehicleRepository,
+    private val photoRepository: VehiclePhotoRepository,
     private val registrationValidator: RegistrationValidator,
     private val clock: Clock,
     private val analytics: AnalyticsTracker,
@@ -62,6 +64,9 @@ class OnboardingViewModel @Inject constructor(
                 }
             is OnboardingAction.FuelTypeSelected -> edit(OnboardingField.FuelType) { copy(fuelType = action.value) }
             OnboardingAction.SubmitVehicleInfo -> submitVehicleInfo()
+            is OnboardingAction.PhotoPicked -> edit(null) { copy(photoUri = action.uri) }
+            OnboardingAction.RemovePhoto -> edit(null) { copy(photoUri = null) }
+            OnboardingAction.SubmitPhoto -> moveTo(OnboardingStep.Mileage)
             is OnboardingAction.MileageChanged ->
                 edit(OnboardingField.Mileage) {
                     copy(mileage = action.value.filter(Char::isDigit).take(MILEAGE_DIGITS))
@@ -106,7 +111,7 @@ class OnboardingViewModel @Inject constructor(
                     put(OnboardingField.ModelYear, FieldError.InvalidYear)
             }
         }
-        if (errors.isEmpty()) moveTo(OnboardingStep.Mileage) else setErrors(errors)
+        if (errors.isEmpty()) moveTo(OnboardingStep.Photo) else setErrors(errors)
     }
 
     private fun submitMileage() {
@@ -142,7 +147,9 @@ class OnboardingViewModel @Inject constructor(
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
             runCatching { vehicleRepository.register(registration) }
-                .onSuccess {
+                .onSuccess { vehicleId ->
+                    // 등록되면 바로 홈으로 넘어가 이 화면이 사라지므로, 사진 가져오기와 배경 지우기는 뒤에서 잇는다.
+                    state.photoUri?.let { photoRepository.replaceInBackground(vehicleId, it) }
                     analytics.track(AnalyticsEvent.ManualRegistrationUsed)
                     analytics.track(
                         AnalyticsEvent.OnboardingCompleted(
@@ -174,8 +181,10 @@ class OnboardingViewModel @Inject constructor(
         draftStore.save(_uiState.value)
     }
 
-    private fun edit(field: OnboardingField, transform: OnboardingUiState.() -> OnboardingUiState) {
-        _uiState.update { it.transform().copy(errors = it.errors - field, hasSaveFailed = false) }
+    private fun edit(field: OnboardingField?, transform: OnboardingUiState.() -> OnboardingUiState) {
+        _uiState.update { state ->
+            state.transform().copy(errors = field?.let { state.errors - it } ?: state.errors, hasSaveFailed = false)
+        }
         draftStore.save(_uiState.value)
     }
 
