@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
 import com.naury.chageun.core.database.entity.MileageRecordEntity
 import com.naury.chageun.core.database.entity.RecordSourceTypes
@@ -26,6 +27,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -179,5 +181,40 @@ class OfflineFirstHistoryRepositoryTest {
         assertThat(detail.entry.isMileageEstimated).isFalse()
         assertThat(detail.entry.costWon).isEqualTo(320_000)
         assertThat(detail.item).isEqualTo(MaintenanceItem.Tire)
+    }
+
+    @Test
+    fun filtersByPeriodCostAndAttachments_andCountsAttachments() = runTest {
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 9, 1), "Bumper", costWon = 120_000),
+            false,
+        )
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Note, LocalDate.of(2026, 3, 1), "Wash", costWon = 10_000),
+            false,
+        )
+        repository.addCheck(vehicleId, CheckEntry(CheckKind.Note, LocalDate.of(2026, 9, 5), "No cost"), false)
+        val bumper = repository.observeTimeline(vehicleId, TimelineQuery(keyword = "Bumper")).first().single()
+        database.attachmentDao().insert(
+            AttachmentEntity(
+                "a1", "v1", bumper.ref.type.name, bumper.ref.id, "a1.jpg", "a1_t.jpg", "image/jpeg", 10, now,
+            ),
+        )
+
+        fun titles(query: TimelineQuery) = repository.observeTimeline(vehicleId, query).map { rows ->
+            rows.map { it.title }
+        }
+
+        assertThat(titles(TimelineQuery(dateFrom = LocalDate.of(2026, 8, 1))).first())
+            .containsExactly("No cost", "Bumper").inOrder()
+        assertThat(titles(TimelineQuery(minCostWon = 50_000)).first()).containsExactly("Bumper")
+        assertThat(titles(TimelineQuery(maxCostWon = 50_000)).first()).containsExactly("Wash")
+        assertThat(titles(TimelineQuery(withAttachmentsOnly = true)).first()).containsExactly("Bumper")
+        assertThat(
+            repository.observeTimeline(vehicleId, TimelineQuery(keyword = "Bumper")).first().single().attachmentCount,
+        )
+            .isEqualTo(1)
     }
 }

@@ -122,4 +122,26 @@
     <string name="history_edit">수정</string>
     <string name="fuel_form_edit_title">주유 기록 수정</string>
     <string name="check_form_edit_title">점검·수리 기록 수정</string>
+    <string name="history_filter">필터</string>
+    <string name="history_filter_count">필터 %1$d</string>
+    <string name="history_filter_title">기록 필터</string>
+    <string name="history_filter_period">기간</string>
+    <string name="history_period_all">전체 기간</string>
+    <string name="history_period_month">최근 1개월</string>
+    <string name="history_period_3months">최근 3개월</string>
+    <string name="history_period_6months">최근 6개월</string>
+    <string name="history_period_year">올해</string>
+    <string name="history_period_custom">날짜 선택</string>
+    <string name="history_filter_range">%1$s – %2$s</string>
+    <string name="history_filter_cost">비용</string>
+    <string name="history_filter_cost_min">최소</string>
+    <string name="history_filter_cost_max">최대</string>
+    <string name="history_filter_cost_hint">범위를 정하면 비용을 입력하지 않은 기록은 빠져요.</string>
+    <string name="history_filter_cost_reversed">최소보다 크게 입력해 주세요</string>
+    <string name="history_filter_attachments">사진·영수증이 있는 기록만</string>
+    <string name="history_filter_reset">초기화</string>
+    <string name="history_filter_apply">적용</string>
+    <plurals name="history_attachment_count">
+        <item quantity="other">사진 %1$d장 첨부</item>
+    </plurals>
 </resources>

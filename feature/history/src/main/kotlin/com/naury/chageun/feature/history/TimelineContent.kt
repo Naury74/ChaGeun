@@ -13,14 +13,17 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,8 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -59,6 +64,8 @@ internal fun TimelineContent(
     onSelect: (RecordRef) -> Unit,
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenAdvancedFilter: () -> Unit = {},
+    onClearAdvancedFilter: () -> Unit = {},
 ) {
     val gutter = ChageunTheme.spacing.gutter
     LazyColumn(
@@ -83,6 +90,23 @@ internal fun TimelineContent(
                 contentPadding = PaddingValues(horizontal = gutter),
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
             ) {
+                item(key = "advanced") {
+                    val count = uiState.advanced.activeCount
+                    FilterChip(
+                        selected = count > 0,
+                        onClick = onOpenAdvancedFilter,
+                        leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
+                        label = {
+                            Text(
+                                if (count > 0) {
+                                    stringResource(R.string.history_filter_count, count)
+                                } else {
+                                    stringResource(R.string.history_filter)
+                                },
+                            )
+                        },
+                    )
+                }
                 items(HistoryFilter.entries) { filter ->
                     FilterChip(
                         selected = uiState.filter == filter,
@@ -100,6 +124,7 @@ internal fun TimelineContent(
                     onClear = {
                         onFilterSelected(HistoryFilter.All)
                         onKeywordChanged("")
+                        onClearAdvancedFilter()
                     },
                 )
             }
@@ -195,7 +220,15 @@ private fun TimelineRow(
         ) {
             Row(Modifier.padding(ChageunTheme.spacing.md), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
-                    Text(timelineTitle(item), style = MaterialTheme.typography.titleSmall)
+                    // 좁은 카드에서 날짜·주행거리가 줄바꿈되어도 밀리지 않도록 첨부 표시는 제목 옆에 둔다.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            timelineTitle(item),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (item.attachmentCount > 0) AttachmentMark(item.attachmentCount)
+                    }
                     val meta = listOfNotNull(
                         item.date?.let { formatDate(it) },
                         timelineMileage(item),
@@ -214,6 +247,30 @@ private fun TimelineRow(
                 }
             }
         }
+    }
+}
+
+/** 사진·영수증이 붙은 기록임을 카드에서 바로 알 수 있게 한다. */
+@Composable
+private fun AttachmentMark(count: Int) {
+    val description = pluralStringResource(R.plurals.history_attachment_count, count, count)
+    Row(
+        modifier = Modifier
+            .padding(start = ChageunTheme.spacing.xs)
+            .semantics(mergeDescendants = true) { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            Icons.Filled.AttachFile,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(ATTACHMENT_ICON_SIZE),
+        )
+        Text(
+            count.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -253,3 +310,5 @@ private val LINE_WIDTH = 2.dp
 private val FAB_CLEARANCE = 88.dp
 
 private const val AD_AFTER_RECORDS = 8
+
+private val ATTACHMENT_ICON_SIZE = 14.dp
