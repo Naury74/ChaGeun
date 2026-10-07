@@ -8,6 +8,7 @@ import com.naury.chageun.core.domain.history.HistoryEntryError
 import com.naury.chageun.core.domain.maintenance.RecordServiceResult
 import com.naury.chageun.core.domain.maintenance.RecordServiceUseCase
 import com.naury.chageun.core.domain.maintenance.ServiceEntryError
+import com.naury.chageun.core.domain.maintenance.ServicePhotos
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
@@ -54,8 +55,10 @@ class RecordServiceViewModel @AssistedInject constructor(
                 .mapNotNull { name -> MaintenanceItem.entries.firstOrNull { it.name == name } }
                 .toSet(),
             isEditing = editingRecordId != null,
+            photos = savedStateHandle.get<ArrayList<String>>(KEY_PHOTOS).orEmpty(),
         ),
     )
+    private var isPhotoHighQuality = savedStateHandle[KEY_PHOTO_HIGH_QUALITY] ?: false
     val uiState: StateFlow<RecordServiceUiState> = _uiState.asStateFlow()
 
     init {
@@ -114,16 +117,20 @@ class RecordServiceViewModel @AssistedInject constructor(
         _uiState.update { it.copy(alsoReplaced = selected) }
     }
 
+    /** 빈 목록이면 고른 사진을 뺀다. 저장한 뒤 새 기록에 붙인다. */
+    fun onPhotosChanged(uris: List<String>, highQuality: Boolean) {
+        isPhotoHighQuality = highQuality
+        savedStateHandle[KEY_PHOTOS] = ArrayList(uris)
+        savedStateHandle[KEY_PHOTO_HIGH_QUALITY] = highQuality
+        _uiState.update { it.copy(photos = uris) }
+    }
+
     // 낮은 값을 확인한 다음 주행거리 갱신까지 물을 수 있어, 앞의 확인을 기억해 둔다.
     private var isLowerMileageConfirmed = false
 
-    fun save() {
-        isLowerMileageConfirmed = false
-        submit()
-    }
-
-    fun confirmLowerMileage() {
-        isLowerMileageConfirmed = true
+    /** [confirmLowerMileage]면 이전 기록보다 낮다는 안내를 보고도 그대로 저장한다. */
+    fun save(confirmLowerMileage: Boolean = false) {
+        isLowerMileageConfirmed = confirmLowerMileage
         submit()
     }
 
@@ -156,9 +163,16 @@ class RecordServiceViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val vehicle = vehicleRepository.observePrimaryVehicle().filterNotNull().first()
             runCatching {
-                recordService(vehicle.id, entry, isLowerMileageConfirmed, state.alsoReplaced, updateOdometer)
+                recordService(
+                    vehicle.id,
+                    entry,
+                    isLowerMileageConfirmed,
+                    state.alsoReplaced,
+                    updateOdometer,
+                    ServicePhotos(state.photos, isPhotoHighQuality),
+                )
             }
-                .onSuccess(::applyResult)
+                .onSuccess { result -> _uiState.update { it.withResult(result) } }
                 .onFailure { _uiState.update { it.copy(isSaving = false, hasSaveFailed = true) } }
         }
     }
@@ -189,33 +203,6 @@ class RecordServiceViewModel @AssistedInject constructor(
         }
     }
 
-    private fun applyResult(result: RecordServiceResult) {
-        _uiState.update { state ->
-            when (result) {
-                is RecordServiceResult.Saved ->
-                    state.copy(
-                        isSaving = false,
-                        savedResult = SavedResult(result.nextDistanceDue, result.nextDateDue, result.alsoReplaced),
-                    )
-                is RecordServiceResult.NeedsConfirmation ->
-                    state.copy(isSaving = false, lowerMileageWarning = result.previousMileage)
-                is RecordServiceResult.NeedsOdometerDecision ->
-                    state.copy(isSaving = false, odometerPrompt = result.currentMileage)
-                is RecordServiceResult.Rejected -> state.copy(
-                    isSaving = false,
-                    errors = result.errors.associate { error ->
-                        when (error) {
-                            ServiceEntryError.FutureDate -> RecordServiceField.Date to RecordServiceError.FutureDate
-                            ServiceEntryError.NegativeCost ->
-                                RecordServiceField.Cost to
-                                    RecordServiceError.InvalidNumber
-                        }
-                    },
-                )
-            }
-        }
-    }
-
     private fun edit(field: RecordServiceField?, transform: RecordServiceUiState.() -> RecordServiceUiState) {
         _uiState.update { state ->
             state.transform().copy(errors = field?.let { state.errors - it } ?: state.errors, hasSaveFailed = false)
@@ -234,6 +221,8 @@ class RecordServiceViewModel @AssistedInject constructor(
     }
 
     private companion object {
+        const val KEY_PHOTOS = "record_photos"
+        const val KEY_PHOTO_HIGH_QUALITY = "record_photo_high_quality"
         const val KEY_DATE = "record_date"
         const val KEY_MILEAGE = "record_mileage"
         const val KEY_COST = "record_cost"
@@ -244,4 +233,27 @@ class RecordServiceViewModel @AssistedInject constructor(
         const val MAX_DIGITS = 9
         const val MAX_TEXT_LENGTH = 200
     }
+}
+
+private fun RecordServiceUiState.withResult(result: RecordServiceResult): RecordServiceUiState = when (result) {
+    is RecordServiceResult.Saved -> copy(
+        isSaving = false,
+        savedResult = SavedResult(
+            result.nextDistanceDue,
+            result.nextDateDue,
+            result.alsoReplaced,
+            result.failedPhotoCount,
+        ),
+    )
+    is RecordServiceResult.NeedsConfirmation -> copy(isSaving = false, lowerMileageWarning = result.previousMileage)
+    is RecordServiceResult.NeedsOdometerDecision -> copy(isSaving = false, odometerPrompt = result.currentMileage)
+    is RecordServiceResult.Rejected -> copy(
+        isSaving = false,
+        errors = result.errors.associate { error ->
+            when (error) {
+                ServiceEntryError.FutureDate -> RecordServiceField.Date to RecordServiceError.FutureDate
+                ServiceEntryError.NegativeCost -> RecordServiceField.Cost to RecordServiceError.InvalidNumber
+            }
+        },
+    )
 }

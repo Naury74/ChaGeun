@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -192,7 +193,7 @@ private fun HeroStatsCard(stats: List<HeroStat>, footnote: String?) {
 
 @Composable
 private fun HeroStatCell(stat: HeroStat, modifier: Modifier) {
-    // 큰 글꼴에서는 잘리지 않고 두 줄로 넘어가도록 줄 수를 묶지 않는다.
+    // 이름표는 큰 글꼴에서 잘리지 않고 두 줄로 넘어가도록 줄 수를 묶지 않는다.
     Column(
         modifier = modifier
             .padding(horizontal = ChageunTheme.spacing.xs)
@@ -215,6 +216,9 @@ private fun HeroStatCell(stat: HeroStat, modifier: Modifier) {
             },
             style = NumericTextStyles.Hero.copy(fontSize = STAT_VALUE_SIZE),
             textAlign = TextAlign.Center,
+            // 칸이 좁으면 단위만 다음 줄로 떨어져 어색하므로, 한 줄에 두고 글자를 줄여 맞춘다.
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = STAT_VALUE_MIN_SIZE, maxFontSize = STAT_VALUE_SIZE),
         )
     }
 }
@@ -404,6 +408,7 @@ private const val GLOW_RADIUS = 0.75f
 private const val DIVIDER_ALPHA = 0.18f
 private const val SECONDARY_ALPHA = 0.7f
 private val STAT_VALUE_SIZE = 20.sp
+private val STAT_VALUE_MIN_SIZE = 12.sp
 
 private val PREVIEW_STATS = listOf(
     HeroStat("Mileage", "42,180", "km"),

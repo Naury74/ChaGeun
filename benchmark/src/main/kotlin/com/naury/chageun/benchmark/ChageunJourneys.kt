@@ -5,6 +5,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.Until
+import java.time.Year
 
 internal const val PACKAGE_NAME = "com.naury.chageun"
 
@@ -19,16 +20,21 @@ internal fun MacrobenchmarkScope.registerCarIfNeeded() {
     clickText("Get started")
     clickText("Register without a plate")
 
-    device.wait(Until.hasObject(By.text("Tell us about your car")), UI_TIMEOUT_MS)
+    awaitText("Tell us about your car")
     clickText("Hyundai")
     clickText("Avante")
-    clickText("2022")
-    device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 1f)
+    // 연식은 가로 목록이라 좁은 화면에서는 오래된 해가 밖에 있다. 늘 앞쪽에 보이는 작년을 고른다.
+    clickText((Year.now().value - 1).toString())
     clickText("Gasoline")
     clickText("Next")
 
-    device.wait(Until.hasObject(By.text("What does the odometer show?")), UI_TIMEOUT_MS)
-    device.findObject(By.clazz("android.widget.EditText")).text = "42000"
+    awaitText("Add a photo of your car")
+    clickText("Skip for now")
+
+    awaitText("What does the odometer show?")
+    checkNotNull(device.wait(Until.findObject(By.clazz("android.widget.EditText")), UI_TIMEOUT_MS)) {
+        "주행거리 입력칸을 찾지 못했다"
+    }.text = "42000"
     clickText("Next")
     clickText("Next")
     clickText("Maybe later")
@@ -59,9 +65,24 @@ internal fun MacrobenchmarkScope.scrollMainList() {
     }
 }
 
+private fun MacrobenchmarkScope.awaitText(text: String) {
+    check(device.wait(Until.hasObject(By.text(text)), UI_TIMEOUT_MS)) { "'$text' 화면이 나오지 않았다" }
+}
+
+/** 작은 화면에서는 버튼이 아래에 가려져 있을 수 있어 세로 목록을 내려 가며 찾는다. */
 private fun MacrobenchmarkScope.clickText(text: String) {
-    device.wait(Until.findObject(By.text(text)), UI_TIMEOUT_MS)?.click()
+    var target = device.wait(Until.findObject(By.text(text)), UI_TIMEOUT_MS)
+    repeat(MAX_SCROLLS) {
+        if (target != null) return@repeat
+        // 연식 칩 같은 가로 목록도 scrollable이므로 가장 높은 것을 화면 목록으로 본다.
+        val page = device.findObjects(By.scrollable(true).pkg(PACKAGE_NAME)).maxByOrNull { it.visibleBounds.height() }
+        page?.scroll(Direction.DOWN, SCROLL_PERCENT)
+        target = device.findObject(By.text(text))
+    }
+    checkNotNull(target) { "'$text'을(를) 찾지 못했다" }.click()
     device.waitForIdle()
 }
 
 private const val GESTURE_MARGIN_DIVISOR = 5
+private const val MAX_SCROLLS = 3
+private const val SCROLL_PERCENT = 0.8f

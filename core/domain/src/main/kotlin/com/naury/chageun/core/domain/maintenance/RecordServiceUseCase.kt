@@ -2,10 +2,13 @@ package com.naury.chageun.core.domain.maintenance
 
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.history.AttachmentRepository
 import com.naury.chageun.core.domain.reminder.ReminderNotifier
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.LocalDate
@@ -20,6 +23,10 @@ sealed interface RecordServiceResult {
         val nextDistanceDue: Kilometers?,
         val nextDateDue: LocalDate?,
         val alsoReplaced: List<MaintenanceItem> = emptyList(),
+        /** 사진을 붙일 때 쓰는 주 항목 기록의 ID. */
+        val recordId: String? = null,
+        /** 붙이지 못한 사진 수. 기록은 이미 저장됐으므로 사진이 실패해도 되돌리지 않는다. */
+        val failedPhotoCount: Int = 0,
     ) : RecordServiceResult
 
     data class Rejected(val errors: Set<ServiceEntryError>) : RecordServiceResult
@@ -31,11 +38,15 @@ sealed interface RecordServiceResult {
     data class NeedsOdometerDecision(val currentMileage: Kilometers) : RecordServiceResult
 }
 
+/** 교체 기록과 함께 붙일 사진·영수증. [highQuality]면 작은 글씨가 보이도록 크게 남긴다. */
+data class ServicePhotos(val uris: List<String> = emptyList(), val highQuality: Boolean = false)
+
 class RecordServiceUseCase @Inject constructor(
     private val repository: MaintenanceRepository,
     private val clock: Clock,
     private val analytics: AnalyticsTracker,
     private val notifier: ReminderNotifier,
+    private val attachments: AttachmentRepository,
 ) {
     /** 입력 폼의 주행거리 기본값. */
     suspend fun currentMileage(vehicleId: VehicleId): Kilometers? = repository.findCurrentMileage(vehicleId)?.mileage
@@ -58,12 +69,13 @@ class RecordServiceUseCase @Inject constructor(
         isLowerMileageConfirmed: Boolean = false,
         alsoReplaced: Set<MaintenanceItem> = emptySet(),
         updateOdometer: Boolean? = null,
+        photos: ServicePhotos = ServicePhotos(),
     ): RecordServiceResult {
         checkBeforeSaving(vehicleId, entry, isLowerMileageConfirmed, updateOdometer)?.let { return it }
 
         val currentMileage = repository.findCurrentMileage(vehicleId)?.mileage
         val advancesOdometer = currentMileage == null || (entry.mileage > currentMileage && updateOdometer == true)
-        repository.recordService(vehicleId, entry, advancesOdometer)
+        val recordId = repository.recordService(vehicleId, entry, advancesOdometer)
         analytics.track(AnalyticsEvent.MaintenanceRecordAdded(withCost = entry.costWon != null))
         notifier.cancel(entry.item)
         // 함께 바꾼 항목은 같은 날짜·주행거리로 따로 기록해 각자의 다음 교체 시점을 다시 계산한다.
@@ -83,7 +95,16 @@ class RecordServiceUseCase @Inject constructor(
             nextDistanceDue = rule?.intervalKm?.let { entry.mileage + Kilometers(it) },
             nextDateDue = rule?.intervalMonths?.let { entry.date.plusMonths(it) },
             alsoReplaced = companions,
+            recordId = recordId,
+            failedPhotoCount = attachPhotos(vehicleId, recordId, photos),
         )
+    }
+
+    private suspend fun attachPhotos(vehicleId: VehicleId, recordId: String, photos: ServicePhotos): Int {
+        if (photos.uris.isEmpty()) return 0
+        val owner = RecordRef(TimelineEventType.Maintenance, recordId)
+        return runCatching { attachments.attach(vehicleId, owner, photos.uris, photos.highQuality).failed }
+            .getOrDefault(photos.uris.size)
     }
 
     /** 저장하기 전에 고치거나 사용자가 정해야 할 것이 있으면 그 결과를, 바로 저장해도 되면 null을 낸다. */

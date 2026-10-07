@@ -95,4 +95,16 @@
     <string name="record_also_replaced">Also replaced that day</string>
     <string name="record_also_replaced_hint">Each one gets its own record with the same date and mileage. Cost and notes stay on this record only.</string>
     <string name="record_saved_also_replaced">Also saved: %1$s</string>
+    <string name="record_photos_add">Add photos or a receipt</string>
+    <string name="record_photos_change">Change</string>
+    <string name="record_photos_clear">Remove</string>
+    <string name="record_photos_notice">Photos stay on this device and are deleted with the app. Location data is removed when saved.</string>
+    <plurals name="record_photos_count">
+        <item quantity="one">%d photo</item>
+        <item quantity="other">%d photos</item>
+    </plurals>
+    <plurals name="record_saved_photo_failed">
+        <item quantity="one">Couldn\'t attach %d photo. You can add it again from History.</item>
+        <item quantity="other">Couldn\'t attach %d photos. You can add them again from History.</item>
+    </plurals>
 </resources>
