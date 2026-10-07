@@ -53,6 +53,7 @@ class FakeVehicleRepository : VehicleRepository {
             modelYear = update.modelYear,
             fuelType = update.fuelType,
             trim = update.trim,
+            firstRegistrationDate = update.firstRegistrationDate,
             plateMasked = when (val plate = update.plate) {
                 PlateChange.Keep -> current.plateMasked
                 PlateChange.Remove -> null

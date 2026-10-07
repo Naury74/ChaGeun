@@ -43,7 +43,15 @@ class UpdateVehicleUseCaseTest {
         fuelType: FuelType = FuelType.Gasoline,
         modelYear: Int = 2022,
         plate: PlateChange = PlateChange.Keep,
-    ) = VehicleProfileUpdate("Kia", "K5", modelYear, fuelType, trim = "Signature", plate = plate)
+    ) = VehicleProfileUpdate(
+        "Kia",
+        "K5",
+        modelYear,
+        fuelType,
+        trim = "Signature",
+        plate = plate,
+        firstRegistrationDate = null,
+    )
 
     @Test
     fun savesProfile_andKeepsPlate() = runTest {

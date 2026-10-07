@@ -13,6 +13,7 @@ import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -65,6 +66,24 @@ class VehicleEditViewModelTest {
         assertThat(saved.model).isEqualTo("Sonata")
         assertThat(saved.fuelType).isEqualTo(FuelType.Hybrid)
         assertThat(saved.plateMasked).isEqualTo("12가 **56")
+    }
+
+    @Test
+    fun savesFirstRegistrationDate_andCanClearIt() = runTest {
+        val viewModel = viewModel()
+        viewModel.onFirstRegistrationDateChanged(LocalDate.of(2022, 3, 15))
+        viewModel.save()
+
+        assertThat(
+            vehicles.observePrimaryVehicle().first()!!.firstRegistrationDate,
+        ).isEqualTo(LocalDate.of(2022, 3, 15))
+
+        val again = viewModel()
+        assertThat(again.uiState.value.firstRegistrationDate).isEqualTo(LocalDate.of(2022, 3, 15))
+        again.onFirstRegistrationDateChanged(null)
+        again.save()
+
+        assertThat(vehicles.observePrimaryVehicle().first()!!.firstRegistrationDate).isNull()
     }
 
     @Test
