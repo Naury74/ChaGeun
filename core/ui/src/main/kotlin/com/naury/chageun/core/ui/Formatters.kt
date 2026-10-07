@@ -5,8 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalLocale
 import java.text.NumberFormat
+import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -23,6 +25,13 @@ fun formatNumber(value: Long): String = NumberFormat.getIntegerInstance(currentL
 @ReadOnlyComposable
 fun formatDate(date: LocalDate): String =
     date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(currentLocale()))
+
+/** 기기 시간대의 날짜와 시각. 예: "2026. 10. 6. 오후 2:03". */
+@Composable
+@ReadOnlyComposable
+fun formatDateTime(instant: Instant): String = instant.atZone(ZoneId.systemDefault()).format(
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(currentLocale()),
+)
 
 /** 월·일만 짧게. 예: 한국어 "10. 6.", 영어 "10/6". */
 @Composable

@@ -13,6 +13,7 @@ import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.model.VehicleProfileUpdate
 import com.naury.chageun.core.ui.VehicleInfoField
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ data class VehicleEditUiState(
     /** 비어 있으면 지금 번호를 그대로 둔다. */
     val newPlate: String = "",
     val isPlateRemoved: Boolean = false,
+    val firstRegistrationDate: LocalDate? = null,
     val errors: Map<VehicleEditField, VehicleEditError> = emptyMap(),
     val isSaving: Boolean = false,
     val isSaved: Boolean = false,
@@ -70,6 +72,7 @@ class VehicleEditViewModel @Inject constructor(
                 originalFuelType = current.fuelType,
                 trim = current.trim.orEmpty(),
                 currentPlateMasked = current.plateMasked,
+                firstRegistrationDate = current.firstRegistrationDate,
             )
         }
     }
@@ -91,6 +94,8 @@ class VehicleEditViewModel @Inject constructor(
     fun onRemovePlate() = edit(VehicleEditField.Plate) { copy(newPlate = "", isPlateRemoved = true) }
 
     fun onKeepPlate() = _uiState.update { it.copy(isPlateRemoved = false) }
+
+    fun onFirstRegistrationDateChanged(date: LocalDate?) = _uiState.update { it.copy(firstRegistrationDate = date) }
 
     fun save() {
         val current = vehicle
@@ -124,7 +129,15 @@ class VehicleEditViewModel @Inject constructor(
         val fuelType = state.fuelType
         val plate = plateChange(state)
         if (year == null || fuelType == null || plate == null) return null
-        return VehicleProfileUpdate(state.maker, state.model, year, fuelType, state.trim, plate)
+        return VehicleProfileUpdate(
+            state.maker,
+            state.model,
+            year,
+            fuelType,
+            state.trim,
+            plate,
+            state.firstRegistrationDate,
+        )
     }
 
     /** null이면 입력한 번호가 올바르지 않다는 뜻이다. */
