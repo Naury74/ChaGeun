@@ -40,5 +40,6 @@ interface MaintenanceRepository {
      * [entry]와, [advancesOdometer]가 true이면 이 정비에서 나온 주행거리 기록까지
      * 하나의 Transaction으로 저장한다.
      */
-    suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean)
+    /** 새 기록의 ID를 돌려준다. 사진을 바로 붙일 때 쓴다. */
+    suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean): String
 }
