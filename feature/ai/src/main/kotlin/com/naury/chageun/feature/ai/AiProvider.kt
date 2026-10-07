@@ -31,6 +31,10 @@ internal fun shareToAi(context: Context, provider: AiProvider, text: String, cho
     context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
 
+/** 패키지 가시성 선언에 넣어 둔 AI 앱 중 기기에 설치된 것. */
+internal fun installedAiProviders(context: Context): Set<AiProvider> =
+    AiProvider.entries.filter { provider -> provider.packageName?.let(context::isInstalled) == true }.toSet()
+
 private fun Context.isInstalled(packageName: String): Boolean = try {
     packageManager.getPackageInfo(packageName, 0)
     true

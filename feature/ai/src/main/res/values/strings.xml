@@ -62,4 +62,7 @@
     <string name="ai_suggestion_record_check">What should I keep an eye on after this?</string>
     <string name="ai_included_focus_record">This record</string>
     <string name="ai_included_focus_record_body">Date, type, mileage and amounts. Cost only if you include it below.</string>
+    <string name="ai_provider_installed">Opens the app directly</string>
+    <string name="ai_provider_missing">Not installed. Pick an app from the share sheet.</string>
+    <string name="ai_provider_other">Pick any app from the share sheet</string>
 </resources>
