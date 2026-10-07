@@ -4,10 +4,14 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.reminder.InspectionReminderStage
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.Instant
@@ -68,6 +72,33 @@ class RoomInspectionRepositoryTest {
         repository.setUserDueDate(vehicleId, dueDate.plusYears(2))
         assertThat(repository.notifiedStage(vehicleId)).isNull()
     }
+
+    @Test
+    fun history_listsOnlyPeriodicInspections_newestFirst() = runTest {
+        val history = database.historyDao()
+        history.insertCheck(check("old", LocalDate.of(2024, 9, 1), mileageKm = 20_000, periodicResult = "Unknown"))
+        history.insertCheck(check("free", LocalDate.of(2026, 5, 1), mileageKm = 38_000, periodicResult = null))
+        history.insertCheck(check("new", LocalDate.of(2026, 9, 1), mileageKm = null, periodicResult = "Failed"))
+
+        assertThat(repository.observeHistory(vehicleId).first()).containsExactly(
+            InspectionRecord(LocalDate.of(2026, 9, 1), null, PeriodicInspectionResult.Failed),
+            InspectionRecord(LocalDate.of(2024, 9, 1), Kilometers(20_000), PeriodicInspectionResult.Unknown),
+        ).inOrder()
+    }
+
+    private fun check(id: String, date: LocalDate, mileageKm: Long?, periodicResult: String?) = CheckRecordEntity(
+        id = id,
+        vehicleId = "v1",
+        kind = "Inspection",
+        checkDate = date,
+        title = id,
+        mileageKm = mileageKm,
+        costWon = null,
+        memo = null,
+        createdAt = now,
+        updatedAt = now,
+        periodicResult = periodicResult,
+    )
 
     @Test
     fun clearingDate_removesSchedule() = runTest {

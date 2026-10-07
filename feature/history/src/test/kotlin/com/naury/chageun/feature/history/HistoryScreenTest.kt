@@ -17,12 +17,15 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.CheckEntry
+import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelAmounts
 import com.naury.chageun.core.model.FuelEntry
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
@@ -323,6 +326,45 @@ class HistoryScreenTest {
 
         composeRule.onNodeWithText("Recorded", substring = true).assertIsDisplayed()
         composeRule.onNodeWithText("edited", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun detail_showsPeriodicInspectionResult_butNotForGeneralCheck() {
+        val checkRef = RecordRef(TimelineEventType.Inspection, "c1")
+        val periodic = CheckEntry(
+            kind = CheckKind.Inspection,
+            date = LocalDate.of(2026, 9, 1),
+            title = "Periodic inspection",
+            periodicResult = PeriodicInspectionResult.Failed,
+        )
+        var state by mutableStateOf(
+            HistoryUiState(isLoading = false, selected = checkRef, detail = RecordDetail.Check(checkRef, periodic)),
+        )
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = state,
+                    isTwoPane = false,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = {},
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Inspection result").assertIsDisplayed()
+        composeRule.onNodeWithText("Failed", substring = true).assertIsDisplayed()
+
+        val general = periodic.copy(title = "Free check", periodicResult = null)
+        state = state.copy(detail = RecordDetail.Check(checkRef, general))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Inspection result").assertDoesNotExist()
     }
 
     @Test

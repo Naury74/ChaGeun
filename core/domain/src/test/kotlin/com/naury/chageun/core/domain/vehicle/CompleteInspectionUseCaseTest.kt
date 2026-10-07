@@ -8,6 +8,7 @@ import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
@@ -42,12 +43,20 @@ class CompleteInspectionUseCaseTest {
         inspections.notified = InspectionReminderStage.Days30
         val next = LocalDate.of(2028, 10, 11)
 
-        val errors = complete(vehicleId, today, "Periodic inspection", Kilometers(42_000), next)
+        val errors = complete(
+            vehicleId,
+            today,
+            "Periodic inspection",
+            Kilometers(42_000),
+            PeriodicInspectionResult.Passed,
+            next,
+        )
 
         assertThat(errors).isEmpty()
         val (entry, _) = history.addedChecks.single()
         assertThat(entry.kind).isEqualTo(CheckKind.Inspection)
         assertThat(entry.mileage).isEqualTo(Kilometers(42_000))
+        assertThat(entry.periodicResult).isEqualTo(PeriodicInspectionResult.Passed)
         assertThat(inspections.schedule.value).isEqualTo(InspectionSchedule(next, InspectionSource.User))
         assertThat(inspections.notified).isNull()
         assertThat(notifier.inspectionCancelCount).isEqualTo(1)
@@ -55,11 +64,29 @@ class CompleteInspectionUseCaseTest {
 
     @Test
     fun futureCompletion_isRejected_andKeepsSchedule() = runTest {
-        val errors = complete(vehicleId, today.plusDays(1), "Periodic inspection", null, today.plusYears(2))
+        val errors = complete(
+            vehicleId,
+            today.plusDays(1),
+            "Periodic inspection",
+            null,
+            PeriodicInspectionResult.Passed,
+            today.plusYears(2),
+        )
 
         assertThat(errors).containsExactly(HistoryEntryError.FutureDate)
         assertThat(inspections.schedule.value?.nextDueDate).isEqualTo(today.plusDays(10))
         assertThat(notifier.inspectionCancelCount).isEqualTo(0)
+    }
+
+    @Test
+    fun failedInspection_isStillRecorded_withItsResult() = runTest {
+        val next = today.plusYears(2)
+
+        val errors = complete(vehicleId, today, "Periodic inspection", null, PeriodicInspectionResult.Failed, next)
+
+        assertThat(errors).isEmpty()
+        assertThat(history.addedChecks.single().first.periodicResult).isEqualTo(PeriodicInspectionResult.Failed)
+        assertThat(inspections.schedule.value?.nextDueDate).isEqualTo(next)
     }
 
     @Test

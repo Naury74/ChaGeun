@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -271,6 +272,11 @@ private fun detailRows(detail: RecordDetail): List<Triple<ImageVector, String, S
                 Icons.Filled.Category,
                 stringResource(R.string.history_detail_kind),
                 stringResource(entry.kind.labelRes),
+            )
+            add(
+                Icons.AutoMirrored.Filled.FactCheck,
+                stringResource(R.string.history_detail_periodic_result),
+                entry.periodicResult?.let { stringResource(it.labelRes) },
             )
             add(Icons.Filled.Speed, mileage, entry.mileage?.let { km(it.value) })
             add(Icons.Filled.Payments, cost, entry.costWon?.let { won(it) })

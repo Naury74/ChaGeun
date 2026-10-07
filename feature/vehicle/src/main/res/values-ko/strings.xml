@@ -118,4 +118,10 @@
     <string name="vehicle_edit_first_registration_pick">날짜 선택</string>
     <string name="vehicle_edit_first_registration_hint">자동차등록증에 적혀 있어요.</string>
     <string name="vehicle_edit_first_registration_clear">지우기</string>
+    <string name="vehicle_inspection_complete_result">검사 결과</string>
+    <string name="vehicle_inspection_latest">최근 검사</string>
+    <plurals name="vehicle_inspection_past_show">
+        <item quantity="other">지난 검사 %1$d건</item>
+    </plurals>
+    <string name="vehicle_inspection_past_hide">지난 검사 접기</string>
 </resources>

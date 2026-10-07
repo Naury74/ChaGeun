@@ -18,6 +18,7 @@ import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordTimestamps
@@ -84,6 +85,37 @@ class OfflineFirstHistoryRepositoryTest {
         assertThat(item.costWon).isEqualTo(70_000)
         assertThat(detail.entry).isEqualTo(fuel.copy(stationName = "S-Oil"))
         assertThat(database.mileageRecordDao().findLatest("v1")?.sourceType).isEqualTo("FUEL")
+    }
+
+    @Test
+    fun periodicResult_isStoredOnAdd_andReplacedOnUpdate() = runTest {
+        val inspection = CheckEntry(
+            kind = CheckKind.Inspection,
+            date = LocalDate.of(2026, 9, 1),
+            title = "Periodic inspection",
+            periodicResult = PeriodicInspectionResult.Passed,
+        )
+        repository.addCheck(vehicleId, inspection, false)
+        repository.addCheck(vehicleId, inspection.copy(title = "Free check", periodicResult = null), false)
+        val refs = repository.observeTimeline(vehicleId, TimelineQuery()).first().associate { it.title to it.ref }
+
+        suspend fun resultOf(title: String) = (
+            repository.observeRecord(
+                vehicleId,
+                refs.getValue(title),
+            ).first() as RecordDetail.Check
+            ).entry.periodicResult
+
+        assertThat(resultOf("Periodic inspection")).isEqualTo(PeriodicInspectionResult.Passed)
+        assertThat(resultOf("Free check")).isNull()
+
+        val periodicRef = refs.getValue("Periodic inspection")
+        repository.updateCheck(
+            vehicleId,
+            periodicRef.id,
+            inspection.copy(periodicResult = PeriodicInspectionResult.Failed),
+        )
+        assertThat(resultOf("Periodic inspection")).isEqualTo(PeriodicInspectionResult.Failed)
     }
 
     @Test

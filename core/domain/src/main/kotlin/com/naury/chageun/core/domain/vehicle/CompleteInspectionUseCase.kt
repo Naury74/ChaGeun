@@ -6,6 +6,7 @@ import com.naury.chageun.core.domain.reminder.ReminderNotifier
 import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.VehicleId
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -20,17 +21,25 @@ class CompleteInspectionUseCase @Inject constructor(
     /**
      * 검사를 Timeline에 기록하고 [nextDueDate]를 저장한다(null이면 지운다).
      * 기록이 유효할 때만 날짜를 바꾸므로, 거부된 입력은 기존 일정을 그대로 둔다.
+     * 부적합이어도 검사를 받은 기록은 남긴다. 재검사 일정은 사용자가 다음 검사일로 고친다.
      */
     suspend operator fun invoke(
         vehicleId: VehicleId,
         completedOn: LocalDate,
         title: String,
         mileage: Kilometers?,
+        result: PeriodicInspectionResult,
         nextDueDate: LocalDate?,
     ): Set<HistoryEntryError> {
         val errors = addHistoryRecord.addCheck(
             vehicleId,
-            CheckEntry(kind = CheckKind.Inspection, date = completedOn, title = title, mileage = mileage),
+            CheckEntry(
+                kind = CheckKind.Inspection,
+                date = completedOn,
+                title = title,
+                mileage = mileage,
+                periodicResult = result,
+            ),
         )
         if (errors.isNotEmpty()) return errors
         inspectionRepository.setUserDueDate(vehicleId, nextDueDate)

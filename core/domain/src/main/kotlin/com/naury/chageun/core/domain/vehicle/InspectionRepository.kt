@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.vehicle
 
 import com.naury.chageun.core.domain.reminder.InspectionReminderStage
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.VehicleId
 import java.time.LocalDate
@@ -15,4 +16,7 @@ interface InspectionRepository {
     suspend fun notifiedStage(vehicleId: VehicleId): InspectionReminderStage?
 
     suspend fun markNotified(vehicleId: VehicleId, stage: InspectionReminderStage)
+
+    /** 지금까지 받은 정기검사를 최근 것부터 내보낸다. 일반 점검 기록은 들어가지 않는다. */
+    fun observeHistory(vehicleId: VehicleId): Flow<List<InspectionRecord>>
 }

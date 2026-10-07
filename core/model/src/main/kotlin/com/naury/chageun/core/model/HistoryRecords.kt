@@ -24,6 +24,9 @@ data class FuelEntry(
 
 enum class CheckKind { Inspection, Repair, Note }
 
+/** [Unknown]은 결과를 따로 받기 전에 남긴 정기검사 기록이다. */
+enum class PeriodicInspectionResult { Passed, Failed, Unknown }
+
 data class CheckEntry(
     val kind: CheckKind,
     val date: LocalDate,
@@ -31,6 +34,8 @@ data class CheckEntry(
     val mileage: Kilometers? = null,
     val costWon: Long? = null,
     val memo: String? = null,
+    /** 법정 정기검사일 때만 값이 있다. 무상 점검 같은 일반 점검은 null이다. */
+    val periodicResult: PeriodicInspectionResult? = null,
 )
 
 /** [Mileage]는 직접 입력하거나 계기판으로 교정한 주행거리다. 다른 기록이 남긴 주행거리는 그 기록과 겹쳐 넣지 않는다. */

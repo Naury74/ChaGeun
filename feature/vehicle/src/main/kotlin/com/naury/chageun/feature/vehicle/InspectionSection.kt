@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
@@ -51,6 +52,7 @@ import kotlin.math.absoluteValue
 @Composable
 internal fun InspectionCard(
     status: InspectionStatus,
+    history: List<InspectionRecord>,
     currentMileage: Kilometers?,
     onDateSelected: (LocalDate?) -> Unit,
     onCompleted: (InspectionCompletion) -> Unit,
@@ -116,6 +118,7 @@ internal fun InspectionCard(
                     }
                 }
             }
+            InspectionHistory(history)
         }
     }
     if (isCompleting) {

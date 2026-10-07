@@ -96,4 +96,7 @@
     <string name="vehicle_photo_remove_background_body">차만 남기고 배경을 지워요. 이 기기 안에서 처리해요. 끄면 사진 가장자리를 부드럽게 흐려서 보여 줘요.</string>
     <string name="vehicle_photo_confirm_cancel">취소</string>
     <string name="vehicle_photo_confirm_apply">적용</string>
+    <string name="periodic_result_passed">합격</string>
+    <string name="periodic_result_failed">부적합</string>
+    <string name="periodic_result_unknown">결과 미기록</string>
 </resources>
