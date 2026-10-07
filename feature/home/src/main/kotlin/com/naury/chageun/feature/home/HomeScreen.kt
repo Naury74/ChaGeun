@@ -56,6 +56,7 @@ import com.naury.chageun.core.ui.HeroStat
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
@@ -182,6 +183,7 @@ private fun HomeContent(
     // Tabletop: 차량과 상태는 위쪽 절반에, 목록과 액션은 아래쪽 절반에 둔다.
     val isTabletop = hinge != null && !hinge.isVertical
     val showAd = LocalAdsEnabled.current
+    val showsAi = LocalFeatureFlags.current.aiShareEnabled
     val panes: List<LazyListScope.() -> Unit> = when {
         isTabletop -> listOf({ summaryPane(state, actions, showsActions = false) }, {
             // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
@@ -190,9 +192,9 @@ private fun HomeContent(
             }
             attentionPane(state, actions)
             missingPane(state, actions)
-            recentPane(state, actions, showAd)
+            recentPane(state, actions, showAd, showsAi)
         })
-        else -> homePanes(state, paneCount, actions, showAd)
+        else -> homePanes(state, paneCount, actions, showAd, showsAi)
     }
     HingeAwarePanes(
         weights = List(panes.size) { 1f },
@@ -221,21 +223,22 @@ private fun homePanes(
     paneCount: Int,
     actions: HomeActions,
     showAd: Boolean,
+    showsAi: Boolean,
 ): List<LazyListScope.() -> Unit> = when (paneCount) {
     SINGLE_PANE -> listOf({
         summaryPane(state, actions)
         attentionPane(state, actions)
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
     TWO_PANES -> listOf({ summaryPane(state, actions, isSideBySide = true) }, {
         attentionPane(state, actions)
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
     else -> listOf({ summaryPane(state, actions, isSideBySide = true) }, { attentionPane(state, actions) }, {
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
 }
 
@@ -332,7 +335,12 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeA
     }
 }
 
-private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeActions, showAd: Boolean) {
+private fun LazyListScope.recentPane(
+    state: HomeUiState.Content,
+    actions: HomeActions,
+    showAd: Boolean,
+    showsAi: Boolean,
+) {
     // 기획서 UI 6.1: 다가오는 관리 다음, 최근 기록 앞에 한 칸만 둔다. 광고를 쓰지 않으면 목록 간격도 남기지 않는다.
     if (showAd) item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
     item(key = "recent") {
@@ -342,7 +350,9 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
             modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
     }
-    item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+    if (showsAi) {
+        item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
