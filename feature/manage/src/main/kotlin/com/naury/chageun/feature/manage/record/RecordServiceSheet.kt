@@ -5,20 +5,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
@@ -49,6 +56,8 @@ import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.manage.R
 import java.time.LocalDate
@@ -68,6 +77,14 @@ fun RecordServiceHost(
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isEditSaved) { if (uiState.isEditSaved) onDismiss() }
+    val photoInput = rememberPhotoInputState()
+    PhotoInput(
+        state = photoInput,
+        maxItems = MAX_ATTACHMENTS_PER_RECORD,
+        // 영수증의 작은 글씨를 남길 수 있게 고화질 저장을 고르게 한다.
+        showQualityOption = true,
+        onPhotos = viewModel::onPhotosChanged,
+    )
     val content: @Composable () -> Unit = {
         RecordServiceContent(
             uiState = uiState,
@@ -78,11 +95,13 @@ fun RecordServiceHost(
                 onShopNameChanged = viewModel::onShopNameChanged,
                 onMemoChanged = viewModel::onMemoChanged,
                 onToggleAlsoReplaced = viewModel::toggleAlsoReplaced,
-                onSave = viewModel::save,
-                onConfirmLowerMileage = viewModel::confirmLowerMileage,
+                onSave = { viewModel.save() },
+                onConfirmLowerMileage = { viewModel.save(confirmLowerMileage = true) },
                 onEditLowerMileage = viewModel::dismissLowerMileageWarning,
                 onDismiss = onDismiss,
                 onDecideOdometer = viewModel::decideOdometer,
+                onPickPhotos = photoInput::open,
+                onClearPhotos = { viewModel.onPhotosChanged(emptyList(), highQuality = false) },
             ),
         )
     }
@@ -101,6 +120,8 @@ data class RecordServiceActions(
     val onDismiss: () -> Unit,
     val onDecideOdometer: (Boolean) -> Unit = {},
     val onToggleAlsoReplaced: (MaintenanceItem) -> Unit = {},
+    val onPickPhotos: () -> Unit = {},
+    val onClearPhotos: () -> Unit = {},
 )
 
 @Composable
@@ -140,27 +161,7 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
             errorText = uiState.errors[RecordServiceField.Cost]?.let { stringResource(it.messageRes) },
             supportingText = stringResource(R.string.record_cost_hint),
         )
-        OptionalSection(
-            hasValue = uiState.shopName.isNotEmpty() || uiState.memo.isNotEmpty() || uiState.alsoReplaced.isNotEmpty(),
-        ) {
-            if (uiState.companionCandidates.isNotEmpty()) {
-                AlsoReplacedPicker(uiState.companionCandidates, uiState.alsoReplaced, actions.onToggleAlsoReplaced)
-            }
-            OutlinedTextField(
-                value = uiState.shopName,
-                onValueChange = actions.onShopNameChanged,
-                label = { Text(stringResource(R.string.record_shop)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = uiState.memo,
-                onValueChange = actions.onMemoChanged,
-                label = { Text(stringResource(R.string.record_memo)) },
-                minLines = 2,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        MoreFields(uiState, actions)
         uiState.lowerMileageWarning?.let { previous ->
             LowerMileageWarning(itemName, formatNumber(previous.value), actions)
         }
@@ -253,7 +254,10 @@ private fun SavedContent(itemName: String, saved: SavedResult, onDone: () -> Uni
                 items.map { stringResource(it.labelRes) }.joinToString(", "),
             )
         }
-        listOfNotNull(message, companions).forEach {
+        val photoFailure = saved.failedPhotoCount.takeIf { it > 0 }?.let {
+            pluralStringResource(R.plurals.record_saved_photo_failed, it, it)
+        }
+        listOfNotNull(message, companions, photoFailure).forEach {
             Text(
                 it,
                 style = MaterialTheme.typography.bodyLarge,
@@ -337,6 +341,71 @@ private fun OdometerPrompt(currentKm: String, enteredKm: String, onDecide: (Bool
             }
         }
     }
+}
+
+/** 정비소·메모·함께 교체·사진처럼 꼭 넣지 않아도 되는 칸. */
+@Composable
+private fun MoreFields(uiState: RecordServiceUiState, actions: RecordServiceActions) {
+    OptionalSection(
+        hasValue = uiState.shopName.isNotEmpty() ||
+            uiState.memo.isNotEmpty() ||
+            uiState.alsoReplaced.isNotEmpty() ||
+            uiState.photos.isNotEmpty(),
+    ) {
+        if (uiState.companionCandidates.isNotEmpty()) {
+            AlsoReplacedPicker(uiState.companionCandidates, uiState.alsoReplaced, actions.onToggleAlsoReplaced)
+        }
+        OutlinedTextField(
+            value = uiState.shopName,
+            onValueChange = actions.onShopNameChanged,
+            label = { Text(stringResource(R.string.record_shop)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = uiState.memo,
+            onValueChange = actions.onMemoChanged,
+            label = { Text(stringResource(R.string.record_memo)) },
+            minLines = 2,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // 고칠 때는 기록 상세의 사진 칸에서 붙이고 지운다.
+        if (!uiState.isEditing) PhotoPicker(uiState.photos.size, actions.onPickPhotos, actions.onClearPhotos)
+    }
+}
+
+@Composable
+private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit) {
+    if (count == 0) {
+        OutlinedButton(
+            onClick = onPick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+        ) {
+            Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(ChageunTheme.spacing.xs))
+            Text(stringResource(R.string.record_photos_add))
+        }
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Photo, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(
+                pluralStringResource(R.plurals.record_photos_count, count, count),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = ChageunTheme.spacing.xs),
+            )
+            TextButton(onClick = onPick) { Text(stringResource(R.string.record_photos_change)) }
+            TextButton(onClick = onClear) { Text(stringResource(R.string.record_photos_clear)) }
+        }
+    }
+    Text(
+        stringResource(R.string.record_photos_notice),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 @Composable
