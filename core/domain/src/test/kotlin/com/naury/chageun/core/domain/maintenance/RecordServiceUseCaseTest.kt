@@ -6,10 +6,13 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MileageReading
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
+import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeReminderNotifier
 import java.time.Clock
@@ -27,11 +30,13 @@ class RecordServiceUseCaseTest {
     private val repository = FakeMaintenanceRepository()
     private val analytics = FakeAnalyticsTracker()
     private val notifier = FakeReminderNotifier()
+    private val attachments = FakeAttachmentRepository()
     private val recordService = RecordServiceUseCase(
         repository,
         Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC),
         analytics,
         notifier,
+        attachments,
     )
 
     @Before
@@ -52,7 +57,9 @@ class RecordServiceUseCaseTest {
     fun savesAndReturnsNextDue_fromRule() = runTest {
         val result = recordService(vehicleId, entry(42_891), updateOdometer = true)
 
-        assertThat(result).isEqualTo(RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1)))
+        assertThat(result).isEqualTo(
+            RecordServiceResult.Saved(Kilometers(52_891), LocalDate.of(2027, 10, 1), recordId = "service-1"),
+        )
         assertThat(analytics.events).containsExactly(AnalyticsEvent.MaintenanceRecordAdded(withCost = false))
     }
 
@@ -77,6 +84,28 @@ class RecordServiceUseCaseTest {
         recordService(vehicleId, entry(41_000), isLowerMileageConfirmed = true)
 
         assertThat(repository.recordedServices.map { it.second }).containsExactly(true, false).inOrder()
+    }
+
+    @Test
+    fun attachesPhotosToTheNewRecord() = runTest {
+        val result = recordService(
+            vehicleId,
+            entry(42_000),
+            photos = ServicePhotos(listOf("content://receipt", "content://part"), highQuality = true),
+        ) as RecordServiceResult.Saved
+
+        val owners = attachments.attachments.value.map { it.owner }.distinct()
+        assertThat(owners).containsExactly(RecordRef(TimelineEventType.Maintenance, result.recordId!!))
+        assertThat(attachments.attachments.value).hasSize(2)
+        assertThat(attachments.lastHighQuality).isTrue()
+        assertThat(result.failedPhotoCount).isEqualTo(0)
+    }
+
+    @Test
+    fun keepsPhotosOut_untilTheRecordIsActuallySaved() = runTest {
+        recordService(vehicleId, entry(42_891), photos = ServicePhotos(listOf("content://receipt")))
+
+        assertThat(attachments.attachments.value).isEmpty()
     }
 
     @Test
