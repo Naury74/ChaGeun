@@ -297,4 +297,15 @@ class SettingsTest {
         }
         composeRule.captureScreen("settings_phone_dark")
     }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun serviceNotice_coversSafetyAndAi() {
+        composeRule.setContent { AppFrame { ServiceNoticeScreen(onBack = {}) } }
+
+        composeRule.onNodeWithText("정비 시기는 추정이에요").assertExists()
+        composeRule.onNodeWithText("외부 AI의 답변").assertExists()
+        composeRule.captureScreen("service_notice_ko")
+    }
 }
