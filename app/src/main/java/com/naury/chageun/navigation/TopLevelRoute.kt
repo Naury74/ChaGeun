@@ -38,6 +38,9 @@ data object OpenSourceLicensesRoute : NavKey
 data object PrivacyNoticeRoute : NavKey
 
 @Serializable
+data object ServiceNoticeRoute : NavKey
+
+@Serializable
 data object AccountRoute : NavKey
 
 @Serializable

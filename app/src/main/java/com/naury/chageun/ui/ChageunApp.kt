@@ -50,6 +50,7 @@ import com.naury.chageun.feature.manage.ManageRoute
 import com.naury.chageun.feature.manage.record.RecordServiceHost
 import com.naury.chageun.feature.settings.OpenSourceLicensesRoute
 import com.naury.chageun.feature.settings.PrivacyNoticeScreen
+import com.naury.chageun.feature.settings.ServiceNoticeScreen
 import com.naury.chageun.feature.settings.SettingsRoute
 import com.naury.chageun.feature.vehicle.VehicleRoute
 import com.naury.chageun.feature.vehicle.album.AlbumRoute as AlbumScreenRoute
@@ -61,6 +62,7 @@ import com.naury.chageun.navigation.AlbumRoute
 import com.naury.chageun.navigation.DriveBackupRoute
 import com.naury.chageun.navigation.OpenSourceLicensesRoute
 import com.naury.chageun.navigation.PrivacyNoticeRoute
+import com.naury.chageun.navigation.ServiceNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
@@ -198,6 +200,7 @@ fun ChageunApp(
                         onBack = { backStack.removeLastOrNull() },
                         onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
                         onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
+                        onOpenServiceNotice = { backStack.add(ServiceNoticeRoute) },
                         onOpenAccount = { backStack.add(AccountRoute) },
                         onOpenDriveBackup = { backStack.add(DriveBackupRoute) },
                     )
@@ -228,6 +231,7 @@ fun ChageunApp(
                 }
                 entry(AlbumRoute) { AlbumScreenRoute(onBack = { backStack.removeLastOrNull() }) }
                 entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
+                entry(ServiceNoticeRoute) { ServiceNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
                 entry<AiRoute> { route ->
                     AiHubRoute(
                         focusItem = route.focusItem?.let { name ->

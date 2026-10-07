@@ -72,4 +72,19 @@
     <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요.</string>
     <string name="settings_share">다른 기기로 보내기</string>
     <string name="settings_share_body">백업 파일을 Quick Share·메일·메신저로 보내요. 새 휴대폰의 첫 화면에서 “백업에서 복원하기”로 열어요.</string>
+    <string name="settings_service_notice">서비스 유의사항</string>
+    <string name="service_what_title">차근은 이런 서비스예요</string>
+    <string name="service_what_body">차근은 직접 입력한 기록으로 정비 시기를 계산하고 알려 주는 개인용 차량 관리 도구예요. 차량을 진단하거나 정비소 점검을 대신하지 않아요.</string>
+    <string name="service_estimate_title">정비 시기는 추정이에요</string>
+    <string name="service_estimate_body">교체 주기는 직접 바꾸지 않았다면 제조사 공식값이 아닌 일반적인 권장 기준이에요. 남은 거리와 날짜는 입력한 기록과 평균 주행량으로 계산한 값이라 실제 차량 상태와 다를 수 있어요. 브레이크, 타이어처럼 안전과 관련된 부품에 이상이 느껴지면 앱 표시와 관계없이 바로 점검받아 주세요.</string>
+    <string name="service_ai_title">외부 AI의 답변</string>
+    <string name="service_ai_body">AI에게 물어보기는 내가 고른 외부 AI 앱으로 요약을 보내는 기능이에요. 답변은 그 서비스가 만들며 틀릴 수 있어요. 차근은 AI 답변을 확인하거나 보증하지 않아요. 보내기 전에 보낼 내용을 확인해 주세요.</string>
+    <string name="service_links_title">공식 사이트 연결</string>
+    <string name="service_links_body">리콜 확인과 검사 예약은 자동차리콜센터, 한국교통안전공단 같은 기관 사이트로 연결돼요. 그 정보와 서비스는 각 기관이 제공하고 관리해요. 정기검사 날짜는 직접 입력한 값이라 검사 안내문과 맞는지 확인해 주세요.</string>
+    <string name="service_records_title">기록 보관</string>
+    <string name="service_records_body">기록은 이 기기에 저장돼요. 기기를 잃어버리거나 앱을 삭제하면 기록도 사라지니, 설정 › 데이터에서 내보내기나 Google 드라이브 백업으로 따로 보관해 주세요.</string>
+    <string name="service_ads_title">광고</string>
+    <string name="service_ads_body">차근은 무료로 제공되며 화면 일부에 광고가 표시돼요. 광고 내용은 광고주가 제공해요.</string>
+    <string name="service_changes_title">바뀔 수 있어요</string>
+    <string name="service_changes_body">기능과 이 안내는 앱 업데이트에 따라 바뀔 수 있어요.</string>
 </resources>
