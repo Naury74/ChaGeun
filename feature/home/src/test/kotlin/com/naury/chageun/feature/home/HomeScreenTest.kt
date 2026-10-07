@@ -1,8 +1,10 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
@@ -212,5 +214,9 @@ class HomeScreenTest {
 
         assertThat(composeRule.onNodeWithText("KG Mobility Torres").getBoundsInRoot().bottom.value).isAtMost(342f)
         assertThat(composeRule.onNodeWithText("Check now").getBoundsInRoot().top.value).isAtLeast(358f)
+        // 자주 누르는 버튼은 손이 닿는 아래 칸에 한 번만 둔다.
+        val update = composeRule.onAllNodesWithText("Update mileage")
+        update.assertCountEquals(1)
+        assertThat(update[0].getBoundsInRoot().top.value).isAtLeast(358f)
     }
 }
