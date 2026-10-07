@@ -21,6 +21,7 @@ import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
+import com.naury.chageun.core.model.RecordTimestamps
 import com.naury.chageun.core.model.ServiceEntry
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.model.TimelineEventType
@@ -93,6 +94,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
                     } else {
                         MileageSource.User
                     },
+                    timestamps = RecordTimestamps.of(it.createdAt, updatedAt = null),
                 )
             }
         }
@@ -297,6 +299,7 @@ private fun MaintenanceRecordEntity.asDetail(ref: RecordRef): RecordDetail? {
             isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
         ),
         memo = memo,
+        timestamps = RecordTimestamps.of(createdAt, updatedAt),
     )
 }
 
@@ -315,6 +318,7 @@ private fun FuelRecordEntity.asDetail(ref: RecordRef) = RecordDetail.Fuel(
         stationName = stationName,
         memo = memo,
     ),
+    timestamps = RecordTimestamps.of(createdAt, updatedAt),
 )
 
 private fun CheckRecordEntity.asDetail(ref: RecordRef): RecordDetail? {
@@ -322,5 +326,6 @@ private fun CheckRecordEntity.asDetail(ref: RecordRef): RecordDetail? {
     return RecordDetail.Check(
         ref = ref,
         entry = CheckEntry(checkKind, checkDate, title, mileageKm?.let(::Kilometers), costWon, memo),
+        timestamps = RecordTimestamps.of(createdAt, updatedAt),
     )
 }

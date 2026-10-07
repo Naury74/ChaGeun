@@ -3,6 +3,7 @@ package com.naury.chageun.core.ads
 import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -61,7 +62,14 @@ fun NativeAdSlot(modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.surface,
     ) {
         AndroidView(
-            factory = { LayoutInflater.from(it).inflate(R.layout.native_ad_card, null) as NativeAdView },
+            factory = {
+                (LayoutInflater.from(it).inflate(R.layout.native_ad_card, null) as NativeAdView).apply {
+                    // 광고는 View 쪽 초점 탐색에 따로 잡혀, Tab 이동이 화면 끝에서 맨 위로 돌아가지 못하고
+                    // 광고 안을 맴돈다. 키보드 이동 순서에서만 빼고 터치와 TalkBack으로는 그대로 누를 수 있다.
+                    descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                    isFocusable = false
+                }
+            },
             update = { view -> view.bind(ad, contentColor, subtleColor) },
         )
     }
