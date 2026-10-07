@@ -47,6 +47,8 @@ import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveListDetail
+import com.naury.chageun.core.ui.ThreePaneListDetail
+import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
@@ -67,6 +69,7 @@ fun HistoryRoute(
     val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isTwoPane = isListDetailTwoPane()
+    val isThreePane = isListDetailThreePane()
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
     var isFilterOpen by rememberSaveable { mutableStateOf(false) }
     // 상세는 한 칸·두 칸 배치에 따라 컴포지션 위치가 달라 접거나 펼 때 상태가 사라진다.
@@ -100,6 +103,7 @@ fun HistoryRoute(
         HistoryScreen(
             uiState = uiState,
             isTwoPane = isTwoPane,
+            isThreePane = isThreePane,
             onKeywordChanged = { keyword ->
                 val matching = if (keyword.isBlank()) {
                     emptySet()
@@ -184,6 +188,8 @@ fun HistoryScreen(
     onEdit: (RecordDetail) -> Unit = {},
     onLoadMore: () -> Unit = {},
     onAskAi: ((RecordRef) -> Unit)? = null,
+    /** [isTwoPane]보다 우선한다. 왼쪽에 검색·필터 Pane을 더한다. */
+    isThreePane: Boolean = false,
 ) {
     val attachments =
         AttachmentsState(
@@ -230,12 +236,13 @@ fun HistoryScreen(
                 onKeywordChanged,
                 onFilterSelected,
                 // 두 칸에서는 같은 기록을 다시 누르면 상세를 닫고 목록을 넓게 되돌린다.
-                { ref -> onSelect(if (isTwoPane && ref == uiState.selected) null else ref) },
+                { ref -> onSelect(if ((isTwoPane || isThreePane) && ref == uiState.selected) null else ref) },
                 onAdd,
                 onOpenAdvancedFilter = onOpenAdvancedFilter,
                 onClearAdvancedFilter = onClearAdvancedFilter,
                 onLoadMore = onLoadMore,
                 listState = timelineState,
+                showFilters = !isThreePane,
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)
@@ -254,6 +261,26 @@ fun HistoryScreen(
         }
     }
     when {
+        isThreePane -> {
+            BackHandler(enabled = detail != null) { onSelect(null) }
+            ThreePaneListDetail(
+                selected = detail,
+                supporting = {
+                    HistoryFilterPane(
+                        uiState = uiState,
+                        onKeywordChanged = onKeywordChanged,
+                        onFilterSelected = onFilterSelected,
+                        onOpenAdvancedFilter = onOpenAdvancedFilter,
+                        onClearAdvancedFilter = onClearAdvancedFilter,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                },
+                list = { timeline(Modifier.fillMaxSize()) },
+                detail = { detailPane(it, Modifier.fillMaxSize()) },
+                emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
+                modifier = modifier,
+            )
+        }
         isTwoPane -> {
             BackHandler(enabled = detail != null) { onSelect(null) }
             AdaptiveListDetail(

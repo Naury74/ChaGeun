@@ -102,4 +102,14 @@
     <plurals name="record_saved_photo_failed">
         <item quantity="other">사진 %d장을 붙이지 못했어요. 기록 탭에서 다시 붙여 주세요.</item>
     </plurals>
+    <string name="manage_pane_status">상태</string>
+    <string name="manage_pane_category">분류</string>
+    <string name="manage_category_all">모든 분류</string>
+    <string name="manage_category_engine">엔진</string>
+    <string name="manage_category_climate">공조</string>
+    <string name="manage_category_brake">브레이크</string>
+    <string name="manage_category_drivetrain">구동·냉각</string>
+    <string name="manage_category_electrical">전기</string>
+    <string name="manage_category_chassis">타이어·하체</string>
+    <string name="manage_category_visibility">시야</string>
 </resources>

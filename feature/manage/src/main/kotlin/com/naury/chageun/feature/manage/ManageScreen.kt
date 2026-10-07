@@ -23,8 +23,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
+import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveListDetail
+import com.naury.chageun.core.ui.ThreePaneListDetail
+import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.feature.manage.rule.RuleEditorHost
 
@@ -39,6 +42,7 @@ fun ManageRoute(
     LaunchedEffect(pendingSelection) {
         if (pendingSelection != null) {
             viewModel.selectFilter(ManageFilter.All)
+            viewModel.selectCategory(null)
             viewModel.selectItem(pendingSelection)
             onPendingSelectionHandled()
         }
@@ -47,13 +51,20 @@ fun ManageRoute(
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     var editingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     val isTwoPane = isListDetailTwoPane()
+    val isThreePane = isListDetailThreePane()
+    // 분류는 세 칸의 왼쪽 Pane에서만 고를 수 있다. 창이 좁아져 그 Pane이 사라지면 보이지 않는 조건이 남지 않게 푼다.
+    LaunchedEffect(isThreePane) {
+        if (!isThreePane) viewModel.selectCategory(null)
+    }
     // 좁은 화면에서 상세를 열면 상세가 자기 머리글(뒤로 가기)을 가지므로 큰 제목을 숨긴다.
     val title = stringResource(R.string.manage_title).takeUnless { !isTwoPane && uiState.selectedItem != null }
     LargeTitleScaffold(title = title) { padding ->
         ManageScreen(
             uiState = uiState,
             isTwoPane = isTwoPane,
+            isThreePane = isThreePane,
             onFilterSelected = viewModel::selectFilter,
+            onCategorySelected = viewModel::selectCategory,
             onItemSelected = viewModel::selectItem,
             onRecordService = onRecordService,
             onEditRule = { editingItem = it },
@@ -78,6 +89,9 @@ fun ManageScreen(
     onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
     onAskAi: (MaintenanceItem) -> Unit = {},
+    /** [isTwoPane]보다 우선한다. 왼쪽에 상태·분류 필터 Pane을 더한다. */
+    isThreePane: Boolean = false,
+    onCategorySelected: (MaintenanceCategory?) -> Unit = {},
 ) {
     if (uiState.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -105,31 +119,48 @@ fun ManageScreen(
             }
         }
     }
-    if (isTwoPane) {
-        BackHandler(enabled = detail != null) { onItemSelected(null) }
-        AdaptiveListDetail(
-            selected = detail,
-            list = {
-                ManageList(
-                    uiState = uiState,
-                    onFilterSelected = onFilterSelected,
-                    onItemSelected = { item ->
-                        // 같은 항목을 다시 누르면 상세를 닫고 목록을 넓게 되돌린다.
-                        onItemSelected(item.takeIf { it != uiState.selectedItem })
-                    },
-                    onEditRule = onEditRule,
-                    modifier = Modifier.fillMaxSize(),
-                    gridState = gridState,
-                )
+    val list = @Composable { listModifier: Modifier, showFilters: Boolean ->
+        ManageList(
+            uiState = uiState,
+            onFilterSelected = onFilterSelected,
+            onItemSelected = { item ->
+                // 같은 항목을 다시 누르면 상세를 닫는다. 두 칸에서는 목록이 다시 넓어진다.
+                onItemSelected(item.takeIf { !(isTwoPane || isThreePane) || it != uiState.selectedItem })
             },
-            detail = { detailPane(it, Modifier.fillMaxSize()) },
-            emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
-            modifier = modifier,
+            onEditRule = onEditRule,
+            modifier = listModifier,
+            gridState = gridState,
+            showFilters = showFilters,
         )
-    } else if (detail != null) {
-        BackHandler { onItemSelected(null) }
-        detailPane(detail, modifier.fillMaxSize())
-    } else {
-        ManageList(uiState, onFilterSelected, onItemSelected, onEditRule, modifier.fillMaxSize(), gridState)
+    }
+    when {
+        isThreePane -> {
+            BackHandler(enabled = detail != null) { onItemSelected(null) }
+            ThreePaneListDetail(
+                selected = detail,
+                supporting = {
+                    ManageFilterPane(uiState, onFilterSelected, onCategorySelected, Modifier.fillMaxSize())
+                },
+                list = { list(Modifier.fillMaxSize(), false) },
+                detail = { detailPane(it, Modifier.fillMaxSize()) },
+                emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
+                modifier = modifier,
+            )
+        }
+        isTwoPane -> {
+            BackHandler(enabled = detail != null) { onItemSelected(null) }
+            AdaptiveListDetail(
+                selected = detail,
+                list = { list(Modifier.fillMaxSize(), true) },
+                detail = { detailPane(it, Modifier.fillMaxSize()) },
+                emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
+                modifier = modifier,
+            )
+        }
+        detail != null -> {
+            BackHandler { onItemSelected(null) }
+            detailPane(detail, modifier.fillMaxSize())
+        }
+        else -> list(modifier.fillMaxSize(), true)
     }
 }

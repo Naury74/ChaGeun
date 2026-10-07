@@ -61,6 +61,7 @@ internal fun ManageList(
     onEditRule: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
+    showFilters: Boolean = true,
 ) {
     val gutter = ChageunTheme.spacing.gutter
     val showAd = LocalAdsEnabled.current
@@ -73,20 +74,23 @@ internal fun ManageList(
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
-        item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
-            // 넓은 화면에서 끝까지 늘어나면 눌러야 할 곳이 멀어지므로 폭을 제한한다.
-            SegmentedControl(
-                options = ManageFilter.entries.map { filter ->
-                    stringResource(
-                        R.string.manage_filter_with_count,
-                        stringResource(filter.labelRes),
-                        uiState.counts[filter] ?: 0,
-                    )
-                },
-                selectedIndex = ManageFilter.entries.indexOf(uiState.filter),
-                onSelect = { onFilterSelected(ManageFilter.entries[it]) },
-                modifier = Modifier.widthIn(max = SEGMENT_MAX_WIDTH),
-            )
+        // 세 칸 배치에서는 왼쪽 Pane이 같은 필터를 보여 주므로 목록 위에는 두지 않는다.
+        if (showFilters) {
+            item(key = "filters", span = { GridItemSpan(maxLineSpan) }) {
+                // 넓은 화면에서 끝까지 늘어나면 눌러야 할 곳이 멀어지므로 폭을 제한한다.
+                SegmentedControl(
+                    options = ManageFilter.entries.map { filter ->
+                        stringResource(
+                            R.string.manage_filter_with_count,
+                            stringResource(filter.labelRes),
+                            uiState.counts[filter] ?: 0,
+                        )
+                    },
+                    selectedIndex = ManageFilter.entries.indexOf(uiState.filter),
+                    onSelect = { onFilterSelected(ManageFilter.entries[it]) },
+                    modifier = Modifier.widthIn(max = SEGMENT_MAX_WIDTH),
+                )
+            }
         }
         if (uiState.items.isEmpty() && !uiState.isLoading) {
             item(key = "empty", span = { GridItemSpan(maxLineSpan) }) {
@@ -207,7 +211,7 @@ private fun MaintenanceItemCard(
     }
 }
 
-private val ManageFilter.labelRes: Int
+internal val ManageFilter.labelRes: Int
     get() = when (this) {
         ManageFilter.All -> R.string.manage_filter_all
         ManageFilter.NeedsAttention -> R.string.manage_filter_attention

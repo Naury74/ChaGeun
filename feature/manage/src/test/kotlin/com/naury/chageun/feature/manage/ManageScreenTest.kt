@@ -8,10 +8,12 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
@@ -109,6 +111,42 @@ class ManageScreenTest {
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Edit interval").assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = "w1400dp-h900dp")
+    fun threePane_showsFiltersListAndDetailSideBySide() {
+        var selected by mutableStateOf<MaintenanceItem?>(null)
+        var category: MaintenanceCategory? = null
+        composeRule.setContent {
+            ChageunTheme {
+                ManageScreen(
+                    uiState = stateFor(selected).copy(categoryCounts = mapOf(MaintenanceCategory.Engine to 1)),
+                    isTwoPane = true,
+                    isThreePane = true,
+                    onFilterSelected = {},
+                    onCategorySelected = { category = it },
+                    onItemSelected = { selected = it },
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+
+        // 필터는 왼쪽 Pane에만 있고, 상세 칸은 선택 전부터 안내 문구로 자리를 지킨다.
+        composeRule.onNodeWithText("Status").assertIsDisplayed()
+        composeRule.onNodeWithText("All categories").assertIsDisplayed()
+        composeRule.onNodeWithText("All 1").assertDoesNotExist()
+        composeRule.onNodeWithText("Select an item to see why it has this status").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Engine").performClick()
+        assertThat(category).isEqualTo(MaintenanceCategory.Engine)
+
+        composeRule.onNodeWithText("Engine oil").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Edit interval").assertIsDisplayed()
+        composeRule.onNodeWithText("Select an item to see why it has this status").assertDoesNotExist()
+        composeRule.onNodeWithText("Status").assertIsDisplayed()
     }
 
     @Test
@@ -228,5 +266,32 @@ class ManageScreenTest {
             }
         }
         composeRule.captureScreen("care_tablet")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.LARGE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_largeThreePaneKorean() {
+        val state = screenshotState(MaintenanceItem.EngineOil).copy(
+            categoryCounts = mapOf(
+                MaintenanceCategory.Engine to 2,
+                MaintenanceCategory.Electrical to 1,
+                MaintenanceCategory.Chassis to 1,
+            ),
+        )
+        composeRule.setContent {
+            AppFrame {
+                ManageScreen(
+                    state,
+                    isTwoPane = true,
+                    isThreePane = true,
+                    onFilterSelected = {},
+                    onItemSelected = {},
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+        composeRule.captureScreen("care_large_ko")
     }
 }
