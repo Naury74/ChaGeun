@@ -183,7 +183,11 @@ private fun HomeContent(
     val isTabletop = hinge != null && !hinge.isVertical
     val showAd = LocalAdsEnabled.current
     val panes: List<LazyListScope.() -> Unit> = when {
-        isTabletop -> listOf({ summaryPane(state, actions) }, {
+        isTabletop -> listOf({ summaryPane(state, actions, showsActions = false) }, {
+            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
+            item(key = "hero-actions") {
+                HomeHeroActions(state, actions, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+            }
             attentionPane(state, actions)
             missingPane(state, actions)
             recentPane(state, actions, showAd)
@@ -239,9 +243,10 @@ private fun LazyListScope.summaryPane(
     state: HomeUiState.Content,
     actions: HomeActions,
     isSideBySide: Boolean = false,
+    showsActions: Boolean = true,
 ) {
     // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다.
-    item(key = "hero") { HomeHero(state, actions, isSideBySide) }
+    item(key = "hero") { HomeHero(state, actions, isSideBySide, showsActions) }
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -342,7 +347,12 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideBySide: Boolean) {
+private fun HomeHero(
+    state: HomeUiState.Content,
+    actions: HomeActions,
+    isSideBySide: Boolean,
+    showsActions: Boolean = true,
+) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
     val subtitleParts = listOfNotNull(
@@ -391,25 +401,33 @@ private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideByS
             mileage.date == state.today -> stringResource(R.string.home_mileage_as_of_today)
             else -> stringResource(R.string.home_mileage_as_of, formatDate(mileage.date))
         },
-        action = {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            ) {
-                FilledTonalButton(onClick = actions.onUpdateMileage) {
-                    Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(stringResource(R.string.home_mileage_update))
-                }
-                // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
-                if (state.photoPath == null && actions.onAddPhoto != null) {
-                    OutlinedButton(onClick = actions.onAddPhoto) {
-                        Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                        Text(stringResource(R.string.home_add_photo))
-                    }
-                }
-            }
+        action = if (showsActions) {
+            { HomeHeroActions(state, actions) }
+        } else {
+            null
         },
     )
+}
+
+@Composable
+private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+    ) {
+        FilledTonalButton(onClick = actions.onUpdateMileage) {
+            Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(ChageunTheme.spacing.xs))
+            Text(stringResource(R.string.home_mileage_update))
+        }
+        // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
+        if (state.photoPath == null && actions.onAddPhoto != null) {
+            OutlinedButton(onClick = actions.onAddPhoto) {
+                Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                Text(stringResource(R.string.home_add_photo))
+            }
+        }
+    }
 }
