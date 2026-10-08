@@ -47,3 +47,13 @@ jobs:
             benchmark/build/outputs/managed_device_android_test_additional_output/
             benchmark/build/reports/
           retention-days: 14
+
+  page-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-android
+      # 서명 없이도 번들 구성은 같으므로 매일 네이티브 라이브러리의 16KB 정렬을 확인한다.
+      - run: ./gradlew bundleRelease
+      - run: scripts/check-16kb-alignment.sh app/build/outputs/bundle/release/app-release.aab
