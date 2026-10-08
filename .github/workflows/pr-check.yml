@@ -74,7 +74,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: ./.github/actions/setup-android
-      - run: ./gradlew assembleDebug
+      # Instrumented test는 Nightly에서 돌리고, PR에서는 컴파일만 확인한다.
+      - run: ./gradlew assembleDebug :app:assembleDebugAndroidTest
 
   dependency-review:
     runs-on: ubuntu-latest

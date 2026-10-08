@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
     alias(libs.plugins.chageun.android.application)
     alias(libs.plugins.kotlin.serialization)
@@ -30,7 +32,8 @@ android {
         applicationId = "com.naury.chageun"
         versionCode = 1
         versionName = "0.1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // 테스트 프로세스마다 앱 데이터를 비우고 시작한다. 설치만 한 첫 실행과 같은 상태에서 흐름을 검사한다.
+        testInstrumentationRunner = "com.naury.chageun.ChageunTestRunner"
         manifestPlaceholders["admobAppId"] = admobTestAppId
     }
 
@@ -74,6 +77,44 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        animationsDisabled = true
+        // 테스트마다 프로세스를 새로 띄워 앞 테스트의 DB 연결과 싱글턴이 다음 테스트로 이어지지 않게 한다.
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        // 기획 문서 9.5의 Nightly 기기. CI는 기기마다 따로 실행하고(nightly-test.yml), 로컬은 nightly 그룹으로 한 번에 돌린다.
+        managedDevices {
+            localDevices {
+                // GMD는 API 27부터 지원한다. 최소 지원 버전인 API 26은 Nightly에서 일반 에뮬레이터로 따로 돌린다.
+                create("pixel2Api27") {
+                    device = "Pixel 2"
+                    apiLevel = 27
+                    // ATD 이미지는 API 30부터 있고, Managed Device가 API 27 AOSP 이미지를 준비하지 못해 Google 이미지를 쓴다.
+                    systemImageSource = "google"
+                    testedAbi = "x86"
+                }
+                create("pixel6Api36") {
+                    device = "Pixel 6"
+                    apiLevel = 36
+                    systemImageSource = "aosp-atd"
+                }
+                create("pixelTabletApi36") {
+                    device = "Pixel Tablet"
+                    apiLevel = 36
+                    systemImageSource = "aosp-atd"
+                }
+                create("pixel6Api36PageSize16k") {
+                    device = "Pixel 6"
+                    apiLevel = 36
+                    // 16KB 페이지 이미지는 Google APIs 계열(ps16k)만 있어 ATD 대신 google 이미지를 쓴다.
+                    systemImageSource = "google"
+                    pageAlignment = ManagedVirtualDevice.PageAlignment.FORCE_16KB_PAGES
+                }
+            }
+            groups {
+                create("nightly") {
+                    targetDevices.addAll(localDevices)
+                }
+            }
+        }
     }
 
     lint {
@@ -141,7 +182,10 @@ dependencies {
     baselineProfile(projects.benchmark)
 
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Compose 테스트가 끌어오는 Espresso 3.5는 Android 16에서 없어진 InputManager.getInstance를 불러 idle 대기부터 실패한다.
+    androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestUtil(libs.androidx.test.orchestrator)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

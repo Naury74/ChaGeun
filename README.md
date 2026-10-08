@@ -50,10 +50,19 @@ git clone https://github.com/Naury74/ChaGeun.git
 ## 품질 검사
 
 ```bash
-./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug assembleDebug
+./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug assembleDebug :app:assembleDebugAndroidTest
 ```
 
 PR마다 GitHub Actions에서 동일한 검사가 실행됩니다. 의도한 UI 변경이면 `./gradlew recordRoborazziDebug`로 기준 Screenshot(`feature/*/src/test/screenshots`)을 갱신해 같은 PR에 포함합니다.
+
+### 기기 흐름 테스트
+
+```bash
+./gradlew :app:connectedDebugAndroidTest       # 연결된 기기·에뮬레이터 (앱 데이터가 지워집니다)
+./gradlew :app:nightlyGroupDebugAndroidTest    # Gradle Managed Device 전체 (API 27 · 36 폰 · 36 태블릿 · 36 16KB 페이지)
+```
+
+차량 등록, 정비 기록 저장, 주행거리 충돌, 알림 Deep Link, AI 공유 미리보기, 데이터 삭제를 실제 화면으로 검사합니다. 테스트마다 앱 데이터를 비운 새 설치 상태에서 시작하므로 개인 기기에서는 돌리지 않습니다. Managed Device는 API 27부터 지원하므로 최소 지원 버전(API 26)은 Nightly가 일반 에뮬레이터로 따로 실행합니다.
 
 ### 성능
 
