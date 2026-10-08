@@ -3,6 +3,7 @@ package com.naury.chageun.feature.history
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -134,6 +135,55 @@ class HistoryScreenTest {
         composeRule.onNodeWithContentDescription("Back").performClick()
         composeRule.waitForIdle()
         assertThat(selected).isNull()
+    }
+
+    @Test
+    @Config(qualifiers = "w1400dp-h900dp")
+    fun threePane_movesFiltersAside_andKeepsTimelinePositionWhileDetailOpens() {
+        val items = (1..30).map { day ->
+            item.copy(ref = RecordRef(TimelineEventType.Fuel, "fuel-$day"), title = "Station $day")
+        }
+        var selected by mutableStateOf<RecordRef?>(null)
+        var openedAdvanced = false
+        composeRule.setContent {
+            ChageunTheme {
+                HistoryScreen(
+                    uiState = HistoryUiState(
+                        isLoading = false,
+                        sections = listOf(TimelineSection(YearMonth.of(2026, 8), items)),
+                        selected = selected,
+                        detail = detail.takeIf { selected != null },
+                    ),
+                    isTwoPane = true,
+                    isThreePane = true,
+                    onKeywordChanged = {},
+                    onFilterSelected = {},
+                    onSelect = { selected = it },
+                    onDelete = {},
+                    onAdd = {},
+                    onAddPhotos = {},
+                    onDeleteAttachment = {},
+                    onDismissAttachFailure = {},
+                    onOpenAdvancedFilter = { openedAdvanced = true },
+                )
+            }
+        }
+
+        // 검색과 필터는 왼쪽 Pane에 한 번만 있고, 상세 칸은 선택 전부터 안내 문구를 보여 준다.
+        composeRule.onAllNodes(hasText("Search records")).assertCountEquals(1)
+        composeRule.onNodeWithText("Record type").assertIsDisplayed()
+        composeRule.onNodeWithText("No extra conditions").performClick()
+        assertThat(openedAdvanced).isTrue()
+        composeRule.onNodeWithText("Select a record to see its details").assertIsDisplayed()
+
+        composeRule.onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToNode(hasText("Fuel · Station 25"))
+        composeRule.onNodeWithText("Fuel · Station 25").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Unit price").assertIsDisplayed()
+        composeRule.onNodeWithText("Select a record to see its details").assertDoesNotExist()
+        composeRule.onNodeWithText("Fuel · Station 25").assertIsDisplayed()
+        composeRule.onNodeWithText("Fuel · Station 1").assertDoesNotExist()
     }
 
     /** 폴더블을 접고 펴 한 칸·두 칸이 바뀌어도 상세 안의 삭제 확인 창이 그대로 남는다. */
@@ -474,12 +524,13 @@ class HistoryScreenTest {
         TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 70_000),
     )
 
-    private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean) {
+    private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean, isThreePane: Boolean = false) {
         composeRule.setContent {
             AppFrame {
                 HistoryScreen(
                     uiState = state,
                     isTwoPane = isTwoPane,
+                    isThreePane = isThreePane,
                     onKeywordChanged = {},
                     onFilterSelected = {},
                     onSelect = {},
@@ -539,6 +590,23 @@ class HistoryScreenTest {
             detail = detail,
         ),
         isTwoPane = true,
+    )
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.LARGE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_largeThreePaneKorean() = screenshot(
+        "history_large_ko",
+        HistoryUiState(
+            isLoading = false,
+            filter = HistoryFilter.All,
+            advanced = AdvancedFilter(period = HistoryPeriod.Last6Months, withAttachmentsOnly = true),
+            sections = screenshotSections,
+            selected = ref,
+            detail = detail,
+        ),
+        isTwoPane = true,
+        isThreePane = true,
     )
 
     @Test

@@ -46,6 +46,18 @@ fun isExpandedWidth(): Boolean = currentWindowAdaptiveInfo().windowSizeClass
 fun isListDetailTwoPane(): Boolean = isExpandedWidth() || currentSeparatingHinge()?.isVertical == true
 
 /**
+ * Large 폭(1200dp)부터는 필터 Pane을 더해 세 칸을 쓴다. 세로 Hinge가 창을 나누면 칸이 접힘에 걸치지 않도록
+ * 두 칸 배치를 그대로 쓴다.
+ */
+@Composable
+fun isListDetailThreePane(): Boolean =
+    isListDetailThreePane(currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass) &&
+        currentSeparatingHinge()?.isVertical != true
+
+fun isListDetailThreePane(windowSizeClass: WindowSizeClass): Boolean =
+    windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND)
+
+/**
  * 각 자식을 Pane으로 배치한다. 나란히 놓거나, [stacked]이면 위아래로 쌓는다.
  * 그 축을 가로지르는 Hinge가 없으면 Pane들이 [weights] 비율로 공간을 나눈다. Hinge가 있으면 첫 Pane은
  * Hinge 앞에서 끝나고 나머지는 Hinge 뒤에서 시작해, 접힘 부분에 카드나 버튼이 걸치지 않는다.

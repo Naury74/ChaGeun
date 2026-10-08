@@ -19,6 +19,9 @@ object ScreenshotDevices {
     const val TABLET = "w1280dp-h800dp-hdpi"
     const val PHONE_DARK = "w360dp-h800dp-night-hdpi"
     const val PHONE_KO = "ko-w360dp-h800dp-hdpi"
+
+    /** 목록 화면이 세 칸으로 나뉘는 Large 폭(1200dp 이상) 창. */
+    const val LARGE_KO = "ko-w1400dp-h900dp-hdpi"
 }
 
 /**

@@ -107,4 +107,14 @@
         <item quantity="one">Couldn\'t attach %d photo. You can add it again from History.</item>
         <item quantity="other">Couldn\'t attach %d photos. You can add them again from History.</item>
     </plurals>
+    <string name="manage_pane_status">Status</string>
+    <string name="manage_pane_category">Category</string>
+    <string name="manage_category_all">All categories</string>
+    <string name="manage_category_engine">Engine</string>
+    <string name="manage_category_climate">Climate</string>
+    <string name="manage_category_brake">Brakes</string>
+    <string name="manage_category_drivetrain">Drivetrain &amp; cooling</string>
+    <string name="manage_category_electrical">Electrical</string>
+    <string name="manage_category_chassis">Tires &amp; chassis</string>
+    <string name="manage_category_visibility">Visibility</string>
 </resources>

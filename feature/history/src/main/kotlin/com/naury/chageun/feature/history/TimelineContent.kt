@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -74,6 +75,7 @@ internal fun TimelineContent(
     onClearAdvancedFilter: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
+    showFilters: Boolean = true,
 ) {
     val gutter = ChageunTheme.spacing.gutter
     // 끝에서 LOAD_MORE_AHEAD줄 전에 미리 다음 페이지를 읽어, 스크롤이 끝에서 멈추지 않게 한다.
@@ -94,48 +96,9 @@ internal fun TimelineContent(
         contentPadding = PaddingValues(top = ChageunTheme.spacing.sm, bottom = FAB_CLEARANCE),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
-        item(key = "search") {
-            OutlinedTextField(
-                value = uiState.keyword,
-                onValueChange = onKeywordChanged,
-                placeholder = { Text(stringResource(R.string.history_search_hint)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = gutter),
-            )
-        }
-        item(key = "filters") {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = gutter),
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            ) {
-                item(key = "advanced") {
-                    val count = uiState.advanced.activeCount
-                    FilterChip(
-                        selected = count > 0,
-                        onClick = onOpenAdvancedFilter,
-                        leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
-                        label = {
-                            Text(
-                                if (count > 0) {
-                                    stringResource(R.string.history_filter_count, count)
-                                } else {
-                                    stringResource(R.string.history_filter)
-                                },
-                            )
-                        },
-                    )
-                }
-                items(HistoryFilter.entries) { filter ->
-                    FilterChip(
-                        selected = uiState.filter == filter,
-                        onClick = { onFilterSelected(filter) },
-                        label = { Text(stringResource(filter.labelRes)) },
-                    )
-                }
-            }
+        // 세 칸 배치에서는 왼쪽 Pane이 검색과 필터를 맡는다.
+        if (showFilters) {
+            timelineFilters(uiState, onKeywordChanged, onFilterSelected, onOpenAdvancedFilter)
         }
         if (uiState.isEmpty) {
             item(key = "empty") {
@@ -168,6 +131,57 @@ internal fun TimelineContent(
                 if (item.ref == adAfter) {
                     NativeAdSlot(Modifier.padding(start = gutter, end = gutter, top = ChageunTheme.spacing.xs))
                 }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.timelineFilters(
+    uiState: HistoryUiState,
+    onKeywordChanged: (String) -> Unit,
+    onFilterSelected: (HistoryFilter) -> Unit,
+    onOpenAdvancedFilter: () -> Unit,
+) {
+    item(key = "search") {
+        OutlinedTextField(
+            value = uiState.keyword,
+            onValueChange = onKeywordChanged,
+            placeholder = { Text(stringResource(R.string.history_search_hint)) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            singleLine = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = ChageunTheme.spacing.gutter),
+        )
+    }
+    item(key = "filters") {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = ChageunTheme.spacing.gutter),
+            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        ) {
+            item(key = "advanced") {
+                val count = uiState.advanced.activeCount
+                FilterChip(
+                    selected = count > 0,
+                    onClick = onOpenAdvancedFilter,
+                    leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null) },
+                    label = {
+                        Text(
+                            if (count > 0) {
+                                stringResource(R.string.history_filter_count, count)
+                            } else {
+                                stringResource(R.string.history_filter)
+                            },
+                        )
+                    },
+                )
+            }
+            items(HistoryFilter.entries) { filter ->
+                FilterChip(
+                    selected = uiState.filter == filter,
+                    onClick = { onFilterSelected(filter) },
+                    label = { Text(stringResource(filter.labelRes)) },
+                )
             }
         }
     }
@@ -317,7 +331,7 @@ private fun EmptyTimeline(isFiltered: Boolean, onAdd: () -> Unit, onClear: () ->
     }
 }
 
-private val HistoryFilter.labelRes: Int
+internal val HistoryFilter.labelRes: Int
     get() = when (this) {
         HistoryFilter.All -> R.string.history_filter_all
         HistoryFilter.Maintenance -> R.string.history_filter_maintenance

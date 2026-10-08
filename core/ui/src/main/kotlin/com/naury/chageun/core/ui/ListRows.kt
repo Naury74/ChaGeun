@@ -1,5 +1,6 @@
 package com.naury.chageun.core.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -26,6 +27,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -114,6 +116,40 @@ fun ListRow(
             )
         }
     }
+}
+
+/**
+ * 여러 개 중 하나를 고르는 행. 세 칸 배치의 필터 Pane처럼 고른 행을 계속 강조해 둬야 하는 곳에 쓴다.
+ * [trailingText]에는 개수처럼 짧은 값을 둔다.
+ */
+@Composable
+fun SelectableListRow(
+    icon: ImageVector,
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tone: ToneColors = ChageunTheme.colors.unknown,
+    trailingText: String? = null,
+) {
+    ListRow(
+        icon = icon,
+        title = title,
+        tone = tone,
+        onClick = onClick,
+        modifier = modifier
+            .semantics { this.selected = selected }
+            .background(if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent),
+        trailing = {
+            trailingText?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
 }
 
 /** 행 전체가 스위치다. TalkBack에서는 제목·설명·켜짐 상태를 한 번에 읽는다. */

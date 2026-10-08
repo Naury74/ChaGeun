@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.maintenance.MaintenanceRepository
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +31,7 @@ class ManageViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val filter = savedStateHandle.getStateFlow(KEY_FILTER, ManageFilter.All.name)
+    private val category = savedStateHandle.getStateFlow<String?>(KEY_CATEGORY, null)
     private val selectedItem = savedStateHandle.getStateFlow<String?>(KEY_SELECTED, null)
 
     val uiState: StateFlow<ManageUiState> = vehicleRepository.observePrimaryVehicle()
@@ -39,22 +41,35 @@ class ManageViewModel @Inject constructor(
                 name?.let { maintenanceRepository.observeServiceHistory(vehicle.id, MaintenanceItem.valueOf(it)) }
                     ?: flowOf(emptyList())
             }
-            combine(observeMaintenanceOverview(vehicle.id), filter, selectedItem, history) {
+            combine(observeMaintenanceOverview(vehicle.id), filter, category, selectedItem, history) {
                     overview,
                     filterName,
+                    categoryName,
                     selectedName,
                     entries,
                 ->
                 val activeFilter = ManageFilter.valueOf(filterName)
+                val activeCategory = categoryName?.let(MaintenanceCategory::valueOf)
+                val inCategory = overview.statuses.filter {
+                    activeCategory == null || it.item.category == activeCategory
+                }
                 val selected = selectedName?.let(MaintenanceItem::valueOf)
                 val selectedStatus = overview.statuses.firstOrNull { it.item == selected }
                 ManageUiState(
                     isLoading = false,
                     filter = activeFilter,
-                    items = overview.statuses.filter(activeFilter::accepts),
-                    counts = ManageFilter.entries.associateWith { f -> overview.statuses.count(f::accepts) },
+                    category = activeCategory,
+                    items = inCategory.filter(activeFilter::accepts),
+                    // 분류를 고르면 상태 필터의 개수도 그 분류 안에서 센다. 목록에 보이는 수와 맞아야 덜 헷갈린다.
+                    counts = ManageFilter.entries.associateWith { f -> inCategory.count(f::accepts) },
+                    categoryCounts = MaintenanceCategory.entries
+                        .associateWith { c -> overview.statuses.count { it.item.category == c } }
+                        .filterValues { it > 0 },
                     rules = overview.rules,
-                    disabledItems = overview.disabledItems,
+                    disabledItems = overview.disabledItems.filter {
+                        activeCategory == null ||
+                            it.category == activeCategory
+                    },
                     selectedItem = selectedStatus?.item,
                     detail = selectedStatus?.let {
                         ManageDetail(it, overview.rules[it.item], entries, overview.currentMileage)
@@ -68,12 +83,17 @@ class ManageViewModel @Inject constructor(
         savedStateHandle[KEY_FILTER] = filter.name
     }
 
+    fun selectCategory(category: MaintenanceCategory?) {
+        savedStateHandle[KEY_CATEGORY] = category?.name
+    }
+
     fun selectItem(item: MaintenanceItem?) {
         savedStateHandle[KEY_SELECTED] = item?.name
     }
 
     private companion object {
         const val KEY_FILTER = "manage_filter"
+        const val KEY_CATEGORY = "manage_category"
         const val KEY_SELECTED = "manage_selected_item"
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
