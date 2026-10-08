@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -38,6 +39,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
@@ -157,6 +159,27 @@ class AiHubTest {
             }
         }
         composeRule.captureScreen("ai_phone")
+    }
+
+    /** 휴대폰에서 보낼 정보 카드까지 내려, 보내는 정보와 빼는 정보가 한 화면에 함께 보이는지 찍는다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_contextPreviewPhone_ko() {
+        composeRule.setContent {
+            AppFrame {
+                val state = AiHubUiState(question = "차 상태 어때?", options = AiContextOptions(), facts = facts)
+                AiHubScreen(
+                    uiState = state,
+                    promptText = aiPromptText(facts, state.question),
+                    actions = AiHubActions({
+                    }, {}, {}, {}, onShare = {}),
+                )
+            }
+        }
+        val showText = RuntimeEnvironment.getApplication().getString(R.string.ai_show_text)
+        composeRule.onNodeWithText(showText).performScrollTo()
+        composeRule.captureScreen("ai_context_preview_phone_ko")
     }
 
     @Test

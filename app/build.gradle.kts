@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.chageun.hilt)
     alias(libs.plugins.aboutlibraries.android)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.roborazzi)
 }
 
 // google-services.json은 Git에 없다. 파일이 있는 로컬·배포 빌드만 Firebase를 쓰고, CI와 처음 받은 사람도 빌드할 수 있다.
@@ -83,6 +84,11 @@ android {
     }
 }
 
+// 앱 셸(하단 바·Rail·Hinge) Screenshot도 기능 모듈처럼 테스트 옆에 기준 이미지를 둔다.
+roborazzi {
+    outputDir.set(layout.projectDirectory.dir("src/test/screenshots"))
+}
+
 dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.profileinstaller)
@@ -127,7 +133,10 @@ dependencies {
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
     testImplementation(libs.truth)
+    testImplementation(projects.core.uiTesting)
 
     baselineProfile(projects.benchmark)
 

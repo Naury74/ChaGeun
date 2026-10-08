@@ -17,7 +17,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.Gutters
 import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelAmounts
@@ -524,9 +526,15 @@ class HistoryScreenTest {
         TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 70_000),
     )
 
-    private fun screenshot(name: String, state: HistoryUiState, isTwoPane: Boolean, isThreePane: Boolean = false) {
+    private fun screenshot(
+        name: String,
+        state: HistoryUiState,
+        isTwoPane: Boolean,
+        isThreePane: Boolean = false,
+        spacing: ChageunSpacing = Gutters.Compact,
+    ) {
         composeRule.setContent {
-            AppFrame {
+            AppFrame(spacing) {
                 HistoryScreen(
                     uiState = state,
                     isTwoPane = isTwoPane,
@@ -590,6 +598,17 @@ class HistoryScreenTest {
             detail = detail,
         ),
         isTwoPane = true,
+    )
+
+    /** Expanded 폭이 시작되는 840dp에서 고른 기록의 상세가 목록 옆에 열린다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.EXPANDED_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_expandedTwoPaneKorean() = screenshot(
+        "history_expanded_ko",
+        HistoryUiState(isLoading = false, sections = screenshotSections, selected = ref, detail = detail),
+        isTwoPane = true,
+        spacing = Gutters.Expanded,
     )
 
     @Test

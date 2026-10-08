@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.Gutters
 import com.naury.chageun.core.domain.maintenance.DefaultMaintenanceRules
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
@@ -293,5 +294,25 @@ class ManageScreenTest {
             }
         }
         composeRule.captureScreen("care_large_ko")
+    }
+
+    /** Expanded 폭이 시작되는 840dp에서도 목록과 상세가 나란히 놓이고, 상세 글이 잘리지 않는다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.EXPANDED_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_expandedTwoPaneKorean() {
+        composeRule.setContent {
+            AppFrame(Gutters.Expanded) {
+                ManageScreen(
+                    screenshotState(MaintenanceItem.EngineOil),
+                    isTwoPane = true,
+                    onFilterSelected = {},
+                    onItemSelected = {},
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+        composeRule.captureScreen("care_expanded_ko")
     }
 }
