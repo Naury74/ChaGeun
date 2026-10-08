@@ -6,6 +6,7 @@ import android.graphics.Paint
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -368,5 +369,28 @@ class VehicleScreenTest {
         // 터치로 누르면 물결 효과가 찍히는 시점에 따라 이미지가 달라지므로 클릭 동작만 실행한다.
         composeRule.onNodeWithText("지난 검사 2건").performSemanticsAction(SemanticsActions.OnClick)
         composeRule.captureScreen("vehicle_inspection_history_ko")
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w1400dp-h900dp-hdpi")
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun threePanes_putPhotoSpecsAndRecordsSideBySide() {
+        composeRule.setContent {
+            AppFrame {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14)),
+                    isTwoPane = true,
+                    onUpdateMileage = {},
+                    isThreePane = true,
+                )
+            }
+        }
+
+        val album = composeRule.onNodeWithText("앨범").getBoundsInRoot()
+        val specs = composeRule.onNodeWithText("기본정보").getBoundsInRoot()
+        val records = composeRule.onNodeWithText("검사·리콜").getBoundsInRoot()
+        assertThat(album.right).isLessThan(specs.left)
+        assertThat(specs.right).isLessThan(records.left)
+        composeRule.captureScreen("vehicle_large_ko")
     }
 }

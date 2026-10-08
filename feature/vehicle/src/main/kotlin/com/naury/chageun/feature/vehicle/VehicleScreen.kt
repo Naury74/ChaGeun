@@ -51,6 +51,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -71,6 +72,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
@@ -85,6 +87,7 @@ import com.naury.chageun.core.ui.InfoListRow
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
+import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
@@ -113,6 +116,10 @@ fun VehicleRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = isListDetailTwoPane()
+    // 1200dp 이상에서 접힘으로 나뉘지 않은 창이면 사진 / 제원 / 기록을 세 칸으로 펼친다(기획 §18.2).
+    val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
+    val isThreePane = currentSeparatingHinge() == null &&
+        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND)
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
     val photoInput = rememberPhotoInputState()
     // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
@@ -150,6 +157,7 @@ fun VehicleRoute(
             modifier = Modifier.padding(padding),
             showInspection = showInspection,
             onInspectionShown = onInspectionShown,
+            isThreePane = isThreePane,
         )
     }
     if (isEditing) VehicleEditHost(isExpanded = isExpandedWidth(), onDismiss = { isEditing = false })
@@ -176,6 +184,7 @@ fun VehicleScreen(
     onOpenAlbum: () -> Unit = {},
     showInspection: Boolean = false,
     onInspectionShown: () -> Unit = {},
+    isThreePane: Boolean = false,
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
@@ -183,8 +192,19 @@ fun VehicleScreen(
         return
     }
     val spacing = ChageunTheme.spacing
-    val panes: List<LazyListScope.() -> Unit> = if (isTwoPane) {
-        listOf({ overviewPane(state, onUpdateMileage, photoActions, onEditVehicle, onOpenAlbum) }, {
+    val panes: List<LazyListScope.() -> Unit> = if (isThreePane) {
+        listOf(
+            { galleryPane(state, onUpdateMileage, photoActions, onOpenAlbum, isSideBySide = true) },
+            { specsPane(state, onEditVehicle) },
+            {
+                recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
+                settingsEntry(onOpenSettings)
+            },
+        )
+    } else if (isTwoPane) {
+        listOf({
+            overviewPane(state, onUpdateMileage, photoActions, onEditVehicle, onOpenAlbum, isSideBySide = true)
+        }, {
             recordsPane(state, onInspectionDateSelected, onInspectionCompleted)
             settingsEntry(onOpenSettings)
         })
@@ -200,7 +220,7 @@ fun VehicleScreen(
     val currentOnInspectionShown by rememberUpdatedState(onInspectionShown)
     LaunchedEffect(showInspection) {
         if (!showInspection) return@LaunchedEffect
-        recordsState.animateScrollToItem(if (isTwoPane) 0 else OVERVIEW_ITEM_COUNT)
+        recordsState.animateScrollToItem(if (isTwoPane || isThreePane) 0 else OVERVIEW_ITEM_COUNT)
         currentOnInspectionShown()
     }
     HingeAwarePanes(weights = List(panes.size) { 1f }, modifier = modifier.fillMaxSize()) {
@@ -222,10 +242,25 @@ private fun LazyListScope.overviewPane(
     photoActions: VehiclePhotoActions,
     onEditVehicle: () -> Unit,
     onOpenAlbum: () -> Unit,
+    isSideBySide: Boolean = false,
 ) {
     // 항목을 더하거나 빼면 OVERVIEW_ITEM_COUNT도 맞춘다.
-    item(key = "hero") { Hero(state, onUpdateMileage, photoActions) }
+    galleryPane(state, onUpdateMileage, photoActions, onOpenAlbum, isSideBySide)
+    specsPane(state, onEditVehicle)
+}
+
+private fun LazyListScope.galleryPane(
+    state: VehicleUiState.Content,
+    onUpdateMileage: () -> Unit,
+    photoActions: VehiclePhotoActions,
+    onOpenAlbum: () -> Unit,
+    isSideBySide: Boolean = false,
+) {
+    item(key = "hero") { Hero(state, onUpdateMileage, photoActions, isSideBySide) }
     item(key = "album") { AlbumPreview(state, onOpenAlbum) }
+}
+
+private fun LazyListScope.specsPane(state: VehicleUiState.Content, onEditVehicle: () -> Unit) {
     item(key = "info") { InfoSection(state, onEditVehicle) }
     item(key = "sources") {
         val res = if (state.vehicle.registrationMode == RegistrationMode.Manual) {
@@ -268,7 +303,12 @@ private fun LazyListScope.settingsEntry(onOpenSettings: () -> Unit) {
 }
 
 @Composable
-private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, photoActions: VehiclePhotoActions) {
+private fun Hero(
+    state: VehicleUiState.Content,
+    onUpdateMileage: () -> Unit,
+    photoActions: VehiclePhotoActions,
+    isSideBySide: Boolean,
+) {
     val vehicle = state.vehicle
     val current = state.currentMileage
     VehicleHeroSection(
@@ -297,6 +337,8 @@ private fun Hero(state: VehicleUiState.Content, onUpdateMileage: () -> Unit, pho
         stats = listOf(mileageHeroStat(current?.mileage?.value), inspectionHeroStat(state.inspection)),
         // 큰 제목 아래에서 시작하므로 하늘이 위에서 서서히 나타나게 한다.
         skyFromTop = false,
+        // 옆 칸과 나란히 놓이면 하늘 바탕이 칸 끝에서 끊겨 보이지 않게 흐린다.
+        skyFadesAtEnd = isSideBySide,
         footnote = current?.let { stringResource(R.string.vehicle_mileage_as_of, formatDate(it.date)) }
             ?: stringResource(R.string.vehicle_mileage_none),
         action = {
