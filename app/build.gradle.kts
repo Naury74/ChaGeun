@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.androidx.profileinstaller)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.play.app.update.ktx)
     implementation(libs.firebase.crashlytics)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
@@ -126,6 +127,7 @@ dependencies {
 
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
+    testImplementation(libs.truth)
 
     baselineProfile(projects.benchmark)
 

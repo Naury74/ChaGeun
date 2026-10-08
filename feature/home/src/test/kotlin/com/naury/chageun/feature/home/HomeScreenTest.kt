@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
@@ -9,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.FeatureFlags
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
@@ -19,6 +21,7 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.Hinge
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
@@ -192,6 +195,24 @@ class HomeScreenTest {
         show(content(VehicleHealthLevel.Upcoming, listOf(HealthReason.InspectionDueSoon)))
 
         composeRule.onNodeWithText("Vehicle inspection is coming up").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun aiCard_hidesWhenAiSharingIsSwitchedOff() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalFeatureFlags provides FeatureFlags(aiShareEnabled = false)) {
+                ChageunTheme {
+                    HomeScreen(
+                        uiState = content(VehicleHealthLevel.Good, emptyList()),
+                        paneCount = 1,
+                        actions = HomeActions({}, {}, {}),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Ask about your car").assertDoesNotExist()
     }
 
     @Test

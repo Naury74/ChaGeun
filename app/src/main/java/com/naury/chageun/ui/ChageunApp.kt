@@ -38,6 +38,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.notification.DeepLink
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.feature.account.AccountRoute as AccountScreenRoute
 import com.naury.chageun.feature.account.DeleteAccountRoute
 import com.naury.chageun.feature.account.DriveBackupRoute as DriveBackupScreenRoute
@@ -286,7 +287,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
         TopLevelDestination.History -> HistoryRoute(
             onRecordService = actions.onRecordService,
             onEditService = actions.onEditService,
-            onAskAi = actions.onAskAiAboutRecord,
+            onAskAi = actions.onAskAiAboutRecord.takeIf { LocalFeatureFlags.current.aiShareEnabled },
         )
         TopLevelDestination.Vehicle -> VehicleRoute(
             onUpdateMileage = actions.onUpdateMileage,

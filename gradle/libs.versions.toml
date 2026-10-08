@@ -16,6 +16,7 @@ playServicesAds = "25.5.0"
 playServicesMlkitTextRecognition = "19.0.1"
 userMessagingPlatform = "4.0.0"
 firebaseBom = "34.19.0"
+playAppUpdate = "2.1.0"
 googleServices = "4.5.0"
 firebaseCrashlyticsPlugin = "3.0.8"
 androidxSplashscreen = "1.2.0"
@@ -122,6 +123,7 @@ wire-runtime = { module = "com.squareup.wire:wire-runtime", version.ref = "wire"
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
 roborazzi-gradlePlugin = { module = "io.github.takahirom.roborazzi:roborazzi-gradle-plugin", version.ref = "roborazzi" }
+play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "playAppUpdate" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 play-services-mlkit-text-recognition = { module = "com.google.android.gms:play-services-mlkit-text-recognition", version.ref = "playServicesMlkitTextRecognition" }
 user-messaging-platform = { module = "com.google.android.ump:user-messaging-platform", version.ref = "userMessagingPlatform" }
