@@ -47,6 +47,8 @@ internal data class VehicleDto(
     @SerialName("registration_mode") val registrationMode: String,
     @SerialName("is_primary") val isPrimary: Boolean,
     @SerialName("created_at") val createdAt: String,
+    /** 버전을 올리지 않고 추가한 필드다. 배기량이 없던 때의 파일은 비워 둔 채 가져온다. */
+    @SerialName("displacement_cc") val displacementCc: Int? = null,
 )
 
 @Serializable

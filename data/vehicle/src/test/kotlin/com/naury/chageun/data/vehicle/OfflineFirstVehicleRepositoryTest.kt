@@ -9,9 +9,11 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PlateChange
 import com.naury.chageun.core.model.PlateNumber
 import com.naury.chageun.core.model.PlateParseResult
 import com.naury.chageun.core.model.ServiceRecord
+import com.naury.chageun.core.model.VehicleProfileUpdate
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.security.FieldCipher
 import java.time.Clock
@@ -138,5 +140,27 @@ class OfflineFirstVehicleRepositoryTest {
 
         assertThat(repository.observePrimaryVehicle().first()?.id).isEqualTo(second)
         assertThat(database.vehicleDao().observe(first.value).first()?.isPrimary).isFalse()
+    }
+
+    @Test
+    fun updateProfile_storesAndClearsDisplacement() = runTest {
+        val id = repository.register(registration())
+        val update = VehicleProfileUpdate(
+            maker = "Maker",
+            model = "Model",
+            modelYear = 2023,
+            fuelType = FuelType.Gasoline,
+            trim = null,
+            plate = PlateChange.Keep,
+            firstRegistrationDate = null,
+            displacementCc = 1_598,
+        )
+
+        repository.updateProfile(id, update)
+        assertThat(repository.observePrimaryVehicle().first()?.displacementCc).isEqualTo(1_598)
+        assertThat(database.vehicleDao().observe(id.value).first()?.displacementCc).isEqualTo(1_598)
+
+        repository.updateProfile(id, update.copy(displacementCc = null))
+        assertThat(repository.observePrimaryVehicle().first()?.displacementCc).isNull()
     }
 }

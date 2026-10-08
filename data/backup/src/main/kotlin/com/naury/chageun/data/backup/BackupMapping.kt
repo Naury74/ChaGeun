@@ -27,6 +27,7 @@ internal fun VehicleEntity.toDto() = VehicleDto(
     registrationMode = registrationMode,
     isPrimary = isPrimary,
     createdAt = createdAt.toString(),
+    displacementCc = displacementCc,
 )
 
 /** 암호화된 번호판은 복원하지 않는다. 내보낸 기기의 Keystore 키로 암호화된 값이기 때문이다. */
@@ -45,6 +46,7 @@ internal fun VehicleDto.toEntity(now: Instant) = VehicleEntity(
     isPrimary = isPrimary,
     createdAt = Instant.parse(createdAt),
     updatedAt = now,
+    displacementCc = displacementCc,
 )
 
 internal fun MileageRecordEntity.toDto() =

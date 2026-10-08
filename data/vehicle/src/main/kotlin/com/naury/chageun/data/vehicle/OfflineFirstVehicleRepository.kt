@@ -118,6 +118,7 @@ internal class OfflineFirstVehicleRepository @Inject constructor(
                 trim = update.trim?.trim()?.ifEmpty { null },
                 fuelType = update.fuelType.name,
                 firstRegistrationDate = update.firstRegistrationDate,
+                displacementCc = update.displacementCc,
                 plateNumberEncrypted = when (plate) {
                     PlateChange.Keep -> current.plateNumberEncrypted
                     PlateChange.Remove -> null

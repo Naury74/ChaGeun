@@ -23,4 +23,5 @@ data class VehicleEntity(
     @ColumnInfo(name = "is_primary") val isPrimary: Boolean,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "updated_at") val updatedAt: Instant,
+    @ColumnInfo(name = "displacement_cc") val displacementCc: Int? = null,
 )

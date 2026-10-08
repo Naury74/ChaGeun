@@ -35,6 +35,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
+import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.VehicleInfoField
 import com.naury.chageun.core.ui.VehicleInfoFields
@@ -57,9 +58,10 @@ fun VehicleEditHost(isExpanded: Boolean, onDismiss: () -> Unit) {
                 onFuelTypeSelected = viewModel::onFuelTypeSelected,
                 onTrimChanged = viewModel::onTrimChanged,
                 onPlateChanged = viewModel::onPlateChanged,
-                onRemovePlate = viewModel::onRemovePlate,
-                onKeepPlate = viewModel::onKeepPlate,
+                onRemovePlate = { viewModel.onPlateRemovalChanged(remove = true) },
+                onKeepPlate = { viewModel.onPlateRemovalChanged(remove = false) },
                 onFirstRegistrationDateChanged = viewModel::onFirstRegistrationDateChanged,
+                onDisplacementChanged = viewModel::onDisplacementChanged,
                 onSave = viewModel::save,
                 onDismiss = onDismiss,
             ),
@@ -77,6 +79,7 @@ data class VehicleEditActions(
     val onRemovePlate: () -> Unit = {},
     val onKeepPlate: () -> Unit = {},
     val onFirstRegistrationDateChanged: (LocalDate?) -> Unit = {},
+    val onDisplacementChanged: (String) -> Unit = {},
     val onSave: () -> Unit = {},
     val onDismiss: () -> Unit = {},
 )
@@ -126,6 +129,15 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
             modifier = Modifier.fillMaxWidth(),
         )
         FirstRegistrationSection(uiState.firstRegistrationDate, actions.onFirstRegistrationDateChanged)
+        if (uiState.hasEngine) {
+            NumberInputField(
+                value = uiState.displacementCc,
+                onValueChange = actions.onDisplacementChanged,
+                label = stringResource(R.string.vehicle_edit_displacement),
+                unit = stringResource(R.string.vehicle_edit_displacement_unit),
+                errorText = uiState.errors[VehicleEditField.Displacement]?.let { stringResource(it.messageRes) },
+            )
+        }
         PlateSection(uiState, actions)
         Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
             TextButton(onClick = actions.onDismiss, modifier = Modifier.weight(1f)) {
@@ -230,4 +242,5 @@ private val VehicleEditError.messageRes: Int
         VehicleEditError.InvalidYear -> R.string.vehicle_edit_error_year
         VehicleEditError.InvalidPlate -> R.string.vehicle_edit_error_plate
         VehicleEditError.UnsupportedPlate -> R.string.vehicle_edit_error_plate_unsupported
+        VehicleEditError.InvalidDisplacement -> R.string.vehicle_edit_error_displacement
     }

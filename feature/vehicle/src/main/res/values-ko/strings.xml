@@ -124,4 +124,9 @@
         <item quantity="other">지난 검사 %1$d건</item>
     </plurals>
     <string name="vehicle_inspection_past_hide">지난 검사 접기</string>
+    <string name="vehicle_displacement">배기량</string>
+    <string name="vehicle_displacement_value">%1$scc</string>
+    <string name="vehicle_edit_displacement">배기량 (선택)</string>
+    <string name="vehicle_edit_displacement_unit">cc</string>
+    <string name="vehicle_edit_error_displacement">50cc에서 10,000cc 사이로 입력해 주세요</string>
 </resources>

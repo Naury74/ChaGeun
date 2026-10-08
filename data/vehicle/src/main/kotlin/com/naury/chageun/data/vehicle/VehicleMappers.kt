@@ -16,6 +16,7 @@ internal fun VehicleEntity.asExternalModel() = Vehicle(
     trim = trim,
     fuelType = fuelType?.let { stored -> FuelType.entries.firstOrNull { it.name == stored } },
     firstRegistrationDate = firstRegistrationDate,
+    displacementCc = displacementCc,
     plateMasked = plateMasked,
     registrationMode = RegistrationMode.valueOf(registrationMode),
     isPrimary = isPrimary,

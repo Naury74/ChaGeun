@@ -23,10 +23,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class VehicleEditError { Required, InvalidYear, InvalidPlate, UnsupportedPlate }
+enum class VehicleEditError { Required, InvalidYear, InvalidPlate, UnsupportedPlate, InvalidDisplacement }
 
 /** 차량번호 칸. [VehicleInfoField]에 없는 값이라 따로 둔다. */
-enum class VehicleEditField { Maker, Model, ModelYear, FuelType, Plate }
+enum class VehicleEditField { Maker, Model, ModelYear, FuelType, Plate, Displacement }
 
 data class VehicleEditUiState(
     val isLoaded: Boolean = false,
@@ -41,11 +41,16 @@ data class VehicleEditUiState(
     val newPlate: String = "",
     val isPlateRemoved: Boolean = false,
     val firstRegistrationDate: LocalDate? = null,
+    /** 숫자만 담는다. 비어 있으면 배기량을 비운다. */
+    val displacementCc: String = "",
     val errors: Map<VehicleEditField, VehicleEditError> = emptyMap(),
     val isSaving: Boolean = false,
     val isSaved: Boolean = false,
 ) {
     val isFuelChanged: Boolean get() = originalFuelType != null && fuelType != originalFuelType
+
+    /** 엔진이 없는 전기·수소차는 배기량 칸을 숨기고, 저장할 때도 비운다. */
+    val hasEngine: Boolean get() = fuelType != FuelType.Electric && fuelType != FuelType.Hydrogen
 }
 
 @HiltViewModel
@@ -73,6 +78,7 @@ class VehicleEditViewModel @Inject constructor(
                 trim = current.trim.orEmpty(),
                 currentPlateMasked = current.plateMasked,
                 firstRegistrationDate = current.firstRegistrationDate,
+                displacementCc = current.displacementCc?.toString().orEmpty(),
             )
         }
     }
@@ -91,11 +97,18 @@ class VehicleEditViewModel @Inject constructor(
 
     fun onPlateChanged(value: String) = edit(VehicleEditField.Plate) { copy(newPlate = value, isPlateRemoved = false) }
 
-    fun onRemovePlate() = edit(VehicleEditField.Plate) { copy(newPlate = "", isPlateRemoved = true) }
-
-    fun onKeepPlate() = _uiState.update { it.copy(isPlateRemoved = false) }
+    /** [remove]면 저장할 때 번호를 지우고, false면 지우기를 취소해 지금 번호를 둔다. */
+    fun onPlateRemovalChanged(remove: Boolean) = if (remove) {
+        edit(VehicleEditField.Plate) { copy(newPlate = "", isPlateRemoved = true) }
+    } else {
+        _uiState.update { it.copy(isPlateRemoved = false) }
+    }
 
     fun onFirstRegistrationDateChanged(date: LocalDate?) = _uiState.update { it.copy(firstRegistrationDate = date) }
+
+    fun onDisplacementChanged(value: String) = edit(VehicleEditField.Displacement) {
+        copy(displacementCc = value.filter(Char::isDigit).take(DISPLACEMENT_DIGITS))
+    }
 
     fun save() {
         val current = vehicle
@@ -122,6 +135,9 @@ class VehicleEditViewModel @Inject constructor(
         if (state.fuelType == null) put(VehicleEditField.FuelType, VehicleEditError.Required)
         if (state.modelYear.toIntOrNull() == null) put(VehicleEditField.ModelYear, VehicleEditError.Required)
         if (plateChange(state) == null) put(VehicleEditField.Plate, plateError(state.newPlate))
+        if (state.hasEngine && state.displacementCc.isNotEmpty() && displacement(state) == null) {
+            put(VehicleEditField.Displacement, VehicleEditError.InvalidDisplacement)
+        }
     }
 
     private fun toUpdate(state: VehicleEditUiState): VehicleProfileUpdate? {
@@ -137,8 +153,13 @@ class VehicleEditViewModel @Inject constructor(
             state.trim,
             plate,
             state.firstRegistrationDate,
+            displacement(state),
         )
     }
+
+    /** 범위를 벗어나거나 비어 있거나 엔진이 없는 차면 null이다. */
+    private fun displacement(state: VehicleEditUiState): Int? =
+        state.displacementCc.toIntOrNull()?.takeIf { state.hasEngine && it in DISPLACEMENT_RANGE }
 
     /** null이면 입력한 번호가 올바르지 않다는 뜻이다. */
     private fun plateChange(state: VehicleEditUiState): PlateChange? = when {
@@ -159,5 +180,9 @@ class VehicleEditViewModel @Inject constructor(
 
     private companion object {
         const val YEAR_DIGITS = 4
+        const val DISPLACEMENT_DIGITS = 5
+
+        // 오타만 걸러 낼 만큼 넉넉하게 잡는다.
+        val DISPLACEMENT_RANGE = 50..10_000
     }
 }

@@ -238,6 +238,34 @@ class RoomBackupRepositoryTest {
     }
 
     @Test
+    fun vehicleDisplacement_roundTrips() = runTest {
+        val stored = database.backupDao().vehicles().single()
+        database.vehicleDao().upsert(stored.copy(displacementCc = 1_598))
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val archive = Uri.fromFile(File(workDir, "out.zip")).toString()
+        repository.export(archive)
+        repository.deleteAll()
+
+        repository.import(archive)
+
+        assertThat(database.backupDao().vehicles().single().displacementCc).isEqualTo(1_598)
+    }
+
+    @Test
+    fun vehicleWithoutDisplacement_fromOlderBackup_decodesAsEmpty() {
+        val legacy = """
+            {"id": "v1", "maker": "Maker", "model": "Model", "model_year": 2023, "trim": null,
+            "fuel_type": "Gasoline", "first_registration_date": null, "plate_masked": null,
+            "registration_mode": "Manual", "is_primary": true, "created_at": "2026-03-01T00:00:00Z"}
+        """.trimIndent()
+
+        val dto = Json.decodeFromString(VehicleDto.serializer(), legacy)
+
+        assertThat(dto.displacementCc).isNull()
+        assertThat(dto.toEntity(now).displacementCc).isNull()
+    }
+
+    @Test
     fun import_rejectsOtherSchemaVersion_andKeepsExistingData() = runTest {
         val repository = repository(StandardTestDispatcher(testScheduler))
         val archive = zip("data.json" to """{"schema_version": 99}""")

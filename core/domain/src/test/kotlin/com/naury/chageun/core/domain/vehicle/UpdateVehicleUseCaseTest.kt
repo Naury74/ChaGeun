@@ -51,6 +51,7 @@ class UpdateVehicleUseCaseTest {
         trim = "Signature",
         plate = plate,
         firstRegistrationDate = null,
+        displacementCc = null,
     )
 
     @Test
