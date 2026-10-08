@@ -17,6 +17,7 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaul
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
+import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -146,6 +148,7 @@ fun ChageunApp(
         pendingInspection = isOpeningInspection,
         onPendingInspectionHandled = { isOpeningInspection = false },
     )
+    val adFreeDestination = rememberAdFreeDestination(deepLink, currentTopLevel)
     LaunchedEffect(deepLink) {
         when (deepLink) {
             is DeepLink.Maintenance -> navigateTo(TopLevelDestination.Manage)
@@ -194,7 +197,11 @@ fun ChageunApp(
                 TopLevelDestination.entries.forEach { destination ->
                     // 홈은 Hero의 하늘 바탕을 상태 표시줄 뒤까지 그리고, 상단 인셋은 화면 안에서 비운다.
                     val metadata = if (destination == TopLevelDestination.Home) DRAWS_BEHIND_STATUS_BAR else emptyMap()
-                    entry(destination.route, metadata = metadata) { destinationContent(destination, actions) }
+                    entry(destination.route, metadata = metadata) {
+                        WithoutAds(hidden = adFreeDestination == destination) {
+                            destinationContent(destination, actions)
+                        }
+                    }
                 }
                 entry(SettingsRoute) {
                     SettingsRoute(
@@ -338,4 +345,33 @@ private fun <T : Any> topInsetDecorator() = NavEntryDecorator<T> { entry ->
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
         },
     ) { entry.Content() }
+}
+
+/** 알림이 여는 탭. */
+private val DeepLink.destination: TopLevelDestination
+    get() = when (this) {
+        is DeepLink.Maintenance -> TopLevelDestination.Manage
+        DeepLink.Inspection -> TopLevelDestination.Vehicle
+        DeepLink.MileageUpdate -> TopLevelDestination.Home
+    }
+
+/** 알림을 눌러 들어온 탭에는 광고를 띄우지 않는다(기획 §17.1). 다른 탭으로 옮기면 다시 보인다. */
+@Composable
+private fun rememberAdFreeDestination(deepLink: DeepLink?, currentTopLevel: TopLevelRoute): TopLevelDestination? {
+    var adFreeDestination by rememberSaveable { mutableStateOf<TopLevelDestination?>(null) }
+    LaunchedEffect(deepLink) {
+        deepLink?.let { adFreeDestination = it.destination }
+    }
+    // 알림이 탭을 여는 중에도 탭이 바뀌므로, 그 탭에 있다가 다른 탭으로 옮겼을 때만 푼다.
+    var lastTopLevel by remember { mutableStateOf(currentTopLevel) }
+    LaunchedEffect(currentTopLevel) {
+        if (lastTopLevel == adFreeDestination?.route && currentTopLevel != lastTopLevel) adFreeDestination = null
+        lastTopLevel = currentTopLevel
+    }
+    return adFreeDestination
+}
+
+@Composable
+private fun WithoutAds(hidden: Boolean, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalAdsEnabled provides (LocalAdsEnabled.current && !hidden), content = content)
 }
