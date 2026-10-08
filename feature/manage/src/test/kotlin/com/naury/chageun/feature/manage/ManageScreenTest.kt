@@ -24,6 +24,7 @@ import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.model.ServiceHistoryEntry
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.LocalDate
@@ -63,6 +64,43 @@ class ManageScreenTest {
         selectedItem = selected,
         detail = selected?.let { ManageDetail(oil, rule, history, null) },
     )
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets_list() {
+        composeRule.setContent {
+            ChageunTheme {
+                ManageScreen(
+                    stateFor(null),
+                    isTwoPane = false,
+                    onFilterSelected = {},
+                    onItemSelected = {},
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h1600dp")
+    fun controls_haveLabelsAndLargeTouchTargets_listAndDetail() {
+        composeRule.setContent {
+            ChageunTheme {
+                ManageScreen(
+                    stateFor(MaintenanceItem.EngineOil),
+                    isTwoPane = true,
+                    onFilterSelected = {},
+                    onItemSelected = {},
+                    onRecordService = {},
+                    onEditRule = {},
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
 
     @Test
     fun compact_opensDetailAndReturnsToList() {

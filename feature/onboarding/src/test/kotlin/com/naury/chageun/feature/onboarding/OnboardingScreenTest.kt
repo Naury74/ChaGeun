@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +36,20 @@ class OnboardingScreenTest {
             composeRule.waitForIdle()
 
             composeRule.assertNoClippedText()
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp", fontScale = 1f)
+    fun everyStep_controlsHaveLabelsAndLargeTouchTargets() {
+        var state by mutableStateOf(OnboardingUiState())
+        composeRule.setContent { ChageunTheme { OnboardingScreen(uiState = state, onAction = {}) } }
+
+        OnboardingStep.entries.forEach { step ->
+            state = OnboardingUiState(step = step)
+            composeRule.waitForIdle()
+
+            composeRule.assertAccessibleControls()
         }
     }
 }

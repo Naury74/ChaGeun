@@ -42,6 +42,8 @@
     <string name="onboarding_intro_feature_ai">내 차 정보로 AI에게 물어봐요</string>
     <string name="onboarding_step_progress">%1$d/%2$d</string>
     <string name="onboarding_plate_placeholder_short">123가 4567</string>
+    <string name="onboarding_plate_field">차량번호</string>
+    <string name="onboarding_mileage_field">현재 주행거리</string>
     <string name="onboarding_mileage_caption">계기판의 ODO(누적 주행거리) 값을 보면 돼요.</string>
     <string name="onboarding_quick_mode_recent">3개월 이내</string>
     <string name="onboarding_quick_mode_half_year">6개월 전</string>
