@@ -49,7 +49,9 @@ import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 fun MileageUpdateHost(
     isExpanded: Boolean,
     onDismiss: () -> Unit,
-    viewModel: MileageUpdateViewModel = hiltViewModel(),
+    sessionKey: Int = 0,
+    // ViewModel은 앱 셸의 Activity 범위에 남으므로, 다시 열 때 지난 저장 상태로 바로 닫히지 않게 열 때마다 키를 바꾼다.
+    viewModel: MileageUpdateViewModel = hiltViewModel(key = "mileage-update-$sessionKey"),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
