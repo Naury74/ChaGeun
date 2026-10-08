@@ -54,8 +54,9 @@ fun isListDetailThreePane(): Boolean =
     isListDetailThreePane(currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass) &&
         currentSeparatingHinge()?.isVertical != true
 
+// 1200dp부터는 왼쪽 고정 메뉴가 360dp 가까이 차지해, Large 폭에서 세 칸으로 나누면 가운데 목록이 너무 좁다.
 fun isListDetailThreePane(windowSizeClass: WindowSizeClass): Boolean =
-    windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND)
+    windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXTRA_LARGE_LOWER_BOUND)
 
 /**
  * 각 자식을 Pane으로 배치한다. 나란히 놓거나, [stacked]이면 위아래로 쌓는다.
