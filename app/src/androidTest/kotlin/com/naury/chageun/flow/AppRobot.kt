@@ -1,6 +1,7 @@
 package com.naury.chageun.flow
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onFirst
@@ -18,6 +20,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.printToLog
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.naury.chageun.MainActivity
 import com.naury.chageun.R
@@ -63,7 +66,37 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     fun exists(matcher: SemanticsMatcher): Boolean = rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
 
     fun waitFor(matcher: SemanticsMatcher, timeoutMillis: Long = TIMEOUT_MILLIS) {
-        rule.waitUntil(timeoutMillis) { exists(matcher) }
+        try {
+            rule.waitUntil(timeoutMillis) { exists(matcher) }
+        } catch (timeout: ComposeTimeoutException) {
+            dumpScreen()
+            throw timeout
+        }
+    }
+
+    /** CI 기기에서는 화면을 볼 수 없으므로 기다리다 실패한 순간의 화면 구조를 logcat에 남긴다. */
+    private fun dumpScreen() {
+        val roots = rule.onAllNodes(isRoot())
+        roots.fetchSemanticsNodes().indices.forEach { index -> roots[index].printToLog(TREE_LOG_TAG) }
+    }
+
+    /** Lazy 목록 아래쪽 항목은 스크롤해야 그려지므로 기다리는 동안 목록을 내려 본다. */
+    fun waitForScrolling(matcher: SemanticsMatcher, timeoutMillis: Long = TIMEOUT_MILLIS) {
+        try {
+            rule.waitUntil(timeoutMillis) { exists(matcher) || scrollListsTo(matcher) }
+        } catch (timeout: ComposeTimeoutException) {
+            dumpScreen()
+            throw timeout
+        }
+    }
+
+    private fun scrollListsTo(matcher: SemanticsMatcher): Boolean {
+        val lists = rule.onAllNodes(hasScrollToNodeAction())
+        for (index in 0 until lists.fetchSemanticsNodes().size) {
+            runCatching { lists[index].performScrollToNode(matcher) }
+            if (exists(matcher)) return true
+        }
+        return false
     }
 
     fun waitForText(text: String, timeoutMillis: Long = TIMEOUT_MILLIS) = waitFor(hasText(text), timeoutMillis)
@@ -92,7 +125,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     }
 
     fun click(matcher: SemanticsMatcher) {
-        waitFor(matcher)
+        waitForScrolling(matcher)
         bringIntoView(matcher).performClick()
     }
 
@@ -184,6 +217,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     companion object {
         /** API 26 에뮬레이터는 첫 Compose 화면과 Room 쓰기가 느려 넉넉히 기다린다. */
         const val TIMEOUT_MILLIS = 15_000L
+        private const val TREE_LOG_TAG = "ChageunScreen"
         const val REGISTER_TIMEOUT_MILLIS = 30_000L
         const val TEST_PLATE = "12가3456"
         const val TEST_MILEAGE = 50_000L
