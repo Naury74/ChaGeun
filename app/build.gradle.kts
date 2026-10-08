@@ -87,9 +87,8 @@ android {
                 create("pixel2Api27") {
                     device = "Pixel 2"
                     apiLevel = 27
-                    // ATD 이미지는 API 30부터 있어 일반 AOSP 이미지를 쓴다.
-                    systemImageSource = "aosp"
-                    // API 27 AOSP 이미지에는 x86_64가 없어 32비트 이미지를 쓴다.
+                    // ATD 이미지는 API 30부터 있고, Managed Device가 API 27 AOSP 이미지를 준비하지 못해 Google 이미지를 쓴다.
+                    systemImageSource = "google"
                     testedAbi = "x86"
                 }
                 create("pixel6Api36") {

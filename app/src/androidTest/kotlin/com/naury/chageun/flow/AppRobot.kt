@@ -2,6 +2,7 @@ package com.naury.chageun.flow
 
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
@@ -14,6 +15,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
@@ -64,6 +66,16 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
 
     fun itemName(item: MaintenanceItem): String = text(item.labelRes)
 
+    // 연식 칩 같은 가로 목록을 끝까지 넘기면 이미 고른 칩이 화면 밖으로 밀리므로 세로 목록만 스크롤한다.
+    private val verticalList =
+        hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+
+    /** 칩·카드처럼 고르는 항목을 누르고 실제로 선택됐는지 확인한다. */
+    fun select(label: String) {
+        clickText(label)
+        waitFor(hasText(label) and isSelected())
+    }
+
     fun exists(matcher: SemanticsMatcher): Boolean = rule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
 
     fun waitFor(matcher: SemanticsMatcher, timeoutMillis: Long = TIMEOUT_MILLIS) {
@@ -95,7 +107,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     }
 
     private fun scrollListsTo(matcher: SemanticsMatcher): Boolean {
-        val lists = rule.onAllNodes(hasScrollToNodeAction())
+        val lists = rule.onAllNodes(verticalList)
         for (index in 0 until lists.fetchSemanticsNodes().size) {
             runCatching { lists[index].performScrollToNode(matcher) }
             if (exists(matcher)) return true
@@ -115,7 +127,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
      */
     fun bringIntoView(matcher: SemanticsMatcher): SemanticsNodeInteraction {
         if (!exists(matcher)) {
-            val lists = rule.onAllNodes(hasScrollToNodeAction())
+            val lists = rule.onAllNodes(verticalList)
             val count = lists.fetchSemanticsNodes().size
             for (index in 0 until count) {
                 runCatching { lists[index].performScrollToNode(matcher) }
@@ -163,14 +175,14 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
         }
 
         val maker = text(UiR.string.maker_hyundai)
-        clickText(maker)
+        select(maker)
         val model = activity.resources.getStringArray(UiR.array.models_hyundai).first()
-        clickText(model)
+        select(model)
         // 연식 칩은 가로 Lazy 목록이라 처음부터 보이는 최근 연식을 고른다.
         val modelYear = Year.now().value - 1
-        clickText(modelYear.toString())
+        select(modelYear.toString())
         val fuel = text(FuelType.Gasoline.labelRes)
-        clickText(fuel)
+        select(fuel)
         clickText(OnboardingR.string.onboarding_next)
 
         clickText(OnboardingR.string.onboarding_photo_later)
