@@ -1,5 +1,6 @@
 package com.naury.chageun.flow
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
@@ -20,7 +21,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.printToLog
+import androidx.compose.ui.test.printToString
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.naury.chageun.MainActivity
 import com.naury.chageun.R
@@ -77,7 +78,10 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     /** CI 기기에서는 화면을 볼 수 없으므로 기다리다 실패한 순간의 화면 구조를 logcat에 남긴다. */
     private fun dumpScreen() {
         val roots = rule.onAllNodes(isRoot())
-        roots.fetchSemanticsNodes().indices.forEach { index -> roots[index].printToLog(TREE_LOG_TAG) }
+        // 한 번에 남기면 logcat 한 줄 길이 제한에 잘리므로 줄마다 나눠 남긴다.
+        roots.fetchSemanticsNodes().indices.forEach { index ->
+            roots[index].printToString().lineSequence().forEach { Log.d(TREE_LOG_TAG, it) }
+        }
     }
 
     /** Lazy 목록 아래쪽 항목은 스크롤해야 그려지므로 기다리는 동안 목록을 내려 본다. */
