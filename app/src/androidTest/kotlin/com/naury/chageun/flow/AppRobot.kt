@@ -25,6 +25,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.printToString
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.naury.chageun.MainActivity
 import com.naury.chageun.R
@@ -161,6 +162,13 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     fun inputText(field: SemanticsMatcher, value: String) {
         waitFor(field)
         bringIntoView(field).performTextReplacement(value)
+        hideKeyboard()
+    }
+
+    /** 화면이 짧은 기기에서는 키보드가 아래쪽 저장 버튼을 덮어, 누르면 키보드가 눌린다. */
+    fun hideKeyboard() {
+        Espresso.closeSoftKeyboard()
+        rule.waitForIdle()
     }
 
     /**
@@ -175,6 +183,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
                 hasSetTextAction() and hasContentDescription(text(OnboardingR.string.onboarding_plate_field))
             waitFor(plateField)
             rule.onNode(plateField).performTextInput(plate)
+            hideKeyboard()
             clickText(OnboardingR.string.onboarding_next)
         } else {
             clickText(OnboardingR.string.onboarding_plate_skip)
