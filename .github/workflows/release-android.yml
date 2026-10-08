@@ -1,0 +1,188 @@
+name: Release Android
+
+# 순서는 CICD §11.4를 따른다. 비밀값과 Environment 설정은 docs/release/README.md 참고.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '배포할 태그 (예: v0.2.0)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+  PACKAGE_NAME: com.naury.chageun
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version_code: ${{ steps.version.outputs.version_code }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - name: Tag가 main 커밋인지 확인
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main || { echo "태그 커밋이 main에 없습니다."; exit 1; }
+      - id: version
+        name: Version과 태그 일치 확인
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          name=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          code=$(grep -oP 'versionCode = \K[0-9]+' app/build.gradle.kts)
+          if [ "v$name" != "$tag" ]; then
+            echo "태그 $tag 와 versionName $name 이 다릅니다."
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version_code=$code" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: ./.github/actions/setup-android
+      - run: ./gradlew ktlintCheck detekt lintDebug testDebugUnitTest verifyRoborazziDebug
+
+  bundle:
+    needs: [verify, ci]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # 서명 키는 이 Environment의 Secret에만 둔다.
+    environment: release-build
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: ./.github/actions/setup-android
+      - name: 서명 키와 Firebase 설정 복원
+        env:
+          UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$UPLOAD_KEYSTORE_BASE64" ] || [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "release-build Environment에 서명 키와 google-services.json Secret이 없습니다."
+            exit 1
+          fi
+          echo "$UPLOAD_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > app/google-services.json
+      - name: Release AAB
+        env:
+          STORE_PASSWORD: ${{ secrets.UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_NATIVE_UNIT_ID: ${{ secrets.ADMOB_NATIVE_UNIT_ID }}
+        run: |
+          ./gradlew bundleRelease \
+            "-Pchageun.signing.storeFile=$RUNNER_TEMP/upload.jks" \
+            "-Pchageun.signing.storePassword=$STORE_PASSWORD" \
+            "-Pchageun.signing.keyAlias=$KEY_ALIAS" \
+            "-Pchageun.signing.keyPassword=$KEY_PASSWORD" \
+            "-Pchageun.admob.appId=$ADMOB_APP_ID" \
+            "-Pchageun.admob.nativeUnitId=$ADMOB_NATIVE_UNIT_ID"
+      - name: 16KB 페이지 크기 검사
+        run: scripts/check-16kb-alignment.sh app/build/outputs/bundle/release/app-release.aab
+      - name: 서명과 mapping 확인
+        run: |
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+          test -s app/build/outputs/mapping/release/mapping.txt
+      - name: 서명 키 삭제
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks" app/google-services.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ needs.verify.outputs.tag }}
+          path: |
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/mapping/release/mapping.txt
+          retention-days: 90
+
+  internal:
+    needs: [verify, bundle]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: play-internal
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-${{ needs.verify.outputs.tag }}
+          path: release
+      # 장기 JSON 키 대신 GitHub OIDC로 Workload Identity에서 단기 토큰을 받는다.
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+      - name: Internal 트랙 업로드
+        env:
+          PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          python3 scripts/play-publish.py upload-internal \
+            --package "$PACKAGE_NAME" \
+            --bundle release/bundle/release/app-release.aab \
+            --mapping release/mapping/release/mapping.txt \
+            --release-name "${{ needs.verify.outputs.tag }}"
+
+  production:
+    needs: [verify, internal]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Required Reviewer가 내부 테스트 스모크 확인 뒤 승인한다.
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PLAY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/androidpublisher
+      # 강제 업데이트가 필요한 버전은 production Environment 변수 IN_APP_UPDATE_PRIORITY를 4 이상으로 둔다(ADR-007).
+      - name: Production 5% 단계적 배포
+        env:
+          PLAY_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          python3 scripts/play-publish.py promote \
+            --package "$PACKAGE_NAME" \
+            --version-code "${{ needs.verify.outputs.version_code }}" \
+            --user-fraction 0.05 \
+            --update-priority "${{ vars.IN_APP_UPDATE_PRIORITY || 0 }}" \
+            --release-name "${{ needs.verify.outputs.tag }}"
+      - name: Release Note 기록
+        run: |
+          echo "## ${{ needs.verify.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commit: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- versionCode: ${{ needs.verify.outputs.version_code }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- production 5% 시작, 이후 단계는 docs/release/README.md 기준으로 Play Console에서 올린다." >> "$GITHUB_STEP_SUMMARY"
