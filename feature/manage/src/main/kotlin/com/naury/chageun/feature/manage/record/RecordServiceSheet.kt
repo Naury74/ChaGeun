@@ -62,16 +62,23 @@ import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.manage.R
 import java.time.LocalDate
 
-/** 앱 셸에서 쓰는 진입점. Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다. */
+/**
+ * 앱 셸에서 쓰는 진입점. Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다.
+ *
+ * ViewModel은 앱 셸의 Activity 범위에 남는다. 시트를 열 때마다 [sessionKey]를 바꿔 주어야
+ * 같은 항목을 다시 열었을 때 지난번 저장 결과 대신 새 입력 화면이 뜬다.
+ */
 @Composable
 fun RecordServiceHost(
     item: MaintenanceItem,
     isExpanded: Boolean,
     onDismiss: () -> Unit,
     editingRecordId: String? = null,
+    sessionKey: Int = 0,
 ) {
+    val target = editingRecordId?.let { "${item.name}-edit-$it" } ?: item.name
     val viewModel = hiltViewModel<RecordServiceViewModel, RecordServiceViewModel.Factory>(
-        key = editingRecordId?.let { "${item.name}-edit-$it" } ?: item.name,
+        key = "$target-$sessionKey",
     ) {
         it.create(RecordServiceTarget(item, editingRecordId))
     }

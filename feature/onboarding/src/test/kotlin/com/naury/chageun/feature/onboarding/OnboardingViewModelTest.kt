@@ -144,6 +144,24 @@ class OnboardingViewModelTest {
     }
 
     @Test
+    fun startsOver_afterRegistration() {
+        val vm = viewModel()
+        vm.onAction(OnboardingAction.Start)
+        vm.onAction(OnboardingAction.PlateChanged("123가4567"))
+        vm.onAction(OnboardingAction.SubmitPlate)
+        vm.fillVehicleInfo()
+        vm.onAction(OnboardingAction.SubmitVehicleInfo)
+        vm.onAction(OnboardingAction.SubmitPhoto)
+        vm.onAction(OnboardingAction.MileageChanged("42180"))
+        vm.onAction(OnboardingAction.SubmitMileage)
+        vm.onAction(OnboardingAction.SubmitQuickMaintenance)
+        vm.onAction(OnboardingAction.Finish)
+
+        assertThat(repository.registrations).hasSize(1)
+        assertThat(vm.uiState.value).isEqualTo(OnboardingUiState())
+    }
+
+    @Test
     fun showsRetryableError_whenSaveFails() {
         repository.failNextRegistration = true
         val vm = viewModel()

@@ -150,6 +150,10 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             runCatching { vehicleRepository.register(registration) }
                 .onSuccess { vehicleId ->
+                    // 이 ViewModel은 Activity 범위라 홈으로 넘어간 뒤에도 남는다. 모든 데이터를 지워 온보딩으로
+                    // 돌아왔을 때 저장 중인 마지막 단계에 갇히지 않도록 처음 상태로 비운다.
+                    _uiState.value = OnboardingUiState()
+                    draftStore.save(_uiState.value)
                     // 등록되면 바로 홈으로 넘어가 이 화면이 사라지므로, 사진 가져오기와 배경 지우기는 뒤에서 잇는다.
                     state.photoUri?.let {
                         photoRepository.replaceInBackground(vehicleId, it, state.removePhotoBackground)

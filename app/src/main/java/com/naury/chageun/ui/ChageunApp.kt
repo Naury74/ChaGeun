@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -104,6 +105,9 @@ fun ChageunApp(
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     var editingServiceId by rememberSaveable { mutableStateOf<String?>(null) }
+    // 입력 시트를 열 때마다 늘린다. 회전·접기에는 유지되고, 다시 열면 새 ViewModel을 쓴다.
+    var recordSession by rememberSaveable { mutableIntStateOf(0) }
+    var mileageSession by rememberSaveable { mutableIntStateOf(0) }
     var isUpdatingMileage by rememberSaveable { mutableStateOf(false) }
     var openedManageItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     var isOpeningInspection by rememberSaveable { mutableStateOf(false) }
@@ -119,14 +123,19 @@ fun ChageunApp(
     val actions = AppActions(
         onRecordService = {
             editingServiceId = null
+            recordSession++
             recordingItem = it
         },
         onEditService = { item, recordId ->
             editingServiceId = recordId
+            recordSession++
             recordingItem = item
         },
         onNavigate = navigateTo,
-        onUpdateMileage = { isUpdatingMileage = true },
+        onUpdateMileage = {
+            mileageSession++
+            isUpdatingMileage = true
+        },
         onAskAi = { item -> backStack.add(AiRoute(item?.name)) },
         onAskAiAboutRecord = { ref -> backStack.add(AiRoute(focusRecord = "${ref.type.name}:${ref.id}")) },
         onOpenSettings = { backStack.add(SettingsRoute) },
@@ -159,6 +168,7 @@ fun ChageunApp(
             }
             DeepLink.MileageUpdate -> {
                 navigateTo(TopLevelDestination.Home)
+                mileageSession++
                 isUpdatingMileage = true
                 onDeepLinkHandled()
             }
@@ -265,10 +275,15 @@ fun ChageunApp(
                 editingServiceId = null
             },
             editingRecordId = editingServiceId,
+            sessionKey = recordSession,
         )
     }
     if (isUpdatingMileage) {
-        MileageUpdateHost(isExpanded = isExpanded, onDismiss = { isUpdatingMileage = false })
+        MileageUpdateHost(
+            isExpanded = isExpanded,
+            onDismiss = { isUpdatingMileage = false },
+            sessionKey = mileageSession,
+        )
     }
 }
 
