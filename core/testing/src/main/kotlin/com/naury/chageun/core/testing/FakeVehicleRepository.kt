@@ -38,6 +38,7 @@ class FakeVehicleRepository : VehicleRepository {
             trim = registration.trim,
             fuelType = registration.fuelType,
             firstRegistrationDate = registration.firstRegistrationDate,
+            displacementCc = null,
             plateMasked = registration.plate?.masked,
             registrationMode = RegistrationMode.Manual,
             isPrimary = true,
@@ -54,6 +55,7 @@ class FakeVehicleRepository : VehicleRepository {
             fuelType = update.fuelType,
             trim = update.trim,
             firstRegistrationDate = update.firstRegistrationDate,
+            displacementCc = update.displacementCc,
             plateMasked = when (val plate = update.plate) {
                 PlateChange.Keep -> current.plateMasked
                 PlateChange.Remove -> null

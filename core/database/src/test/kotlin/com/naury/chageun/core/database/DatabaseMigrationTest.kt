@@ -10,6 +10,7 @@ import com.naury.chageun.core.database.migration.Migration4To5
 import com.naury.chageun.core.database.migration.Migration5To6
 import com.naury.chageun.core.database.migration.Migration6To7
 import com.naury.chageun.core.database.migration.Migration7To8
+import com.naury.chageun.core.database.migration.Migration8To9
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -149,6 +150,29 @@ class DatabaseMigrationTest {
                     while (cursor.moveToNext()) put(cursor.getString(0), cursor.getString(1))
                 }
                 assertThat(results).containsExactly("en", "Unknown", "free", null, "ko", "Unknown", "repair", null)
+            }
+        }
+    }
+
+    @Test
+    fun migration8To9_keepsVehicleAndLeavesDisplacementEmpty() {
+        helper.createDatabase(TEST_DB, 8).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 9, true, Migration8To9).use { db ->
+            db.query("SELECT maker, displacement_cc FROM vehicle WHERE id = 'v1'").use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.getString(0)).isEqualTo("Maker")
+                assertThat(cursor.isNull(1)).isTrue()
+            }
+            db.execSQL("UPDATE vehicle SET displacement_cc = 1598 WHERE id = 'v1'")
+            db.query("SELECT displacement_cc FROM vehicle WHERE id = 'v1'").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getInt(0)).isEqualTo(1598)
             }
         }
     }

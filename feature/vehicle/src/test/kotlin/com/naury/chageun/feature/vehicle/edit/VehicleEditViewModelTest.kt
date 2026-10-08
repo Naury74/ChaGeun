@@ -87,6 +87,75 @@ class VehicleEditViewModelTest {
     }
 
     @Test
+    fun savesDisplacement_andClearsItWhenEmptied() = runTest {
+        val viewModel = viewModel()
+        viewModel.onDisplacementChanged("1,598cc")
+        assertThat(viewModel.uiState.value.displacementCc).isEqualTo("1598")
+        viewModel.save()
+
+        assertThat(vehicles.observePrimaryVehicle().first()!!.displacementCc).isEqualTo(1_598)
+
+        val again = viewModel()
+        assertThat(again.uiState.value.displacementCc).isEqualTo("1598")
+        again.onDisplacementChanged("")
+        again.save()
+
+        assertThat(again.uiState.value.isSaved).isTrue()
+        assertThat(vehicles.observePrimaryVehicle().first()!!.displacementCc).isNull()
+    }
+
+    @Test
+    fun rejectsDisplacementOutOfRange_andKeepsAtMostFiveDigits() = runTest {
+        val viewModel = viewModel()
+        viewModel.onDisplacementChanged("1234567")
+        assertThat(viewModel.uiState.value.displacementCc).isEqualTo("12345")
+
+        viewModel.save()
+        assertThat(viewModel.uiState.value.errors[VehicleEditField.Displacement])
+            .isEqualTo(VehicleEditError.InvalidDisplacement)
+        assertThat(viewModel.uiState.value.isSaved).isFalse()
+
+        viewModel.onDisplacementChanged("49")
+        assertThat(viewModel.uiState.value.errors).doesNotContainKey(VehicleEditField.Displacement)
+        viewModel.save()
+        assertThat(viewModel.uiState.value.errors).containsKey(VehicleEditField.Displacement)
+
+        viewModel.onDisplacementChanged("50")
+        viewModel.save()
+        assertThat(viewModel.uiState.value.isSaved).isTrue()
+        assertThat(vehicles.observePrimaryVehicle().first()!!.displacementCc).isEqualTo(50)
+    }
+
+    @Test
+    fun hidesDisplacementForElectricAndHydrogen_andSavesItEmpty() = runTest {
+        val viewModel = viewModel()
+        viewModel.onDisplacementChanged("1598")
+        assertThat(viewModel.uiState.value.hasEngine).isTrue()
+
+        viewModel.onFuelTypeSelected(FuelType.Hydrogen)
+        assertThat(viewModel.uiState.value.hasEngine).isFalse()
+        viewModel.onFuelTypeSelected(FuelType.Electric)
+        assertThat(viewModel.uiState.value.hasEngine).isFalse()
+        viewModel.save()
+
+        val saved = vehicles.observePrimaryVehicle().first()!!
+        assertThat(saved.fuelType).isEqualTo(FuelType.Electric)
+        assertThat(saved.displacementCc).isNull()
+    }
+
+    @Test
+    fun ignoresInvalidDisplacement_whenFuelHasNoEngine() = runTest {
+        val viewModel = viewModel()
+        viewModel.onDisplacementChanged("12")
+        viewModel.onFuelTypeSelected(FuelType.Electric)
+
+        viewModel.save()
+
+        assertThat(viewModel.uiState.value.isSaved).isTrue()
+        assertThat(vehicles.observePrimaryVehicle().first()!!.displacementCc).isNull()
+    }
+
+    @Test
     fun showsFuelNotice_onlyWhenFuelChanges() {
         val viewModel = viewModel()
         assertThat(viewModel.uiState.value.isFuelChanged).isFalse()
@@ -123,7 +192,7 @@ class VehicleEditViewModelTest {
         assertThat(vehicles.observePrimaryVehicle().first()!!.plateMasked).isEqualTo("34나 **78")
 
         val again = viewModel()
-        again.onRemovePlate()
+        again.onPlateRemovalChanged(remove = true)
         again.save()
         assertThat(vehicles.observePrimaryVehicle().first()!!.plateMasked).isNull()
     }

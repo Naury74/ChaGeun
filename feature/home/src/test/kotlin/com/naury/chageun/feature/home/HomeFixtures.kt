@@ -28,6 +28,7 @@ internal val VEHICLE = Vehicle(
     trim = null,
     fuelType = FuelType.Gasoline,
     firstRegistrationDate = null,
+    displacementCc = null,
     plateMasked = null,
     registrationMode = RegistrationMode.Manual,
     isPrimary = true,

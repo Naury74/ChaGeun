@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -408,6 +409,13 @@ private fun InfoSection(state: VehicleUiState.Content, onEditVehicle: () -> Unit
             Icons.Filled.Event,
             R.string.vehicle_first_registration,
             vehicle.firstRegistrationDate?.let { formatDate(it) },
+        ),
+        Triple(
+            Icons.Filled.Straighten,
+            R.string.vehicle_displacement,
+            vehicle.displacementCc?.let {
+                stringResource(R.string.vehicle_displacement_value, formatNumber(it.toLong()))
+            },
         ),
         Triple(
             Icons.Filled.EditNote,

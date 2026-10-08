@@ -17,6 +17,8 @@ data class Vehicle(
     val trim: String?,
     val fuelType: FuelType?,
     val firstRegistrationDate: LocalDate?,
+    /** 엔진 배기량(cc). 전기·수소차이거나 입력하지 않았으면 null이다. */
+    val displacementCc: Int?,
     val plateMasked: String?,
     val registrationMode: RegistrationMode,
     val isPrimary: Boolean,
@@ -44,6 +46,8 @@ data class VehicleProfileUpdate(
     val plate: PlateChange,
     /** 자동차등록증의 최초 등록일. null이면 비운다. */
     val firstRegistrationDate: LocalDate?,
+    /** 엔진 배기량(cc). null이면 비운다. */
+    val displacementCc: Int?,
 )
 
 sealed interface PlateChange {

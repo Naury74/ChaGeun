@@ -3,6 +3,9 @@ package com.naury.chageun.feature.vehicle
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Paint
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -63,6 +66,7 @@ class VehicleScreenTest {
         trim = null,
         fuelType = FuelType.Gasoline,
         firstRegistrationDate = null,
+        displacementCc = null,
         plateMasked = "123가 **67",
         registrationMode = RegistrationMode.Manual,
         isPrimary = true,
@@ -91,6 +95,21 @@ class VehicleScreenTest {
         composeRule.onNodeWithText("Update mileage").performClick()
 
         assertThat(updateRequested).isTrue()
+    }
+
+    @Test
+    fun infoSection_showsDisplacementOnlyWhenSet() {
+        var state by mutableStateOf(VehicleUiState.Content(vehicle, log))
+        composeRule.setContent {
+            ChageunTheme { VehicleScreen(state, isTwoPane = false, onUpdateMileage = {}) }
+        }
+
+        composeRule.onNodeWithText("Displacement").assertDoesNotExist()
+
+        state = VehicleUiState.Content(vehicle.copy(displacementCc = 1_598), log)
+
+        composeRule.onNodeWithText("Displacement").assertIsDisplayed()
+        composeRule.onNodeWithText("1,598cc").assertIsDisplayed()
     }
 
     @Test
