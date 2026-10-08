@@ -7,6 +7,7 @@ import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
@@ -69,6 +70,7 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     // 연식 칩 같은 가로 목록을 끝까지 넘기면 이미 고른 칩이 화면 밖으로 밀리므로 세로 목록만 스크롤한다.
     private val verticalList =
         hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)
+    private val horizontalList = SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange)
 
     /** 칩·카드처럼 고르는 항목을 누르고 실제로 선택됐는지 확인한다. */
     fun select(label: String) {
@@ -135,6 +137,10 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
             }
         }
         val node = rule.onAllNodes(matcher).onFirst()
+        // 가로 목록 안의 항목은 performScrollTo가 가로로만 움직인다. 화면이 짧으면 그 줄이 하단 고정 버튼 뒤에
+        // 가려진 채로 눌리므로, 먼저 가로 목록을 세로 화면 안으로 가져온다.
+        val row = horizontalList and hasAnyDescendant(matcher) and hasAnyAncestor(hasScrollAction())
+        if (exists(row)) rule.onAllNodes(row).onFirst().performScrollTo()
         // 스크롤하지 않는 영역(하단 버튼, 내비게이션 바)에 있는 노드는 그대로 둔다.
         if (exists(matcher and hasAnyAncestor(hasScrollAction()))) node.performScrollTo()
         return node.assertExists()
