@@ -10,6 +10,7 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.LocalDate
 import org.junit.Rule
@@ -47,6 +48,28 @@ class RecordServiceContentTest {
 
     private val base =
         RecordServiceUiState(item = MaintenanceItem.EngineOil, date = LocalDate.of(2026, 10, 1), mileage = "42891")
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets_formWithOptionalFields() {
+        // 정비소 이름이 있으면 선택 입력이 펼쳐진 채로 열린다.
+        show(
+            base.copy(
+                cost = "80000",
+                shopName = "Shop",
+                companionCandidates = listOf(MaintenanceItem.OilFilter, MaintenanceItem.AirFilter),
+                alsoReplaced = setOf(MaintenanceItem.OilFilter),
+            ),
+        )
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets_saved() {
+        show(base.copy(savedResult = SavedResult(Kilometers(52_891), LocalDate.of(2027, 10, 1))))
+
+        composeRule.assertAccessibleControls()
+    }
 
     @Test
     fun showsLowerMileageWarning_andConfirms() {

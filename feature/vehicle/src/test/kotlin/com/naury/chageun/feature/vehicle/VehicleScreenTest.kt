@@ -40,8 +40,12 @@ import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
+import com.naury.chageun.feature.vehicle.edit.VehicleEditActions
+import com.naury.chageun.feature.vehicle.edit.VehicleEditContent
+import com.naury.chageun.feature.vehicle.edit.VehicleEditUiState
 import java.io.File
 import java.time.LocalDate
 import org.junit.Rule
@@ -75,6 +79,42 @@ class VehicleScreenTest {
         MileageEntry("m2", LocalDate.of(2026, 10, 1), Kilometers(1_200), MileageSource.Correction),
         MileageEntry("m1", LocalDate.of(2026, 9, 1), Kilometers(42_891), MileageSource.User),
     )
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets() {
+        val history = listOf(
+            InspectionRecord(LocalDate.of(2026, 9, 30), Kilometers(41_000), PeriodicInspectionResult.Passed),
+            InspectionRecord(LocalDate.of(2024, 9, 28), Kilometers(21_500), PeriodicInspectionResult.Failed),
+        )
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14), inspectionHistory = history),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    fun editSheet_controls_haveLabelsAndLargeTouchTargets() {
+        val state = VehicleEditUiState(
+            isLoaded = true,
+            maker = "KG Mobility",
+            model = "Torres",
+            modelYear = "2023",
+            fuelType = FuelType.Gasoline,
+            originalFuelType = FuelType.Gasoline,
+            currentPlateMasked = "123가 **67",
+            firstRegistrationDate = LocalDate.of(2023, 3, 1),
+        )
+        composeRule.setContent { ChageunTheme { VehicleEditContent(state, VehicleEditActions()) } }
+
+        composeRule.assertAccessibleControls()
+    }
 
     @Test
     fun showsMaskedPlate_mileageSources_andNeverClaimsNoRecall() {

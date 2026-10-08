@@ -29,6 +29,7 @@ import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Clock
@@ -123,6 +124,22 @@ class AiHubTest {
         assertThat(prompt).contains("Vehicle: KG Mobility Torres · 2023 · Gasoline")
         assertThat(prompt).contains("Mileage: 42,180 km")
         assertThat(prompt).endsWith("Question: How is my car?")
+    }
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets() {
+        composeRule.setContent {
+            ChageunTheme {
+                val state = AiHubUiState(question = "How is my car?", options = AiContextOptions(), facts = facts)
+                AiHubScreen(
+                    uiState = state,
+                    promptText = aiPromptText(facts, state.question),
+                    actions = AiHubActions({}, {}, {}, {}, onShare = {}),
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
     }
 
     @Test

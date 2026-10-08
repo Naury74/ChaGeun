@@ -38,6 +38,7 @@ import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Instant
@@ -99,6 +100,49 @@ class HistoryScreenTest {
                 onDeleteAttachment = {},
                 onDismissAttachFailure = {},
                 onLoadMore = onLoadMore,
+            )
+        }
+    }
+
+    @Test
+    fun controls_haveLabelsAndLargeTouchTargets_timeline() {
+        show(HistoryUiState(isLoading = false, sections = screenshotSections))
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun controls_haveLabelsAndLargeTouchTargets_fuelDetail() {
+        showDetailWithAskAi(detail)
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun controls_haveLabelsAndLargeTouchTargets_maintenanceDetail() {
+        val maintenanceRef = RecordRef(TimelineEventType.Maintenance, "oil")
+        val entry = ServiceHistoryEntry("oil", LocalDate.of(2026, 4, 6), Kilometers(39_007), 95_000, "Shop")
+        showDetailWithAskAi(RecordDetail.Maintenance(maintenanceRef, MaintenanceItem.EngineOil, entry, memo = "Memo"))
+
+        composeRule.assertAccessibleControls()
+    }
+
+    private fun showDetailWithAskAi(detail: RecordDetail) = composeRule.setContent {
+        ChageunTheme {
+            HistoryScreen(
+                uiState = HistoryUiState(isLoading = false, selected = detail.ref, detail = detail),
+                isTwoPane = false,
+                onKeywordChanged = {},
+                onFilterSelected = {},
+                onSelect = {},
+                onDelete = {},
+                onAdd = {},
+                onAddPhotos = {},
+                onDeleteAttachment = {},
+                onDismissAttachFailure = {},
+                onAskAi = {},
             )
         }
     }

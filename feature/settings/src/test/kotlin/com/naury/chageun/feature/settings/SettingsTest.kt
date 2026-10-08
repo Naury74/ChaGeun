@@ -23,6 +23,7 @@ import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
 import kotlinx.coroutines.flow.first
@@ -88,6 +89,35 @@ class SettingsTest {
         composeRule.onAllNodes(isToggleable())[2].performClick()
         assertThat(settings.isMileageReminderEnabled).isTrue()
         composeRule.onNodeWithText("Version 0.1.0").assertExists()
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun controls_haveLabelsAndLargeTouchTargets() {
+        composeRule.setContent {
+            ChageunTheme {
+                SettingsScreen(
+                    settings = UserSettings(),
+                    versionName = "0.1.0",
+                    onBack = {},
+                    onThemeSelected = {},
+                    onRemindersChanged = {},
+                    onOpenSystemNotifications = {},
+                    isAdPrivacyRequired = true,
+                    dataSection = { DataSection(DataUiState(), onExport = {}, onImport = {}, onRequestDelete = {}) },
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun serviceNotice_controls_haveLabelsAndLargeTouchTargets() {
+        composeRule.setContent { ChageunTheme { ServiceNoticeScreen(onBack = {}) } }
+
+        composeRule.assertAccessibleControls()
     }
 
     @Test

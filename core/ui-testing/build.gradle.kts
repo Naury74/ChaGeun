@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
 
     testImplementation(libs.androidx.compose.material3)
+    testImplementation(libs.androidx.compose.material.icons.core)
     testImplementation(libs.robolectric)
     testImplementation(libs.truth)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

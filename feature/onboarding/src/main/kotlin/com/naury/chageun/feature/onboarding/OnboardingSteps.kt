@@ -38,6 +38,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -134,6 +136,7 @@ internal fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box(Modifier.padding(vertical = 20.dp, horizontal = 16.dp), contentAlignment = Alignment.Center) {
+            val plateLabel = stringResource(R.string.onboarding_plate_field)
             val style = NumericTextStyles.Hero.copy(
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -151,7 +154,10 @@ internal fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
                 textStyle = style,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth(),
+                // 자리 표시 번호는 따로 그린 글자라 입력칸 이름으로 읽히지 않는다.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = plateLabel },
             )
         }
     }
@@ -206,6 +212,7 @@ internal fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction
         )
         val transformation = remember(unit, unitStyle) { MileageTransformation(unit, unitStyle) }
         val focusRequester = remember { FocusRequester() }
+        val mileageLabel = stringResource(R.string.onboarding_mileage_field)
         // 이 단계는 숫자 하나만 받으므로 들어오자마자 키패드를 띄운다.
         LaunchedEffect(Unit) { focusRequester.requestFocus() }
         BasicTextField(
@@ -218,7 +225,8 @@ internal fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             modifier = Modifier
                 .fillMaxWidth()
-                .focusRequester(focusRequester),
+                .focusRequester(focusRequester)
+                .semantics { contentDescription = mileageLabel },
         )
         HorizontalDivider(
             thickness = 2.dp,

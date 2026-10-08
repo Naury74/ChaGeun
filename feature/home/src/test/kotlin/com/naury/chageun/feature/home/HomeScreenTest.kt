@@ -22,6 +22,7 @@ import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.LocalFeatureFlags
+import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
@@ -39,6 +40,21 @@ class HomeScreenTest {
 
     private fun show(state: HomeUiState) = composeRule.setContent {
         ChageunTheme { HomeScreen(uiState = state, paneCount = 1, actions = HomeActions({}, {}, {})) }
+    }
+
+    @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun controls_haveLabelsAndLargeTouchTargets() {
+        show(
+            content(
+                VehicleHealthLevel.NeedsAttention,
+                listOf(HealthReason.ItemOverdue(MaintenanceItem.EngineOil)),
+                status(MaintenanceItem.EngineOil, MaintenanceState.Overdue, remainingKm = -300),
+                status(MaintenanceItem.BrakePad, MaintenanceState.Unknown),
+            ),
+        )
+
+        composeRule.assertAccessibleControls()
     }
 
     @Test

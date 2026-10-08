@@ -250,7 +250,8 @@ fun HistoryScreen(
             )
             ExtendedFloatingActionButton(
                 onClick = onAdd,
-                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                // M3 확장 FAB은 글자를 읽지 않고 아이콘 설명을 버튼 이름으로 쓴다.
+                icon = { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.history_add)) },
                 text = { Text(stringResource(R.string.history_add)) },
                 // 다른 주요 버튼(Tonal)과 같은 색을 써서 다크 모드에서도 같은 무게로 보이게 한다.
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
