@@ -4,10 +4,12 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.history.AddHistoryRecordUseCase
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAlbumRepository
@@ -102,7 +104,12 @@ class VehicleViewModelTest {
         viewModel.uiState.first { it is VehicleUiState.Content }
 
         viewModel.completeInspection(
-            InspectionCompletion(LocalDate.of(2026, 9, 30), Kilometers(41_000), LocalDate.of(2028, 9, 30)),
+            InspectionCompletion(
+                LocalDate.of(2026, 9, 30),
+                Kilometers(41_000),
+                PeriodicInspectionResult.Failed,
+                LocalDate.of(2028, 9, 30),
+            ),
             title = "Periodic inspection",
         )
         val state = viewModel.uiState.first {
@@ -110,8 +117,28 @@ class VehicleViewModelTest {
         } as VehicleUiState.Content
 
         assertThat(state.inspection.schedule?.nextDueDate).isEqualTo(LocalDate.of(2028, 9, 30))
-        assertThat(history.addedChecks.single().first.title).isEqualTo("Periodic inspection")
+        val (entry, _) = history.addedChecks.single()
+        assertThat(entry.title).isEqualTo("Periodic inspection")
+        assertThat(entry.periodicResult).isEqualTo(PeriodicInspectionResult.Failed)
         assertThat(notifier.inspectionCancelCount).isEqualTo(1)
+    }
+
+    @Test
+    fun exposesPeriodicInspectionHistory_newestFirst() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
+        val records = listOf(
+            InspectionRecord(LocalDate.of(2026, 9, 30), Kilometers(41_000), PeriodicInspectionResult.Passed),
+            InspectionRecord(LocalDate.of(2024, 9, 28), null, PeriodicInspectionResult.Unknown),
+        )
+
+        inspections.history.value = records
+
+        val state = viewModel.uiState.first {
+            (it as? VehicleUiState.Content)?.inspectionHistory?.isNotEmpty() == true
+        } as VehicleUiState.Content
+        assertThat(state.inspectionHistory).isEqualTo(records)
     }
 
     @Test

@@ -116,6 +116,8 @@ internal data class CheckDto(
     @SerialName("cost_won") val costWon: Long?,
     val memo: String?,
     @SerialName("created_at") val createdAt: String,
+    /** 버전을 올리지 않고 추가한 필드다. 정기검사 결과가 없던 때의 파일은 일반 점검으로 가져온다. */
+    @SerialName("periodic_result") val periodicResult: String? = null,
 )
 
 @Serializable

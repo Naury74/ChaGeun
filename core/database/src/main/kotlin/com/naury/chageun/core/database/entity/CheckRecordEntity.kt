@@ -31,4 +31,6 @@ data class CheckRecordEntity(
     val memo: String?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "updated_at") val updatedAt: Instant,
+    /** 정기검사 결과. 일반 점검이면 null이다. */
+    @ColumnInfo(name = "periodic_result") val periodicResult: String? = null,
 )

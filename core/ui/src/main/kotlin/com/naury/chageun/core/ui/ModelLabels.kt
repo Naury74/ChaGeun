@@ -1,8 +1,10 @@
 package com.naury.chageun.core.ui
 
 import androidx.annotation.StringRes
+import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.PeriodicInspectionResult
 
 @get:StringRes
 val MaintenanceItem.labelRes: Int
@@ -31,4 +33,19 @@ val FuelType.labelRes: Int
         FuelType.PlugInHybrid -> R.string.fuel_plug_in_hybrid
         FuelType.Electric -> R.string.fuel_electric
         FuelType.Hydrogen -> R.string.fuel_hydrogen
+    }
+
+@get:StringRes
+val PeriodicInspectionResult.labelRes: Int
+    get() = when (this) {
+        PeriodicInspectionResult.Passed -> R.string.periodic_result_passed
+        PeriodicInspectionResult.Failed -> R.string.periodic_result_failed
+        PeriodicInspectionResult.Unknown -> R.string.periodic_result_unknown
+    }
+
+val PeriodicInspectionResult.tone: StatusTone
+    get() = when (this) {
+        PeriodicInspectionResult.Passed -> StatusTone.Good
+        PeriodicInspectionResult.Failed -> StatusTone.Critical
+        PeriodicInspectionResult.Unknown -> StatusTone.Unknown
     }

@@ -2,6 +2,7 @@ package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.reminder.InspectionReminderStage
 import com.naury.chageun.core.domain.vehicle.InspectionRepository
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.VehicleId
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakeInspectionRepository(schedule: InspectionSchedule? = null) : InspectionRepository {
     val schedule = MutableStateFlow(schedule)
     var notified: InspectionReminderStage? = null
+    val history = MutableStateFlow<List<InspectionRecord>>(emptyList())
 
     override fun observeSchedule(vehicleId: VehicleId): Flow<InspectionSchedule?> = schedule
 
@@ -25,4 +27,6 @@ class FakeInspectionRepository(schedule: InspectionSchedule? = null) : Inspectio
     override suspend fun markNotified(vehicleId: VehicleId, stage: InspectionReminderStage) {
         notified = stage
     }
+
+    override fun observeHistory(vehicleId: VehicleId): Flow<List<InspectionRecord>> = history
 }

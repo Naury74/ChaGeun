@@ -4,8 +4,11 @@ import com.naury.chageun.core.database.dao.InspectionDao
 import com.naury.chageun.core.database.entity.InspectionScheduleEntity
 import com.naury.chageun.core.domain.reminder.InspectionReminderStage
 import com.naury.chageun.core.domain.vehicle.InspectionRepository
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.VehicleId
 import java.time.Clock
 import java.time.LocalDate
@@ -45,4 +48,17 @@ internal class RoomInspectionRepository @Inject constructor(private val dao: Ins
 
     override suspend fun markNotified(vehicleId: VehicleId, stage: InspectionReminderStage) =
         dao.updateNotifiedStage(vehicleId.value, stage.name)
+
+    override fun observeHistory(vehicleId: VehicleId): Flow<List<InspectionRecord>> =
+        dao.observePeriodicChecks(vehicleId.value).map { rows ->
+            rows.map { row ->
+                InspectionRecord(
+                    date = row.checkDate,
+                    mileage = row.mileageKm?.let(::Kilometers),
+                    // 더 새로운 앱 버전이 쓴 결과 값은 미기록으로 보여 준다.
+                    result = PeriodicInspectionResult.entries.firstOrNull { it.name == row.periodicResult }
+                        ?: PeriodicInspectionResult.Unknown,
+                )
+            }
+        }
 }

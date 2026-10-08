@@ -9,6 +9,7 @@ import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.AttachmentEntity
+import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.InspectionScheduleEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
@@ -29,6 +30,7 @@ import java.util.zip.ZipOutputStream
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -208,6 +210,34 @@ class RoomBackupRepositoryTest {
     }
 
     @Test
+    fun periodicInspectionResult_roundTrips_andGeneralCheckStaysNull() = runTest {
+        database.historyDao().insertCheck(check("c1", periodicResult = "Failed"))
+        database.historyDao().insertCheck(check("c2", periodicResult = null))
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val archive = Uri.fromFile(File(workDir, "out.zip")).toString()
+        repository.export(archive)
+        repository.deleteAll()
+
+        repository.import(archive)
+
+        val restored = database.backupDao().checkRecords().associate { it.id to it.periodicResult }
+        assertThat(restored).containsExactly("c1", "Failed", "c2", null)
+    }
+
+    @Test
+    fun checkWithoutPeriodicResult_fromOlderBackup_decodesAsGeneralCheck() {
+        val legacy = """
+            {"id": "c1", "vehicle_id": "v1", "kind": "Inspection", "date": "2026-03-01", "title": "Free check",
+            "mileage_km": null, "cost_won": null, "memo": null, "created_at": "2026-03-01T00:00:00Z"}
+        """.trimIndent()
+
+        val dto = Json.decodeFromString(CheckDto.serializer(), legacy)
+
+        assertThat(dto.periodicResult).isNull()
+        assertThat(dto.toEntity(now).periodicResult).isNull()
+    }
+
+    @Test
     fun import_rejectsOtherSchemaVersion_andKeepsExistingData() = runTest {
         val repository = repository(StandardTestDispatcher(testScheduler))
         val archive = zip("data.json" to """{"schema_version": 99}""")
@@ -241,6 +271,20 @@ class RoomBackupRepositoryTest {
         assertThat(File(workDir, "escaped.jpg").exists()).isFalse()
         assertThat(File(attachmentDir, "escaped.jpg").exists()).isTrue()
     }
+
+    private fun check(id: String, periodicResult: String?) = CheckRecordEntity(
+        id = id,
+        vehicleId = "v1",
+        kind = "Inspection",
+        checkDate = LocalDate.of(2026, 3, 1),
+        title = "Inspection",
+        mileageKm = 40_000,
+        costWon = null,
+        memo = null,
+        createdAt = now,
+        updatedAt = now,
+        periodicResult = periodicResult,
+    )
 
     private fun zip(vararg entries: Pair<String, String>): String {
         val file = Files.createTempFile(workDir.toPath(), "import", ".zip").toFile()

@@ -8,6 +8,7 @@ import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -102,6 +103,43 @@ class CheckFormViewModelTest {
         assertThat(id).isEqualTo("c1")
         assertThat((entry as CheckEntry).costWon).isEqualTo(150_000)
         assertThat(entry.kind).isEqualTo(CheckKind.Repair)
+        assertThat(entry.periodicResult).isNull()
         assertThat(history.addedChecks).isEmpty()
+    }
+
+    @Test
+    fun editingPeriodicInspection_keepsResult_andCanCorrectIt() = runTest {
+        val ref = RecordRef(TimelineEventType.Inspection, "c2")
+        val saved = CheckEntry(
+            kind = CheckKind.Inspection,
+            date = LocalDate.of(2026, 9, 1),
+            title = "Periodic inspection",
+            mileage = Kilometers(41_000),
+            periodicResult = PeriodicInspectionResult.Unknown,
+        )
+        history.details.value = mapOf(ref to RecordDetail.Check(ref, saved))
+        val vm = viewModel()
+
+        vm.startEditing(ref)
+        assertThat(vm.uiState.value.isPeriodicInspection).isTrue()
+        vm.onMileageChanged("41500")
+        vm.save()
+        assertThat((history.updated.last().second as CheckEntry).periodicResult)
+            .isEqualTo(PeriodicInspectionResult.Unknown)
+
+        vm.onPeriodicResultSelected(PeriodicInspectionResult.Failed)
+        vm.save()
+        assertThat((history.updated.last().second as CheckEntry).periodicResult)
+            .isEqualTo(PeriodicInspectionResult.Failed)
+    }
+
+    @Test
+    fun newInspection_isGeneralCheck() {
+        val vm = viewModel()
+        vm.onTitleChanged("Free check")
+        vm.save()
+
+        assertThat(vm.uiState.value.isPeriodicInspection).isFalse()
+        assertThat(history.addedChecks.single().first.periodicResult).isNull()
     }
 }
