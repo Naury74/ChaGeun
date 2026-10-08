@@ -68,6 +68,7 @@ import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.currentSeparatingHinge
+import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
 
@@ -118,9 +119,12 @@ data class AiHubActions(
     val onShare: (AiProvider) -> Unit,
 )
 
-/** Expanded 폭부터 질문과 보낼 정보를 나란히, Large 폭부터는 보낼 곳까지 세 칸으로 나눈다. */
+/**
+ * Expanded 폭부터 질문과 보낼 정보를 나란히, Extra Large 폭부터는 보낼 곳까지 세 칸으로 나눈다.
+ * Large 폭은 왼쪽 고정 메뉴가 자리를 차지해 세 칸이면 칸마다 너무 좁다.
+ */
 fun aiPaneCount(windowSizeClass: WindowSizeClass): Int = when {
-    windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND) -> THREE_PANES
+    isListDetailThreePane(windowSizeClass) -> THREE_PANES
     windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> TWO_PANES
     else -> SINGLE_PANE
 }

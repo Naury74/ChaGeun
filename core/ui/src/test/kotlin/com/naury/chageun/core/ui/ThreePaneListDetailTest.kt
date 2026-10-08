@@ -83,9 +83,10 @@ class ThreePaneListDetailTest {
     }
 
     @Test
-    fun threePanes_startAtLargeWidth() {
-        assertThat(isListDetailThreePane(WindowSizeClass(minWidthDp = 1199, minHeightDp = 800))).isFalse()
-        assertThat(isListDetailThreePane(WindowSizeClass(minWidthDp = 1200, minHeightDp = 800))).isTrue()
+    fun threePanes_startAtExtraLargeWidth() {
+        // Large 폭은 고정 메뉴가 자리를 차지해 두 칸으로 둔다.
+        assertThat(isListDetailThreePane(WindowSizeClass(minWidthDp = 1200, minHeightDp = 800))).isFalse()
+        assertThat(isListDetailThreePane(WindowSizeClass(minWidthDp = 1599, minHeightDp = 800))).isFalse()
         assertThat(isListDetailThreePane(WindowSizeClass(minWidthDp = 1600, minHeightDp = 800))).isTrue()
     }
 }

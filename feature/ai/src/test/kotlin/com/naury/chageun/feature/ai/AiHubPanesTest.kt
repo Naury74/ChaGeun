@@ -86,8 +86,8 @@ class AiHubPanesTest {
 
         assertThat(countAt(839)).isEqualTo(1)
         assertThat(countAt(840)).isEqualTo(2)
-        assertThat(countAt(1199)).isEqualTo(2)
-        assertThat(countAt(1200)).isEqualTo(3)
+        assertThat(countAt(1599)).isEqualTo(2)
+        assertThat(countAt(1600)).isEqualTo(3)
     }
 
     @Test
@@ -115,7 +115,7 @@ class AiHubPanesTest {
     }
 
     @Test
-    @Config(qualifiers = "w1400dp-h900dp")
+    @Config(qualifiers = "w1700dp-h900dp")
     fun largeWidth_addsProviderPane_withEachActionOnce() {
         var shared: AiProvider? = null
         setScreen(installed = setOf(AiProvider.Claude), onShare = { shared = it })
@@ -157,7 +157,7 @@ class AiHubPanesTest {
     }
 
     @Test
-    @Config(qualifiers = "w1400dp-h900dp")
+    @Config(qualifiers = "w1700dp-h900dp")
     fun widePanes_keepThemeSpacing() {
         // 칸 사이 간격이 테마의 paneGap보다 좁아지지 않는다.
         var paneGap = 0f
@@ -180,6 +180,6 @@ class AiHubPanesTest {
         const val DISCLAIMER =
             "The AI answers from what's shared. Values are calculated by Chageun and aren't a mechanical diagnosis."
         const val TWO_PANES_KO = "ko-w1000dp-h800dp-hdpi"
-        const val THREE_PANES_KO = "ko-w1400dp-h900dp-hdpi"
+        const val THREE_PANES_KO = "ko-w1700dp-h900dp-hdpi"
     }
 }

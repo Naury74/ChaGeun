@@ -51,7 +51,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,7 +71,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
@@ -87,12 +85,12 @@ import com.naury.chageun.core.ui.InfoListRow
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.VehicleHeroSection
-import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.inspectionHeroStat
 import com.naury.chageun.core.ui.isExpandedWidth
+import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.mileageHeroStat
@@ -116,10 +114,8 @@ fun VehicleRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isTwoPane = isListDetailTwoPane()
-    // 1200dp 이상에서 접힘으로 나뉘지 않은 창이면 사진 / 제원 / 기록을 세 칸으로 펼친다(기획 §18.2).
-    val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
-    val isThreePane = currentSeparatingHinge() == null &&
-        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND)
+    // 고정 메뉴를 빼고도 폭이 넉넉한 창이면 사진 / 제원 / 기록을 세 칸으로 펼친다(기획 §18.2).
+    val isThreePane = isListDetailThreePane()
     val inspectionTitle = stringResource(R.string.vehicle_inspection_record_title)
     val photoInput = rememberPhotoInputState()
     // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
