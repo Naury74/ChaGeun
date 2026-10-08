@@ -156,4 +156,10 @@
     <string name="history_detail_times">%1$s · %2$s</string>
     <string name="history_detail_periodic_result">Inspection result</string>
     <string name="check_form_periodic_result_label">Inspection result</string>
+    <string name="history_pane_type">Record type</string>
+    <string name="history_pane_more">More filters</string>
+    <string name="history_filter_none">No extra conditions</string>
+    <string name="history_filter_cost_from">%1$s or more</string>
+    <string name="history_filter_cost_to">Up to %1$s</string>
+    <string name="history_filter_attachments_short">With photos or receipts</string>
 </resources>

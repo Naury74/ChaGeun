@@ -154,4 +154,10 @@
     <string name="history_detail_times">%1$s · %2$s</string>
     <string name="history_detail_periodic_result">검사 결과</string>
     <string name="check_form_periodic_result_label">검사 결과</string>
+    <string name="history_pane_type">기록 종류</string>
+    <string name="history_pane_more">세부 필터</string>
+    <string name="history_filter_none">추가 조건 없음</string>
+    <string name="history_filter_cost_from">%1$s 이상</string>
+    <string name="history_filter_cost_to">%1$s 이하</string>
+    <string name="history_filter_attachments_short">사진·영수증 있음</string>
 </resources>

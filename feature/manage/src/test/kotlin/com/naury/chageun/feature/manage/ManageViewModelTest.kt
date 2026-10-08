@@ -9,6 +9,7 @@ import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MileageReading
@@ -83,6 +84,47 @@ class ManageViewModelTest {
             all.counts,
         ).containsExactly(ManageFilter.All, 3, ManageFilter.NeedsAttention, 1, ManageFilter.Upcoming, 0)
         assertThat(attention.items.map { it.item }).containsExactly(MaintenanceItem.EngineOil)
+    }
+
+    @Test
+    fun filtersByCategory_andCountsWithinIt() = runTest {
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        val all = vm.uiState.first { !it.isLoading }
+        vm.selectCategory(MaintenanceCategory.Engine)
+        val engine = vm.uiState.first { it.category == MaintenanceCategory.Engine }
+
+        // 분류 목록은 켜 둔 항목이 있는 분류만 보여 주고, 다른 분류를 골라도 개수는 바뀌지 않는다.
+        assertThat(all.categoryCounts).containsExactly(
+            MaintenanceCategory.Engine,
+            1,
+            MaintenanceCategory.Chassis,
+            1,
+            MaintenanceCategory.Visibility,
+            1,
+        ).inOrder()
+        assertThat(engine.categoryCounts).isEqualTo(all.categoryCounts)
+        assertThat(engine.items.map { it.item }).containsExactly(MaintenanceItem.EngineOil)
+        assertThat(
+            engine.counts,
+        ).containsExactly(ManageFilter.All, 1, ManageFilter.NeedsAttention, 1, ManageFilter.Upcoming, 0)
+
+        vm.selectCategory(null)
+        assertThat(vm.uiState.first { it.category == null }.items).hasSize(3)
+    }
+
+    @Test
+    fun keepsCategory_acrossRecreation() = runTest {
+        val handle = SavedStateHandle()
+        viewModel(handle).selectCategory(MaintenanceCategory.Chassis)
+
+        val restored = viewModel(handle)
+        backgroundScope.launch { restored.uiState.collect {} }
+        val state = restored.uiState.first { !it.isLoading }
+
+        assertThat(state.category).isEqualTo(MaintenanceCategory.Chassis)
+        assertThat(state.items.map { it.item }).containsExactly(MaintenanceItem.Tire)
     }
 
     @Test
