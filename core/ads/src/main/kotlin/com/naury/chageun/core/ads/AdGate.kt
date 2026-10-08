@@ -2,6 +2,7 @@ package com.naury.chageun.core.ads
 
 import com.naury.chageun.core.domain.ads.AdEligibility
 import com.naury.chageun.core.domain.ads.AppUsageRepository
+import com.naury.chageun.core.domain.flags.FeatureFlagRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import java.time.Clock
 import javax.inject.Inject
@@ -16,13 +17,16 @@ class AdGate @Inject constructor(
     vehicleRepository: VehicleRepository,
     appUsageRepository: AppUsageRepository,
     consentController: AdConsentController,
+    featureFlags: FeatureFlagRepository,
     private val clock: Clock,
 ) {
+    // 스위치가 꺼지면 광고 요청 자체를 하지 않도록 화면에 넘기는 값을 끈다.
     val canShowAds: Flow<Boolean> = combine(
         vehicleRepository.observePrimaryVehicle(),
         appUsageRepository.usage,
         consentController.canRequestAds,
-    ) { vehicle, usage, canRequestAds ->
-        AdEligibility.isEligible(vehicle != null, usage, canRequestAds, clock.instant())
+        featureFlags.flags,
+    ) { vehicle, usage, canRequestAds, flags ->
+        flags.nativeAdsEnabled && AdEligibility.isEligible(vehicle != null, usage, canRequestAds, clock.instant())
     }.distinctUntilChanged()
 }

@@ -152,4 +152,6 @@
     <string name="history_detail_created">%1$s 기록</string>
     <string name="history_detail_edited">%1$s 수정</string>
     <string name="history_detail_times">%1$s · %2$s</string>
+    <string name="history_detail_periodic_result">검사 결과</string>
+    <string name="check_form_periodic_result_label">검사 결과</string>
 </resources>

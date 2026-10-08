@@ -14,3 +14,5 @@ data class InspectionStatus(val schedule: InspectionSchedule?, val daysLeft: Lon
         val Unknown = InspectionStatus(schedule = null, daysLeft = null, state = InspectionState.Unknown)
     }
 }
+
+data class InspectionRecord(val date: LocalDate, val mileage: Kilometers?, val result: PeriodicInspectionResult)

@@ -12,6 +12,7 @@ import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,7 +40,12 @@ data class CheckFormUiState(
     val isSaved: Boolean = false,
     /** 저장된 기록을 고치는 중이다. 제목과 저장 동작만 다르다. */
     val isEditing: Boolean = false,
-)
+    /** "검사 받음"으로 남긴 정기검사를 고칠 때만 값이 있다. 이 폼에서 새로 만드는 점검은 일반 점검이다. */
+    val periodicResult: PeriodicInspectionResult? = null,
+) {
+    /** 종류를 검사가 아닌 것으로 바꾸면 정기검사 기록이 아니게 된다. */
+    val isPeriodicInspection: Boolean get() = periodicResult != null && kind == CheckKind.Inspection
+}
 
 @HiltViewModel
 class CheckFormViewModel @Inject constructor(
@@ -60,6 +66,8 @@ class CheckFormViewModel @Inject constructor(
             cost = savedStateHandle[KEY_COST] ?: "",
             memo = savedStateHandle[KEY_MEMO] ?: "",
             isEditing = savedStateHandle.get<String>(KEY_EDIT_ID) != null,
+            periodicResult = savedStateHandle.get<String>(KEY_PERIODIC_RESULT)
+                ?.let(PeriodicInspectionResult::valueOf),
         ),
     )
     val uiState: StateFlow<CheckFormUiState> = _uiState.asStateFlow()
@@ -81,6 +89,7 @@ class CheckFormViewModel @Inject constructor(
                     cost = entry.costWon?.toString().orEmpty(),
                     memo = entry.memo.orEmpty(),
                     isEditing = true,
+                    periodicResult = entry.periodicResult,
                 )
             }
         }
@@ -89,6 +98,8 @@ class CheckFormViewModel @Inject constructor(
     fun onKindSelected(kind: CheckKind) = edit { copy(kind = kind) }
 
     fun onDateSelected(date: LocalDate) = edit { copy(date = date) }
+
+    fun onPeriodicResultSelected(result: PeriodicInspectionResult) = edit { copy(periodicResult = result) }
 
     fun onTitleChanged(value: String) = edit { copy(title = value.take(MAX_TITLE_LENGTH)) }
 
@@ -107,6 +118,7 @@ class CheckFormViewModel @Inject constructor(
             mileage = state.mileage.toLongOrNull()?.let(::Kilometers),
             costWon = state.cost.toLongOrNull(),
             memo = state.memo,
+            periodicResult = state.periodicResult.takeIf { state.isPeriodicInspection },
         )
         _uiState.update { it.copy(isSaving = true, hasSaveFailed = false) }
         viewModelScope.launch {
@@ -142,6 +154,7 @@ class CheckFormViewModel @Inject constructor(
         savedStateHandle[KEY_MILEAGE] = state.mileage
         savedStateHandle[KEY_COST] = state.cost
         savedStateHandle[KEY_MEMO] = state.memo
+        savedStateHandle[KEY_PERIODIC_RESULT] = state.periodicResult?.name
     }
 
     private companion object {
@@ -152,6 +165,7 @@ class CheckFormViewModel @Inject constructor(
         const val KEY_COST = "check_cost"
         const val KEY_MEMO = "check_memo"
         const val KEY_EDIT_ID = "check_edit_id"
+        const val KEY_PERIODIC_RESULT = "check_periodic_result"
         const val MAX_DIGITS = 9
         const val MAX_TITLE_LENGTH = 60
         const val MAX_MEMO_LENGTH = 500

@@ -147,8 +147,18 @@ internal fun FuelDto.toEntity(now: Instant) = FuelRecordEntity(
     updatedAt = now,
 )
 
-internal fun CheckRecordEntity.toDto() =
-    CheckDto(id, vehicleId, kind, checkDate.toString(), title, mileageKm, costWon, memo, createdAt.toString())
+internal fun CheckRecordEntity.toDto() = CheckDto(
+    id = id,
+    vehicleId = vehicleId,
+    kind = kind,
+    date = checkDate.toString(),
+    title = title,
+    mileageKm = mileageKm,
+    costWon = costWon,
+    memo = memo,
+    createdAt = createdAt.toString(),
+    periodicResult = periodicResult,
+)
 
 internal fun CheckDto.toEntity(now: Instant) = CheckRecordEntity(
     id = id,
@@ -161,6 +171,7 @@ internal fun CheckDto.toEntity(now: Instant) = CheckRecordEntity(
     memo = memo,
     createdAt = Instant.parse(createdAt),
     updatedAt = now,
+    periodicResult = periodicResult,
 )
 
 internal fun AttachmentEntity.toDto() =

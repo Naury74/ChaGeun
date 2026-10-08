@@ -9,6 +9,7 @@ import com.naury.chageun.core.database.migration.Migration3To4
 import com.naury.chageun.core.database.migration.Migration4To5
 import com.naury.chageun.core.database.migration.Migration5To6
 import com.naury.chageun.core.database.migration.Migration6To7
+import com.naury.chageun.core.database.migration.Migration7To8
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -120,6 +121,36 @@ class DatabaseMigrationTest {
         helper.createDatabase(TEST_DB, 6).close()
 
         helper.runMigrationsAndValidate(TEST_DB, 7, true, Migration6To7).close()
+    }
+
+    @Test
+    fun migration7To8_marksOldInspectionRecordsAsPeriodic_only() {
+        helper.createDatabase(TEST_DB, 7).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            listOf(
+                Triple("ko", "Inspection", "자동차 정기검사"),
+                Triple("en", "Inspection", "Periodic inspection"),
+                Triple("free", "Inspection", "무상 점검"),
+                Triple("repair", "Repair", "Periodic inspection"),
+            ).forEach { (id, kind, title) ->
+                db.execSQL(
+                    "INSERT INTO check_record (id, vehicle_id, kind, check_date, title, created_at, updated_at) " +
+                        "VALUES ('$id', 'v1', '$kind', 20500, '$title', 0, 0)",
+                )
+            }
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 8, true, Migration7To8).use { db ->
+            db.query("SELECT id, periodic_result FROM check_record ORDER BY id").use { cursor ->
+                val results = buildMap {
+                    while (cursor.moveToNext()) put(cursor.getString(0), cursor.getString(1))
+                }
+                assertThat(results).containsExactly("en", "Unknown", "free", null, "ko", "Unknown", "repair", null)
+            }
+        }
     }
 
     @Test

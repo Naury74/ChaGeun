@@ -41,6 +41,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelField
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveSheet
@@ -53,6 +54,7 @@ import com.naury.chageun.core.ui.QuickPick
 import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
+import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.feature.history.R
 import java.time.LocalDate
 
@@ -246,6 +248,9 @@ internal fun CheckFormHost(
                     )
                 }
             }
+            if (uiState.isPeriodicInspection) {
+                PeriodicResultField(uiState.periodicResult, viewModel::onPeriodicResultSelected)
+            }
             FormLabel(stringResource(R.string.check_form_subject_label))
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
@@ -279,6 +284,17 @@ internal fun CheckFormHost(
             OptionalSection(hasValue = uiState.memo.isNotEmpty()) {
                 TextInput(uiState.memo, viewModel::onMemoChanged, R.string.form_memo, singleLine = false)
             }
+        }
+    }
+}
+
+/** 결과 미기록인 예전 기록은 아무것도 고르지 않은 채로 보여 준다. 미기록으로 되돌리는 선택지는 두지 않는다. */
+@Composable
+private fun PeriodicResultField(selected: PeriodicInspectionResult?, onSelect: (PeriodicInspectionResult) -> Unit) {
+    FormLabel(stringResource(R.string.check_form_periodic_result_label))
+    Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        listOf(PeriodicInspectionResult.Passed, PeriodicInspectionResult.Failed).forEach { result ->
+            ChoicePill(stringResource(result.labelRes), selected == result, { onSelect(result) })
         }
     }
 }

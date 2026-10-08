@@ -1,12 +1,16 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.model.FeatureFlags
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
@@ -17,6 +21,7 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.Hinge
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import org.junit.Rule
 import org.junit.Test
@@ -193,6 +198,24 @@ class HomeScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "w400dp-h3000dp")
+    fun aiCard_hidesWhenAiSharingIsSwitchedOff() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalFeatureFlags provides FeatureFlags(aiShareEnabled = false)) {
+                ChageunTheme {
+                    HomeScreen(
+                        uiState = content(VehicleHealthLevel.Good, emptyList()),
+                        paneCount = 1,
+                        actions = HomeActions({}, {}, {}),
+                    )
+                }
+            }
+        }
+
+        composeRule.onNodeWithText("Ask about your car").assertDoesNotExist()
+    }
+
+    @Test
     @Config(qualifiers = "w800dp-h700dp-mdpi")
     fun tabletop_keepsCarAboveHinge_andListsBelow() {
         composeRule.setContent {
@@ -212,5 +235,9 @@ class HomeScreenTest {
 
         assertThat(composeRule.onNodeWithText("KG Mobility Torres").getBoundsInRoot().bottom.value).isAtMost(342f)
         assertThat(composeRule.onNodeWithText("Check now").getBoundsInRoot().top.value).isAtLeast(358f)
+        // 자주 누르는 버튼은 손이 닿는 아래 칸에 한 번만 둔다.
+        val update = composeRule.onAllNodesWithText("Update mileage")
+        update.assertCountEquals(1)
+        assertThat(update[0].getBoundsInRoot().top.value).isAtLeast(358f)
     }
 }

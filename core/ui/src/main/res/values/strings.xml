@@ -99,4 +99,7 @@
     <string name="vehicle_photo_remove_background_body">Keeps just the car, processed on this device. If off, the photo\'s edges fade softly instead.</string>
     <string name="vehicle_photo_confirm_cancel">Cancel</string>
     <string name="vehicle_photo_confirm_apply">Use photo</string>
+    <string name="periodic_result_passed">Passed</string>
+    <string name="periodic_result_failed">Failed</string>
+    <string name="periodic_result_unknown">Result not recorded</string>
 </resources>

@@ -409,6 +409,7 @@ private fun OfficialDataSection(
     Section(R.string.vehicle_section_official) {
         InspectionCard(
             status = state.inspection,
+            history = state.inspectionHistory,
             currentMileage = state.currentMileage?.mileage,
             onDateSelected = onInspectionDateSelected,
             onCompleted = onInspectionCompleted,

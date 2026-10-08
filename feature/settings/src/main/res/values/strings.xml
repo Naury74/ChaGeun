@@ -75,4 +75,19 @@
     <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it.</string>
     <string name="settings_share">Send to another device</string>
     <string name="settings_share_body">Send a backup file with Quick Share, email, or a messenger. On the new phone, choose “Restore from a backup” on the first screen.</string>
+    <string name="settings_service_notice">Service notice</string>
+    <string name="service_what_title">What Chageun does</string>
+    <string name="service_what_body">Chageun is a personal car care tool that works out maintenance timing from the records you enter and reminds you. It doesn\'t diagnose your car or replace a mechanic\'s inspection.</string>
+    <string name="service_estimate_title">Maintenance timing is an estimate</string>
+    <string name="service_estimate_body">Unless you changed them, replacement intervals are general recommendations, not the manufacturer\'s official values. Remaining distance and dates are estimated from your records and average driving, so they can differ from your car\'s actual condition. If something feels wrong with safety parts like brakes or tires, get them checked right away, whatever the app shows.</string>
+    <string name="service_ai_title">Answers from external AI</string>
+    <string name="service_ai_body">Ask AI sends a summary to the external AI app you choose. That service writes the answer, and it can be wrong. Chageun doesn\'t review or guarantee AI answers. Check what will be sent before you share it.</string>
+    <string name="service_links_title">Links to official sites</string>
+    <string name="service_links_body">Recall checks and inspection booking open sites run by public bodies such as the Korea Automobile Recall Center and the Korea Transportation Safety Authority. Those bodies provide and manage that information and those services. The inspection due date is the one you entered, so compare it with your official notice.</string>
+    <string name="service_records_title">Keeping your records</string>
+    <string name="service_records_body">Records are stored on this device. If you lose the device or delete the app, they\'re gone too, so keep a copy with Export or Google Drive backup in Settings › Data.</string>
+    <string name="service_ads_title">Ads</string>
+    <string name="service_ads_body">Chageun is free and shows ads in parts of the app. Advertisers provide the ad content.</string>
+    <string name="service_changes_title">Changes</string>
+    <string name="service_changes_body">Features and this notice may change with app updates.</string>
 </resources>

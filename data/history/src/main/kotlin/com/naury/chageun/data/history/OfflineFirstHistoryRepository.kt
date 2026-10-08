@@ -18,6 +18,7 @@ import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MileageSource
+import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
@@ -136,6 +137,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
             memo = entry.memo.normalized(),
             createdAt = now,
             updatedAt = now,
+            periodicResult = entry.periodicResult?.name,
         )
         database.withTransaction {
             historyDao.insertCheck(record)
@@ -180,6 +182,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
                     mileageKm = entry.mileage?.value,
                     costWon = entry.costWon,
                     memo = entry.memo.normalized(),
+                    periodicResult = entry.periodicResult?.name,
                     updatedAt = clock.instant(),
                 ),
             )
@@ -325,7 +328,17 @@ private fun CheckRecordEntity.asDetail(ref: RecordRef): RecordDetail? {
     val checkKind = CheckKind.entries.firstOrNull { it.name == kind } ?: return null
     return RecordDetail.Check(
         ref = ref,
-        entry = CheckEntry(checkKind, checkDate, title, mileageKm?.let(::Kilometers), costWon, memo),
+        entry = CheckEntry(
+            kind = checkKind,
+            date = checkDate,
+            title = title,
+            mileage = mileageKm?.let(::Kilometers),
+            costWon = costWon,
+            memo = memo,
+            periodicResult = periodicResult?.let { name ->
+                PeriodicInspectionResult.entries.firstOrNull { it.name == name } ?: PeriodicInspectionResult.Unknown
+            },
+        ),
         timestamps = RecordTimestamps.of(createdAt, updatedAt),
     )
 }

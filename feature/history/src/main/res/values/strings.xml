@@ -154,4 +154,6 @@
     <string name="history_detail_created">Recorded %1$s</string>
     <string name="history_detail_edited">edited %1$s</string>
     <string name="history_detail_times">%1$s · %2$s</string>
+    <string name="history_detail_periodic_result">Inspection result</string>
+    <string name="check_form_periodic_result_label">Inspection result</string>
 </resources>

@@ -121,4 +121,11 @@
     <string name="vehicle_edit_first_registration_pick">Choose a date</string>
     <string name="vehicle_edit_first_registration_hint">It\'s on your vehicle registration certificate.</string>
     <string name="vehicle_edit_first_registration_clear">Clear</string>
+    <string name="vehicle_inspection_complete_result">Result</string>
+    <string name="vehicle_inspection_latest">Last inspection</string>
+    <plurals name="vehicle_inspection_past_show">
+        <item quantity="one">%1$d past inspection</item>
+        <item quantity="other">%1$d past inspections</item>
+    </plurals>
+    <string name="vehicle_inspection_past_hide">Hide past inspections</string>
 </resources>

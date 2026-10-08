@@ -10,6 +10,7 @@ import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.CutoutStatus
+import com.naury.chageun.core.model.InspectionRecord
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.Vehicle
@@ -34,6 +35,8 @@ sealed interface VehicleUiState {
         val vehicle: Vehicle,
         val mileageLog: List<MileageEntry>,
         val inspection: InspectionStatus = InspectionStatus.Unknown,
+        /** 받은 정기검사, 최근 것부터. */
+        val inspectionHistory: List<InspectionRecord> = emptyList(),
         val photoPath: String? = null,
         val isPhotoImportFailed: Boolean = false,
         val cutout: CutoutStatus = CutoutStatus.Idle,
@@ -82,11 +85,13 @@ class VehicleViewModel @Inject constructor(
                 vehicleState,
                 albumRepository.observe(vehicle.id),
                 photoRepository.observeBackgroundRemoval(vehicle.id),
-            ) { state, album, removeBackground ->
+                inspectionRepository.observeHistory(vehicle.id),
+            ) { state, album, removeBackground, inspectionHistory ->
                 state.copy(
                     albumPreview = album.take(ALBUM_PREVIEW_COUNT),
                     albumCount = album.size,
                     isBackgroundRemovalEnabled = removeBackground,
+                    inspectionHistory = inspectionHistory,
                 )
             }
         }
@@ -101,7 +106,14 @@ class VehicleViewModel @Inject constructor(
     fun completeInspection(completion: InspectionCompletion, title: String) {
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         viewModelScope.launch {
-            completeInspection(vehicle.id, completion.completedOn, title, completion.mileage, completion.nextDueDate)
+            completeInspection(
+                vehicleId = vehicle.id,
+                completedOn = completion.completedOn,
+                title = title,
+                mileage = completion.mileage,
+                result = completion.result,
+                nextDueDate = completion.nextDueDate,
+            )
         }
     }
 

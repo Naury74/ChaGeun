@@ -7,6 +7,7 @@ import com.naury.chageun.core.database.migration.Migration3To4
 import com.naury.chageun.core.database.migration.Migration4To5
 import com.naury.chageun.core.database.migration.Migration5To6
 import com.naury.chageun.core.database.migration.Migration6To7
+import com.naury.chageun.core.database.migration.Migration7To8
 
 /**
  * 스키마를 바꿀 때마다 수동 또는 자동 Migration을 함께 넣는다. Destructive fallback은 절대 켜지 않으므로
@@ -20,5 +21,6 @@ object DatabaseMigrations {
         Migration4To5,
         Migration5To6,
         Migration6To7,
+        Migration7To8,
     )
 }
