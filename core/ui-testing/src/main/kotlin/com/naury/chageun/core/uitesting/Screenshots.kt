@@ -11,7 +11,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.Gutters
 
 /** Screenshot 크기별 Robolectric qualifier. 글자가 실제로 그려지도록 `@GraphicsMode(NATIVE)`와 함께 쓴다. */
 object ScreenshotDevices {
@@ -19,6 +21,15 @@ object ScreenshotDevices {
     const val TABLET = "w1280dp-h800dp-hdpi"
     const val PHONE_DARK = "w360dp-h800dp-night-hdpi"
     const val PHONE_KO = "ko-w360dp-h800dp-hdpi"
+
+    /** Medium 폭이 시작되는 600dp. 하단 바 대신 Rail이 나오고, 화면은 아직 한 칸이다. */
+    const val MEDIUM_KO = "ko-w600dp-h900dp-hdpi"
+
+    /** Expanded 폭이 시작되는 840dp. 홈과 목록-상세 화면이 두 칸으로 나뉜다. */
+    const val EXPANDED_KO = "ko-w840dp-h900dp-hdpi"
+
+    /** 펼친 Pixel 9 Pro Fold 안쪽 화면과 비슷한 크기. Book 자세의 세로 Hinge를 넣어 찍을 때 쓴다. */
+    const val FOLD_KO = "ko-w792dp-h820dp-hdpi"
 
     /** 목록 화면이 세 칸으로 나뉘는 Large 폭(1200dp 이상) 창. */
     const val LARGE_KO = "ko-w1400dp-h900dp-hdpi"
@@ -38,12 +49,15 @@ fun ComposeTestRule.captureScreen(name: String) {
     captureScreenRoboImage("src/test/screenshots/$name.png")
 }
 
-/** ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다. */
+/**
+ * ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다.
+ * 앱은 창 폭에 따라 여백을 넓히므로, 넓은 창을 찍을 때는 그 폭의 [spacing]을 넘긴다.
+ */
 @Composable
-fun AppFrame(content: @Composable () -> Unit) {
+fun AppFrame(spacing: ChageunSpacing = Gutters.Compact, content: @Composable () -> Unit) {
     val view = LocalView.current
     SideEffect { frameView = view }
-    ChageunTheme {
+    ChageunTheme(spacing = spacing) {
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
     }
 }
