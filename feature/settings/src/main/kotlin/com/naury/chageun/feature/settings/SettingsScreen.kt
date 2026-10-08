@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -71,6 +72,7 @@ fun SettingsRoute(
     onOpenPrivacy: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenDriveBackup: () -> Unit,
+    onOpenServiceNotice: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
@@ -101,6 +103,7 @@ fun SettingsRoute(
         onOpenSystemNotifications = { context.launchExternal { context.openNotificationSettings() } },
         onOpenLicenses = onOpenLicenses,
         onOpenPrivacy = onOpenPrivacy,
+        onOpenServiceNotice = onOpenServiceNotice,
         onOpenAccount = onOpenAccount,
         onOpenPrivacyPolicy = { uriHandler.openUriSafely(context, ChageunLinks.PRIVACY_POLICY) },
         isAdPrivacyRequired = isAdPrivacyRequired,
@@ -161,6 +164,7 @@ fun SettingsScreen(
     onUsageStatsChanged: (Boolean) -> Unit = {},
     onOpenLicenses: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenServiceNotice: () -> Unit = {},
     onOpenAccount: () -> Unit = {},
     onOpenPrivacyPolicy: () -> Unit = {},
     isAdPrivacyRequired: Boolean = false,
@@ -252,6 +256,12 @@ fun SettingsScreen(
                     ListRow(Icons.Filled.Info, stringResource(R.string.settings_version, versionName))
                     GroupDivider()
                     ListRow(Icons.Filled.Shield, stringResource(R.string.settings_privacy), onClick = onOpenPrivacy)
+                    GroupDivider()
+                    ListRow(
+                        Icons.Filled.Description,
+                        stringResource(R.string.settings_service_notice),
+                        onClick = onOpenServiceNotice,
+                    )
                     GroupDivider()
                     ListRow(
                         Icons.Filled.Policy,

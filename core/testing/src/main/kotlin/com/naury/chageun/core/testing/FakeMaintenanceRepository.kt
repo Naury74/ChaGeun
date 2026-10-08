@@ -44,7 +44,7 @@ class FakeMaintenanceRepository : MaintenanceRepository {
         inputs.update { it.copy(mileageHistory = it.mileageHistory + reading) }
     }
 
-    override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean) {
+    override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean): String {
         recordedServices += entry to advancesOdometer
         inputs.update { current ->
             current.copy(
@@ -56,5 +56,6 @@ class FakeMaintenanceRepository : MaintenanceRepository {
                 },
             )
         }
+        return "service-${recordedServices.size}"
     }
 }

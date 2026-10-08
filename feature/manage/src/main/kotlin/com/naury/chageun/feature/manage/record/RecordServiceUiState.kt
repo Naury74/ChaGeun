@@ -31,10 +31,13 @@ data class RecordServiceUiState(
     /** 저장된 기록을 고치는 중이다. 저장하면 다음 교체 안내 없이 바로 닫는다. */
     val isEditing: Boolean = false,
     val isEditSaved: Boolean = false,
+    /** 저장하면 붙일 사진·영수증 URI. 새 기록에서만 고를 수 있다. */
+    val photos: List<String> = emptyList(),
 )
 
 data class SavedResult(
     val nextDistanceDue: Kilometers?,
     val nextDateDue: LocalDate?,
     val alsoReplaced: List<MaintenanceItem> = emptyList(),
+    val failedPhotoCount: Int = 0,
 )

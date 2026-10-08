@@ -18,6 +18,7 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
+import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeReminderNotifier
@@ -41,6 +42,7 @@ class RecordServiceViewModelTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-01T00:00:00Z"), ZoneOffset.UTC)
     private val vehicles = FakeVehicleRepository()
     private val maintenance = FakeMaintenanceRepository()
+    private val attachments = FakeAttachmentRepository()
 
     private val history = FakeHistoryRepository()
 
@@ -49,7 +51,13 @@ class RecordServiceViewModelTest {
             target = RecordServiceTarget(MaintenanceItem.EngineOil, editingRecordId),
             savedStateHandle = handle,
             vehicleRepository = vehicles,
-            recordService = RecordServiceUseCase(maintenance, clock, FakeAnalyticsTracker(), FakeReminderNotifier()),
+            recordService = RecordServiceUseCase(
+                maintenance,
+                clock,
+                FakeAnalyticsTracker(),
+                FakeReminderNotifier(),
+                attachments,
+            ),
             editRecord = EditHistoryRecordUseCase(history, clock),
             clock = clock,
         )
@@ -112,7 +120,7 @@ class RecordServiceViewModelTest {
         assertThat(vm.uiState.value.lowerMileageWarning).isEqualTo(Kilometers(40_260))
         assertThat(maintenance.recordedServices).isEmpty()
 
-        vm.confirmLowerMileage()
+        vm.save(confirmLowerMileage = true)
 
         assertThat(vm.uiState.value.savedResult).isNotNull()
         assertThat(maintenance.recordedServices.single().first.mileage).isEqualTo(Kilometers(39_000))
@@ -132,6 +140,16 @@ class RecordServiceViewModelTest {
         assertThat(vm.uiState.value.odometerPrompt).isNull()
         assertThat(vm.uiState.value.savedResult).isNotNull()
         assertThat(maintenance.recordedServices.single().second).isTrue()
+    }
+
+    @Test
+    fun chosenPhotos_areAttachedWhenSaved() {
+        val vm = viewModel()
+        vm.onPhotosChanged(listOf("content://receipt"), highQuality = false)
+        vm.save()
+
+        assertThat(vm.uiState.value.savedResult?.failedPhotoCount).isEqualTo(0)
+        assertThat(attachments.attachments.value.map { it.filePath }).containsExactly("content://receipt")
     }
 
     @Test

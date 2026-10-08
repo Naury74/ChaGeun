@@ -49,6 +49,7 @@ import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.LabeledListRow
 import com.naury.chageun.core.ui.ListRow
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.formatDate
@@ -70,6 +71,8 @@ internal fun ManageDetailPane(
 ) {
     val status = detail.status
     val gutter = ChageunTheme.spacing.gutter
+    // 외부 AI 공유를 끄면 진입점도 감춘다.
+    val showsAi = LocalFeatureFlags.current.aiShareEnabled
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(horizontal = gutter, vertical = ChageunTheme.spacing.sm),
@@ -117,14 +120,16 @@ internal fun ManageDetailPane(
             }
         }
         item(key = "basis") { BasisSection(detail) }
-        item(key = "ai") {
-            CardGroup(null) {
-                ListRow(
-                    icon = Icons.Filled.AutoAwesome,
-                    title = stringResource(R.string.manage_ask_ai),
-                    tone = ChageunTheme.colors.ai,
-                    onClick = { onAskAi(status.item) },
-                )
+        if (showsAi) {
+            item(key = "ai") {
+                CardGroup(null) {
+                    ListRow(
+                        icon = Icons.Filled.AutoAwesome,
+                        title = stringResource(R.string.manage_ask_ai),
+                        tone = ChageunTheme.colors.ai,
+                        onClick = { onAskAi(status.item) },
+                    )
+                }
             }
         }
         item(key = "history") { HistorySection(detail.history) }

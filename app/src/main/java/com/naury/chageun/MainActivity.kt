@@ -17,10 +17,14 @@ import com.naury.chageun.core.ads.LocalAdConsent
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.domain.ads.AppUsageRepository
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.flags.FeatureFlagRepository
+import com.naury.chageun.core.model.FeatureFlags
 import com.naury.chageun.core.notification.DeepLink
 import com.naury.chageun.core.notification.DeepLinks.deepLinkOrNull
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.ui.ChageunRoot
+import com.naury.chageun.update.AppUpdateChecker
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.Clock
 import javax.inject.Inject
@@ -44,6 +48,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var clock: Clock
 
+    @Inject
+    lateinit var featureFlagRepository: FeatureFlagRepository
+
+    @Inject
+    lateinit var appUpdateChecker: AppUpdateChecker
+
     private val deepLink = mutableStateOf<DeepLink?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +67,9 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             val adsEnabled by adGate.canShowAds.collectAsStateWithLifecycle(initialValue = false)
+            val featureFlags by featureFlagRepository.flags.collectAsStateWithLifecycle(initialValue = FeatureFlags())
             CompositionLocalProvider(
+                LocalFeatureFlags provides featureFlags,
                 LocalAnalyticsTracker provides analyticsTracker,
                 LocalAdsEnabled provides adsEnabled,
                 LocalAdConsent provides adConsentController,
@@ -70,6 +82,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdateChecker.check(this)
     }
 
     override fun onNewIntent(intent: Intent) {

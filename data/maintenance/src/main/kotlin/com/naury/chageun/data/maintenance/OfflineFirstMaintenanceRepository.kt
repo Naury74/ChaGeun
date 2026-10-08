@@ -90,7 +90,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
         )
     }
 
-    override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean) {
+    override suspend fun recordService(vehicleId: VehicleId, entry: ServiceEntry, advancesOdometer: Boolean): String {
         val now = clock.instant()
         val record = MaintenanceRecordEntity(
             id = UUID.randomUUID().toString(),
@@ -121,6 +121,7 @@ internal class OfflineFirstMaintenanceRepository @Inject constructor(
                 )
             }
         }
+        return record.id
     }
 
     private companion object {

@@ -56,6 +56,7 @@ import com.naury.chageun.core.ui.HeroStat
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
+import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.ui.VehicleHeroSection
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
@@ -182,13 +183,18 @@ private fun HomeContent(
     // Tabletop: 차량과 상태는 위쪽 절반에, 목록과 액션은 아래쪽 절반에 둔다.
     val isTabletop = hinge != null && !hinge.isVertical
     val showAd = LocalAdsEnabled.current
+    val showsAi = LocalFeatureFlags.current.aiShareEnabled
     val panes: List<LazyListScope.() -> Unit> = when {
-        isTabletop -> listOf({ summaryPane(state, actions) }, {
+        isTabletop -> listOf({ summaryPane(state, actions, showsActions = false) }, {
+            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
+            item(key = "hero-actions") {
+                HomeHeroActions(state, actions, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+            }
             attentionPane(state, actions)
             missingPane(state, actions)
-            recentPane(state, actions, showAd)
+            recentPane(state, actions, showAd, showsAi)
         })
-        else -> homePanes(state, paneCount, actions, showAd)
+        else -> homePanes(state, paneCount, actions, showAd, showsAi)
     }
     HingeAwarePanes(
         weights = List(panes.size) { 1f },
@@ -217,21 +223,22 @@ private fun homePanes(
     paneCount: Int,
     actions: HomeActions,
     showAd: Boolean,
+    showsAi: Boolean,
 ): List<LazyListScope.() -> Unit> = when (paneCount) {
     SINGLE_PANE -> listOf({
         summaryPane(state, actions)
         attentionPane(state, actions)
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
     TWO_PANES -> listOf({ summaryPane(state, actions, isSideBySide = true) }, {
         attentionPane(state, actions)
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
     else -> listOf({ summaryPane(state, actions, isSideBySide = true) }, { attentionPane(state, actions) }, {
         missingPane(state, actions)
-        recentPane(state, actions, showAd)
+        recentPane(state, actions, showAd, showsAi)
     })
 }
 
@@ -239,9 +246,10 @@ private fun LazyListScope.summaryPane(
     state: HomeUiState.Content,
     actions: HomeActions,
     isSideBySide: Boolean = false,
+    showsActions: Boolean = true,
 ) {
     // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다.
-    item(key = "hero") { HomeHero(state, actions, isSideBySide) }
+    item(key = "hero") { HomeHero(state, actions, isSideBySide, showsActions) }
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -327,7 +335,12 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeA
     }
 }
 
-private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeActions, showAd: Boolean) {
+private fun LazyListScope.recentPane(
+    state: HomeUiState.Content,
+    actions: HomeActions,
+    showAd: Boolean,
+    showsAi: Boolean,
+) {
     // 기획서 UI 6.1: 다가오는 관리 다음, 최근 기록 앞에 한 칸만 둔다. 광고를 쓰지 않으면 목록 간격도 남기지 않는다.
     if (showAd) item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
     item(key = "recent") {
@@ -337,12 +350,19 @@ private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeAc
             modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
     }
-    item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+    if (showsAi) {
+        item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideBySide: Boolean) {
+private fun HomeHero(
+    state: HomeUiState.Content,
+    actions: HomeActions,
+    isSideBySide: Boolean,
+    showsActions: Boolean = true,
+) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
     val subtitleParts = listOfNotNull(
@@ -391,25 +411,33 @@ private fun HomeHero(state: HomeUiState.Content, actions: HomeActions, isSideByS
             mileage.date == state.today -> stringResource(R.string.home_mileage_as_of_today)
             else -> stringResource(R.string.home_mileage_as_of, formatDate(mileage.date))
         },
-        action = {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            ) {
-                FilledTonalButton(onClick = actions.onUpdateMileage) {
-                    Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(stringResource(R.string.home_mileage_update))
-                }
-                // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
-                if (state.photoPath == null && actions.onAddPhoto != null) {
-                    OutlinedButton(onClick = actions.onAddPhoto) {
-                        Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                        Text(stringResource(R.string.home_add_photo))
-                    }
-                }
-            }
+        action = if (showsActions) {
+            { HomeHeroActions(state, actions) }
+        } else {
+            null
         },
     )
+}
+
+@Composable
+private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+    ) {
+        FilledTonalButton(onClick = actions.onUpdateMileage) {
+            Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(ChageunTheme.spacing.xs))
+            Text(stringResource(R.string.home_mileage_update))
+        }
+        // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
+        if (state.photoPath == null && actions.onAddPhoto != null) {
+            OutlinedButton(onClick = actions.onAddPhoto) {
+                Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                Text(stringResource(R.string.home_add_photo))
+            }
+        }
+    }
 }
