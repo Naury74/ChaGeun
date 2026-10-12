@@ -246,6 +246,45 @@ class RoomBackupRepositoryTest {
     }
 
     @Test
+    fun import_ofBackupWithoutVideos_keepsThisDevicesAlbumVideos() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        insertLocalVideo()
+        val cloud = File(workDir, "cloud.zip")
+        repository.export(Uri.fromFile(cloud).toString(), includeVideos = false)
+
+        assertThat(repository.import(Uri.fromFile(cloud).toString())).isTrue()
+
+        val kept = database.backupDao().albumPhotos().single { it.id == "v1-clip" }
+        assertThat(kept.mediaType).isEqualTo(AlbumPhotoEntity.MEDIA_VIDEO)
+        assertThat(File(attachmentDir, "album_v1.mp4").readText()).isEqualTo("video")
+        assertThat(File(attachmentDir, "album_v1_thumb.jpg").readText()).isEqualTo("poster")
+    }
+
+    @Test
+    fun import_ofBackupWithTheSameVideo_doesNotDuplicateIt() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        insertLocalVideo()
+        val full = File(workDir, "full.zip")
+        repository.export(Uri.fromFile(full).toString())
+
+        assertThat(repository.import(Uri.fromFile(full).toString())).isTrue()
+
+        assertThat(database.backupDao().albumPhotos().count { it.id == "v1-clip" }).isEqualTo(1)
+        assertThat(File(attachmentDir, "album_v1.mp4").readText()).isEqualTo("video")
+    }
+
+    private suspend fun insertLocalVideo() {
+        File(attachmentDir, "album_v1.mp4").writeText("video")
+        File(attachmentDir, "album_v1_thumb.jpg").writeText("poster")
+        database.albumDao().insert(
+            AlbumPhotoEntity(
+                "v1-clip", "v1", "album_v1.mp4", "album_v1_thumb.jpg", 5, LocalDate.of(2026, 5, 3), null, now, now,
+                mediaType = AlbumPhotoEntity.MEDIA_VIDEO, durationMs = 42_000,
+            ),
+        )
+    }
+
+    @Test
     fun deleteAll_removesAlbumVideos() = runTest {
         val repository = repository(StandardTestDispatcher(testScheduler))
         val video = File(attachmentDir, "album_v1.mp4").apply { writeText("video") }

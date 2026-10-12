@@ -88,7 +88,9 @@ internal class RoomBackupRepository @Inject constructor(
         val result = runCatching {
             val content = openInput(sourceUri).use { BackupArchiveReader.read(it, extractTo = staging) }
             val document = (content as? ArchiveContent.Valid)?.document ?: return@runCatching false
-            replaceDatabase(document)
+            val keptVideos = localVideosMissingFrom(document)
+            replaceDatabase(document, keptVideos)
+            keepVideoFiles(keptVideos, staging)
             attachmentDirectory.deleteRecursively()
             val moved = !staging.exists() || staging.renameTo(attachmentDirectory)
             if (!moved) staging.copyRecursively(attachmentDirectory, overwrite = true)
@@ -98,7 +100,30 @@ internal class RoomBackupRepository @Inject constructor(
         result.getOrDefault(false)
     }
 
-    private suspend fun replaceDatabase(document: BackupDocument) {
+    /**
+     * 드라이브 백업은 크기 때문에 앨범 동영상을 넣지 않는다. 전체 교체로 복원하면 이 기기의 동영상이 사라지므로,
+     * 백업에 없는 동영상 중 그 차가 백업에 있는 것은 그대로 남긴다.
+     */
+    private suspend fun localVideosMissingFrom(document: BackupDocument): List<AlbumPhotoEntity> {
+        val vehicleIds = document.vehicles.mapTo(HashSet()) { it.id }
+        val restoredIds = document.albumPhotos.mapTo(HashSet()) { it.id }
+        return backupDao.albumPhotos().filter {
+            it.mediaType == AlbumPhotoEntity.MEDIA_VIDEO && it.vehicleId in vehicleIds && it.id !in restoredIds
+        }
+    }
+
+    /** DB가 바뀐 뒤에 옮기므로, 그 전에 실패하면 기존 첨부 폴더가 그대로 남는다. 같은 저장소 안이라 이름만 바뀐다. */
+    private fun keepVideoFiles(videos: List<AlbumPhotoEntity>, staging: File) {
+        if (videos.isEmpty()) return
+        staging.mkdirs()
+        videos.flatMap { listOf(it.fileName, it.thumbnailName) }.forEach { name ->
+            val source = File(attachmentDirectory, name)
+            val target = File(staging, name)
+            if (source.exists() && !source.renameTo(target)) source.copyTo(target, overwrite = true)
+        }
+    }
+
+    private suspend fun replaceDatabase(document: BackupDocument, keptVideos: List<AlbumPhotoEntity> = emptyList()) {
         val now = clock.instant()
         database.withTransaction {
             backupDao.deleteAllVehicles()
@@ -114,7 +139,7 @@ internal class RoomBackupRepository @Inject constructor(
                 checks = document.checkRecords.map { it.toEntity(now) },
                 attachments = document.attachments.map { it.toEntity() },
             )
-            backupDao.insertAlbumPhotos(document.albumPhotos.map { it.toEntity(now) })
+            backupDao.insertAlbumPhotos(document.albumPhotos.map { it.toEntity(now) } + keptVideos)
         }
     }
 

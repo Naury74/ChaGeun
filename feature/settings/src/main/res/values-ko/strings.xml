@@ -69,7 +69,7 @@
     <string name="settings_account">계정</string>
     <string name="settings_account_body">이메일이나 Google 계정으로 로그인해요</string>
     <string name="settings_drive_backup">Google 드라이브 백업</string>
-    <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요. 앨범 동영상은 용량이 커서 백업에 넣지 않아요. 동영상까지 보관하려면 데이터 내보내기를 써 주세요.</string>
+    <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요. 앨범 동영상은 용량이 커서 백업에 넣지 않아요. 복원해도 이 휴대폰의 동영상은 그대로 남고, 다른 휴대폰으로 옮기려면 데이터 내보내기를 써 주세요.</string>
     <string name="settings_share">다른 기기로 보내기</string>
     <string name="settings_share_body">백업 파일을 Quick Share·메일·메신저로 보내요. 새 휴대폰의 첫 화면에서 “백업에서 복원하기”로 열어요.</string>
     <string name="settings_service_notice">서비스 유의사항</string>
