@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DocumentScanner
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -43,6 +46,7 @@ import androidx.compose.ui.window.Dialog
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.ui.rememberFileImage
 
@@ -51,10 +55,14 @@ import com.naury.chageun.core.ui.rememberFileImage
  *
  * @property onEdit 첨부한 사진 한 장을 고쳐 그 자리에 바꿔 넣는다.
  * @property onAddEdited 사진을 고른 뒤 편집해서 첨부한다.
+ * @property onScan 카메라로 영수증을 찍고 문서 보정을 거쳐 첨부한다.
+ * @property onSharePdf 기록에 붙인 사진을 첨부한 순서대로 PDF 한 개로 묶어 공유 창으로 보낸다.
  */
 data class AttachmentPhotoEdits(
     val onEdit: ((Attachment) -> Unit)? = null,
     val onAddEdited: ((RecordRef) -> Unit)? = null,
+    val onScan: ((RecordRef) -> Unit)? = null,
+    val onSharePdf: ((RecordDetail, List<Attachment>) -> Unit)? = null,
 )
 
 @Composable
@@ -66,6 +74,8 @@ internal fun AttachmentSection(
     onDismissFailure: () -> Unit,
     onEdit: ((Attachment) -> Unit)? = null,
     onAddEdited: (() -> Unit)? = null,
+    onScan: (() -> Unit)? = null,
+    onSharePdf: (() -> Unit)? = null,
 ) {
     var viewingId by rememberSaveable { mutableStateOf<String?>(null) }
     val remaining = MAX_ATTACHMENTS_PER_RECORD - attachments.size
@@ -81,6 +91,9 @@ internal fun AttachmentSection(
                 items(attachments, key = { it.id }) { attachment ->
                     Thumbnail(attachment, onClick = { viewingId = attachment.id })
                 }
+            }
+            onSharePdf?.let {
+                AttachmentActionButton(Icons.Outlined.PictureAsPdf, stringResource(R.string.attachment_share_pdf), it)
             }
         }
         if (failedCount > 0) {
@@ -99,12 +112,21 @@ internal fun AttachmentSection(
             enabled = remaining > 0,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD)) }
+        onScan?.let {
+            AttachmentActionButton(
+                Icons.Outlined.DocumentScanner,
+                stringResource(R.string.attachment_scan_receipt),
+                it,
+                enabled = remaining > 0,
+            )
+        }
         onAddEdited?.let {
-            TextButton(onClick = it, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.attachment_add_edited))
-            }
+            AttachmentActionButton(
+                Icons.Outlined.Edit,
+                stringResource(R.string.attachment_add_edited),
+                it,
+                enabled = remaining > 0,
+            )
         }
         Text(
             stringResource(R.string.attachment_notice),
@@ -128,6 +150,15 @@ internal fun AttachmentSection(
             },
             onDismiss = { viewingId = null },
         )
+    }
+}
+
+@Composable
+private fun AttachmentActionButton(icon: ImageVector, label: String, onClick: () -> Unit, enabled: Boolean = true) {
+    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text(label)
     }
 }
 

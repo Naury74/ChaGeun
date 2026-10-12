@@ -12,6 +12,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // 사진 편집 화면. FrameKit 타입은 이 모듈 밖으로 내보내지 않는다.
     implementation(libs.framekit)
+    // 영수증 PDF에 검색·복사되는 글자 층을 넣는다. 기기 안(:framekit_ocr 프로세스)에서만 인식한다.
+    implementation(libs.framekit.ocr)
     api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(projects.core.uiTesting)

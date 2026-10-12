@@ -88,6 +88,9 @@
     <string name="photo_edit_error_too_large">This photo is too large to edit.</string>
     <string name="photo_edit_error_storage">Not enough storage. Free up some space and try again.</string>
     <string name="photo_edit_error_generic">Couldn\'t finish editing. Please try again.</string>
+    <string name="receipt_pdf_share_title">Share receipts PDF</string>
+    <string name="receipt_pdf_file_name">ChaGeun_receipts_%1$s.pdf</string>
+    <string name="receipt_pdf_error">Couldn\'t make the PDF. Please try again.</string>
     <string name="video_edit_error_unavailable">Couldn\'t open the video. Please choose it again.</string>
     <string name="video_edit_error_unsupported">This video can\'t be edited. Try another one.</string>
     <string name="video_edit_error_too_large">This video is too large to edit.</string>

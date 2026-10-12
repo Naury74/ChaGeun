@@ -56,8 +56,9 @@ import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
-import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
+import com.naury.chageun.core.ui.photo.ReceiptEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
+import com.naury.chageun.core.ui.photo.rememberReceiptEditorLauncher
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.calendar.CalendarActions
 import com.naury.chageun.feature.history.calendar.HistoryCalendar
@@ -117,18 +118,9 @@ fun HistoryRoute(
         },
     )
     // 사진 편집기도 같은 이유로 여기서 연다. 어느 기록·첨부의 편집인지는 태그로 남긴다.
-    val photoEditor = rememberPhotoEditorLauncher { HistoryPhotoEditTag.apply(it, viewModel) }
-    val photoEdits = AttachmentPhotoEdits(
-        onEdit = { attachment ->
-            photoEditor.edit(File(attachment.filePath), tag = HistoryPhotoEditTag.replace(attachment.id))
-        },
-        onAddEdited = { ref ->
-            photoEditor.pickAndEdit(
-                maxItems = MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size,
-                tag = HistoryPhotoEditTag.add(ref),
-            )
-        },
-    )
+    // 첨부는 대개 영수증이라 문서 보정을 맨 앞에 둔 편집기를 쓴다. 일반 사진에서는 그 도구가 보이지 않는다.
+    val receiptEditor = rememberReceiptEditorLauncher { HistoryPhotoEditTag.apply(it, viewModel) }
+    val photoEdits = receiptPhotoEdits(receiptEditor, remaining = MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size)
     // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
     var editingType by rememberSaveable { mutableStateOf<TimelineEventType?>(null) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -233,6 +225,24 @@ fun HistoryRoute(
         TimelineEventType.Maintenance, TimelineEventType.Mileage, null -> Unit
     }
 }
+
+private fun receiptPhotoEdits(editor: ReceiptEditorLauncher, remaining: Int) = AttachmentPhotoEdits(
+    onEdit = { attachment -> editor.edit(File(attachment.filePath), tag = HistoryPhotoEditTag.replace(attachment.id)) },
+    onAddEdited = { ref -> editor.pickAndEdit(maxItems = remaining, tag = HistoryPhotoEditTag.add(ref)) },
+    onScan = { ref -> editor.scan(maxItems = remaining, tag = HistoryPhotoEditTag.add(ref)) },
+    onSharePdf = { detail, attachments ->
+        editor.sharePdf(attachments.map { File(it.filePath) }, detail.date ?: LocalDate.now())
+    },
+)
+
+/** 영수증 PDF 파일 이름에 넣을 기록 날짜. 날짜를 모르는 공공데이터 정비 기록이면 null이다. */
+private val RecordDetail.date: LocalDate?
+    get() = when (this) {
+        is RecordDetail.Maintenance -> entry.date
+        is RecordDetail.Fuel -> entry.date
+        is RecordDetail.Check -> entry.date
+        is RecordDetail.Mileage -> date
+    }
 
 private fun calendarActions(
     calendarViewModel: HistoryCalendarViewModel,
@@ -354,6 +364,8 @@ fun HistoryScreen(
             onDismissAttachFailure,
             photoEdits.onEdit,
             photoEdits.onAddEdited,
+            photoEdits.onScan,
+            photoEdits.onSharePdf,
         )
     if (uiState.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }

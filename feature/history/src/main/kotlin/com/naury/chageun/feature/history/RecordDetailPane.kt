@@ -155,6 +155,11 @@ internal fun RecordDetailPane(
                     onDismissFailure = attachments.onDismissFailure,
                     onEdit = attachments.onEdit,
                     onAddEdited = attachments.onAddEdited?.let { add -> { add(detail.ref) } },
+                    onScan = attachments.onScan?.let { scan -> { scan(detail.ref) } },
+                    // 사진이 하나도 없으면 묶을 것이 없으므로 버튼을 두지 않는다.
+                    onSharePdf = attachments.onSharePdf
+                        ?.takeIf { attachments.items.isNotEmpty() }
+                        ?.let { share -> { share(detail, attachments.items) } },
                 )
             }
         }
@@ -219,6 +224,10 @@ internal data class AttachmentsState(
     val onEdit: ((Attachment) -> Unit)? = null,
     /** null이면 "편집해서 추가" 버튼을 두지 않는다. */
     val onAddEdited: ((RecordRef) -> Unit)? = null,
+    /** null이면 "영수증 스캔" 버튼을 두지 않는다. */
+    val onScan: ((RecordRef) -> Unit)? = null,
+    /** null이면 "영수증 PDF로 공유" 버튼을 두지 않는다. */
+    val onSharePdf: ((RecordDetail, List<Attachment>) -> Unit)? = null,
 )
 
 @Composable
