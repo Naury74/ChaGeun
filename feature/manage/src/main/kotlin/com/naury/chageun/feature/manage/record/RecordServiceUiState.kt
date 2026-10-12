@@ -4,8 +4,15 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
 import java.time.LocalDate
 
-/** 교체 기록 시트가 다루는 항목. [editingRecordId]가 있으면 그 기록을 고친다. */
-data class RecordServiceTarget(val item: MaintenanceItem, val editingRecordId: String? = null)
+/**
+ * 교체 기록 시트가 다루는 항목. [editingRecordId]가 있으면 그 기록을 고친다.
+ * [initialDate]는 달력에서 그날 교체를 기록할 때 입력 창 날짜로 채운다.
+ */
+data class RecordServiceTarget(
+    val item: MaintenanceItem,
+    val editingRecordId: String? = null,
+    val initialDate: LocalDate? = null,
+)
 
 enum class RecordServiceField { Date, Mileage, Cost }
 

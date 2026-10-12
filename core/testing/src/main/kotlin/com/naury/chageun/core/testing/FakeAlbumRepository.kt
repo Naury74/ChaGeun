@@ -8,6 +8,7 @@ import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
 /** "broken"이 들어간 URI는 넣지 못한다. 넣은 사진은 [fallbackDate]로 저장한다. */
@@ -15,6 +16,11 @@ class FakeAlbumRepository : AlbumRepository {
     val photos = MutableStateFlow<List<AlbumPhoto>>(emptyList())
 
     override fun observe(vehicleId: VehicleId): Flow<List<AlbumPhoto>> = photos
+
+    override fun observeBetween(vehicleId: VehicleId, from: LocalDate, to: LocalDate): Flow<List<AlbumPhoto>> =
+        photos.map { list ->
+            list.filter { it.takenOn in from..to }.sortedWith(compareBy({ it.takenOn }, { it.createdAt }))
+        }
 
     override suspend fun add(
         vehicleId: VehicleId,

@@ -102,4 +102,14 @@
     <string name="periodic_result_passed">Passed</string>
     <string name="periodic_result_failed">Failed</string>
     <string name="periodic_result_unknown">Result not recorded</string>
+    <string name="upcoming_inspection">Periodic inspection</string>
+    <string name="upcoming_mileage">Update mileage</string>
+    <string name="upcoming_overdue">Overdue</string>
+    <string name="upcoming_estimated">Estimated</string>
+    <string name="upcoming_due_date">Due date</string>
+    <string name="upcoming_inspection_due">Deadline</string>
+    <string name="upcoming_mileage_due">Suggested</string>
+    <string name="upcoming_confidence_high">Based on the interval</string>
+    <string name="upcoming_confidence_medium">Based on recent driving</string>
+    <string name="upcoming_confidence_low">Rough guess, few records</string>
 </resources>

@@ -129,4 +129,5 @@
     <string name="vehicle_edit_displacement">배기량 (선택)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">50cc에서 10,000cc 사이로 입력해 주세요</string>
+    <string name="album_open_calendar">달력에서 이날 보기</string>
 </resources>

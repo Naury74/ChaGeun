@@ -133,4 +133,5 @@
     <string name="vehicle_edit_displacement">Engine displacement (optional)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">Enter a value between 50 and 10,000 cc</string>
+    <string name="album_open_calendar">View this day in the calendar</string>
 </resources>

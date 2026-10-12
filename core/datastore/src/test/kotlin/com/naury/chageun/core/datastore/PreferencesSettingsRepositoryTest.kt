@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import java.io.File
@@ -44,6 +45,15 @@ class PreferencesSettingsRepositoryTest {
         ).isEqualTo(
             UserSettings(ThemeMode.Dark, isMaintenanceReminderEnabled = false, isCloudAutoBackupEnabled = true),
         )
+    }
+
+    @Test
+    fun remembersHistoryView() = scope.runTest {
+        assertThat(repository.settings.first().historyView).isEqualTo(HistoryView.List)
+
+        repository.setHistoryView(HistoryView.Calendar)
+
+        assertThat(repository.settings.first().historyView).isEqualTo(HistoryView.Calendar)
     }
 
     @Test

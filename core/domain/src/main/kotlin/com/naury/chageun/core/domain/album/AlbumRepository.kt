@@ -12,6 +12,9 @@ interface AlbumRepository {
     /** 찍은 날짜 최신순. */
     fun observe(vehicleId: VehicleId): Flow<List<AlbumPhoto>>
 
+    /** 찍은 날짜가 [from]~[to](양 끝 포함)인 사진. 날짜순이고, 같은 날은 먼저 넣은 사진이 앞에 온다. */
+    fun observeBetween(vehicleId: VehicleId, from: LocalDate, to: LocalDate): Flow<List<AlbumPhoto>>
+
     /**
      * 사진을 위치·카메라 정보 없이 다시 인코딩해 저장한다. 찍은 날짜는 원본 EXIF에서 읽고, 없으면 [fallbackDate]를 쓴다.
      */

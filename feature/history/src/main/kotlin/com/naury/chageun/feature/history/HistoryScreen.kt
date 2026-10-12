@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.movableContentOf
@@ -40,21 +41,34 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
+import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.analytics.AnalyticsEvent
+import com.naury.chageun.core.domain.analytics.AnalyticsTracker
+import com.naury.chageun.core.domain.analytics.CalendarItemKind
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
+import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveListDetail
+import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.ThreePaneListDetail
+import com.naury.chageun.core.ui.currentLocale
 import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
+import com.naury.chageun.feature.history.calendar.CalendarActions
+import com.naury.chageun.feature.history.calendar.HistoryCalendar
+import com.naury.chageun.feature.history.calendar.HistoryCalendarSlot
+import com.naury.chageun.feature.history.calendar.HistoryCalendarViewModel
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
+import java.time.LocalDate
+import java.time.temporal.WeekFields
 
 private enum class AddDialog { Chooser, MaintenanceItem, Fuel, Check }
 
@@ -63,15 +77,32 @@ fun HistoryRoute(
     onRecordService: (MaintenanceItem) -> Unit,
     onEditService: (MaintenanceItem, String) -> Unit = { _, _ -> },
     onAskAi: ((RecordRef) -> Unit)? = null,
+    calendarLinks: HistoryCalendarLinks = HistoryCalendarLinks(),
     viewModel: HistoryViewModel = hiltViewModel(),
+    calendarViewModel: HistoryCalendarViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val view by calendarViewModel.view.collectAsStateWithLifecycle()
+    val calendarState by calendarViewModel.uiState.collectAsStateWithLifecycle()
     val isExpanded = currentWindowAdaptiveInfo().windowSizeClass
         .isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
     val isTwoPane = isListDetailTwoPane()
     val isThreePane = isListDetailThreePane()
+    val analytics = LocalAnalyticsTracker.current
     var dialog by rememberSaveable { mutableStateOf<AddDialog?>(null) }
+    // 달력의 [이날 기록 추가]로 열면 입력 창 날짜를 그날로 채운다. 목록의 추가 버튼으로 열면 null이다.
+    var addDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     var isFilterOpen by rememberSaveable { mutableStateOf(false) }
+    val locale = currentLocale()
+    LaunchedEffect(locale) { calendarViewModel.setFirstDayOfWeek(WeekFields.of(locale).firstDayOfWeek) }
+    val pendingDate = calendarLinks.pendingDate
+    LaunchedEffect(pendingDate) {
+        if (pendingDate != null) {
+            viewModel.select(null)
+            calendarViewModel.focusOn(pendingDate)
+            calendarLinks.onPendingDateHandled()
+        }
+    }
     // 상세는 한 칸·두 칸 배치에 따라 컴포지션 위치가 달라 접거나 펼 때 상태가 사라진다.
     // 사진 선택·편집은 배치와 상관없는 이 자리에 두어, 편집 도중 접어도 이어지게 한다.
     val photoInput = rememberPhotoInputState()
@@ -93,6 +124,10 @@ fun HistoryRoute(
         editingId = null
     }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
+    val calendarActions = calendarActions(calendarViewModel, viewModel, calendarLinks, analytics) { date ->
+        addDate = date
+        dialog = AddDialog.Chooser
+    }
 
     LargeTitleScaffold(
         title = stringResource(R.string.history_title).takeUnless {
@@ -100,44 +135,69 @@ fun HistoryRoute(
                 uiState.selected != null
         },
     ) { padding ->
-        HistoryScreen(
-            uiState = uiState,
-            isTwoPane = isTwoPane,
-            isThreePane = isThreePane,
-            onKeywordChanged = { keyword ->
-                val matching = if (keyword.isBlank()) {
-                    emptySet()
-                } else {
-                    itemLabels.filterValues {
-                        it.contains(keyword.trim(), ignoreCase = true)
-                    }.keys
-                }
-                viewModel.search(keyword, matching)
-            },
-            onFilterSelected = viewModel::selectFilter,
-            onSelect = viewModel::select,
-            onDelete = viewModel::delete,
-            onEdit = { detail ->
-                if (detail is RecordDetail.Maintenance) {
-                    onEditService(detail.item, detail.ref.id)
-                } else {
-                    editingType = detail.ref.type
-                    editingId = detail.ref.id
-                }
-            },
-            onAdd = { dialog = AddDialog.Chooser },
-            onOpenAdvancedFilter = { isFilterOpen = true },
-            onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
-            onLoadMore = viewModel::loadMore,
-            onAskAi = onAskAi,
-            onAddPhotos = { ref ->
-                photoTarget = "${ref.type.name}:${ref.id}"
-                photoInput.open()
-            },
-            onDeleteAttachment = viewModel::deleteAttachment,
-            onDismissAttachFailure = viewModel::dismissAttachFailure,
-            modifier = Modifier.padding(padding),
-        )
+        Column(Modifier.padding(padding)) {
+            val shownView = view
+            if (shownView == null) {
+                // 고른 보기를 읽기 전에 목록을 잠깐 보였다가 달력으로 바뀌지 않게 비워 둔다.
+                Box(Modifier.fillMaxSize())
+                return@Column
+            }
+            if (isTwoPane || uiState.selected == null) {
+                HistoryViewToggle(
+                    view = shownView,
+                    onChange = { next ->
+                        analytics.track(AnalyticsEvent.HistoryViewChanged(next))
+                        calendarViewModel.setView(next)
+                    },
+                    modifier = Modifier
+                        .padding(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.xxs)
+                        .widthIn(max = TOGGLE_MAX_WIDTH),
+                )
+            }
+            HistoryScreen(
+                uiState = uiState,
+                isTwoPane = isTwoPane,
+                isThreePane = isThreePane,
+                onKeywordChanged = { keyword ->
+                    val matching = if (keyword.isBlank()) {
+                        emptySet()
+                    } else {
+                        itemLabels.filterValues {
+                            it.contains(keyword.trim(), ignoreCase = true)
+                        }.keys
+                    }
+                    viewModel.search(keyword, matching)
+                },
+                onFilterSelected = viewModel::selectFilter,
+                onSelect = viewModel::select,
+                onDelete = viewModel::delete,
+                onEdit = { detail ->
+                    if (detail is RecordDetail.Maintenance) {
+                        onEditService(detail.item, detail.ref.id)
+                    } else {
+                        editingType = detail.ref.type
+                        editingId = detail.ref.id
+                    }
+                },
+                onAdd = {
+                    addDate = null
+                    dialog = AddDialog.Chooser
+                },
+                onOpenAdvancedFilter = { isFilterOpen = true },
+                onClearAdvancedFilter = { viewModel.applyAdvancedFilter(AdvancedFilter()) },
+                onLoadMore = viewModel::loadMore,
+                onAskAi = onAskAi,
+                onAddPhotos = { ref ->
+                    photoTarget = "${ref.type.name}:${ref.id}"
+                    photoInput.open()
+                },
+                onDeleteAttachment = viewModel::deleteAttachment,
+                onDismissAttachFailure = viewModel::dismissAttachFailure,
+                view = shownView,
+                calendar = HistoryCalendarSlot(calendarState, calendarActions),
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 
     if (isFilterOpen) {
@@ -148,19 +208,14 @@ fun HistoryRoute(
             onDismiss = { isFilterOpen = false },
         )
     }
-    when (dialog) {
-        AddDialog.Chooser -> AddRecordChooser(onPick = { dialog = it }, onDismiss = { dialog = null })
-        AddDialog.MaintenanceItem -> MaintenanceItemPicker(
-            onPick = {
-                dialog = null
-                onRecordService(it)
-            },
-            onDismiss = { dialog = null },
-        )
-        AddDialog.Fuel -> FuelFormHost(isExpanded = isExpanded, onDismiss = { dialog = null })
-        AddDialog.Check -> CheckFormHost(isExpanded = isExpanded, onDismiss = { dialog = null })
-        null -> Unit
-    }
+    AddRecordDialogs(
+        dialog = dialog,
+        addDate = addDate,
+        isExpanded = isExpanded,
+        onChange = { dialog = it },
+        onRecordService = onRecordService,
+        onRecordServiceOn = calendarLinks.onRecordServiceOn,
+    )
     val editing = editingType?.let { type -> editingId?.let { RecordRef(type, it) } }
     when (editing?.type) {
         TimelineEventType.Fuel -> FuelFormHost(isExpanded, onDismiss = stopEditing, editingId = editing.id)
@@ -168,6 +223,84 @@ fun HistoryRoute(
             CheckFormHost(isExpanded, onDismiss = stopEditing, editing = editing)
         TimelineEventType.Maintenance, TimelineEventType.Mileage, null -> Unit
     }
+}
+
+private fun calendarActions(
+    calendarViewModel: HistoryCalendarViewModel,
+    historyViewModel: HistoryViewModel,
+    links: HistoryCalendarLinks,
+    analytics: AnalyticsTracker,
+    onAddOnDate: (LocalDate) -> Unit,
+) = CalendarActions(
+    onSelectDate = calendarViewModel::selectDate,
+    onShowMonth = calendarViewModel::showMonth,
+    onToday = calendarViewModel::showToday,
+    onToggleLayer = calendarViewModel::toggleLayer,
+    onOpenUpcoming = { event ->
+        analytics.track(AnalyticsEvent.CalendarItemOpened(event.itemKind))
+        links.open(event)
+    },
+    onOpenRecord = { ref ->
+        analytics.track(AnalyticsEvent.CalendarItemOpened(CalendarItemKind.Record))
+        historyViewModel.select(ref)
+    },
+    onOpenPhoto = { photo ->
+        analytics.track(AnalyticsEvent.CalendarItemOpened(CalendarItemKind.Photo))
+        links.onOpenPhoto(photo.id)
+    },
+    onAddOnDate = onAddOnDate,
+)
+
+/** [addDate]가 있으면 달력에서 그날 기록을 추가하는 중이라 입력 창 날짜를 그날로 채운다. */
+@Composable
+private fun AddRecordDialogs(
+    dialog: AddDialog?,
+    addDate: LocalDate?,
+    isExpanded: Boolean,
+    onChange: (AddDialog?) -> Unit,
+    onRecordService: (MaintenanceItem) -> Unit,
+    onRecordServiceOn: ((MaintenanceItem, LocalDate) -> Unit)?,
+) {
+    when (dialog) {
+        AddDialog.Chooser -> AddRecordChooser(onPick = onChange, onDismiss = { onChange(null) })
+        AddDialog.MaintenanceItem -> MaintenanceItemPicker(
+            onPick = { item ->
+                onChange(null)
+                if (addDate != null &&
+                    onRecordServiceOn != null
+                ) {
+                    onRecordServiceOn(item, addDate)
+                } else {
+                    onRecordService(item)
+                }
+            },
+            onDismiss = { onChange(null) },
+        )
+        AddDialog.Fuel -> FuelFormHost(isExpanded = isExpanded, onDismiss = { onChange(null) }, initialDate = addDate)
+        AddDialog.Check -> CheckFormHost(isExpanded = isExpanded, onDismiss = { onChange(null) }, initialDate = addDate)
+        null -> Unit
+    }
+}
+
+@Composable
+internal fun HistoryViewToggle(view: HistoryView, onChange: (HistoryView) -> Unit, modifier: Modifier = Modifier) {
+    val views = HistoryView.entries
+    SegmentedControl(
+        options = views.map {
+            stringResource(
+                if (it ==
+                    HistoryView.List
+                ) {
+                    R.string.history_view_list
+                } else {
+                    R.string.history_view_calendar
+                },
+            )
+        },
+        selectedIndex = views.indexOf(view),
+        onSelect = { onChange(views[it]) },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -190,6 +323,8 @@ fun HistoryScreen(
     onAskAi: ((RecordRef) -> Unit)? = null,
     /** [isTwoPane]보다 우선한다. 왼쪽에 검색·필터 Pane을 더한다. */
     isThreePane: Boolean = false,
+    view: HistoryView = HistoryView.List,
+    calendar: HistoryCalendarSlot? = null,
 ) {
     val attachments =
         AttachmentsState(
@@ -225,6 +360,20 @@ fun HistoryScreen(
                 )
             }
         }
+    }
+    if (view == HistoryView.Calendar && calendar != null) {
+        // 달력에서 연 기록도 목록과 같은 상세를 쓴다. 닫으면 고른 날 목록으로 돌아간다.
+        HistoryCalendar(
+            state = calendar.state,
+            actions = calendar.actions,
+            detail = detail,
+            detailPane = detailPane,
+            onCloseDetail = { onSelect(null) },
+            isTwoPane = isTwoPane,
+            isThreePane = isThreePane,
+            modifier = modifier,
+        )
+        return
     }
     // 휴대폰에서 상세를 열면 목록이 컴포지션에서 빠지므로, 돌아왔을 때 보던 자리를 잇도록 여기서 기억한다.
     val timelineState = rememberLazyListState()
@@ -354,3 +503,5 @@ private fun <T> OptionDialog(
 }
 
 private val TIMELINE_MAX_WIDTH = 720.dp
+
+private val TOGGLE_MAX_WIDTH = 360.dp

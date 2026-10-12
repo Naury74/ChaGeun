@@ -3,6 +3,8 @@ package com.naury.chageun.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.auth.AuthRepository
+import com.naury.chageun.core.domain.calendar.UpcomingEventPlanner
+import com.naury.chageun.core.domain.calendar.within
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
@@ -47,16 +49,21 @@ class HomeViewModel @Inject constructor(
                 photoRepository.observeCutout(vehicle.id),
                 authRepository.currentUser,
             ) { overview, recent, (photo, removeBackground), cutout, user ->
+                val today = LocalDate.now(clock)
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
-                    today = LocalDate.now(clock),
+                    today = today,
                     recentRecords = recent,
                     photoPath = photo,
                     cutout = cutout,
                     isBackgroundRemovalEnabled = removeBackground,
                     greetingName = user?.greetingName(),
                     dayPart = DayPart.of(LocalTime.now(clock)),
+                    // 정비 개요를 한 번만 계산하도록 달력과 같은 규칙으로 여기서 바로 고른다.
+                    upcomingEvents = UpcomingEventPlanner.plan(overview, today)
+                        .within(today, today.plusDays(UPCOMING_DAYS))
+                        .take(UPCOMING_COUNT),
                 )
             }
         }
@@ -78,5 +85,7 @@ class HomeViewModel @Inject constructor(
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
         const val RECENT_RECORD_COUNT = 3
+        const val UPCOMING_DAYS = 14L
+        const val UPCOMING_COUNT = 3
     }
 }

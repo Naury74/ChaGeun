@@ -63,12 +63,17 @@ internal fun FuelFormHost(
     isExpanded: Boolean,
     onDismiss: () -> Unit,
     editingId: String? = null,
+    /** 달력에서 그날 기록을 추가할 때 입력 창 날짜를 채운다. */
+    initialDate: LocalDate? = null,
     // 추가와 수정이 같은 ViewModel을 나눠 쓰지 않도록 수정할 기록마다 따로 둔다.
-    viewModel: FuelFormViewModel = hiltViewModel(key = editingId?.let { "fuel-edit-$it" }),
+    viewModel: FuelFormViewModel = hiltViewModel(
+        key = editingId?.let { "fuel-edit-$it" } ?: initialDate?.let { "fuel-on-$it" },
+    ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
     LaunchedEffect(editingId) { editingId?.let(viewModel::startEditing) }
+    PrefillDate(initialDate, viewModel::onDateSelected)
     AdaptiveSheet(isExpanded = isExpanded, onDismiss = onDismiss) {
         FuelFormContent(
             uiState,
@@ -221,11 +226,16 @@ internal fun CheckFormHost(
     isExpanded: Boolean,
     onDismiss: () -> Unit,
     editing: RecordRef? = null,
-    viewModel: CheckFormViewModel = hiltViewModel(key = editing?.let { "check-edit-${it.id}" }),
+    /** 달력에서 그날 기록을 추가할 때 입력 창 날짜를 채운다. */
+    initialDate: LocalDate? = null,
+    viewModel: CheckFormViewModel = hiltViewModel(
+        key = editing?.let { "check-edit-${it.id}" } ?: initialDate?.let { "check-on-$it" },
+    ),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
     LaunchedEffect(editing) { editing?.let(viewModel::startEditing) }
+    PrefillDate(initialDate, viewModel::onDateSelected)
     AdaptiveSheet(isExpanded = isExpanded, onDismiss = onDismiss) {
         FormColumn(
             icon = Icons.Filled.Build,
@@ -384,3 +394,15 @@ private val CheckKind.titlesRes: Int
 
 /** 한 번에 넣는 흔한 금액. 칩에 없는 금액만 직접 입력한다. */
 private val FUEL_AMOUNTS = listOf(30_000L, 50_000L, 70_000L, 100_000L)
+
+/** 창을 처음 열 때 한 번만 날짜를 채운다. 회전·접기 뒤에는 사용자가 바꾼 날짜를 그대로 둔다. */
+@Composable
+private fun PrefillDate(date: LocalDate?, onDateSelected: (LocalDate) -> Unit) {
+    var isPrefilled by rememberSaveable(date) { mutableStateOf(false) }
+    LaunchedEffect(date) {
+        if (date != null && !isPrefilled) {
+            onDateSelected(date)
+            isPrefilled = true
+        }
+    }
+}

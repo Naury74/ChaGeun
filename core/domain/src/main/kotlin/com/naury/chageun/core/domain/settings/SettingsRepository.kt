@@ -1,5 +1,6 @@
 package com.naury.chageun.core.domain.settings
 
+import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import kotlinx.coroutines.flow.Flow
@@ -20,4 +21,6 @@ interface SettingsRepository {
     suspend fun setCloudAutoBackupEnabled(enabled: Boolean)
 
     suspend fun setVehiclePhotoCutoutEnabled(enabled: Boolean)
+
+    suspend fun setHistoryView(view: HistoryView)
 }

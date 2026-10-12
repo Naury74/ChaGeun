@@ -99,4 +99,14 @@
     <string name="periodic_result_passed">합격</string>
     <string name="periodic_result_failed">부적합</string>
     <string name="periodic_result_unknown">결과 미기록</string>
+    <string name="upcoming_inspection">자동차 정기검사</string>
+    <string name="upcoming_mileage">주행거리 입력</string>
+    <string name="upcoming_overdue">지남</string>
+    <string name="upcoming_estimated">예상</string>
+    <string name="upcoming_due_date">교체 기준일</string>
+    <string name="upcoming_inspection_due">검사 기한</string>
+    <string name="upcoming_mileage_due">입력 권장</string>
+    <string name="upcoming_confidence_high">교체 주기 기준</string>
+    <string name="upcoming_confidence_medium">최근 주행 패턴 기준</string>
+    <string name="upcoming_confidence_low">기록이 적어 대략적인 예상</string>
 </resources>

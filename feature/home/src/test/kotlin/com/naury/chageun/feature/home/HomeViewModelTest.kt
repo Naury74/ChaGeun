@@ -150,4 +150,35 @@ class HomeViewModelTest {
         // 고정 시각 UTC 00:00은 밤이다.
         assertThat(content.dayPart).isEqualTo(DayPart.Night)
     }
+
+    @Test
+    fun upcomingEvents_coverTheNextTwoWeeks_atMostThree() = runTest {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+        val today = java.time.LocalDate.of(2026, 10, 1)
+        maintenance.inputs.value = MaintenanceInputs(
+            rules = listOf(
+                MaintenanceRule(MaintenanceItem.Wiper, intervalKm = null, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.CabinFilter, intervalKm = null, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.Battery, intervalKm = null, intervalMonths = 12),
+                MaintenanceRule(MaintenanceItem.Coolant, intervalKm = null, intervalMonths = 12),
+            ),
+            lastServices = mapOf(
+                MaintenanceItem.Wiper to ServiceRecord(today.minusMonths(13), null),
+                MaintenanceItem.CabinFilter to ServiceRecord(today.minusMonths(12).plusDays(5), null),
+                MaintenanceItem.Battery to ServiceRecord(today.minusMonths(12).plusDays(10), null),
+                MaintenanceItem.Coolant to ServiceRecord(today.minusMonths(12).plusDays(30), null),
+            ),
+            mileageHistory = listOf(MileageReading(today, Kilometers(45_000))),
+        )
+
+        val events = (
+            viewModel.uiState.first {
+                it is HomeUiState.Content && it.upcomingEvents.size == 3
+            } as HomeUiState.Content
+            ).upcomingEvents
+
+        assertThat(events.map { it.date }).containsExactly(today, today.plusDays(5), today.plusDays(10)).inOrder()
+        assertThat(events.first().isOverdue).isTrue()
+    }
 }

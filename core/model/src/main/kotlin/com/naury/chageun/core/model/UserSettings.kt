@@ -16,4 +16,6 @@ data class UserSettings(
     val isCloudAutoBackupEnabled: Boolean = false,
     /** 내 차 사진의 배경을 지운 모습으로 보여 줄지. 끄면 원본을 가장자리만 흐리게 해서 보여 준다. */
     val isVehiclePhotoCutoutEnabled: Boolean = true,
+    /** 기록 탭을 목록과 달력 중 어느 보기로 열지. */
+    val historyView: HistoryView = HistoryView.List,
 )

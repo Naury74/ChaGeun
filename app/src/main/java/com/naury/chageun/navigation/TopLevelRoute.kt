@@ -28,8 +28,9 @@ data class AiRoute(val focusItem: String? = null, val focusRecord: String? = nul
 @Serializable
 data object SettingsRoute : NavKey
 
+/** 내 차 앨범. 달력에서 사진을 눌러 열면 [focusPhotoId]에 그 사진 ID가 들어온다. */
 @Serializable
-data object AlbumRoute : NavKey
+data class AlbumRoute(val focusPhotoId: String? = null) : NavKey
 
 @Serializable
 data object OpenSourceLicensesRoute : NavKey

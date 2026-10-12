@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.naury.chageun.core.domain.settings.SettingsRepository
+import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import javax.inject.Inject
@@ -27,6 +28,8 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
             isUsageStatsEnabled = prefs[USAGE_STATS] ?: true,
             isCloudAutoBackupEnabled = prefs[CLOUD_AUTO_BACKUP] ?: false,
             isVehiclePhotoCutoutEnabled = prefs[VEHICLE_PHOTO_CUTOUT] ?: true,
+            historyView = prefs[HISTORY_VIEW]?.let { stored -> HistoryView.entries.firstOrNull { it.name == stored } }
+                ?: HistoryView.List,
         )
     }
 
@@ -62,6 +65,10 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         dataStore.edit { it[VEHICLE_PHOTO_CUTOUT] = enabled }
     }
 
+    override suspend fun setHistoryView(view: HistoryView) {
+        dataStore.edit { it[HISTORY_VIEW] = view.name }
+    }
+
     private companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MAINTENANCE_REMINDER = booleanPreferencesKey("maintenance_reminder_enabled")
@@ -70,5 +77,6 @@ internal class PreferencesSettingsRepository @Inject constructor(private val dat
         val USAGE_STATS = booleanPreferencesKey("usage_stats_enabled")
         val CLOUD_AUTO_BACKUP = booleanPreferencesKey("cloud_auto_backup_enabled")
         val VEHICLE_PHOTO_CUTOUT = booleanPreferencesKey("vehicle_photo_cutout_enabled")
+        val HISTORY_VIEW = stringPreferencesKey("history_view")
     }
 }

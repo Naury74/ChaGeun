@@ -3,6 +3,7 @@ package com.naury.chageun.feature.home
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
@@ -12,6 +13,7 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
@@ -144,5 +146,20 @@ class HomeScreenshotTest {
         status(MaintenanceItem.BrakePad, MaintenanceState.Unknown, missing = setOf(MissingInput.LastService)),
         status(MaintenanceItem.Tire, MaintenanceState.Unknown, missing = setOf(MissingInput.LastService)),
         status(MaintenanceItem.EngineOil, MaintenanceState.Unknown, missing = setOf(MissingInput.LastServiceMileage)),
+    )
+
+    /** 다가오는 일정 카드. 지난 항목은 오늘에 모여 "지남"으로, 예상 일정은 "예상"으로 보인다. */
+    @Test
+    @Config(qualifiers = "ko-w360dp-h1800dp-hdpi")
+    fun upcomingSchedule_ko() = capture(
+        "home_schedule_ko",
+        paneCount = 1,
+        state.copy(
+            upcomingEvents = listOf(
+                UpcomingEvent.MaintenanceDue(MaintenanceItem.Tire, TODAY, false, null, isOverdue = true),
+                UpcomingEvent.InspectionDue(TODAY.plusDays(6)),
+                UpcomingEvent.MaintenanceDue(MaintenanceItem.EngineOil, TODAY.plusDays(11), true, Confidence.Medium),
+            ),
+        ),
     )
 }

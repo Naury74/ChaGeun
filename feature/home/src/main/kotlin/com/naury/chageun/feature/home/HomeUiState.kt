@@ -7,6 +7,7 @@ import com.naury.chageun.core.model.MaintenanceOverview
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.Vehicle
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -25,6 +26,8 @@ sealed interface HomeUiState {
         /** 로그인한 사용자를 부를 이름. 로그인하지 않았으면 이름 없이 인사한다. */
         val greetingName: String? = null,
         val dayPart: DayPart = DayPart.Morning,
+        /** 오늘부터 2주 안의 예정 일정. 가까운 것부터 최대 3개다. */
+        val upcomingEvents: List<UpcomingEvent> = emptyList(),
     ) : HomeUiState {
         val needsAttention: List<MaintenanceStatus> =
             overview.statuses.filter { it.state == MaintenanceState.Overdue || it.state == MaintenanceState.Due }
