@@ -24,6 +24,7 @@ import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.SKY_COLOR_TOLERANCE
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Instant
@@ -145,7 +146,8 @@ class HomeScreenshotTest {
                 }
             }
         }
-        composeRule.captureScreen(name)
+        // 날씨 하늘의 흐림·빗줄기는 OS마다 1~2단계 다르게 그려진다.
+        composeRule.captureScreen(name, colorTolerance = SKY_COLOR_TOLERANCE)
     }
 
     @Test
