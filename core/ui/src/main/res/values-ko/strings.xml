@@ -120,4 +120,30 @@
     <string name="upcoming_confidence_high">교체 주기 기준</string>
     <string name="upcoming_confidence_medium">최근 주행 패턴 기준</string>
     <string name="upcoming_confidence_low">기록이 적어 대략적인 예상</string>
+    <!-- 홈 날씨 위치 고르기 -->
+    <string name="weather_location_title">어디 날씨를 볼까요?</string>
+    <string name="weather_location_message">날씨를 받을 때 약 10km 단위의 대략적인 위치만 보내요. 위치는 저장하지 않아요.</string>
+    <string name="weather_location_current">현재 위치 (대략)</string>
+    <string name="weather_location_pick_region">지역 직접 고르기</string>
+    <string name="weather_location_regions_title">지역 고르기</string>
+    <string name="weather_location_denied_message">위치 권한이 없어도 가까운 지역을 고르면 날씨를 볼 수 있어요.</string>
+    <string name="weather_location_cancel">취소</string>
+    <string name="weather_location_current_short">현재 위치</string>
+    <string name="weather_region_seoul">서울</string>
+    <string name="weather_region_busan">부산</string>
+    <string name="weather_region_daegu">대구</string>
+    <string name="weather_region_incheon">인천</string>
+    <string name="weather_region_gwangju">광주</string>
+    <string name="weather_region_daejeon">대전</string>
+    <string name="weather_region_ulsan">울산</string>
+    <string name="weather_region_sejong">세종</string>
+    <string name="weather_region_gyeonggi">경기</string>
+    <string name="weather_region_gangwon">강원</string>
+    <string name="weather_region_chungbuk">충북</string>
+    <string name="weather_region_chungnam">충남</string>
+    <string name="weather_region_jeonbuk">전북</string>
+    <string name="weather_region_jeonnam">전남</string>
+    <string name="weather_region_gyeongbuk">경북</string>
+    <string name="weather_region_gyeongnam">경남</string>
+    <string name="weather_region_jeju">제주</string>
 </resources>

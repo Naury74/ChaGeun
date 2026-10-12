@@ -1,8 +1,11 @@
 package com.naury.chageun.feature.settings
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
@@ -11,15 +14,20 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.model.WeatherLocation
+import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
+import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
@@ -337,5 +345,52 @@ class SettingsTest {
         composeRule.onNodeWithText("정비 시기는 추정이에요").assertExists()
         composeRule.onNodeWithText("외부 AI의 답변").assertExists()
         composeRule.captureScreen("service_notice_ko")
+    }
+
+    @Test
+    fun weatherViewModel_turnsOffAndChangesRegion() = runTest {
+        val repository = FakeWeatherSettingsRepository()
+        val viewModel = WeatherSettingsViewModel(repository)
+
+        viewModel.setLocation(WeatherLocation.Region(KoreaRegion.Daejeon))
+        viewModel.setEnabled(false)
+
+        assertThat(repository.settings.first())
+            .isEqualTo(WeatherSettings(isEnabled = false, location = WeatherLocation.Region(KoreaRegion.Daejeon)))
+    }
+
+    @Test
+    fun weatherSection_togglesAndShowsChosenRegion() {
+        var settings by mutableStateOf(WeatherSettings(location = WeatherLocation.Region(KoreaRegion.Jeju)))
+        composeRule.setContent {
+            ChageunTheme {
+                WeatherSection(
+                    settings = settings,
+                    onEnabledChange = { settings = settings.copy(isEnabled = it) },
+                    onLocationPicked = { settings = settings.copy(location = it) },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Jeju").assertExists()
+        composeRule.onNode(isToggleable()).assertIsOn().performClick()
+        composeRule.onNode(isToggleable()).assertIsOff()
+        assertThat(settings.isEnabled).isFalse()
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_weatherSection_ko() {
+        composeRule.setContent {
+            AppFrame {
+                Column(Modifier.padding(16.dp)) {
+                    WeatherSection(WeatherSettings(location = WeatherLocation.Current), {}, {})
+                }
+            }
+        }
+        composeRule.onNodeWithText("현재 위치").assertExists()
+        composeRule.captureScreen("settings_weather_ko")
     }
 }

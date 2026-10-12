@@ -1,21 +1,26 @@
 package com.naury.chageun.feature.home
 
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.ads.AppUsage
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
-import java.time.LocalTime
+import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionSchedule
+import com.naury.chageun.core.model.InspectionSource
+import com.naury.chageun.core.model.InspectionState
+import com.naury.chageun.core.model.InspectionStatus
+import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.MaintenanceState
+import com.naury.chageun.core.model.VehicleHealthLevel
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import org.junit.Test
 
 class HomeGreetingTest {
 
-    @Test
-    fun dayPart_followsHourBoundaries() {
-        assertThat(DayPart.of(LocalTime.of(4, 59))).isEqualTo(DayPart.Night)
-        assertThat(DayPart.of(LocalTime.of(5, 0))).isEqualTo(DayPart.Morning)
-        assertThat(DayPart.of(LocalTime.of(12, 0))).isEqualTo(DayPart.Afternoon)
-        assertThat(DayPart.of(LocalTime.of(18, 0))).isEqualTo(DayPart.Evening)
-        assertThat(DayPart.of(LocalTime.of(22, 0))).isEqualTo(DayPart.Night)
-    }
+    private val now = LocalDateTime.of(2026, 10, 1, 9, 0)
 
     @Test
     fun greetingName_prefersDisplayName_thenEmailId() {
@@ -27,4 +32,51 @@ class HomeGreetingTest {
         assertThat(email.greetingName()).isEqualTo("driver.kim")
         assertThat(unverified.greetingName()).isNull()
     }
+
+    @Test
+    fun facts_collectSafetyState() {
+        val state = content(
+            VehicleHealthLevel.NeedsAttention,
+            listOf(HealthReason.ActiveSafetyRecall),
+            status(MaintenanceItem.Tire, MaintenanceState.Overdue),
+            status(MaintenanceItem.EngineOil, MaintenanceState.Overdue),
+            status(MaintenanceItem.Wiper, MaintenanceState.Due),
+        ).let {
+            it.copy(
+                overview = it.overview.copy(
+                    inspection = InspectionStatus(
+                        InspectionSchedule(TODAY.plusDays(9), InspectionSource.User),
+                        daysLeft = 9,
+                        state = InspectionState.DueSoon,
+                    ),
+                ),
+            )
+        }
+
+        val facts = greetingFacts(now, ZoneOffset.UTC, state.vehicle, state.overview, emptyList(), usage())
+
+        assertThat(facts.hasActiveRecall).isTrue()
+        assertThat(facts.overdueItemCount).isEqualTo(2)
+        assertThat(facts.isInspectionDueSoon).isTrue()
+        assertThat(facts.inspectionDaysLeft).isEqualTo(9)
+    }
+
+    @Test
+    fun facts_useLaunchBeforeThisOne_asPreviousVisit() {
+        val state = content(VehicleHealthLevel.Good, emptyList())
+        val thisLaunch = now.minusMinutes(1).toInstant(ZoneOffset.UTC)
+        val lastMonth = LocalDate.of(2026, 9, 1)
+        val justLaunched = usage(last = thisLaunch, previous = lastMonth.atStartOfDay().toInstant(ZoneOffset.UTC))
+        val notYetRecorded = usage(last = lastMonth.atStartOfDay().toInstant(ZoneOffset.UTC), previous = null)
+
+        val facts = greetingFacts(now, ZoneOffset.UTC, state.vehicle, state.overview, emptyList(), justLaunched)
+        val early = greetingFacts(now, ZoneOffset.UTC, state.vehicle, state.overview, emptyList(), notYetRecorded)
+
+        assertThat(facts.previousVisitDate).isEqualTo(lastMonth)
+        assertThat(early.previousVisitDate).isEqualTo(lastMonth)
+        assertThat(facts.isFirstVisit).isFalse()
+    }
+
+    private fun usage(last: Instant? = null, previous: Instant? = null) =
+        AppUsage(firstLaunchAt = Instant.EPOCH, launchCount = 10, lastLaunchAt = last, previousLaunchAt = previous)
 }

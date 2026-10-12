@@ -3,9 +3,13 @@ package com.naury.chageun.feature.home
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.chageun.core.domain.greeting.Greeting
+import com.naury.chageun.core.domain.greeting.GreetingSituation
+import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
@@ -15,6 +19,9 @@ import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.model.WeatherCondition
+import com.naury.chageun.core.model.WeatherLocation
+import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.captureScreen
@@ -33,7 +40,7 @@ class HomeScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val state = content(
+    private val baseState = content(
         VehicleHealthLevel.NeedsAttention,
         listOf(
             HealthReason.SafetyItemOverdue(MaintenanceItem.Tire),
@@ -56,6 +63,19 @@ class HomeScreenshotTest {
                 RecordSource.User,
                 Instant.EPOCH,
             ),
+        ),
+    )
+
+    /** 처음 설치한 사용자가 보는 홈. 날씨는 위치를 고르기 전이라 "날씨 보기" 카드가 나온다. */
+    private val state = baseState.copy(weather = HomeWeather.Setup)
+
+    private val rainyState = baseState.copy(
+        greetingName = "나우리",
+        greeting = Greeting(GreetingSituation.CommuteMorning, seed = 0),
+        weather = HomeWeather.Shown(
+            WeatherSnapshot(WeatherCondition.Rain, 17.9, 3.4, false, Instant.EPOCH),
+            WeatherLocation.Current,
+            WeatherTip.Rain,
         ),
     )
 
@@ -84,12 +104,45 @@ class HomeScreenshotTest {
     /** 로그인한 사용자는 이름으로 인사하고 계정 버튼에 첫 글자를 보여 준다. */
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
-    fun phoneSignedIn_ko() =
-        capture("home_phone_signed_in_ko", paneCount = 1, state.copy(greetingName = "나우리", dayPart = DayPart.Evening))
+    fun phoneSignedIn_ko() = capture(
+        "home_phone_signed_in_ko",
+        paneCount = 1,
+        state.copy(greetingName = "나우리", greeting = Greeting(GreetingSituation.Evening, seed = 0)),
+    )
 
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)
     fun tablet() = capture("home_tablet", paneCount = 3)
+
+    /** 비 오는 출근길: 인사말 아래에 기온·날씨와 빗길 팁, 출처가 나온다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherRain_ko() = capture("home_weather_rain_ko", paneCount = 1, rainyState)
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h800dp-night-hdpi")
+    fun weatherSnow_dark_ko() = capture(
+        "home_weather_snow_dark_ko",
+        paneCount = 1,
+        rainyState.copy(
+            greeting = Greeting(GreetingSituation.MaintenanceOverdue, seed = 0, number = 1),
+            weather = HomeWeather.Shown(
+                WeatherSnapshot(WeatherCondition.Snow, -3.0, 2.0, false, Instant.EPOCH),
+                WeatherLocation.Region(KoreaRegion.Gangwon),
+                WeatherTip.Snow,
+            ),
+        ),
+    )
+
+    /** 설정에서 날씨를 끄면 인사말과 날짜만 남는다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherOff_ko() = capture("home_weather_off_ko", paneCount = 1, baseState.copy(weather = HomeWeather.Off))
+
+    /** 펼친 폴더블 안쪽 화면. 머리말이 넓은 폭에서도 로고·버튼과 날씨 카드가 어색하지 않은지 본다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.FOLD_KO)
+    fun fold_ko() = capture("home_fold_ko", paneCount = 1, rainyState, spacing = Gutters.Medium)
 
     /** 600dp에서는 Rail이 옆에 붙어도 홈은 한 칸이다. 두 칸이면 상세 쪽이 360dp보다 좁아진다. */
     @Test
@@ -99,7 +152,7 @@ class HomeScreenshotTest {
     /** 840dp부터는 차량·상태 요약과 할 일 목록을 나란히 둔다. */
     @Test
     @Config(qualifiers = ScreenshotDevices.EXPANDED_KO)
-    fun expanded_ko() = capture("home_expanded_ko", paneCount = 2, spacing = Gutters.Expanded)
+    fun expanded_ko() = capture("home_expanded_ko", paneCount = 2, rainyState, spacing = Gutters.Expanded)
 
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)

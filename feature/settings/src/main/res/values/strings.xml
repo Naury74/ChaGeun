@@ -90,4 +90,12 @@
     <string name="service_ads_body">Chageun is free and shows ads in parts of the app. Advertisers provide the ad content.</string>
     <string name="service_changes_title">Changes</string>
     <string name="service_changes_body">Features and this notice may change with app updates.</string>
+    <string name="settings_section_weather">Weather</string>
+    <string name="settings_weather_enabled">Weather on Home</string>
+    <string name="settings_weather_enabled_body">Driving tips for rain, snow and icy roads. Only an approximate location is sent to MET Norway.</string>
+    <string name="settings_weather_location">Weather location</string>
+    <string name="settings_weather_location_none">Not chosen yet</string>
+    <string name="settings_source_weather">Weather: MET Norway Locationforecast (CC BY 4.0)</string>
+    <string name="privacy_weather_title">Weather</string>
+    <string name="privacy_weather_body">Weather on Home is optional. When you choose your current location, Chageun asks for approximate location permission only then, rounds the location to about 10 km and sends it to MET Norway (the Norwegian Meteorological Institute) to get the weather. If you pick a region instead, only that region\'s representative point is sent. Chageun doesn\'t store or log your location, and the weather is kept in memory for about an hour. You can turn weather off or change the location in Settings › Weather.</string>
 </resources>

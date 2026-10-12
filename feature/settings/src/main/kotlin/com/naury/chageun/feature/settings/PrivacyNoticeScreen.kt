@@ -66,6 +66,7 @@ private fun NoticeSection(@StringRes titleRes: Int, @StringRes bodyRes: Int) {
 private val PRIVACY_SECTIONS = listOf(
     R.string.privacy_stored_title to R.string.privacy_stored_body,
     R.string.privacy_transfer_title to R.string.privacy_transfer_body,
+    R.string.privacy_weather_title to R.string.privacy_weather_body,
     R.string.privacy_security_title to R.string.privacy_security_body,
     R.string.privacy_control_title to R.string.privacy_control_body,
     R.string.privacy_disclaimer_title to R.string.privacy_disclaimer_body,

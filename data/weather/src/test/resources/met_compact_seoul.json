@@ -1,0 +1,67 @@
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [127.0, 37.6, 38] },
+  "properties": {
+    "meta": {
+      "updated_at": "2026-10-12T05:31:24Z",
+      "units": {
+        "air_pressure_at_sea_level": "hPa",
+        "air_temperature": "celsius",
+        "cloud_area_fraction": "%",
+        "precipitation_amount": "mm",
+        "relative_humidity": "%",
+        "wind_from_direction": "degrees",
+        "wind_speed": "m/s"
+      }
+    },
+    "timeseries": [
+      {
+        "time": "2026-10-12T05:00:00Z",
+        "data": {
+          "instant": {
+            "details": {
+              "air_pressure_at_sea_level": 1012.4,
+              "air_temperature": 17.9,
+              "cloud_area_fraction": 98.4,
+              "relative_humidity": 88.1,
+              "wind_from_direction": 214.6,
+              "wind_speed": 3.4
+            }
+          },
+          "next_12_hours": { "summary": { "symbol_code": "rain" }, "details": {} },
+          "next_1_hours": { "summary": { "symbol_code": "rain" }, "details": { "precipitation_amount": 1.2 } },
+          "next_6_hours": { "summary": { "symbol_code": "rain" }, "details": { "precipitation_amount": 6.3 } }
+        }
+      },
+      {
+        "time": "2026-10-12T06:00:00Z",
+        "data": {
+          "instant": {
+            "details": {
+              "air_pressure_at_sea_level": 1012.1,
+              "air_temperature": 18.4,
+              "cloud_area_fraction": 100.0,
+              "relative_humidity": 90.2,
+              "wind_from_direction": 220.1,
+              "wind_speed": 4.1
+            }
+          },
+          "next_1_hours": { "summary": { "symbol_code": "heavyrain" }, "details": { "precipitation_amount": 4.8 } },
+          "next_6_hours": { "summary": { "symbol_code": "rain" }, "details": { "precipitation_amount": 8.0 } }
+        }
+      },
+      {
+        "time": "2026-10-12T12:00:00Z",
+        "data": {
+          "instant": {
+            "details": {
+              "air_temperature": 14.2,
+              "wind_speed": 2.0
+            }
+          },
+          "next_6_hours": { "summary": { "symbol_code": "partlycloudy_night" }, "details": { "precipitation_amount": 0.0 } }
+        }
+      }
+    ]
+  }
+}

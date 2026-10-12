@@ -80,14 +80,6 @@
     <string name="home_dashboard_unavailable">Reading photos isn\'t available on this device right now. Please type the mileage in.</string>
     <string name="home_open_account">Account</string>
     <string name="home_open_account_named">Account: %1$s</string>
-    <string name="home_greeting_morning">Good morning</string>
-    <string name="home_greeting_morning_named">Good morning, %1$s</string>
-    <string name="home_greeting_afternoon">Good afternoon</string>
-    <string name="home_greeting_afternoon_named">Good afternoon, %1$s</string>
-    <string name="home_greeting_evening">Good evening</string>
-    <string name="home_greeting_evening_named">Good evening, %1$s</string>
-    <string name="home_greeting_night">Hope you had a good day</string>
-    <string name="home_greeting_night_named">Hope you had a good day, %1$s</string>
     <string name="home_stat_recent">Last record</string>
     <string name="home_stat_recent_none">None</string>
     <string name="home_dashboard_downloading">Downloading text recognition (first time only)</string>
@@ -96,4 +88,208 @@
     <string name="home_section_schedule">Coming up</string>
     <string name="home_schedule_calendar">View in calendar</string>
     <string name="home_schedule_today">Today</string>
+
+    <!-- 홈 인사말. 같은 날에는 같은 문구, 다음 날에는 다음 문구가 나온다(GreetingEngine). -->
+    <string name="home_greeting_named">%2$s, %1$s</string>
+    <string name="home_weather_summary">%1$s° %2$s</string>
+    <string name="home_weather_attribution">Weather: MET Norway</string>
+    <string name="home_weather_setup_title">Driving tips for today\'s weather</string>
+    <string name="home_weather_setup_body">Pick a location and we\'ll warn you about rain, snow and icy roads</string>
+    <string name="home_weather_setup_action">Show weather</string>
+    <string name="home_weather_permission_title">Location permission is off</string>
+    <string name="home_weather_permission_body">Allow it again or pick a region instead</string>
+    <string name="home_weather_permission_action">Choose location</string>
+    <string name="home_weather_loading">Checking the weather…</string>
+    <string-array name="home_greeting_recall">
+        <item>There\'s a safety recall to check</item>
+        <item>Please check your open recall first</item>
+    </string-array>
+    <string-array name="home_greeting_inspection_overdue">
+        <item>Your inspection is overdue</item>
+        <item>Time to book that overdue inspection</item>
+    </string-array>
+    <string-array name="home_greeting_maintenance_overdue">
+        <item>Some maintenance is overdue</item>
+        <item>Let\'s start with the overdue items today</item>
+        <item>A few items are past due</item>
+    </string-array>
+    <string-array name="home_greeting_inspection_soon">
+        <item>Your inspection is coming up soon</item>
+        <item>Book your inspection soon</item>
+    </string-array>
+    <string-array name="home_greeting_first_visit">
+        <item>Welcome to Chageun</item>
+        <item>Nice to meet you</item>
+    </string-array>
+    <string-array name="home_greeting_welcome_back">
+        <item>It\'s been %1$s days, welcome back</item>
+        <item>Good to see you again</item>
+        <item>Welcome back</item>
+    </string-array>
+    <string-array name="home_greeting_new_year">
+        <item>Happy New Year</item>
+        <item>New year, safe miles ahead</item>
+    </string-array>
+    <string-array name="home_greeting_independence_movement_day">
+        <item>Today is Independence Movement Day</item>
+        <item>Happy March 1st Movement Day</item>
+    </string-array>
+    <string-array name="home_greeting_childrens_day">
+        <item>Happy Children\'s Day</item>
+        <item>Lots of kids out today, drive gently</item>
+    </string-array>
+    <string-array name="home_greeting_memorial_day">
+        <item>Today is Memorial Day</item>
+        <item>A day to remember those who served</item>
+    </string-array>
+    <string-array name="home_greeting_liberation_day">
+        <item>Happy Liberation Day</item>
+        <item>Today is Liberation Day</item>
+    </string-array>
+    <string-array name="home_greeting_national_foundation_day">
+        <item>Happy National Foundation Day</item>
+        <item>Enjoy the holiday and drive safe</item>
+    </string-array>
+    <string-array name="home_greeting_hangul_day">
+        <item>Happy Hangul Day</item>
+        <item>Today is Hangul Day</item>
+    </string-array>
+    <string-array name="home_greeting_christmas">
+        <item>Merry Christmas</item>
+        <item>Happy holidays</item>
+    </string-array>
+    <string-array name="home_greeting_car_anniversary">
+        <item>%1$s years on the road together</item>
+        <item>Happy car anniversary</item>
+    </string-array>
+    <string-array name="home_greeting_mileage_milestone">
+        <item>You just passed %1$s\u00A0km</item>
+        <item>%1$s\u00A0km together, congrats</item>
+    </string-array>
+    <string-array name="home_greeting_recorded_recently">
+        <item>Thanks for keeping your records</item>
+        <item>Nice and steady record keeping</item>
+        <item>Your car history is growing</item>
+    </string-array>
+    <string-array name="home_greeting_monday_morning">
+        <item>New week, fresh start</item>
+        <item>Happy Monday, leave a little early</item>
+    </string-array>
+    <string-array name="home_greeting_friday_evening">
+        <item>Happy Friday</item>
+        <item>Great week, time to unwind</item>
+    </string-array>
+    <string-array name="home_greeting_commute_morning">
+        <item>Safe drive to work</item>
+        <item>Take it easy on the way in</item>
+        <item>Good morning, drive safe</item>
+    </string-array>
+    <string-array name="home_greeting_commute_evening">
+        <item>Safe drive home</item>
+        <item>Long day, drive home safe</item>
+    </string-array>
+    <string-array name="home_greeting_weekend">
+        <item>Enjoy your weekend</item>
+        <item>A great weekend for a drive</item>
+        <item>Let your car rest too</item>
+    </string-array>
+    <string-array name="home_greeting_mileage_stale">
+        <item>Time to log your mileage</item>
+        <item>Snap your odometer tonight</item>
+    </string-array>
+    <string-array name="home_greeting_spring_afternoon">
+        <item>Lovely spring afternoon</item>
+        <item>Perfect weather for a spring drive</item>
+    </string-array>
+    <string-array name="home_greeting_summer_afternoon">
+        <item>Hot afternoon, stay cool</item>
+        <item>Summer afternoon, stay hydrated</item>
+    </string-array>
+    <string-array name="home_greeting_autumn_afternoon">
+        <item>Crisp autumn afternoon</item>
+        <item>Great autumn weather for a drive</item>
+    </string-array>
+    <string-array name="home_greeting_winter_afternoon">
+        <item>Cozy winter afternoon</item>
+        <item>Stay warm out there</item>
+    </string-array>
+    <string-array name="home_greeting_dawn">
+        <item>It\'s late, watch for drowsiness</item>
+        <item>Driving before dawn, take breaks</item>
+    </string-array>
+    <string-array name="home_greeting_morning">
+        <item>Good morning</item>
+        <item>Fresh morning</item>
+        <item>Have a good start</item>
+    </string-array>
+    <string-array name="home_greeting_lunch">
+        <item>Enjoy your lunch</item>
+        <item>Lunchtime</item>
+    </string-array>
+    <string-array name="home_greeting_afternoon">
+        <item>Good afternoon</item>
+        <item>Hope your afternoon is going well</item>
+    </string-array>
+    <string-array name="home_greeting_evening">
+        <item>Good evening</item>
+        <item>Hope you had a good day</item>
+    </string-array>
+    <string-array name="home_greeting_night">
+        <item>Hope you had a good day</item>
+        <item>Have a restful night</item>
+    </string-array>
+    <!-- 날씨 운전 팁(WeatherTips). 값을 넣지 않으므로 %를 그대로 쓴다. -->
+    <string-array name="home_weather_tip_snow" formatted="false">
+        <item>Snowy roads, slow down and avoid hard braking</item>
+        <item>Snow today, keep double the following distance</item>
+    </string-array>
+    <string-array name="home_weather_tip_thunder" formatted="false">
+        <item>Thunderstorms, slow down with headlights on</item>
+        <item>Storms around, avoid deep puddles</item>
+    </string-array>
+    <string-array name="home_weather_tip_heavy_rain" formatted="false">
+        <item>Heavy rain, cut your speed in half and avoid flooded spots</item>
+        <item>Downpour, leave plenty of space ahead</item>
+    </string-array>
+    <string-array name="home_weather_tip_rain" formatted="false">
+        <item>Wet roads, slow down 20% and keep your distance</item>
+        <item>Rain today, wipers and headlights on</item>
+    </string-array>
+    <string-array name="home_weather_tip_fog" formatted="false">
+        <item>Foggy, fog lights on and take it slow</item>
+        <item>Low visibility, ease off and keep your distance</item>
+    </string-array>
+    <string-array name="home_weather_tip_strong_wind" formatted="false">
+        <item>Strong winds, keep both hands on the wheel</item>
+        <item>Gusty out, careful on bridges and tunnel exits</item>
+    </string-array>
+    <string-array name="home_weather_tip_cold" formatted="false">
+        <item>Bitter cold, check your battery and warm up briefly</item>
+        <item>Very cold, watch for black ice and a weak battery</item>
+    </string-array>
+    <string-array name="home_weather_tip_freezing" formatted="false">
+        <item>Below freezing, watch for black ice on bridges and in shade</item>
+        <item>Roads may be icy, start off gently</item>
+    </string-array>
+    <string-array name="home_weather_tip_heat" formatted="false">
+        <item>Heat wave, never leave kids, pets or lighters in the car</item>
+        <item>Scorching day, check your tire pressure</item>
+    </string-array>
+    <string-array name="home_weather_tip_nice_day" formatted="false">
+        <item>Clear skies, a perfect day for a car wash</item>
+        <item>Lovely weather for a drive</item>
+    </string-array>
+    <string-array name="home_weather_tip_calm" formatted="false">
+        <item>Drive safe today</item>
+        <item>Have a smooth drive</item>
+    </string-array>
+    <string name="home_weather_condition_clear">Clear</string>
+    <string name="home_weather_condition_partly_cloudy">Partly cloudy</string>
+    <string name="home_weather_condition_cloudy">Cloudy</string>
+    <string name="home_weather_condition_fog">Fog</string>
+    <string name="home_weather_condition_rain">Rain</string>
+    <string name="home_weather_condition_heavy_rain">Heavy rain</string>
+    <string name="home_weather_condition_thunder">Thunderstorm</string>
+    <string name="home_weather_condition_sleet">Sleet</string>
+    <string name="home_weather_condition_snow">Snow</string>
 </resources>

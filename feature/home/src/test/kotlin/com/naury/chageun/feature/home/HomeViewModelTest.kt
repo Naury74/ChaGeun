@@ -1,14 +1,20 @@
 package com.naury.chageun.feature.home
 
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.ads.AppUsage
+import com.naury.chageun.core.domain.greeting.GreetingSituation
 import com.naury.chageun.core.domain.maintenance.DrivingPaceEstimator
 import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.domain.weather.LoadWeatherUseCase
+import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.FuelType
+import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
@@ -19,12 +25,20 @@ import com.naury.chageun.core.model.ServiceRecord
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.VehicleRegistration
+import com.naury.chageun.core.model.WeatherCondition
+import com.naury.chageun.core.model.WeatherLocation
+import com.naury.chageun.core.model.WeatherSettings
+import com.naury.chageun.core.model.WeatherSnapshot
+import com.naury.chageun.core.testing.FakeAppUsageRepository
+import com.naury.chageun.core.testing.FakeApproximateLocationProvider
 import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
+import com.naury.chageun.core.testing.FakeWeatherRepository
+import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
@@ -46,6 +60,10 @@ class HomeViewModelTest {
     private val history = FakeHistoryRepository()
     private val photos = FakeVehiclePhotoRepository()
     private val auth = FakeAuthRepository()
+    private val usage = FakeAppUsageRepository(AppUsage(firstLaunchAt = Instant.EPOCH, launchCount = 5))
+    private val weatherSettings = FakeWeatherSettingsRepository()
+    private val location = FakeApproximateLocationProvider()
+    private val weatherRepository = FakeWeatherRepository()
     private val viewModel = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
@@ -57,7 +75,7 @@ class HomeViewModelTest {
         ),
         historyRepository = history,
         photoRepository = photos,
-        authRepository = auth,
+        header = HomeHeaderSource(auth, usage, weatherSettings, LoadWeatherUseCase(location, weatherRepository)),
         clock = clock,
     )
 
@@ -147,8 +165,8 @@ class HomeViewModelTest {
             (it as? HomeUiState.Content)?.greetingName != null
         } as HomeUiState.Content
         assertThat(content.greetingName).isEqualTo("naury")
-        // 고정 시각 UTC 00:00은 밤이다.
-        assertThat(content.dayPart).isEqualTo(DayPart.Night)
+        // 고정 시각 UTC 00:00은 새벽이다.
+        assertThat(content.greeting.situation).isEqualTo(GreetingSituation.Dawn)
     }
 
     @Test
@@ -181,4 +199,56 @@ class HomeViewModelTest {
         assertThat(events.map { it.date }).containsExactly(today, today.plusDays(5), today.plusDays(10)).inOrder()
         assertThat(events.first().isOverdue).isTrue()
     }
+
+    @Test
+    fun firstLaunch_welcomesUser() = runTest {
+        usage.usage.value = AppUsage(firstLaunchAt = Instant.EPOCH, launchCount = 1)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        val content = viewModel.uiState.first { it is HomeUiState.Content } as HomeUiState.Content
+
+        assertThat(content.greeting.situation).isEqualTo(GreetingSituation.FirstVisit)
+    }
+
+    @Test
+    fun weather_asksForLocationFirst_thenShowsTipForPickedRegion() = runTest {
+        weatherRepository.snapshot = WeatherSnapshot(WeatherCondition.Rain, 17.9, 3.4, false, Instant.EPOCH)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        assertThat(contentWith { it.weather == HomeWeather.Setup }.weather).isEqualTo(HomeWeather.Setup)
+        // 위치를 고르기 전에는 날씨를 묻지 않는다.
+        assertThat(weatherRepository.requested).isEmpty()
+
+        viewModel.setWeatherLocation(WeatherLocation.Region(KoreaRegion.Seoul))
+        val shown = contentWith { it.weather is HomeWeather.Shown }.weather as HomeWeather.Shown
+
+        assertThat(shown.tip).isEqualTo(WeatherTip.Rain)
+        assertThat(shown.location).isEqualTo(WeatherLocation.Region(KoreaRegion.Seoul))
+    }
+
+    @Test
+    fun weather_currentLocationWithoutPermission_asksAgain_andFailureHidesCard() = runTest {
+        weatherSettings.settings.value = WeatherSettings(location = WeatherLocation.Current)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        assertThat(contentWith { it.weather == HomeWeather.NeedsPermission }.weather)
+            .isEqualTo(HomeWeather.NeedsPermission)
+
+        location.permitted = true
+        location.location = GeoPoint(37.56, 126.97)
+        viewModel.refreshWeather()
+
+        // 제공처가 답하지 않으면 오류 대신 카드를 숨긴다.
+        assertThat(contentWith { it.weather == HomeWeather.Unavailable }.weather).isEqualTo(HomeWeather.Unavailable)
+        assertThat(weatherRepository.requested.single()).isEqualTo(GeoPoint(37.6, 127.0))
+
+        weatherSettings.setEnabled(false)
+        assertThat(contentWith { it.weather == HomeWeather.Off }.weather).isEqualTo(HomeWeather.Off)
+    }
+
+    private suspend fun contentWith(predicate: (HomeUiState.Content) -> Boolean): HomeUiState.Content =
+        viewModel.uiState.first { it is HomeUiState.Content && predicate(it) } as HomeUiState.Content
 }

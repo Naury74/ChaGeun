@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -126,6 +127,7 @@ fun SettingsRoute(
                 onOpenDriveBackup = onOpenDriveBackup,
             )
         },
+        weatherSection = { WeatherSectionRoute() },
     )
     val shareTitle = stringResource(R.string.settings_share)
     LaunchedEffect(dataState.readyToShare) {
@@ -170,6 +172,7 @@ fun SettingsScreen(
     isAdPrivacyRequired: Boolean = false,
     onOpenAdPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
+    weatherSection: @Composable () -> Unit = {},
 ) {
     SettingsScaffold(R.string.settings_title, onBack, modifier) { padding ->
         Column(
@@ -235,6 +238,7 @@ fun SettingsScreen(
                         trailing = { ExternalIcon() },
                     )
                 }
+                weatherSection()
                 dataSection()
                 CardGroup(stringResource(R.string.settings_section_privacy)) {
                     ToggleListRow(
@@ -315,6 +319,7 @@ private val SOURCES = listOf(
     Icons.Filled.Calculate to R.string.settings_source_derived,
     Icons.AutoMirrored.Filled.MenuBook to R.string.settings_source_generic,
     Icons.Filled.Verified to R.string.settings_source_official,
+    Icons.Filled.WbSunny to R.string.settings_source_weather,
 )
 
 private val ThemeMode.labelRes: Int
