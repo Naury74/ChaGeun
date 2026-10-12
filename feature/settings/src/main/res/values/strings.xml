@@ -72,7 +72,7 @@
     <string name="settings_account">Account</string>
     <string name="settings_account_body">Sign in with your email or Google account</string>
     <string name="settings_drive_backup">Google Drive backup</string>
-    <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it. Album videos are too large and aren\'t included. Use Export to keep them.</string>
+    <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it. Album videos are too large and aren\'t included. Restoring keeps the videos on this phone. To move them to another phone, use Export.</string>
     <string name="settings_share">Send to another device</string>
     <string name="settings_share_body">Send a backup file with Quick Share, email, or a messenger. On the new phone, choose “Restore from a backup” on the first screen.</string>
     <string name="settings_service_notice">Service notice</string>
