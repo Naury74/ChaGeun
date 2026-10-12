@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.naury.chageun.core.database.entity.AttachmentEntity
+import com.naury.chageun.core.database.entity.DatedAttachmentRow
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -16,6 +18,27 @@ interface AttachmentDao {
         """,
     )
     fun observe(vehicleId: String, ownerType: String, ownerId: String): Flow<List<AttachmentEntity>>
+
+    /**
+     * 기록 날짜가 [from]~[to](양 끝 포함)인 기록의 첨부. 첨부는 소유자 FK가 없는 다형 구조라 기록 테이블들을
+     * 모아 owner_type·owner_id로 잇는다. 날짜 없는 정비 기록의 첨부는 빠진다. 기록 날짜, 첨부한 순서로 정렬한다.
+     */
+    @Query(
+        """
+        SELECT a.*, r.occurred_on FROM attachment a
+        INNER JOIN (
+            SELECT 'Maintenance' AS owner_type, id, service_date AS occurred_on
+            FROM maintenance_record WHERE vehicle_id = :vehicleId
+            UNION ALL
+            SELECT 'Fuel', id, fuel_date FROM fuel_record WHERE vehicle_id = :vehicleId
+            UNION ALL
+            SELECT kind, id, check_date FROM check_record WHERE vehicle_id = :vehicleId
+        ) AS r ON a.owner_type = r.owner_type AND a.owner_id = r.id
+        WHERE a.vehicle_id = :vehicleId AND r.occurred_on BETWEEN :from AND :to
+        ORDER BY r.occurred_on ASC, a.created_at ASC
+        """,
+    )
+    fun observeBetween(vehicleId: String, from: LocalDate, to: LocalDate): Flow<List<DatedAttachmentRow>>
 
     @Query(
         "SELECT * FROM attachment WHERE vehicle_id = :vehicleId AND owner_type = :ownerType AND owner_id = :ownerId",

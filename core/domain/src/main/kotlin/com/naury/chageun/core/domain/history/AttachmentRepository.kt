@@ -1,14 +1,19 @@
 package com.naury.chageun.core.domain.history
 
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.model.RecordPhoto
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.VehicleId
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 data class AttachResult(val added: Int, val failed: Int)
 
 interface AttachmentRepository {
     fun observe(vehicleId: VehicleId, owner: RecordRef): Flow<List<Attachment>>
+
+    /** 기록 날짜가 [from]~[to](양 끝 포함)인 기록의 첨부. 기록 날짜, 첨부한 순서로 온다. 날짜 없는 기록은 빠진다. */
+    fun observeBetween(vehicleId: VehicleId, from: LocalDate, to: LocalDate): Flow<List<RecordPhoto>>
 
     /**
      * 선택한 이미지를 메타데이터 없이 다시 인코딩해 앱 저장소로 복사한다.

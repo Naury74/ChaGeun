@@ -167,10 +167,40 @@
     <string name="calendar_previous_month">Previous month</string>
     <string name="calendar_next_month">Next month</string>
     <string name="calendar_today">Today</string>
-    <string name="calendar_layer_records">Records</string>
-    <string name="calendar_layer_photos">Photos</string>
-    <string name="calendar_layer_upcoming">Upcoming</string>
-    <string name="calendar_side_layers">Show on calendar</string>
+    <string name="calendar_previous_week">Previous week</string>
+    <string name="calendar_next_week">Next week</string>
+    <string name="calendar_week_view">Week view</string>
+    <string name="calendar_month_view">Month view</string>
+    <string name="calendar_search">Search calendar</string>
+    <string name="calendar_search_close">Close search</string>
+    <string name="calendar_previous_result">Previous result</string>
+    <string name="calendar_next_result">Next result</string>
+    <plurals name="calendar_search_results">
+        <item quantity="one">%1$d result</item>
+        <item quantity="other">%1$d results</item>
+    </plurals>
+    <string name="calendar_search_empty">No records match your search</string>
+    <string name="calendar_search_limit">Showing the latest %1$d</string>
+    <string name="calendar_kind_maintenance">Maintenance</string>
+    <string name="calendar_kind_fuel">Fuel</string>
+    <string name="calendar_kind_check">Check &amp; repair</string>
+    <string name="calendar_kind_mileage">Mileage</string>
+    <string name="calendar_kind_photos">Photos</string>
+    <string name="calendar_kind_upcoming">Upcoming</string>
+    <string name="calendar_pick_items">Items</string>
+    <plurals name="calendar_items_count">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
+    </plurals>
+    <string name="calendar_items_title">Show only these items</string>
+    <plurals name="calendar_filter_count">
+        <item quantity="one">%1$d filter</item>
+        <item quantity="other">%1$d filters</item>
+    </plurals>
+    <string name="calendar_filter_keyword">“%1$s”</string>
+    <string name="calendar_clear_all">Clear all</string>
+    <string name="calendar_side_filters">Show on calendar</string>
+    <string name="calendar_record_photo">Photo attached to %1$s</string>
     <string name="calendar_side_spent">Spent</string>
     <string name="calendar_side_summary">This month</string>
     <plurals name="calendar_summary_records">
@@ -207,4 +237,7 @@
         <item quantity="one">%1$d overdue</item>
         <item quantity="other">%1$d overdue</item>
     </plurals>
+    <string name="calendar_a11y_names">%1$s (%2$s)</string>
+    <string name="calendar_a11y_replacement">%1$s replacement</string>
+    <string name="calendar_a11y_match">search result</string>
 </resources>

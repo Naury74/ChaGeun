@@ -25,13 +25,22 @@ class FakeHistoryRepository : HistoryRepository {
 
     var lastLimit: Int? = null
 
+    /** true면 검색어도 실제 저장소처럼 제목이나 [TimelineQuery.matchingItems]로 거른다. 기본은 거르지 않는다. */
+    var appliesKeyword: Boolean = false
+
     override fun observeTimeline(vehicleId: VehicleId, query: TimelineQuery, limit: Int?): Flow<List<TimelineItem>> {
         lastQuery = query
         lastLimit = limit
         return timeline.map { items ->
-            items.filter { it.ref.type in query.types && it.isWithin(query) }
+            items.filter { it.ref.type in query.types && it.isWithin(query) && matchesKeyword(it, query) }
                 .let { if (limit != null) it.take(limit) else it }
         }
+    }
+
+    private fun matchesKeyword(item: TimelineItem, query: TimelineQuery): Boolean {
+        val keyword = query.keyword.trim()
+        if (!appliesKeyword || keyword.isEmpty()) return true
+        return item.title?.contains(keyword, ignoreCase = true) == true || item.maintenanceItem in query.matchingItems
     }
 
     override fun observeMonthlyCosts(vehicleId: VehicleId, query: TimelineQuery): Flow<Map<YearMonth?, Long>> =

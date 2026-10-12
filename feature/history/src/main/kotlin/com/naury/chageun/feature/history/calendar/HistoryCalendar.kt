@@ -1,6 +1,8 @@
 package com.naury.chageun.feature.history.calendar
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,16 +16,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
-import androidx.compose.material.icons.filled.EventRepeat
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.CalendarMonth
@@ -34,17 +43,26 @@ import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.InfoListRow
 import com.naury.chageun.core.ui.ThreePaneListDetail
-import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.feature.history.R
 
+/** 달력 칸들이 함께 쓰는 값. [mode]는 화면 배치에 맞춘 기본값까지 정해진 보기다. */
+private class CalendarParts(
+    val state: CalendarUiState,
+    val calendar: CalendarMonth,
+    val mode: CalendarMode,
+    val actions: CalendarActions,
+    val onPickItems: () -> Unit,
+)
+
 /**
  * 달력 보기의 배치.
- * - 휴대폰: 달력 아래에 고른 날 목록을 한 번에 스크롤한다. 기록을 열면 상세가 화면을 채운다.
- * - 탁자 자세: 위 칸에 달력, 아래 칸에 목록.
- * - 두 칸(840dp 이상·책 자세): 왼쪽 달력, 오른쪽 목록 또는 기록 상세. 세로 접힘은 피한다.
- * - 세 칸(1600dp 이상): 왼쪽에 레이어·월 요약을 따로 두고 달력과 목록·상세를 나란히 둔다.
+ * - 휴대폰: 달력 아래에 고른 날 목록을 한 번에 스크롤한다. 목록을 위로 밀면 주 보기로 접히고, 주 보기 달력은
+ *   위에 붙어 남는다. 맨 위에서 더 당기면 월 보기로 펼쳐진다. 기록을 열면 상세가 화면을 채운다.
+ * - 탁자 자세: 위 칸에 달력, 아래 칸에 목록. 위 칸에 다 들어가도록 기본은 주 보기다.
+ * - 두 칸(840dp 이상·책 자세): 왼쪽 달력, 오른쪽 목록 또는 기록 상세. 세로 접힘은 피한다. 월/주는 버튼으로만 바꾼다.
+ * - 세 칸(1600dp 이상): 왼쪽에 필터·월 요약을 따로 두고 달력과 목록·상세를 나란히 둔다.
  */
 @Composable
 internal fun HistoryCalendar(
@@ -64,6 +82,15 @@ internal fun HistoryCalendar(
         return
     }
     BackHandler(enabled = detail != null) { onCloseDetail() }
+    val isTabletop = hinge != null && !hinge.isVertical
+    var isPickingItems by rememberSaveable { mutableStateOf(false) }
+    val parts = CalendarParts(
+        state = state,
+        calendar = calendar,
+        mode = state.mode ?: if (isTabletop) CalendarMode.Week else CalendarMode.Month,
+        actions = actions,
+        onPickItems = { isPickingItems = true },
+    )
     val agendaOrDetail: @Composable () -> Unit = {
         if (detail != null) {
             detailPane(detail, Modifier.fillMaxSize())
@@ -71,16 +98,11 @@ internal fun HistoryCalendar(
             CalendarLazyColumn(Modifier.fillMaxSize()) { calendarAgenda(state, actions) }
         }
     }
-    val isTabletop = hinge != null && !hinge.isVertical
     when {
         isThreePane && !isTabletop -> ThreePaneListDetail(
             selected = detail,
-            supporting = { CalendarSidePane(state, calendar, actions, Modifier.fillMaxSize()) },
-            list = {
-                CalendarLazyColumn(Modifier.fillMaxSize()) {
-                    calendarItems(state, calendar, actions, showControls = false)
-                }
-            },
+            supporting = { CalendarSidePane(parts, Modifier.fillMaxSize()) },
+            list = { CalendarLazyColumn(Modifier.fillMaxSize()) { calendarItems(parts, showFilters = false) } },
             detail = { detailPane(it, Modifier.fillMaxSize()) },
             emptyDetail = { CalendarLazyColumn(Modifier.fillMaxSize()) { calendarAgenda(state, actions) } },
             listFraction = THREE_PANE_CALENDAR_FRACTION,
@@ -92,14 +114,28 @@ internal fun HistoryCalendar(
             stacked = isTabletop,
             hinge = hinge,
         ) {
-            CalendarLazyColumn(Modifier.fillMaxSize()) { calendarItems(state, calendar, actions) }
+            CalendarLazyColumn(Modifier.fillMaxSize()) { calendarItems(parts) }
             Box(Modifier.fillMaxSize()) { agendaOrDetail() }
         }
         detail != null -> detailPane(detail, modifier.fillMaxSize())
-        else -> CalendarLazyColumn(modifier.fillMaxSize()) {
-            calendarItems(state, calendar, actions)
-            calendarAgenda(state, actions)
-        }
+        else -> PhoneCalendar(parts, modifier.fillMaxSize())
+    }
+    if (isPickingItems) {
+        CalendarItemSheet(
+            selected = state.filter.items,
+            isExpanded = isTwoPane,
+            onApply = actions.onSetItems,
+            onDismiss = { isPickingItems = false },
+        )
+    }
+}
+
+@Composable
+private fun PhoneCalendar(parts: CalendarParts, modifier: Modifier) {
+    val collapse = rememberCalendarCollapse(parts.mode, parts.actions.onSetMode)
+    CalendarLazyColumn(modifier.nestedScroll(collapse)) {
+        calendarItems(parts, isPhone = true)
+        calendarAgenda(parts.state, parts.actions)
     }
 }
 
@@ -113,49 +149,53 @@ private fun CalendarLazyColumn(modifier: Modifier, content: LazyListScope.() -> 
     )
 }
 
-/** 머리글·레이어 칩·월 요약·그리드. 세 칸에서는 칩과 요약을 왼쪽 칸으로 옮긴다. */
-private fun LazyListScope.calendarItems(
-    state: CalendarUiState,
-    calendar: CalendarMonth,
-    actions: CalendarActions,
-    showControls: Boolean = true,
-) {
+/**
+ * 머리글·검색·필터·월 요약·그리드. 세 칸에서는 필터와 요약을 왼쪽 칸으로 옮긴다.
+ * 휴대폰 주 보기에서는 그리드를 목록 위에 붙여 두어 목록을 내려도 고른 주가 보인다.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.calendarItems(parts: CalendarParts, showFilters: Boolean = true, isPhone: Boolean = false) {
     item(key = "calendar-header") {
         Column(Modifier.padding(horizontal = GRID_PADDING)) {
-            CalendarHeader(calendar.month, actions.onShowMonth, actions.onToday)
-            if (showControls) {
-                Column(
-                    Modifier.padding(horizontal = ChageunTheme.spacing.xs),
-                    verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
-                ) {
-                    MonthSummary(calendar)
-                    CalendarLayerChips(state.layers, actions.onToggleLayer)
-                }
+            CalendarHeader(parts.calendar.month, parts.mode, parts.state.search.isOpen, parts.actions)
+            Column(
+                Modifier.padding(horizontal = ChageunTheme.spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+            ) {
+                CalendarSearchControls(parts.state, parts.actions)
+                if (showFilters) CalendarFilters(parts)
             }
         }
     }
-    item(key = "calendar-grid") {
+    val grid: @Composable () -> Unit = {
         // 좁은 휴대폰에서도 칸이 48dp를 넘도록 그리드 좌우 여백은 화면 여백보다 좁게 둔다.
-        MonthGrid(
-            state = state,
-            calendar = calendar,
-            onSelect = actions.onSelectDate,
-            onShowMonth = actions.onShowMonth,
-            modifier = Modifier
+        Column(
+            Modifier
                 .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = GRID_PADDING),
-        )
+        ) {
+            CalendarGrid(parts.state, parts.calendar, parts.mode, parts.actions)
+            CalendarModeBar(parts.mode, showHandle = isPhone, onSetMode = parts.actions.onSetMode)
+        }
+    }
+    if (isPhone && parts.mode == CalendarMode.Week) {
+        stickyHeader(key = "calendar-grid") { grid() }
+    } else {
+        item(key = "calendar-grid") { grid() }
     }
 }
 
-/** 세 칸 배치의 왼쪽 칸. 레이어를 켜고 끄며, 이번 달 요약을 숫자로 보여 준다. */
 @Composable
-private fun CalendarSidePane(
-    state: CalendarUiState,
-    calendar: CalendarMonth,
-    actions: CalendarActions,
-    modifier: Modifier = Modifier,
-) {
+private fun CalendarFilters(parts: CalendarParts) {
+    MonthSummary(parts.state.monthSummary(parts.calendar))
+    CalendarFilterChips(parts.state.filter, parts.actions.onToggleKind, parts.onPickItems)
+}
+
+/** 세 칸 배치의 왼쪽 칸. 종류·항목 필터를 고르고, 이번 달 요약을 숫자로 보여 준다. */
+@Composable
+private fun CalendarSidePane(parts: CalendarParts, modifier: Modifier = Modifier) {
+    val summary = parts.state.monthSummary(parts.calendar)
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -166,46 +206,37 @@ private fun CalendarSidePane(
             ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {
-        CardGroup(stringResource(R.string.calendar_side_layers)) {
-            CalendarLayer.entries.forEachIndexed { index, layer ->
-                if (index > 0) GroupDivider()
-                ToggleListRow(
-                    icon = layer.icon,
-                    title = stringResource(layer.labelRes),
-                    body = null,
-                    checked = layer in state.layers,
-                    onCheckedChange = { actions.onToggleLayer(layer) },
-                )
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+            Text(
+                stringResource(R.string.calendar_side_filters),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .padding(top = ChageunTheme.spacing.xs)
+                    .semantics { heading() },
+            )
+            CalendarFilterChips(parts.state.filter, parts.actions.onToggleKind, parts.onPickItems)
         }
         CardGroup(stringResource(R.string.calendar_side_summary)) {
             InfoListRow(
                 Icons.AutoMirrored.Filled.EventNote,
-                stringResource(R.string.calendar_layer_records),
-                pluralStringResource(R.plurals.calendar_summary_records, calendar.recordCount, calendar.recordCount),
+                stringResource(R.string.calendar_section_records),
+                pluralStringResource(R.plurals.calendar_summary_records, summary.recordCount, summary.recordCount),
             )
             GroupDivider()
             InfoListRow(
                 Icons.Filled.PhotoLibrary,
-                stringResource(R.string.calendar_layer_photos),
-                pluralStringResource(R.plurals.calendar_summary_photos, calendar.photoCount, calendar.photoCount),
+                stringResource(R.string.calendar_kind_photos),
+                pluralStringResource(R.plurals.calendar_summary_photos, summary.photoCount, summary.photoCount),
             )
             GroupDivider()
             InfoListRow(
                 Icons.Filled.Payments,
                 stringResource(R.string.calendar_side_spent),
-                stringResource(R.string.history_won, formatNumber(calendar.monthTotalWon)),
+                stringResource(R.string.history_won, formatNumber(summary.totalWon)),
             )
         }
     }
 }
-
-private val CalendarLayer.icon: ImageVector
-    get() = when (this) {
-        CalendarLayer.Records -> Icons.AutoMirrored.Filled.EventNote
-        CalendarLayer.Photos -> Icons.Filled.PhotoLibrary
-        CalendarLayer.Upcoming -> Icons.Filled.EventRepeat
-    }
 
 private val GRID_PADDING = 8.dp
 

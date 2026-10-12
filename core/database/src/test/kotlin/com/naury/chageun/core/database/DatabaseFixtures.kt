@@ -1,6 +1,7 @@
 package com.naury.chageun.core.database
 
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
+import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
@@ -101,4 +102,22 @@ internal fun albumPhoto(
     comment = null,
     createdAt = createdAt,
     updatedAt = createdAt,
+)
+
+internal fun attachment(
+    id: String,
+    ownerType: String,
+    ownerId: String,
+    createdAt: Instant = FIXED_NOW,
+    vehicleId: String = "vehicle-1",
+) = AttachmentEntity(
+    id = id,
+    vehicleId = vehicleId,
+    ownerType = ownerType,
+    ownerId = ownerId,
+    fileName = "$id.jpg",
+    thumbnailName = "${id}_thumb.jpg",
+    mimeType = "image/jpeg",
+    sizeBytes = 1_000,
+    createdAt = createdAt,
 )
