@@ -278,6 +278,23 @@ class HomeScreenshotTest {
         clearState.copy(greeting = Greeting(GreetingSituation.Seollal, seed = 1)),
     )
 
+    /** 새 지역 목록에서 고른 동이 없어졌을 때. 날씨 줄 아래 "다시 고르기" 알약과 닫기 버튼이 나온다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherRegionChanged_ko() = capture(
+        "home_weather_region_changed_ko",
+        paneCount = 1,
+        clearState.copy(isWeatherRegionChanged = true),
+    )
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherRegionChanged_dark_ko() = capture(
+        "home_weather_region_changed_dark_ko",
+        paneCount = 1,
+        rainyState.copy(isWeatherRegionChanged = true),
+    )
+
     /** 날씨를 아직 안 켰을 때의 작은 켜기 알약과 닫기 버튼. */
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)

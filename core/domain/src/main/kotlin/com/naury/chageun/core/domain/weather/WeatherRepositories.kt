@@ -42,6 +42,20 @@ interface WeatherSettingsRepository {
 
     /** 날씨가 켜져 있고 위치가 "현재 위치"일 때만 true를 저장한다. */
     suspend fun setCurrentLocationMissing(missing: Boolean)
+
+    /**
+     * 새 지역 목록 때문에 고른 지역이 목록에서 없어졌다. 위 시·군·구나 시·도의 날씨를 보여 주면서 홈에
+     * "다시 고르기" 안내를 한 번 띄운다. 닫거나 위치를 다시 고르면 사라진다.
+     */
+    val isRegionChangeNoticeVisible: Flow<Boolean>
+
+    suspend fun dismissRegionChangeNotice()
+
+    /**
+     * [version] 지역 목록을 새로 쓰기 시작한 뒤 한 번 부른다. 고른 지역과 최근 지역의 코드를 [renamedCodes]에 따라
+     * 새 코드로 바꾸고, 고른 지역이 [catalog]에 없으면 안내를 켠다. 같은 판이나 더 옛 판으로 다시 부르면 아무것도 하지 않는다.
+     */
+    suspend fun applyRegionListChange(version: String, renamedCodes: Map<String, String>, catalog: KoreaRegionCatalog)
 }
 
 /** 대략적인 기기 위치(ACCESS_COARSE_LOCATION). 권한이 없거나 위치를 못 구하면 null이다. */

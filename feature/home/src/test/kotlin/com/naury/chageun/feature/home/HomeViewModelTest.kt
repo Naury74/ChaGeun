@@ -38,6 +38,7 @@ import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeKoreaRegionRepository
+import com.naury.chageun.core.testing.FakeKoreaRegionUpdates
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeProfilePhotoRepository
@@ -76,6 +77,7 @@ class HomeViewModelTest {
     private val weatherRepository = FakeWeatherRepository()
     private val areaNames = FakeAreaNameRepository()
     private val lastWeather = FakeLastWeatherRepository()
+    private val regionUpdates = FakeKoreaRegionUpdates()
     private val viewModel = homeViewModel(weatherRepository)
 
     private fun homeViewModel(weather: WeatherRepository) = HomeViewModel(
@@ -98,6 +100,7 @@ class HomeViewModelTest {
                 LoadWeatherUseCase(location, weather, areaNames, weatherSettings),
                 LastWeatherCache(lastWeather),
                 FakeKoreaRegionRepository(),
+                regionUpdates,
             ),
             clock,
         ),
@@ -392,6 +395,30 @@ class HomeViewModelTest {
         weatherSettings.setEnabled(false)
         contentWith { it.weather == HomeWeather.Off }
         assertThat(lastWeather.saved).isNull()
+    }
+
+    @Test
+    fun regionChangeNotice_showsWhileWeatherIsOn_andDismisses() = runTest {
+        weatherSettings.settings.value = WeatherSettings(location = WeatherLocation.Region(TestKoreaRegions.seoul))
+        weatherRepository.snapshot = WeatherSnapshot(WeatherCondition.Clear, 20.0, 1.0, false, Instant.EPOCH)
+        weatherSettings.isRegionChangeNoticeVisible.value = true
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        contentWith { it.isWeatherRegionChanged }
+        viewModel.dismissRegionChangeNotice()
+        contentWith { !it.isWeatherRegionChanged }
+        assertThat(weatherSettings.isRegionChangeNoticeVisible.value).isFalse()
+
+        weatherSettings.isRegionChangeNoticeVisible.value = true
+        weatherSettings.setEnabled(false)
+        assertThat(contentWith { it.weather == HomeWeather.Off }.isWeatherRegionChanged).isFalse()
+    }
+
+    @Test
+    fun openingRegionPicker_checksRegionListIfStale() = runTest {
+        homeViewModel(weatherRepository).regionCatalog()
+        assertThat(regionUpdates.staleChecks).isEqualTo(1)
     }
 
     private suspend fun contentWith(predicate: (HomeUiState.Content) -> Boolean): HomeUiState.Content =

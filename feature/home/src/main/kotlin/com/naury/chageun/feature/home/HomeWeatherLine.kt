@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Dehaze
+import androidx.compose.material.icons.filled.EditLocationAlt
 import androidx.compose.material.icons.filled.FilterDrama
 import androidx.compose.material.icons.filled.LocationOff
 import androidx.compose.material.icons.filled.LocationSearching
@@ -167,6 +168,30 @@ private fun WeatherNow(weather: HomeWeather.Shown, seed: Long, onChooseLocation:
             maxLines = 1,
             modifier = Modifier.alignByBaseline(),
         )
+    }
+}
+
+/**
+ * 새 지역 목록에서 고른 날씨 지역이 없어졌을 때 한 번 띄우는 안내. 누르면 지역을 다시 고르고, ✕로 닫는다.
+ * 그동안 날씨는 위 시·군·구나 시·도로 보여 준다.
+ */
+@Composable
+internal fun RegionChangedNotice(onChooseAgain: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        WeatherPill(
+            Icons.Filled.EditLocationAlt,
+            stringResource(R.string.home_weather_region_changed),
+            onChooseAgain,
+            Modifier.weight(1f, fill = false),
+        )
+        IconButton(onClick = onDismiss) {
+            Icon(
+                Icons.Filled.Close,
+                contentDescription = stringResource(R.string.home_weather_region_changed_dismiss),
+                tint = skyVariantText(),
+                modifier = Modifier.size(DISMISS_ICON_SIZE),
+            )
+        }
     }
 }
 

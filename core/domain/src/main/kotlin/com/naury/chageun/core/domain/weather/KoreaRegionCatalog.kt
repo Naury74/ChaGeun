@@ -3,14 +3,18 @@ package com.naury.chageun.core.domain.weather
 import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.KoreaArea
 import com.naury.chageun.core.model.KoreaAreaLevel
+import kotlinx.coroutines.flow.Flow
 
 /** 지역 목록 파일의 한 줄. [name]은 그 단계의 원래 이름(수원시장안구)이고, [shortName]은 시·도 줄에만 있다. */
 data class KoreaRegionRow(val code: String, val name: String, val point: GeoPoint, val shortName: String? = null)
 
-/** 앱에 넣어 둔 전국 시·도, 시·군·구, 읍·면·동 목록. */
+/** 전국 시·도, 시·군·구, 읍·면·동 목록. 앱에 넣은 목록이나, 그보다 새로 내려받은 목록을 쓴다. */
 interface KoreaRegionRepository {
     /** 처음 부를 때 백그라운드에서 읽고, 그 뒤로는 메모리에 둔 목록을 돌려준다. */
     suspend fun catalog(): KoreaRegionCatalog
+
+    /** 지금 쓰는 목록의 판과 출처. 새 목록을 받으면 새 값을 낸다. 목록 자체는 읽지 않는다. */
+    val listInfo: Flow<KoreaRegionListInfo>
 }
 
 /**

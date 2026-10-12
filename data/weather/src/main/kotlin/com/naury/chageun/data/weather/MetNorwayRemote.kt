@@ -36,12 +36,7 @@ internal class HttpMetNorwayRemote @Inject constructor(
     @param:Dispatcher(ChageunDispatchers.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : MetNorwayRemote {
 
-    private val userAgent: String by lazy {
-        val version = runCatching {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName
-        }.getOrNull().orEmpty()
-        "Chageun/$version $CONTACT"
-    }
+    private val userAgent: String by lazy { chageunUserAgent(context) }
 
     override suspend fun fetch(point: GeoPoint, ifModifiedSince: String?): MetFetch = withContext(ioDispatcher) {
         val url = String.format(Locale.ROOT, ENDPOINT, point.latitude, point.longitude)
@@ -70,8 +65,17 @@ internal class HttpMetNorwayRemote @Inject constructor(
 
     private companion object {
         const val ENDPOINT = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.1f&lon=%.1f"
-        const val CONTACT = "help@naurylab.com"
         const val TIMEOUT_MILLIS = 10_000
         val HTTP_OK_RANGE = 200..299
     }
 }
+
+/** 앱을 알아볼 수 있는 User-Agent. 앱 버전과 연락처만 담는다. */
+internal fun chageunUserAgent(context: Context): String {
+    val version = runCatching {
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    }.getOrNull().orEmpty()
+    return "Chageun/$version $USER_AGENT_CONTACT"
+}
+
+private const val USER_AGENT_CONTACT = "help@naurylab.com"

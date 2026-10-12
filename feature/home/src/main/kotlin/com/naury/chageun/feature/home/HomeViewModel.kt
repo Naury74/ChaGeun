@@ -62,8 +62,8 @@ class HomeViewModel @Inject constructor(
                     ::HomePhoto,
                 ),
                 header.profile,
-                combine(header.usage, weather.filterNotNull(), ::Pair),
-            ) { overview, recent, photo, profile, (usage, weather) ->
+                combine(header.usage, weather.filterNotNull(), header.isRegionChangeNoticeVisible, ::Triple),
+            ) { overview, recent, photo, profile, (usage, weather, isRegionChanged) ->
                 val now = LocalDateTime.now(clock)
                 val today = now.toLocalDate()
                 HomeUiState.Content(
@@ -78,6 +78,7 @@ class HomeViewModel @Inject constructor(
                     avatarPath = profile.avatarPath,
                     greeting = greetingEngine.greet(greetingFacts(now, clock.zone, vehicle, overview, recent, usage)),
                     weather = weather,
+                    isWeatherRegionChanged = isRegionChanged && weather != HomeWeather.Off,
                     // 정비 개요를 한 번만 계산하도록 달력과 같은 규칙으로 여기서 바로 고른다.
                     upcomingEvents = UpcomingEventPlanner.plan(overview, today)
                         .within(today, today.plusDays(UPCOMING_DAYS))
@@ -115,7 +116,16 @@ class HomeViewModel @Inject constructor(
     val recentRegionCodes: StateFlow<List<String>> = header.recentRegionCodes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
 
-    suspend fun regionCatalog(): KoreaRegionCatalog = header.regionCatalog()
+    /** 창을 여는 김에 지역 목록이 오래됐으면 새 판을 확인한다. 창은 기다리지 않고 지금 목록으로 연다. */
+    suspend fun regionCatalog(): KoreaRegionCatalog {
+        viewModelScope.launch { header.checkRegionListIfStale() }
+        return header.regionCatalog()
+    }
+
+    /** "날씨 지역이 바뀌었어요" 안내를 닫는다. 날씨는 위 시·군·구나 시·도로 계속 보여 준다. */
+    fun dismissRegionChangeNotice() {
+        viewModelScope.launch { header.dismissRegionChangeNotice() }
+    }
 
     fun setWeatherLocation(location: WeatherLocation) {
         viewModelScope.launch {

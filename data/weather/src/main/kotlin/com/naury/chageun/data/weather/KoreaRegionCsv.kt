@@ -11,6 +11,9 @@ internal object KoreaRegionCsv {
 
     const val ASSET_PATH = "weather/korea_regions.csv"
 
+    /** 앱에 넣은 목록의 판. 원본(최종 업데이트 파일_20260701)의 연-월이다. 목록을 바꾸면 함께 고친다. */
+    const val BUNDLED_VERSION = "2026-07"
+
     fun parse(lines: Sequence<String>): List<KoreaRegionRow> = lines
         .map(String::trim)
         .filter { it.isNotEmpty() && !it.startsWith(COMMENT) }

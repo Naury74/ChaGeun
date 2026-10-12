@@ -154,6 +154,7 @@ fun HomeRoute(
             },
             onSetUpWeather = { picksWeatherLocation = true },
             onDismissWeatherPrompt = viewModel::dismissWeatherPrompt,
+            onDismissRegionNotice = viewModel::dismissRegionChangeNotice,
         ),
     )
 }
@@ -181,6 +182,8 @@ data class HomeActions(
     val onSetUpWeather: () -> Unit = {},
     /** 날씨 켜기 안내의 ✕. 다시는 홈에 안내하지 않는다. */
     val onDismissWeatherPrompt: () -> Unit = {},
+    /** "날씨 지역이 바뀌었어요" 안내의 ✕. */
+    val onDismissRegionNotice: () -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -452,6 +455,8 @@ private fun HomeHero(
                 weather = state.weather,
                 onSetUpWeather = actions.onSetUpWeather,
                 onDismissWeatherPrompt = actions.onDismissWeatherPrompt,
+                isRegionChanged = state.isWeatherRegionChanged,
+                onDismissRegionNotice = actions.onDismissRegionNotice,
                 onOpenAccount = actions.onOpenAccount,
                 onOpenSettings = actions.onOpenSettings,
                 modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),

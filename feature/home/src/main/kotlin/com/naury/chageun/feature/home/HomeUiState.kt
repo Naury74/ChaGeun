@@ -35,6 +35,8 @@ sealed interface HomeUiState {
         /** 상황에 맞춰 고른 인사말. 문구는 화면이 리소스에서 고른다. */
         val greeting: Greeting = Greeting(GreetingSituation.Morning, seed = 0),
         val weather: HomeWeather = HomeWeather.Off,
+        /** 새 지역 목록에서 고른 날씨 지역이 없어져 다시 고르라고 안내한다. */
+        val isWeatherRegionChanged: Boolean = false,
         /** 오늘부터 2주 안의 예정 일정. 가까운 것부터 최대 3개다. */
         val upcomingEvents: List<UpcomingEvent> = emptyList(),
     ) : HomeUiState {

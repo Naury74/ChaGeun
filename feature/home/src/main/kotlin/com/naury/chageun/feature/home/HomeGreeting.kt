@@ -97,6 +97,8 @@ internal fun HomeGreetingBar(
     onOpenAccount: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    isRegionChanged: Boolean = false,
+    onDismissRegionNotice: () -> Unit = {},
 ) {
     val spacing = ChageunTheme.spacing
     Column(modifier.fillMaxWidth().padding(top = spacing.xs)) {
@@ -128,6 +130,7 @@ internal fun HomeGreetingBar(
                 onDismissPrompt = onDismissWeatherPrompt,
                 modifier = Modifier.padding(top = spacing.xxs),
             )
+            if (isRegionChanged) RegionChangedNotice(onChooseAgain = onSetUpWeather, onDismiss = onDismissRegionNotice)
         }
     }
 }
