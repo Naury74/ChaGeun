@@ -41,7 +41,7 @@ interface BackupDao {
     @Query("SELECT * FROM inspection_schedule")
     suspend fun inspectionSchedules(): List<InspectionScheduleEntity>
 
-    @Query("SELECT * FROM album_photo ORDER BY taken_on, created_at")
+    @Query("SELECT * FROM album_photo WHERE deleted_at IS NULL ORDER BY taken_on, created_at")
     suspend fun albumPhotos(): List<AlbumPhotoEntity>
 
     @Query(

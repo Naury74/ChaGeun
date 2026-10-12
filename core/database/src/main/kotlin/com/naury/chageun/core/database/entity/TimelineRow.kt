@@ -15,4 +15,5 @@ data class TimelineRow(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "source_type") val sourceType: String,
     @ColumnInfo(name = "attachment_count") val attachmentCount: Int = 0,
+    @ColumnInfo(name = "sound_count") val soundCount: Int = 0,
 )

@@ -4,6 +4,7 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.migration.Migration10To11
+import com.naury.chageun.core.database.migration.Migration11To12
 import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
 import com.naury.chageun.core.database.migration.Migration3To4
@@ -252,6 +253,34 @@ class DatabaseMigrationTest {
                 assertThat(cursor.getString(0)).isEqualTo("AUDIO")
                 assertThat(cursor.getLong(1)).isEqualTo(12_000)
                 assertThat(cursor.getString(2)).isEqualTo("Engine knock")
+            }
+        }
+    }
+
+    @Test
+    fun migration11To12_keepsAlbumPhotosVisible_andAcceptsPendingDeletes() {
+        helper.createDatabase(TEST_DB, 11).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO album_photo (id, vehicle_id, file_name, thumbnail_name, size_bytes, taken_on, comment, " +
+                    "created_at, updated_at, media_type) VALUES ('a1', 'v1', 'album_a1.jpg', 'album_a1_thumb.jpg', " +
+                    "1000, 20500, 'Car wash', 1, 1, 'PHOTO')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 12, true, Migration11To12).use { db ->
+            db.query("SELECT deleted_at, comment FROM album_photo WHERE id = 'a1'").use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.isNull(0)).isTrue()
+                assertThat(cursor.getString(1)).isEqualTo("Car wash")
+            }
+            db.execSQL("UPDATE album_photo SET deleted_at = 1790000000000 WHERE id = 'a1'")
+            db.query("SELECT COUNT(*) FROM album_photo WHERE deleted_at IS NOT NULL").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getInt(0)).isEqualTo(1)
             }
         }
     }

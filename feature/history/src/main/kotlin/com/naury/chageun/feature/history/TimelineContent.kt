@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -262,7 +264,22 @@ private fun TimelineRow(
                             style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier.weight(1f, fill = false),
                         )
-                        if (item.attachmentCount > 0) AttachmentMark(item.attachmentCount)
+                        if (item.attachmentCount > 0) {
+                            val count = item.attachmentCount
+                            AttachmentMark(
+                                Icons.Filled.AttachFile,
+                                count,
+                                pluralStringResource(R.plurals.history_attachment_count, count, count),
+                            )
+                        }
+                        if (item.soundCount > 0) {
+                            val count = item.soundCount
+                            AttachmentMark(
+                                Icons.Outlined.GraphicEq,
+                                count,
+                                pluralStringResource(R.plurals.history_sound_count, count, count),
+                            )
+                        }
                     }
                     val meta = listOfNotNull(
                         item.date?.let { formatDate(it) },
@@ -285,10 +302,9 @@ private fun TimelineRow(
     }
 }
 
-/** 사진·영수증이 붙은 기록임을 카드에서 바로 알 수 있게 한다. */
+/** 사진·영수증이나 녹음한 소리가 붙은 기록임을 카드에서 바로 알 수 있게 한다. 사진과 소리는 따로 센다. */
 @Composable
-private fun AttachmentMark(count: Int) {
-    val description = pluralStringResource(R.plurals.history_attachment_count, count, count)
+private fun AttachmentMark(icon: ImageVector, count: Int, description: String) {
     Row(
         modifier = Modifier
             .padding(start = ChageunTheme.spacing.xs)
@@ -296,7 +312,7 @@ private fun AttachmentMark(count: Int) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            Icons.Filled.AttachFile,
+            icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(ATTACHMENT_ICON_SIZE),

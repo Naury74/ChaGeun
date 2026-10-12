@@ -175,6 +175,22 @@ internal fun PhotoViewer(
                     modifier = Modifier.onSizeChanged { bottomBarHeight = it.height },
                 )
             }
+            if (immersive) {
+                // 두 칸 화면에서는 앨범 화면 아래쪽에 한 번만 띄운다.
+                AlbumUndoBar(
+                    uiState.undo,
+                    actions,
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .then(
+                            if (chrome.isShown) {
+                                Modifier.padding(bottom = with(LocalDensity.current) { bottomBarHeight.toDp() })
+                            } else {
+                                Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                            },
+                        ),
+                )
+            }
         }
     }
 }

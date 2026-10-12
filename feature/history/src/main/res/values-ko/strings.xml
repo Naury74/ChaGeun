@@ -172,6 +172,11 @@
     <string name="history_filter_cost_hint">범위를 정하면 비용을 입력하지 않은 기록은 빠져요.</string>
     <string name="history_filter_cost_reversed">최소보다 크게 입력해 주세요</string>
     <string name="history_filter_attachments">사진·영수증이 있는 기록만</string>
+    <string name="history_filter_sounds">소리가 있는 기록만</string>
+    <string name="history_filter_sounds_short">소리 있음</string>
+    <plurals name="history_sound_count">
+        <item quantity="other">소리 %1$d개 첨부</item>
+    </plurals>
     <string name="history_filter_reset">초기화</string>
     <string name="history_filter_apply">적용</string>
     <plurals name="history_attachment_count">
@@ -251,6 +256,14 @@
     <plurals name="calendar_a11y_photos">
         <item quantity="other">사진 %1$d장</item>
     </plurals>
+    <plurals name="calendar_a11y_videos">
+        <item quantity="other">동영상 %1$d개</item>
+    </plurals>
+    <plurals name="calendar_a11y_sounds">
+        <item quantity="other">소리 %1$d개</item>
+    </plurals>
+    <string name="calendar_video_on">%1$s 동영상</string>
+    <string name="calendar_video_named">동영상, %1$s</string>
     <plurals name="calendar_a11y_upcoming">
         <item quantity="other">예정 %1$d개</item>
     </plurals>

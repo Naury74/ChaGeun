@@ -54,6 +54,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
             minCostWon = query.minCostWon,
             maxCostWon = query.maxCostWon,
             withAttachmentsOnly = query.withAttachmentsOnly,
+            withSoundsOnly = query.withSoundsOnly,
             limit = limit ?: NO_LIMIT,
         ).map { rows -> rows.mapNotNull { it.asTimelineItem() } }
 
@@ -68,6 +69,7 @@ internal class OfflineFirstHistoryRepository @Inject constructor(
             minCostWon = query.minCostWon,
             maxCostWon = query.maxCostWon,
             withAttachmentsOnly = query.withAttachmentsOnly,
+            withSoundsOnly = query.withSoundsOnly,
         ).map { rows ->
             rows.mapNotNull { row ->
                 val total = row.totalWon ?: return@mapNotNull null
@@ -285,6 +287,7 @@ private fun TimelineRow.asTimelineItem(): TimelineItem? {
         createdAt = createdAt,
         isMileageEstimated = sourceType == RecordSourceTypes.ESTIMATED,
         attachmentCount = attachmentCount,
+        soundCount = soundCount,
     )
 }
 

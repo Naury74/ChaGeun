@@ -4,6 +4,7 @@ import android.app.Application
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.notification.ReminderScheduler
 import com.naury.chageun.data.cloudbackup.AutoBackupSync
 import com.naury.chageun.data.weather.KoreaRegionUpdateScheduler
@@ -14,6 +15,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 @HiltAndroidApp
 class ChageunApplication :
@@ -30,6 +32,8 @@ class ChageunApplication :
 
     @Inject lateinit var regionUpdateScheduler: KoreaRegionUpdateScheduler
 
+    @Inject lateinit var albumRepository: AlbumRepository
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override val workManagerConfiguration: Configuration
@@ -44,6 +48,8 @@ class ChageunApplication :
         usageStatsSync.start(appScope)
         autoBackupSync.start(appScope)
         regionUpdateScheduler.schedule()
+        // 앨범에서 지우고 되돌리기를 기다리던 중에 앱이 끝났으면 그 사진은 여기서 마저 지운다.
+        appScope.launch { runCatching { albumRepository.purgeStaleDeleted() } }
     }
 
     private fun currentProcessName(): String? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

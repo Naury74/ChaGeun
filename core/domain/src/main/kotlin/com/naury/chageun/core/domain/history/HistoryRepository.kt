@@ -25,7 +25,10 @@ data class TimelineQuery(
     /** 비용 범위를 정하면 비용을 입력하지 않은 기록은 빠진다. */
     val minCostWon: Long? = null,
     val maxCostWon: Long? = null,
+    /** 사진·영수증이 붙은 기록만. 소리만 붙은 기록은 빠진다. */
     val withAttachmentsOnly: Boolean = false,
+    /** 녹음한 소리가 붙은 기록만. */
+    val withSoundsOnly: Boolean = false,
 )
 
 interface HistoryRepository {

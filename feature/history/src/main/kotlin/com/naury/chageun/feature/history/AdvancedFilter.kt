@@ -13,6 +13,7 @@ data class AdvancedFilter(
     val minCostWon: Long? = null,
     val maxCostWon: Long? = null,
     val withAttachmentsOnly: Boolean = false,
+    val withSoundsOnly: Boolean = false,
 ) {
     /** 필터 버튼에 보여 줄 적용 중인 조건 수. */
     val activeCount: Int
@@ -20,6 +21,7 @@ data class AdvancedFilter(
             period != HistoryPeriod.All,
             minCostWon != null || maxCostWon != null,
             withAttachmentsOnly,
+            withSoundsOnly,
         ).count { it }
 
     /** [today]를 기준으로 기간 프리셋을 날짜로 바꿔 [query]에 넣는다. */
@@ -38,6 +40,7 @@ data class AdvancedFilter(
             minCostWon = minCostWon,
             maxCostWon = maxCostWon,
             withAttachmentsOnly = withAttachmentsOnly,
+            withSoundsOnly = withSoundsOnly,
         )
     }
 
@@ -49,16 +52,21 @@ data class AdvancedFilter(
         minCostWon,
         maxCostWon,
         withAttachmentsOnly,
+        withSoundsOnly,
     ).joinToString(SEPARATOR) { it?.toString().orEmpty() }
 
     companion object {
         private const val SEPARATOR = "|"
-        private const val FIELD_COUNT = 6
+        private const val FIELD_COUNT = 7
+
+        /** 소리 필터를 넣기 전에 저장한 값. 화면을 다시 만들 때 이어지도록 읽어 준다. */
+        private const val OLD_FIELD_COUNT = 6
         private const val QUARTER_MONTHS = 3L
         private const val HALF_YEAR_MONTHS = 6L
 
         fun decode(value: String?): AdvancedFilter {
-            val parts = value?.split(SEPARATOR)?.takeIf { it.size == FIELD_COUNT } ?: return AdvancedFilter()
+            val parts = value?.split(SEPARATOR)?.takeIf { it.size == FIELD_COUNT || it.size == OLD_FIELD_COUNT }
+                ?: return AdvancedFilter()
             return AdvancedFilter(
                 period = HistoryPeriod.entries.firstOrNull { it.name == parts[0] } ?: HistoryPeriod.All,
                 customFrom = parts[1].toLongOrNull()?.let(LocalDate::ofEpochDay),
@@ -66,6 +74,7 @@ data class AdvancedFilter(
                 minCostWon = parts[3].toLongOrNull(),
                 maxCostWon = parts[4].toLongOrNull(),
                 withAttachmentsOnly = parts[5].toBoolean(),
+                withSoundsOnly = parts.getOrNull(OLD_FIELD_COUNT).toBoolean(),
             )
         }
     }

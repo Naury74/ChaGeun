@@ -33,4 +33,17 @@ class AdvancedFilterTest {
         assertThat(AdvancedFilter.decode("broken")).isEqualTo(AdvancedFilter())
         assertThat(filter.activeCount).isEqualTo(3)
     }
+
+    @Test
+    fun soundsOnly_isItsOwnCondition_andOlderSavedStateStillReads() {
+        val filter = AdvancedFilter(withSoundsOnly = true)
+
+        val query = filter.applyTo(TimelineQuery(), today)
+        assertThat(query.withSoundsOnly).isTrue()
+        assertThat(query.withAttachmentsOnly).isFalse()
+        assertThat(filter.activeCount).isEqualTo(1)
+        assertThat(AdvancedFilter.decode(filter.encode())).isEqualTo(filter)
+        // 소리 필터를 넣기 전 형식(6칸)도 그대로 읽는다.
+        assertThat(AdvancedFilter.decode("All|||||true")).isEqualTo(AdvancedFilter(withAttachmentsOnly = true))
+    }
 }

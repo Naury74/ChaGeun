@@ -31,8 +31,9 @@ sealed interface UpcomingEvent {
 }
 
 /**
- * 달력 하루 칸. 기록·사진은 지난 일, [upcoming]은 앞으로 할 일이다. 사진은 앨범 사진([photos])과
- * 그날 기록에 붙인 사진([recordPhotos], 영수증 등)을 따로 들고, 개수는 합쳐 센다.
+ * 달력 하루 칸. 기록·사진은 지난 일, [upcoming]은 앞으로 할 일이다. 사진은 앨범 사진·동영상([photos])과
+ * 그날 기록에 붙인 사진([recordPhotos], 영수증 등)을 따로 들고, [photoCount]는 동영상까지 합쳐 센다.
+ * 화면 읽기 문구처럼 종류를 나눠 말할 때는 [videoCount]·[soundCount]를 쓴다.
  */
 data class CalendarDay(
     val date: LocalDate,
@@ -42,6 +43,12 @@ data class CalendarDay(
     val recordPhotos: List<RecordPhoto> = emptyList(),
 ) {
     val photoCount: Int get() = photos.size + recordPhotos.size
+
+    /** 앨범 동영상 수. [photoCount]에 들어 있다. */
+    val videoCount: Int get() = photos.count { it.isVideo }
+
+    /** 그날 기록에 붙인 녹음한 소리 수. */
+    val soundCount: Int get() = records.sumOf { it.soundCount }
 
     val isEmpty: Boolean get() = records.isEmpty() && photoCount == 0 && upcoming.isEmpty()
 }
