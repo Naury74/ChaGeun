@@ -22,6 +22,7 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
         WeatherSettings(
             isEnabled = prefs[ENABLED] ?: true,
             location = prefs[LOCATION]?.let(::decode),
+            isPromptDismissed = prefs[PROMPT_DISMISSED] ?: false,
         )
     }
 
@@ -35,6 +36,10 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
             // 위치를 고르는 것은 날씨를 보겠다는 뜻이라 꺼 둔 경우에도 다시 켠다.
             it[ENABLED] = true
         }
+    }
+
+    override suspend fun dismissPrompt() {
+        dataStore.edit { it[PROMPT_DISMISSED] = true }
     }
 
     private fun encode(location: WeatherLocation): String = when (location) {
@@ -51,5 +56,6 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
         const val CURRENT = "current"
         val ENABLED = booleanPreferencesKey("weather_enabled")
         val LOCATION = stringPreferencesKey("weather_location")
+        val PROMPT_DISMISSED = booleanPreferencesKey("weather_prompt_dismissed")
     }
 }

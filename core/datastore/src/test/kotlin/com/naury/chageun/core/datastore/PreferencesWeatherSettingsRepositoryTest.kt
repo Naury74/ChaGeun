@@ -47,6 +47,13 @@ class PreferencesWeatherSettingsRepositoryTest {
     }
 
     @Test
+    fun dismissingPrompt_isRemembered() = scope.runTest {
+        repository.dismissPrompt()
+
+        assertThat(repository.settings.first().isPromptDismissed).isTrue()
+    }
+
+    @Test
     fun appUsage_keepsPreviousLaunch() = scope.runTest {
         val usage = PreferencesAppUsageRepository(dataStore)
         val first = Instant.parse("2026-09-01T00:00:00Z")

@@ -56,7 +56,7 @@ sealed interface HomeWeather {
     /** 설정에서 날씨를 껐다. 아무것도 보이지 않는다. */
     data object Off : HomeWeather
 
-    /** 아직 위치를 고르지 않았다. "날씨 보기"를 눌러야 위치를 묻는다. */
+    /** 아직 위치를 고르지 않았다. "날씨 맞춤 운전 팁 켜기"를 눌러야 위치를 묻는다. 안내를 닫았으면 [Off]다. */
     data object Setup : HomeWeather
 
     /** "현재 위치"를 골랐지만 위치 권한이 없다. */
@@ -64,7 +64,13 @@ sealed interface HomeWeather {
 
     data object Loading : HomeWeather
 
-    data class Shown(val snapshot: WeatherSnapshot, val location: WeatherLocation, val tip: WeatherTip) : HomeWeather
+    /** [scene]은 Hero 바탕 하늘에 그릴 날씨 장면이다. */
+    data class Shown(
+        val snapshot: WeatherSnapshot,
+        val location: WeatherLocation,
+        val tip: WeatherTip,
+        val scene: WeatherScene = WeatherScene.ClearDay,
+    ) : HomeWeather
 
     /** 위치나 날씨를 구하지 못했다. 오류를 띄우지 않고 카드를 숨긴다. */
     data object Unavailable : HomeWeather

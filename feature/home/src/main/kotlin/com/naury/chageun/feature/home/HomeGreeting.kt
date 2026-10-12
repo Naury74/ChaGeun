@@ -94,7 +94,7 @@ internal fun greetingFacts(
 
 private val THIS_LAUNCH_WINDOW: Duration = Duration.ofMinutes(10)
 
-/** 홈 맨 위. 차근 로고, 계정·설정 버튼, 상황별 인사말, 오늘 날짜와 날씨 카드를 둔다. */
+/** 홈 맨 위. 차근 로고, 계정·설정 버튼, 상황별 인사말, 오늘 날짜와 날씨 한 줄을 둔다. */
 @Composable
 internal fun HomeGreetingBar(
     name: String?,
@@ -102,6 +102,7 @@ internal fun HomeGreetingBar(
     today: LocalDate,
     weather: HomeWeather,
     onSetUpWeather: () -> Unit,
+    onDismissWeatherPrompt: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -128,16 +129,13 @@ internal fun HomeGreetingBar(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.semantics { heading() },
             )
-            Text(
-                todayLabel(today),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            HomeWeatherCard(
+            Text(todayLabel(today), style = MaterialTheme.typography.bodySmall, color = skyVariantText())
+            HomeWeatherLine(
                 weather = weather,
                 seed = greeting.seed,
-                onSetUp = onSetUpWeather,
-                modifier = Modifier.padding(top = spacing.sm),
+                onChooseLocation = onSetUpWeather,
+                onDismissPrompt = onDismissWeatherPrompt,
+                modifier = Modifier.padding(top = spacing.xxs),
             )
         }
     }

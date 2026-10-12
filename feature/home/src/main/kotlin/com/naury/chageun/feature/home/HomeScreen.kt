@@ -148,6 +148,7 @@ fun HomeRoute(
                 onOpenCalendar(date)
             },
             onSetUpWeather = { picksWeatherLocation = true },
+            onDismissWeatherPrompt = viewModel::dismissWeatherPrompt,
         ),
     )
 }
@@ -171,8 +172,10 @@ data class HomeActions(
     val onRemoveBackground: () -> Unit = {},
     /** 기록 탭 달력을 그 날짜로 연다. */
     val onOpenCalendar: (LocalDate) -> Unit = {},
-    /** 날씨 카드의 "날씨 보기". 위치를 고르는 창을 연다. */
+    /** 날씨 켜기 안내나 날씨 줄을 눌렀을 때. 위치를 고르는 창을 연다. */
     val onSetUpWeather: () -> Unit = {},
+    /** 날씨 켜기 안내의 ✕. 다시는 홈에 안내하지 않는다. */
+    val onDismissWeatherPrompt: () -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -406,6 +409,9 @@ private fun HomeHero(
 ) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
+    // 날씨를 받았으면 Hero 하늘을 그 날씨로 바꾼다. 없으면 기본 하늘이다.
+    val isDark = isDarkBackground()
+    val skyPalette = (state.weather as? HomeWeather.Shown)?.let { skyPalette(it.scene, isDark) }
     val subtitleParts = listOfNotNull(
         vehicle.modelYear?.toString(),
         vehicle.fuelType?.let { stringResource(it.labelRes) },
@@ -428,6 +434,10 @@ private fun HomeHero(
             }
         },
         skyFadesAtEnd = isSideBySide,
+        sky = skyPalette?.sky?.copy(secondaryText = skyVariantText()),
+        skyOverlay = (state.weather as? HomeWeather.Shown)?.let { shown ->
+            { WeatherSkyOverlay(shown.scene, checkNotNull(skyPalette), fadesAtEnd = isSideBySide) }
+        },
         header = {
             HomeGreetingBar(
                 name = state.greetingName,
@@ -435,6 +445,7 @@ private fun HomeHero(
                 today = state.today,
                 weather = state.weather,
                 onSetUpWeather = actions.onSetUpWeather,
+                onDismissWeatherPrompt = actions.onDismissWeatherPrompt,
                 onOpenAccount = actions.onOpenAccount,
                 onOpenSettings = actions.onOpenSettings,
                 modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),

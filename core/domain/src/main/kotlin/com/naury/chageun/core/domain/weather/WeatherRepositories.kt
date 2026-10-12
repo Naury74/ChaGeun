@@ -13,6 +13,9 @@ interface WeatherSettingsRepository {
     suspend fun setEnabled(enabled: Boolean)
 
     suspend fun setLocation(location: WeatherLocation)
+
+    /** 홈의 날씨 켜기 안내를 닫는다. */
+    suspend fun dismissPrompt()
 }
 
 /** 대략적인 기기 위치(ACCESS_COARSE_LOCATION). 권한이 없거나 위치를 못 구하면 null이다. */

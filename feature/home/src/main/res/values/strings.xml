@@ -93,12 +93,11 @@
     <string name="home_greeting_named">%2$s, %1$s</string>
     <string name="home_weather_summary">%1$s° %2$s</string>
     <string name="home_weather_attribution">Weather: MET Norway</string>
-    <string name="home_weather_setup_title">Driving tips for today\'s weather</string>
-    <string name="home_weather_setup_body">Pick a location and we\'ll warn you about rain, snow and icy roads</string>
-    <string name="home_weather_setup_action">Show weather</string>
-    <string name="home_weather_permission_title">Location permission is off</string>
-    <string name="home_weather_permission_body">Allow it again or pick a region instead</string>
-    <string name="home_weather_permission_action">Choose location</string>
+    <string name="home_weather_enable">Turn on weather driving tips</string>
+    <string name="home_weather_dismiss">Dismiss weather tip</string>
+    <string name="home_weather_permission">Location is off · Choose location</string>
+    <string name="home_weather_change_location">Change location</string>
+    <string name="home_weather_spoken">%1$s, %2$s degrees, %3$s. %4$s</string>
     <string name="home_weather_loading">Checking the weather…</string>
     <string-array name="home_greeting_recall">
         <item>There\'s a safety recall to check</item>

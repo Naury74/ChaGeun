@@ -9,6 +9,8 @@ import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import com.naury.chageun.core.domain.weather.WeatherTips
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
+import java.time.Clock
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -27,6 +29,7 @@ class HomeHeaderSource @Inject constructor(
     appUsageRepository: AppUsageRepository,
     private val settings: WeatherSettingsRepository,
     private val loadWeather: LoadWeatherUseCase,
+    private val clock: Clock,
 ) {
     private var hasShownWeather = false
 
@@ -45,18 +48,24 @@ class HomeHeaderSource @Inject constructor(
 
     suspend fun setWeatherLocation(location: WeatherLocation) = settings.setLocation(location)
 
+    suspend fun dismissWeatherPrompt() = settings.dismissPrompt()
+
     private fun weatherFor(settings: WeatherSettings): Flow<HomeWeather> = flow {
         val location = settings.location
         when {
             !settings.isEnabled -> emit(HomeWeather.Off)
-            location == null -> emit(HomeWeather.Setup)
+            location == null -> emit(if (settings.isPromptDismissed) HomeWeather.Off else HomeWeather.Setup)
             else -> {
                 // 이미 날씨를 보여 줬으면 새로 받는 동안 이전 카드를 그대로 둬 깜빡이지 않게 한다.
                 if (!hasShownWeather) emit(HomeWeather.Loading)
                 emit(
                     when (val result = loadWeather(location)) {
-                        is WeatherResult.Shown ->
-                            HomeWeather.Shown(result.snapshot, location, WeatherTips.tipFor(result.snapshot))
+                        is WeatherResult.Shown -> HomeWeather.Shown(
+                            snapshot = result.snapshot,
+                            location = location,
+                            tip = WeatherTips.tipFor(result.snapshot),
+                            scene = weatherSceneFor(result.snapshot, LocalTime.now(clock).hour),
+                        )
                         WeatherResult.NeedsPermission -> HomeWeather.NeedsPermission
                         WeatherResult.Unavailable -> HomeWeather.Unavailable
                     },

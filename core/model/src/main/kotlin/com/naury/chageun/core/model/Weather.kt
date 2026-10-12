@@ -97,4 +97,9 @@ sealed interface WeatherLocation {
  * 홈 날씨 설정. 기본은 켜져 있지만 [location]을 고르기 전에는 위치를 묻지도, 날씨를 받지도 않는다.
  * 홈 카드의 "날씨 보기"를 눌러 위치를 고를 때 처음 위치 권한을 묻는다.
  */
-data class WeatherSettings(val isEnabled: Boolean = true, val location: WeatherLocation? = null)
+data class WeatherSettings(
+    val isEnabled: Boolean = true,
+    val location: WeatherLocation? = null,
+    /** 홈의 "날씨 맞춤 운전 팁 켜기" 안내를 닫았다. 그 뒤로는 설정에서만 켤 수 있다. */
+    val isPromptDismissed: Boolean = false,
+)

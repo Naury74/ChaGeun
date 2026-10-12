@@ -100,6 +100,11 @@ class HomeViewModel @Inject constructor(
         weatherRefreshes.update { it + 1 }
     }
 
+    /** 홈의 날씨 켜기 안내를 닫는다. 그 뒤로는 설정 › 날씨에서만 켤 수 있다. */
+    fun dismissWeatherPrompt() {
+        viewModelScope.launch { header.dismissWeatherPrompt() }
+    }
+
     /** 같은 위치를 다시 골라도(예: 권한을 다시 허용) 새로 가져오도록 새로 고침도 함께 한다. */
     fun setWeatherLocation(location: WeatherLocation) {
         viewModelScope.launch {

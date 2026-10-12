@@ -88,12 +88,11 @@
     <string name="home_greeting_named">%1$s님, %2$s</string>
     <string name="home_weather_summary">%1$s° %2$s</string>
     <string name="home_weather_attribution">날씨: MET Norway</string>
-    <string name="home_weather_setup_title">날씨 맞춤 운전 팁</string>
-    <string name="home_weather_setup_body">위치를 고르면 비·눈·빙판길 소식에 맞춰 알려 드려요</string>
-    <string name="home_weather_setup_action">날씨 보기</string>
-    <string name="home_weather_permission_title">위치 권한이 꺼져 있어요</string>
-    <string name="home_weather_permission_body">다시 허용하거나 지역을 골라 주세요</string>
-    <string name="home_weather_permission_action">위치 고르기</string>
+    <string name="home_weather_enable">날씨 맞춤 운전 팁 켜기</string>
+    <string name="home_weather_dismiss">날씨 안내 닫기</string>
+    <string name="home_weather_permission">위치 권한이 꺼져 있어요 · 위치 고르기</string>
+    <string name="home_weather_change_location">위치 바꾸기</string>
+    <string name="home_weather_spoken">%1$s %2$s도 %3$s. %4$s</string>
     <string name="home_weather_loading">날씨를 확인하고 있어요…</string>
     <string-array name="home_greeting_recall">
         <item>리콜 소식이 있어요, 꼭 확인해 주세요</item>

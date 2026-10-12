@@ -20,6 +20,8 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
 
     override suspend fun setLocation(location: WeatherLocation) =
         settings.update { it.copy(isEnabled = true, location = location) }
+
+    override suspend fun dismissPrompt() = settings.update { it.copy(isPromptDismissed = true) }
 }
 
 /** 받은 지점을 [requested]에 모은다. 반올림한 값만 넘어오는지 테스트에서 확인한다. */

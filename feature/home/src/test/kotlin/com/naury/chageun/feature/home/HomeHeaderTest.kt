@@ -1,14 +1,20 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.google.common.truth.Truth.assertThat
@@ -41,6 +47,7 @@ class HomeHeaderTest {
         WeatherSnapshot(WeatherCondition.Rain, 17.6, 3.4, false, Instant.EPOCH),
         WeatherLocation.Region(KoreaRegion.Busan),
         WeatherTip.Rain,
+        WeatherScene.Rain,
     )
 
     private fun show(
@@ -48,14 +55,24 @@ class HomeHeaderTest {
         greeting: Greeting = Greeting(GreetingSituation.Morning, seed = 0),
         name: String? = null,
         onSetUpWeather: () -> Unit = {},
+        onDismiss: () -> Unit = {},
     ) = composeRule.setContent {
-        ChageunTheme {
-            HomeScreen(
-                uiState = content(VehicleHealthLevel.Good, emptyList())
-                    .copy(weather = weather, greeting = greeting, greetingName = name),
-                paneCount = 1,
-                actions = HomeActions({}, {}, {}, onSetUpWeather = onSetUpWeather),
-            )
+        // 하늘 애니메이션이 계속 프레임을 요청하면 테스트가 끝나지 않으므로 한 장면으로 멈춘다.
+        CompositionLocalProvider(LocalFrozenSkyTime provides 0L) {
+            ChageunTheme {
+                HomeScreen(
+                    uiState = content(VehicleHealthLevel.Good, emptyList())
+                        .copy(weather = weather, greeting = greeting, greetingName = name),
+                    paneCount = 1,
+                    actions = HomeActions(
+                        {},
+                        {},
+                        {},
+                        onSetUpWeather = onSetUpWeather,
+                        onDismissWeatherPrompt = onDismiss,
+                    ),
+                )
+            }
         }
     }
 
@@ -88,13 +105,16 @@ class HomeHeaderTest {
     }
 
     @Test
-    fun weatherSetup_opensLocationPicker() {
+    fun weatherSetup_pillOpensPicker_andCanBeDismissed() {
         var opened = 0
-        show(weather = HomeWeather.Setup, onSetUpWeather = { opened++ })
+        var dismissed = 0
+        show(weather = HomeWeather.Setup, onSetUpWeather = { opened++ }, onDismiss = { dismissed++ })
 
-        composeRule.onNode(hasText("Show weather", substring = true) and hasClickAction()).performClick()
+        composeRule.onNode(hasText("Turn on weather driving tips") and hasClickAction()).performClick()
+        composeRule.onNodeWithContentDescription("Dismiss weather tip").performClick()
 
         assertThat(opened).isEqualTo(1)
+        assertThat(dismissed).isEqualTo(1)
         composeRule.assertAccessibleControls()
     }
 
@@ -103,8 +123,7 @@ class HomeHeaderTest {
         var opened = 0
         show(weather = HomeWeather.NeedsPermission, onSetUpWeather = { opened++ })
 
-        composeRule.onNodeWithText("Location permission is off").assertIsDisplayed()
-        composeRule.onNode(hasText("Choose location", substring = true) and hasClickAction()).performClick()
+        composeRule.onNode(hasText("Location is off · Choose location") and hasClickAction()).performClick()
 
         assertThat(opened).isEqualTo(1)
     }
@@ -117,20 +136,38 @@ class HomeHeaderTest {
     }
 
     @Test
-    fun weatherShown_hasTemperatureTipAndAttribution() {
-        show(weather = rain)
+    fun weatherShown_isOneSentence_andChangesLocation() {
+        var opened = 0
+        show(weather = rain, onSetUpWeather = { opened++ })
 
-        composeRule.onNodeWithText("18° Rain · Busan").assertIsDisplayed()
-        composeRule.onNodeWithText("Wet roads, slow down 20% and keep your distance").assertIsDisplayed()
-        composeRule.onNodeWithText("Weather: MET Norway").assertIsDisplayed()
+        val line = composeRule.onNode(
+            hasContentDescription("Busan, 18 degrees, Rain. Wet roads, slow down 20% and keep your distance") and
+                hasClickAction(),
+        )
+        line.assertIsDisplayed()
+        line.assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        assertThat(line.fetchSemanticsNode().config[SemanticsActions.OnClick].label).isEqualTo("Change location")
+        line.performClick()
+
+        assertThat(opened).isEqualTo(1)
+        composeRule.assertAccessibleControls()
     }
 
     @Test
-    fun weatherOffOrUnavailable_showsNoCard() {
+    @Config(qualifiers = "ko-w360dp-h2000dp")
+    fun weatherShown_ko_readsNaturally() {
+        show(weather = rain)
+
+        composeRule.onNode(hasContentDescription("부산 18도 비. ", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    fun weatherOffOrUnavailable_showsNothing() {
         show(weather = HomeWeather.Unavailable)
 
-        composeRule.onAllNodesWithText("Weather: MET Norway").assertCountEquals(0)
-        composeRule.onAllNodesWithText("Show weather").assertCountEquals(0)
+        composeRule.onAllNodes(hasClickAction() and hasContentDescription("degrees", substring = true))
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithText("Turn on weather driving tips").assertCountEquals(0)
         composeRule.onAllNodesWithText("Checking the weather…").assertCountEquals(0)
     }
 

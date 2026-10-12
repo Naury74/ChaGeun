@@ -75,7 +75,7 @@ class HomeViewModelTest {
         ),
         historyRepository = history,
         photoRepository = photos,
-        header = HomeHeaderSource(auth, usage, weatherSettings, LoadWeatherUseCase(location, weatherRepository)),
+        header = HomeHeaderSource(auth, usage, weatherSettings, LoadWeatherUseCase(location, weatherRepository), clock),
         clock = clock,
     )
 
