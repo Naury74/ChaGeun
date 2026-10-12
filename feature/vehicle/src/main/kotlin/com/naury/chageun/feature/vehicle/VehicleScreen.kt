@@ -56,6 +56,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -98,11 +99,14 @@ import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.openUriSafely
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
+import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
+import java.io.File
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun VehicleRoute(
@@ -122,6 +126,9 @@ fun VehicleRoute(
     // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })
+    // 넣기 전이든 넣은 뒤든 편집한 사진은 확인 시트로 돌아가 배경 지우기를 다시 고르고 넣는다.
+    val photoEditor = rememberPhotoEditorLauncher { edited -> edited.uris.firstOrNull()?.let { pendingPhoto = it } }
+    val scope = rememberCoroutineScope()
     pendingPhoto?.let { uri ->
         VehiclePhotoConfirmSheet(
             sourceUri = uri,
@@ -132,6 +139,7 @@ fun VehicleRoute(
                 pendingPhoto = null
             },
             onDismiss = { pendingPhoto = null },
+            onEdit = { photoEditor.edit(listOf(uri)) },
         )
     }
     var isEditing by rememberSaveable { mutableStateOf(false) }
@@ -148,6 +156,7 @@ fun VehicleRoute(
                 onRemove = viewModel::removePhoto,
                 onRemoveBackground = viewModel::removeBackground,
                 onBackgroundRemovalChanged = viewModel::setBackgroundRemoval,
+                onEdit = { scope.launch { viewModel.originalPhotoPath()?.let { photoEditor.edit(File(it)) } } },
             ),
             onEditVehicle = { isEditing = true },
             onOpenAlbum = onOpenAlbum,
@@ -165,6 +174,8 @@ data class VehiclePhotoActions(
     val onRemove: () -> Unit = {},
     val onRemoveBackground: () -> Unit = {},
     val onBackgroundRemovalChanged: (Boolean) -> Unit = {},
+    /** null이면 넣은 사진에 편집 버튼을 두지 않는다. */
+    val onEdit: (() -> Unit)? = null,
 )
 
 @Composable
@@ -381,6 +392,9 @@ private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoAct
             },
             modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
         )
+        actions.onEdit?.let {
+            TextButton(onClick = it) { Text(stringResource(R.string.vehicle_photo_edit)) }
+        }
         TextButton(onClick = actions.onRemove) { Text(stringResource(R.string.vehicle_photo_remove)) }
     }
 }

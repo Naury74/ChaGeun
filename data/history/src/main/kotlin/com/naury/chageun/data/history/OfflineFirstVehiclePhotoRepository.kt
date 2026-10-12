@@ -72,6 +72,13 @@ internal class OfflineFirstVehiclePhotoRepository @Inject constructor(
         .distinctUntilChanged()
         .flowOn(ioDispatcher)
 
+    override suspend fun originalPath(vehicleId: VehicleId): String? = withContext(ioDispatcher) {
+        attachmentDao.findFor(vehicleId.value, OWNER_TYPE, vehicleId.value).maxByOrNull { it.createdAt }
+            ?.let { File(directory, it.fileName) }
+            ?.takeIf { it.exists() }
+            ?.absolutePath
+    }
+
     // 배경 지우기를 꺼 두었으면 지난 실패 안내도 보이지 않게 한다.
     override fun observeCutout(vehicleId: VehicleId): Flow<CutoutStatus> =
         combine(cutoutStatus.map { it[vehicleId] ?: CutoutStatus.Idle }, observeBackgroundRemoval(vehicleId)) {

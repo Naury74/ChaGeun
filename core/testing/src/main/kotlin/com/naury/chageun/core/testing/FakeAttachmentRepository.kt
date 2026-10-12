@@ -47,6 +47,16 @@ class FakeAttachmentRepository : AttachmentRepository {
         return AttachResult(added = sourceUris.size, failed = 0)
     }
 
+    var replaceSucceeds = true
+
+    override suspend fun replace(vehicleId: VehicleId, attachmentId: String, sourceUri: String): Boolean {
+        if (!replaceSucceeds || attachments.value.none { it.id == attachmentId }) return false
+        attachments.update { list ->
+            list.map { if (it.id == attachmentId) it.copy(filePath = sourceUri, thumbnailPath = sourceUri) else it }
+        }
+        return true
+    }
+
     override suspend fun delete(vehicleId: VehicleId, attachmentId: String) {
         attachments.update { list -> list.filterNot { it.id == attachmentId } }
     }

@@ -160,6 +160,20 @@ class VehicleViewModelTest {
     }
 
     @Test
+    fun editingCurrentPhoto_startsFromTheOriginal() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        assertThat(viewModel.originalPhotoPath()).isNull()
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Diesel, Kilometers(40_000)))
+        viewModel.uiState.first { it is VehicleUiState.Content }
+
+        viewModel.setPhoto("car", removeBackground = true)
+        viewModel.uiState.first { (it as? VehicleUiState.Content)?.photoPath != null }
+
+        assertThat(viewModel.originalPhotoPath()).isEqualTo("/photos/car.jpg")
+    }
+
+    @Test
     fun photo_isShown_andFailedImportIsReported() = runTest {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }

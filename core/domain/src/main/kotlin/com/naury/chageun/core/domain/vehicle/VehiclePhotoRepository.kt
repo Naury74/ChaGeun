@@ -12,6 +12,9 @@ interface VehiclePhotoRepository {
      */
     fun observe(vehicleId: VehicleId): Flow<String?>
 
+    /** 배경을 지우기 전 원본 JPEG의 절대 경로. 편집기에 넘길 때 쓴다. 사진이 없으면 null이다. */
+    suspend fun originalPath(vehicleId: VehicleId): String?
+
     /** 배경 지우기 진행 상태. 앱을 다시 켜면 [CutoutStatus.Idle]부터 시작한다. */
     fun observeCutout(vehicleId: VehicleId): Flow<CutoutStatus>
 

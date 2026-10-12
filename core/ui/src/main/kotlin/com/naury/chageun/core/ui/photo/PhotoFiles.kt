@@ -50,6 +50,26 @@ object PhotoFiles {
         return target.toUri().toString()
     }
 
+    /**
+     * [sourceUri]의 바이트를 그대로 캐시 파일로 옮긴다. 다른 곳의 임시 파일을 바로 지워도
+     * 저장소가 나중에 가져갈 수 있게 할 때 쓴다.
+     *
+     * @return 복사한 파일의 URI. 읽을 수 없으면 null이고 반쯤 쓴 파일은 남기지 않는다.
+     */
+    fun copyIn(context: Context, sourceUri: Uri): String? {
+        val target = newFile(context)
+        val copied = runCatching {
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                target.outputStream().use { input.copyTo(it) }
+            }
+        }.getOrNull()
+        if (copied == null || target.length() == 0L) {
+            target.delete()
+            return null
+        }
+        return target.toUri().toString()
+    }
+
     /** 편집 화면 미리보기와 자르기에 쓸 수 있게 방향을 바로잡아 읽는다. */
     fun decodeUpright(context: Context, sourceUri: String, maxEdge: Int = MAX_EDIT_EDGE_PX): Bitmap? {
         val uri = sourceUri.toUri()

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -57,6 +58,7 @@ import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.manage.R
@@ -93,6 +95,9 @@ fun RecordServiceHost(
         showQualityOption = true,
         onPhotos = viewModel::onPhotosChanged,
     )
+    // 고른 사진을 저장 전에 한꺼번에 편집한다. 잘라 낸 영수증 글씨가 남도록 고화질 상한으로 가져온다.
+    val photoEditor =
+        rememberPhotoEditorLauncher { edited -> viewModel.onPhotosChanged(edited.uris, highQuality = true) }
     val content: @Composable () -> Unit = {
         RecordServiceContent(
             uiState = uiState,
@@ -110,6 +115,7 @@ fun RecordServiceHost(
                 onDecideOdometer = viewModel::decideOdometer,
                 onPickPhotos = photoInput::open,
                 onClearPhotos = { viewModel.onPhotosChanged(emptyList(), highQuality = false) },
+                onEditPhotos = { photoEditor.edit(uiState.photos, maxItems = MAX_ATTACHMENTS_PER_RECORD) },
             ),
         )
     }
@@ -130,6 +136,8 @@ data class RecordServiceActions(
     val onToggleAlsoReplaced: (MaintenanceItem) -> Unit = {},
     val onPickPhotos: () -> Unit = {},
     val onClearPhotos: () -> Unit = {},
+    /** null이면 고른 사진에 편집 버튼을 두지 않는다. */
+    val onEditPhotos: (() -> Unit)? = null,
 )
 
 @Composable
@@ -378,12 +386,14 @@ private fun MoreFields(uiState: RecordServiceUiState, actions: RecordServiceActi
             modifier = Modifier.fillMaxWidth(),
         )
         // 고칠 때는 기록 상세의 사진 칸에서 붙이고 지운다.
-        if (!uiState.isEditing) PhotoPicker(uiState.photos.size, actions.onPickPhotos, actions.onClearPhotos)
+        if (!uiState.isEditing) {
+            PhotoPicker(uiState.photos.size, actions.onPickPhotos, actions.onClearPhotos, actions.onEditPhotos)
+        }
     }
 }
 
 @Composable
-private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit) {
+private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit, onEdit: (() -> Unit)?) {
     if (count == 0) {
         OutlinedButton(
             onClick = onPick,
@@ -407,6 +417,13 @@ private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit) {
             )
             TextButton(onClick = onPick) { Text(stringResource(R.string.record_photos_change)) }
             TextButton(onClick = onClear) { Text(stringResource(R.string.record_photos_clear)) }
+        }
+        onEdit?.let {
+            TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(ChageunTheme.spacing.xs))
+                Text(stringResource(R.string.record_photos_edit))
+            }
         }
     }
     Text(

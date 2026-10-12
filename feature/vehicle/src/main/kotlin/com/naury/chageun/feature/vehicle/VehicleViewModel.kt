@@ -139,6 +139,12 @@ class VehicleViewModel @Inject constructor(
         photoRepository.removeBackground(vehicle.id)
     }
 
+    /** 지금 대표 사진의 배경을 지우기 전 원본. 편집기는 이 파일을 열고, 결과는 [setPhoto]로 다시 넣는다. */
+    suspend fun originalPhotoPath(): String? {
+        val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return null
+        return photoRepository.originalPath(vehicle.id)
+    }
+
     fun removePhoto() {
         val vehicle = (uiState.value as? VehicleUiState.Content)?.vehicle ?: return
         viewModelScope.launch { photoRepository.clear(vehicle.id) }

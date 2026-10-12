@@ -153,6 +153,8 @@ internal fun RecordDetailPane(
                     onAdd = { attachments.onAdd(detail.ref) },
                     onDelete = attachments.onDelete,
                     onDismissFailure = attachments.onDismissFailure,
+                    onEdit = attachments.onEdit,
+                    onAddEdited = attachments.onAddEdited?.let { add -> { add(detail.ref) } },
                 )
             }
         }
@@ -213,6 +215,10 @@ internal data class AttachmentsState(
     val onAdd: (RecordRef) -> Unit,
     val onDelete: (String) -> Unit,
     val onDismissFailure: () -> Unit,
+    /** null이면 첨부한 사진에 편집 버튼을 두지 않는다. */
+    val onEdit: ((Attachment) -> Unit)? = null,
+    /** null이면 "편집해서 추가" 버튼을 두지 않는다. */
+    val onAddEdited: ((RecordRef) -> Unit)? = null,
 )
 
 @Composable

@@ -60,8 +60,16 @@ internal class RoomBackupRepository @Inject constructor(
     override suspend fun deleteAll() = withContext(ioDispatcher) {
         database.withTransaction { backupDao.deleteAllVehicles() }
         attachmentDirectory.deleteRecursively()
+        leftoverPhotoDirectories().forEach(File::deleteRecursively)
         Unit
     }
+
+    // 모두 지운다고 안내하므로 사진 편집기(FrameKit)의 세션·결과 파일과 가져오기 전 임시 사진도 함께 지운다.
+    private fun leftoverPhotoDirectories() = listOf(
+        File(context.filesDir, FRAMEKIT_DIRECTORY),
+        File(context.cacheDir, FRAMEKIT_DIRECTORY),
+        File(context.cacheDir, PHOTO_INPUT_DIRECTORY),
+    )
 
     override suspend fun previewImport(sourceUri: String): ImportPreview = withContext(ioDispatcher) {
         val content = runCatching {
@@ -134,5 +142,9 @@ internal class RoomBackupRepository @Inject constructor(
 
     private companion object {
         const val STAGING_DIRECTORY = "attachments-import"
+
+        // FrameKit이 files·cache 아래에 만드는 폴더, core:ui PhotoFiles의 임시 폴더와 이름이 같아야 한다.
+        const val FRAMEKIT_DIRECTORY = "framekit"
+        const val PHOTO_INPUT_DIRECTORY = "photo_input"
     }
 }

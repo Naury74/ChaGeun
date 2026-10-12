@@ -66,6 +66,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.mileageHeroStat
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
+import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import java.time.LocalDate
@@ -89,6 +90,7 @@ fun HomeRoute(
     // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })
+    val photoEditor = rememberPhotoEditorLauncher { edited -> edited.uris.firstOrNull()?.let { pendingPhoto = it } }
     pendingPhoto?.let { uri ->
         VehiclePhotoConfirmSheet(
             sourceUri = uri,
@@ -100,6 +102,7 @@ fun HomeRoute(
                 pendingPhoto = null
             },
             onDismiss = { pendingPhoto = null },
+            onEdit = { photoEditor.edit(listOf(uri)) },
         )
     }
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass

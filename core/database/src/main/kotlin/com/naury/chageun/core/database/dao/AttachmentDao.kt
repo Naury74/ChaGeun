@@ -3,6 +3,7 @@ package com.naury.chageun.core.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.naury.chageun.core.database.entity.AttachmentEntity
 import com.naury.chageun.core.database.entity.DatedAttachmentRow
 import java.time.LocalDate
@@ -58,6 +59,10 @@ interface AttachmentDao {
 
     @Insert
     suspend fun insert(attachment: AttachmentEntity)
+
+    /** 편집한 사진으로 파일만 바꿀 때 쓴다. id·소유자·만든 시각은 그대로 둔다. */
+    @Update
+    suspend fun update(attachment: AttachmentEntity)
 
     @Query("DELETE FROM attachment WHERE vehicle_id = :vehicleId AND id = :id")
     suspend fun delete(vehicleId: String, id: String)

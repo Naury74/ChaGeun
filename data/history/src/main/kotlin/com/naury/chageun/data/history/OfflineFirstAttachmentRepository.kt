@@ -84,6 +84,33 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
         }
     }
 
+    override suspend fun replace(vehicleId: VehicleId, attachmentId: String, sourceUri: String): Boolean =
+        withContext(ioDispatcher) {
+            val row = attachmentDao.find(vehicleId.value, attachmentId) ?: return@withContext false
+            // 이름을 새로 지어 이미지 캐시가 예전 사진을 보여 주지 않게 하고, 다 쓴 뒤에 옛 파일을 지운다.
+            val name = UUID.randomUUID().toString()
+            val imported = runCatching {
+                importer.import(
+                    sourceUri,
+                    File(directory, "$name.jpg"),
+                    File(directory, "${name}_thumb.jpg"),
+                    ImageImporter.HIGH_QUALITY_EDGE_PX,
+                )
+            }.onFailure { logger.warn("attachment_replace_failed", error = it) }.getOrNull()
+            if (imported != null) {
+                attachmentDao.update(
+                    row.copy(
+                        fileName = imported.file.name,
+                        thumbnailName = imported.thumbnail.name,
+                        sizeBytes = imported.sizeBytes,
+                    ),
+                )
+                row.deleteFiles()
+            }
+            logger.debug("attachment_replaced", LogField.Success(imported != null))
+            imported != null
+        }
+
     override suspend fun delete(vehicleId: VehicleId, attachmentId: String) = withContext(ioDispatcher) {
         attachmentDao.find(vehicleId.value, attachmentId)?.let { row ->
             attachmentDao.delete(vehicleId.value, attachmentId)

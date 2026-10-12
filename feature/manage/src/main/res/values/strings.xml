@@ -98,6 +98,7 @@
     <string name="record_photos_add">Add photos or a receipt</string>
     <string name="record_photos_change">Change</string>
     <string name="record_photos_clear">Remove</string>
+    <string name="record_photos_edit">Edit photos</string>
     <string name="record_photos_notice">Photos stay on this device and are deleted with the app. Location data is removed when saved.</string>
     <plurals name="record_photos_count">
         <item quantity="one">%d photo</item>
