@@ -121,6 +121,45 @@
         <item>다시 와 줘서 반가워요</item>
         <item>오랜만이에요, 그동안 잘 달렸나요?</item>
     </string-array>
+    <string-array name="home_greeting_seollal">
+        <item>새해 복 많이 받으세요</item>
+        <item>즐거운 설 연휴 보내세요</item>
+        <item>설날이에요, 따뜻한 하루 보내요</item>
+    </string-array>
+    <string-array name="home_greeting_seollal_travel">
+        <item>즐거운 설 연휴, 오가는 길 조심하세요</item>
+        <item>먼 길 가시면 두 시간마다 쉬어 가요</item>
+        <item>막히는 명절 길, 졸리면 꼭 쉬어 가요</item>
+        <item>출발 전에 타이어와 와이퍼를 살펴봐요</item>
+    </string-array>
+    <string-array name="home_greeting_chuseok">
+        <item>풍성한 한가위 보내세요</item>
+        <item>즐거운 추석 보내세요</item>
+        <item>오늘 밤 보름달 보며 소원 빌어요</item>
+    </string-array>
+    <string-array name="home_greeting_chuseok_travel">
+        <item>풍성한 한가위, 오가는 길 조심하세요</item>
+        <item>먼 길 가시면 두 시간마다 쉬어 가요</item>
+        <item>막히는 명절 길, 졸리면 꼭 쉬어 가요</item>
+        <item>출발 전에 타이어와 와이퍼를 살펴봐요</item>
+    </string-array>
+    <string-array name="home_greeting_buddhas_birthday">
+        <item>부처님오신날이에요</item>
+        <item>평안한 부처님오신날 보내요</item>
+    </string-array>
+    <string-array name="home_greeting_labor_day">
+        <item>오늘은 노동절이에요</item>
+        <item>노동절이에요, 느긋하게 쉬어요</item>
+    </string-array>
+    <string-array name="home_greeting_constitution_day">
+        <item>오늘은 제헌절이에요</item>
+        <item>제헌절이에요, 뜻깊은 하루 보내요</item>
+    </string-array>
+    <string-array name="home_greeting_substitute_holiday">
+        <item>오늘은 대체공휴일이에요, 푹 쉬어요</item>
+        <item>하루 더 쉬는 날이에요</item>
+        <item>덤으로 생긴 휴일, 즐겁게 보내요</item>
+    </string-array>
     <string-array name="home_greeting_new_year">
         <item>새해 복 많이 받으세요</item>
         <item>새해에도 안전 운전해요</item>

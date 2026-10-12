@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
+import com.naury.chageun.core.domain.weather.Daylight
 import com.naury.chageun.core.domain.weather.WeatherTips
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherSnapshot
@@ -50,24 +51,24 @@ enum class WeatherScene {
     Snow,
     Heat,
     Cold,
+
+    // 입자 위치를 장면 순서로 뽑으므로 새 장면은 맨 뒤에 둔다.
+    Dusk,
 }
 
 /**
- * 날씨로 장면을 고른다. 위에서부터 먼저 맞는 것을 쓰고, 남은 맑음·구름 조금은 밤낮으로 나눈다.
- * 밤은 제공처가 밤 아이콘을 줬거나 현지 시각이 18시부터 6시 전까지일 때다.
+ * 날씨로 장면을 고른다. 위에서부터 먼저 맞는 것을 쓰고, 남은 맑음·구름 조금은 [daylight]로 낮·노을·밤을 나눈다.
+ * 밤낮은 날씨를 물은 지점의 해 뜨고 지는 시각으로 정하고, 제공처가 밤 아이콘을 줬으면 밤이다.
  */
-fun weatherSceneFor(snapshot: WeatherSnapshot, hour: Int): WeatherScene {
+fun weatherSceneFor(snapshot: WeatherSnapshot, daylight: Daylight): WeatherScene {
     val matched = SCENE_RULES.firstOrNull { (matches, _) -> matches(snapshot) }?.second
-    val isNight = snapshot.isNight || hour < DAY_START_HOUR || hour >= NIGHT_START_HOUR
     return matched ?: when {
-        isNight -> WeatherScene.ClearNight
+        snapshot.isNight || daylight == Daylight.Night -> WeatherScene.ClearNight
+        daylight == Daylight.Dusk -> WeatherScene.Dusk
         snapshot.condition == WeatherCondition.PartlyCloudy -> WeatherScene.PartlyCloudy
         else -> WeatherScene.ClearDay
     }
 }
-
-private const val DAY_START_HOUR = 6
-private const val NIGHT_START_HOUR = 18
 
 private val SCENE_RULES: List<Pair<(WeatherSnapshot) -> Boolean, WeatherScene>> = listOf(
     { s: WeatherSnapshot -> s.condition == WeatherCondition.Snow || s.condition == WeatherCondition.Sleet } to
@@ -94,6 +95,8 @@ fun skyPalette(scene: WeatherScene, isDark: Boolean): SkyPalette =
 // 라이트 모드는 글자가 어두우므로 밤도 옅은 남보라 하늘로 둔다. 깊은 남색 밤하늘은 다크 모드에서 쓴다.
 private val LightSkies: Map<WeatherScene, SkyPalette> = mapOf(
     WeatherScene.ClearDay to SkyPalette(HeroSky(Color(0xFFA6CFFF), Color(0xCCFFF3D1))),
+    // 해 지기 전 30분. 위는 옅은 라벤더, 해 쪽은 살구빛으로 번진다.
+    WeatherScene.Dusk to SkyPalette(HeroSky(Color(0xFFD9C8E8), Color(0xCCFFC9A3))),
     WeatherScene.ClearNight to SkyPalette(HeroSky(Color(0xFFB4BCDF), Color(0x33FFFFFF)), ink = Color(0xE6FFFFFF)),
     WeatherScene.PartlyCloudy to
         SkyPalette(HeroSky(Color(0xFFB3CCEB), Color(0x99FFFFFF)), cloud = Color(0x8CFFFFFF)),
@@ -122,6 +125,7 @@ private val LightSkies: Map<WeatherScene, SkyPalette> = mapOf(
 
 private val DarkSkies: Map<WeatherScene, SkyPalette> = mapOf(
     WeatherScene.ClearDay to SkyPalette(HeroSky(Color(0xFF15335F), Color(0x1AFFE7B0))),
+    WeatherScene.Dusk to SkyPalette(HeroSky(Color(0xFF2A2142), Color(0x33FF9E6B))),
     WeatherScene.ClearNight to SkyPalette(HeroSky(Color(0xFF070F26), Color(0x14FFFFFF)), ink = Color(0xB3FFFFFF)),
     WeatherScene.PartlyCloudy to
         SkyPalette(HeroSky(Color(0xFF15253F), Color(0x14FFFFFF)), cloud = Color(0x14FFFFFF)),

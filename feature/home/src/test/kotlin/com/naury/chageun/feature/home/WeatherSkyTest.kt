@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
+import com.naury.chageun.core.domain.weather.Daylight
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherSnapshot
 import java.time.Instant
@@ -37,10 +38,17 @@ class WeatherSkyTest {
             snapshot(WeatherCondition.Clear, temperatureC = -8.0) to WeatherScene.Cold,
         )
 
-        cases.forEach { (weather, scene) -> assertThat(weatherSceneFor(weather, hour = 13)).isEqualTo(scene) }
-        // 제공처가 낮 아이콘을 줘도 저녁 7시 맑은 하늘은 밤이다.
-        assertThat(weatherSceneFor(snapshot(WeatherCondition.Clear), hour = 19)).isEqualTo(WeatherScene.ClearNight)
-        assertThat(weatherSceneFor(snapshot(WeatherCondition.Clear), hour = 5)).isEqualTo(WeatherScene.ClearNight)
+        cases.forEach { (weather, scene) -> assertThat(weatherSceneFor(weather, Daylight.Day)).isEqualTo(scene) }
+        // 해가 진 뒤 맑은 하늘은 제공처가 낮 아이콘을 줘도 밤이다.
+        assertThat(weatherSceneFor(snapshot(WeatherCondition.Clear), Daylight.Night)).isEqualTo(WeatherScene.ClearNight)
+        // 해 지기 전 30분은 노을이다. 구름 조금도 노을로 그리지만, 비·눈 같은 날씨는 그대로다.
+        assertThat(weatherSceneFor(snapshot(WeatherCondition.Clear), Daylight.Dusk)).isEqualTo(WeatherScene.Dusk)
+        assertThat(weatherSceneFor(snapshot(WeatherCondition.PartlyCloudy), Daylight.Dusk))
+            .isEqualTo(WeatherScene.Dusk)
+        assertThat(weatherSceneFor(snapshot(WeatherCondition.Rain), Daylight.Dusk)).isEqualTo(WeatherScene.Rain)
+        // 제공처가 밤 아이콘을 줬으면 노을 시간이어도 밤이다.
+        assertThat(weatherSceneFor(snapshot(WeatherCondition.Clear, isNight = true), Daylight.Dusk))
+            .isEqualTo(WeatherScene.ClearNight)
     }
 
     /** 하늘 위 글자(브랜드·인사말·날짜·날씨 줄·차 이름·연식)가 어떤 날씨에서도 4.5:1 이상이다. */

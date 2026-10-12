@@ -8,8 +8,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 sealed interface WeatherResult {
-    /** [areaName]은 "현재 위치"의 동네 이름이다. 지역을 직접 골랐거나 찾지 못했으면 null이다. */
-    data class Shown(val snapshot: WeatherSnapshot, val areaName: String? = null) : WeatherResult
+    /**
+     * [areaName]은 "현재 위치"의 동네 이름이다. 지역을 직접 골랐거나 찾지 못했으면 null이다.
+     * [point]는 날씨를 물은 반올림 좌표다. 화면이 해 뜨고 지는 시각을 계산하는 데만 쓰고 저장하지 않는다.
+     */
+    data class Shown(val snapshot: WeatherSnapshot, val areaName: String? = null, val point: GeoPoint? = null) :
+        WeatherResult
 
     /** "현재 위치"를 골랐지만 위치 권한이 꺼져 있다. 다시 허용하거나 지역을 고르게 한다. */
     data object NeedsPermission : WeatherResult
@@ -48,7 +52,7 @@ class LoadWeatherUseCase @Inject constructor(
             weatherRepository.weatherAt(point) to area?.await()
         }
         if (areaName != null) settingsRepository.setCurrentAreaName(areaName)
-        return snapshot?.let { WeatherResult.Shown(it, areaName) } ?: WeatherResult.Unavailable
+        return snapshot?.let { WeatherResult.Shown(it, areaName, point) } ?: WeatherResult.Unavailable
     }
 
     private suspend fun pointFor(location: WeatherLocation): GeoPoint? = when (location) {

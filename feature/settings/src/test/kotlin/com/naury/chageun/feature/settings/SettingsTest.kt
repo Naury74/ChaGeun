@@ -19,13 +19,17 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.domain.weather.LastWeather
 import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
+import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
+import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeBackupRepository
+import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
@@ -34,6 +38,7 @@ import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
+import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -131,7 +136,7 @@ class SettingsTest {
     @Test
     fun deleteAll_showsSummaryFirst_thenDeletesOnConfirm() = runTest {
         val backup = FakeBackupRepository().apply { summary = LocalDataSummary(1, 12, 3) }
-        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository(), FakeLastWeatherRepository())
 
         viewModel.requestDeleteAll()
         assertThat(viewModel.dataState.value.pendingDeletion?.records).isEqualTo(12)
@@ -146,19 +151,28 @@ class SettingsTest {
     @Test
     fun deleteAll_alsoRemovesSavedAreaName() = runTest {
         val weather = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current), "서울 강남구")
-        val viewModel = BackupViewModel(FakeBackupRepository(), weather)
+        val lastWeather = FakeLastWeatherRepository(
+            LastWeather(
+                WeatherSnapshot(WeatherCondition.Clear, 20.0, 1.0, false, Instant.EPOCH),
+                fetchedAt = Instant.EPOCH,
+                areaName = "서울 강남구",
+                locationKey = WeatherLocation.Current.toString(),
+            ),
+        )
+        val viewModel = BackupViewModel(FakeBackupRepository(), weather, lastWeather)
 
         viewModel.requestDeleteAll()
         viewModel.confirmDeleteAll()
 
         assertThat(weather.currentAreaName.value).isNull()
         assertThat(weather.isCurrentLocationMissing.value).isFalse()
+        assertThat(lastWeather.saved).isNull()
     }
 
     @Test
     fun export_reportsFailure() = runTest {
         val backup = FakeBackupRepository().apply { exportSucceeds = false }
-        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository(), FakeLastWeatherRepository())
 
         viewModel.export("content://downloads/backup.zip")
 
@@ -182,7 +196,7 @@ class SettingsTest {
     fun import_previewsFirst_thenReplacesOnConfirm() = runTest {
         val preview = ImportPreview.Ready(incoming = LocalDataSummary(1, 20, 4), current = LocalDataSummary(1, 12, 3))
         val backup = FakeBackupRepository().apply { importPreview = preview }
-        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository(), FakeLastWeatherRepository())
 
         viewModel.previewImport("content://downloads/backup.zip")
         assertThat(viewModel.dataState.value.pendingImport?.preview).isEqualTo(preview)
@@ -198,7 +212,7 @@ class SettingsTest {
     @Test
     fun import_unsupportedVersion_neverReplaces() = runTest {
         val backup = FakeBackupRepository().apply { importPreview = ImportPreview.UnsupportedVersion(2) }
-        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository(), FakeLastWeatherRepository())
 
         viewModel.previewImport("content://downloads/backup.zip")
         viewModel.confirmImport()

@@ -126,6 +126,45 @@
         <item>Good to see you again</item>
         <item>Welcome back</item>
     </string-array>
+    <string-array name="home_greeting_seollal">
+        <item>Happy Lunar New Year</item>
+        <item>Wishing you a happy Seollal break</item>
+        <item>A fresh start this Lunar New Year</item>
+    </string-array>
+    <string-array name="home_greeting_seollal_travel">
+        <item>Enjoy the Seollal break, and take breaks on the road</item>
+        <item>Long drive home? Rest every two hours</item>
+        <item>Holiday traffic ahead. Drive safe out there</item>
+        <item>Check your tires and wipers before the trip</item>
+    </string-array>
+    <string-array name="home_greeting_chuseok">
+        <item>Happy Chuseok</item>
+        <item>Wishing you a bountiful Chuseok</item>
+        <item>Enjoy the full moon tonight</item>
+    </string-array>
+    <string-array name="home_greeting_chuseok_travel">
+        <item>Enjoy Chuseok, and take breaks on the road</item>
+        <item>Long drive home? Rest every two hours</item>
+        <item>Holiday traffic ahead. Drive safe out there</item>
+        <item>Check your tires and wipers before the trip</item>
+    </string-array>
+    <string-array name="home_greeting_buddhas_birthday">
+        <item>Happy Buddha\'s Birthday</item>
+        <item>A peaceful Buddha\'s Birthday to you</item>
+    </string-array>
+    <string-array name="home_greeting_labor_day">
+        <item>Happy Labor Day</item>
+        <item>Labor Day off. Enjoy a slow day</item>
+    </string-array>
+    <string-array name="home_greeting_constitution_day">
+        <item>Today is Constitution Day</item>
+        <item>Happy Constitution Day</item>
+    </string-array>
+    <string-array name="home_greeting_substitute_holiday">
+        <item>It\'s a substitute holiday. Rest well</item>
+        <item>One more day off today</item>
+        <item>Enjoy the extra holiday</item>
+    </string-array>
     <string-array name="home_greeting_new_year">
         <item>Happy New Year</item>
         <item>New year, safe miles ahead</item>
