@@ -1,6 +1,7 @@
 package com.naury.chageun
 
 import android.app.Application
+import android.content.Context
 import androidx.test.runner.AndroidJUnitRunner
 import java.io.File
 
@@ -11,6 +12,10 @@ import java.io.File
  * `pm clear`는 테스트 프로세스 안에서 부를 수 없고, Activity를 띄운 뒤 파일을 지우면 이미 열린 DB와 어긋난다.
  */
 class ChageunTestRunner : AndroidJUnitRunner() {
+
+    /** 실제 앱 대신 Hilt 테스트 앱([ChageunTestApplication])을 띄워 테스트가 모듈을 바꾸고 저장소를 주입받게 한다. */
+    override fun newApplication(cl: ClassLoader?, className: String?, context: Context?): Application =
+        super.newApplication(cl, ChageunTestApplication_Application::class.java.name, context)
 
     override fun callApplicationOnCreate(app: Application) {
         val dataDir = app.applicationInfo.dataDir?.let(::File)

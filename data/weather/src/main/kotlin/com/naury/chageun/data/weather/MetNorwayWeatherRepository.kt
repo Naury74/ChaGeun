@@ -17,9 +17,11 @@ import kotlinx.coroutines.sync.withLock
 /**
  * 마지막으로 받은 날씨 하나를 메모리에만 둔다. 앱을 다시 켜면 처음부터 받는다.
  * 좌표·응답 본문은 디스크와 로그에 남기지 않는다.
+ *
+ * [WeatherRepositoryModule]이 공개 모듈이라 클래스도 공개하고, 생성자는 이 모듈 안에서만 쓴다.
  */
 @Singleton
-internal class MetNorwayWeatherRepository @Inject constructor(
+class MetNorwayWeatherRepository @Inject internal constructor(
     private val remote: MetNorwayRemote,
     private val clock: Clock,
     private val logger: AppLogger,

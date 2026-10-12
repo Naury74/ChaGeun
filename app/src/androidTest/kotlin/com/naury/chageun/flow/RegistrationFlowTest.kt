@@ -9,6 +9,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.naury.chageun.MainActivity
 import com.naury.chageun.core.ui.R as UiR
 import com.naury.chageun.feature.onboarding.R as OnboardingR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,10 +19,14 @@ import org.junit.runner.RunWith
  * 기획 문서 9.3 차량 등록. 처음 설치한 상태에서 온보딩을 마치면 홈에 등록한 차량이 보여야 한다.
  * 번호판 조회 API가 아직 없어 번호판을 넣는 경우와 건너뛰는 경우 모두 직접 입력으로 등록한다.
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class RegistrationFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }

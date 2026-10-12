@@ -187,6 +187,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    // 흐름 테스트는 Hilt 테스트 앱으로 띄워 날씨 저장소를 가짜로 바꾸고, 저장소를 주입받아 앨범 사진 같은 기록을 미리 넣는다.
+    androidTestImplementation(libs.hilt.android.testing)
+    add("kspAndroidTest", libs.hilt.compiler)
     androidTestUtil(libs.androidx.test.orchestrator)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

@@ -6,15 +6,21 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.naury.chageun.MainActivity
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.manage.R as ManageR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** 기획 문서 9.3 정비 완료 저장. 관리 탭 상세에서 교체 기록을 저장하면 그 항목의 이력에 남아야 한다. */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class ServiceRecordFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }

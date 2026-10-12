@@ -7,6 +7,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.naury.chageun.MainActivity
 import com.naury.chageun.feature.ai.R as AiR
 import com.naury.chageun.feature.home.R as HomeR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,10 +17,14 @@ import org.junit.runner.RunWith
  * 기획 문서 9.3 AI Context Preview. 외부 AI로 보내기 전에 보낼 정보와 보내지 않는 정보를 보여 주고,
  * 실제로 보낼 글에는 차량 정보가 들어가되 번호판은 빠져야 한다.
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class AiContextPreviewFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }
