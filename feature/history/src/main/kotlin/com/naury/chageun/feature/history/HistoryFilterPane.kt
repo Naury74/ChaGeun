@@ -115,7 +115,8 @@ private fun advancedSummary(filter: AdvancedFilter): String {
         else -> null
     }
     val attachments = stringResource(R.string.history_filter_attachments_short).takeIf { filter.withAttachmentsOnly }
-    return listOfNotNull(period, cost, attachments).joinToString(", ")
+    val sounds = stringResource(R.string.history_filter_sounds_short).takeIf { filter.withSoundsOnly }
+    return listOfNotNull(period, cost, attachments, sounds).joinToString(", ")
         .ifEmpty { stringResource(R.string.history_filter_none) }
 }
 

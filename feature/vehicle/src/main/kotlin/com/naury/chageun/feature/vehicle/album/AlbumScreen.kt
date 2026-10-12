@@ -3,6 +3,7 @@ package com.naury.chageun.feature.vehicle.album
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -78,7 +80,7 @@ fun AlbumRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val photoInput = rememberPhotoInputState()
-    // 확인 창을 띄운 채 회전해도 남도록 지울 사진 id를 저장한다. 한 장이든 여러 장이든 같은 창을 쓴다.
+    // 확인 창을 띄운 채 회전해도 남도록 지울 사진 id를 저장한다. 되돌릴 수 있어 많이 지울 때만 묻는다.
     var deleting by rememberSaveable { mutableStateOf<List<String>?>(null) }
     // 처음 열 때 한 번만 고른다. 그 뒤 사용자가 다른 사진으로 넘기거나 닫으면 그대로 둔다.
     var isFocusHandled by rememberSaveable { mutableStateOf(false) }
@@ -114,6 +116,7 @@ fun AlbumRoute(
         viewModel.picks.clear()
     }
 
+    FinishDeleteWhenLeaving(viewModel.deletes::finish)
     val isTwoPane = isListDetailTwoPane()
     val isImmersive = !isTwoPane && uiState.selected != null
     val currentOnImmersiveChange by rememberUpdatedState(onImmersiveChange)
@@ -127,7 +130,7 @@ fun AlbumRoute(
         onSelect = viewModel::select,
         onAdd = photoInput::open,
         onEdit = viewModel::editDetails,
-        onDelete = { deleting = listOf(it) },
+        onDelete = { viewModel.delete(listOf(it)) },
         onSetCover = viewModel::setAsCover,
         onDismissMessage = viewModel::dismissMessage,
         onOpenCalendar = onOpenCalendar,
@@ -141,6 +144,8 @@ fun AlbumRoute(
             if (photo.isVideo) editor.editVideo(file, tag, watermark) else editor.edit(file, tag, watermark)
         },
         onShare = { photo -> editor.share(File(photo.filePath), watermarkFor(photo)) },
+        onUndoDelete = viewModel.deletes::undo,
+        onFinishDelete = viewModel.deletes::finish,
     )
     if (!isTwoPane && uiState.selected != null) {
         // 사진 보기는 제목 바 없이 상태 표시줄 뒤까지 그린다.
@@ -154,7 +159,10 @@ fun AlbumRoute(
                 onClearPicks = viewModel.picks::clear,
                 onAdd = photoInput::open,
                 onMakeSlideshow = makeSlideshow,
-                onDeletePicked = { deleting = uiState.picked.toList() },
+                onDeletePicked = {
+                    val ids = uiState.picked.toList()
+                    if (ids.size >= CONFIRM_DELETE_COUNT) deleting = ids else viewModel.delete(ids)
+                },
             ),
         ) { padding ->
             AlbumScreen(uiState, isTwoPane, actions, Modifier.padding(padding), gridState)
@@ -199,6 +207,10 @@ data class AlbumActions(
     val onZoomGrid: (Int) -> Unit = {},
     /** 다른 앱으로 보내기. 편집기를 붙이지 않았으면 null이고 공유 버튼을 숨긴다. */
     val onShare: ((AlbumPhoto) -> Unit)? = null,
+    /** 방금 지운 사진을 되살린다. */
+    val onUndoDelete: () -> Unit = {},
+    /** 되돌리기 안내 시간이 끝나 정말 지운다. */
+    val onFinishDelete: () -> Unit = {},
 )
 
 /** 그리드 화면 위쪽 버튼이 하는 일. */
@@ -257,7 +269,7 @@ internal fun AlbumListScaffold(
 
 /**
  * 여러 장 고르는 중의 위쪽 버튼. 슬라이드쇼는 사진이 두 장 이상 골라졌을 때만 누를 수 있다.
- * 지우기는 되돌릴 수 없어 위험 색으로 둔다.
+ * 지우기는 잠깐 뒤에는 되돌릴 수 없어 위험 색으로 둔다.
  */
 @Composable
 private fun PickingActions(canMakeSlideshow: Boolean, onMakeSlideshow: () -> Unit, onDelete: () -> Unit) {
@@ -273,6 +285,10 @@ private fun PickingActions(canMakeSlideshow: Boolean, onMakeSlideshow: () -> Uni
     }
 }
 
+/**
+ * 앨범 본문. 사진을 지운 뒤에는 아래에 되돌리기 막대를 띄운다. 한 칸 화면의 사진 보기는 아래 조작 막대를 피해
+ * 사진 보기 안에서 띄운다.
+ */
 @Composable
 fun AlbumScreen(
     uiState: AlbumUiState,
@@ -280,6 +296,29 @@ fun AlbumScreen(
     actions: AlbumActions,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
+) {
+    val isViewerOnly = !isTwoPane && uiState.selected != null
+    Box(modifier) {
+        AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState)
+        if (!isViewerOnly) {
+            AlbumUndoBar(
+                uiState.undo,
+                actions,
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AlbumBody(
+    uiState: AlbumUiState,
+    isTwoPane: Boolean,
+    actions: AlbumActions,
+    modifier: Modifier,
+    gridState: LazyGridState,
 ) {
     val selected = uiState.selected
     when {
@@ -372,3 +411,6 @@ private fun DetailsDialog(photo: AlbumPhoto, onSave: (LocalDate, String) -> Unit
 }
 
 private const val MAX_COMMENT_LENGTH = 300
+
+/** 이보다 적게 고른 사진은 묻지 않고 지운다. 지운 뒤 되돌리기 막대로 되살릴 수 있다. */
+private const val CONFIRM_DELETE_COUNT = 5

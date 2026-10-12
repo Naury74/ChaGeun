@@ -21,6 +21,7 @@ import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -95,6 +96,35 @@ internal class OfflineFirstAlbumRepository @Inject constructor(
         val photo = albumDao.find(vehicleId.value, id) ?: return@withContext
         albumDao.delete(vehicleId.value, id)
         photo.deleteFiles()
+    }
+
+    override suspend fun markDeleted(vehicleId: VehicleId, ids: List<String>) {
+        if (ids.isNotEmpty()) albumDao.setDeletedAt(vehicleId.value, ids, clock.instant())
+    }
+
+    override suspend fun restoreDeleted(vehicleId: VehicleId, ids: List<String>) {
+        if (ids.isNotEmpty()) albumDao.setDeletedAt(vehicleId.value, ids, deletedAt = null)
+    }
+
+    // 화면을 떠나며 부르면 부른 쪽 코루틴이 곧 취소되므로, 시작한 뒤에는 끝까지 지운다.
+    override suspend fun purgeDeleted(vehicleId: VehicleId, ids: List<String>) =
+        withContext(ioDispatcher + NonCancellable) {
+            if (ids.isEmpty()) return@withContext
+            purge(albumDao.deletedRows().filter { it.vehicleId == vehicleId.value && it.id in ids })
+        }
+
+    override suspend fun purgeStaleDeleted() = withContext(ioDispatcher + NonCancellable) {
+        // 이 앱이 시작한 뒤에 새로 지운 사진은 아직 되돌릴 수 있으므로 건드리지 않는다.
+        val now = clock.instant()
+        purge(albumDao.deletedRows().filter { it.deletedAt?.isAfter(now) == false })
+    }
+
+    private suspend fun purge(rows: List<AlbumPhotoEntity>) {
+        if (rows.isEmpty()) return
+        // 행을 먼저 지운다. 파일만 남으면 다음 정리 때 찾을 수 없지만, 행만 남아 깨진 사진이 보이는 것보다 낫다.
+        albumDao.deleteRows(rows.map { it.id })
+        rows.forEach { it.deleteFiles() }
+        logger.debug("album_purged")
     }
 
     /** [uri]를 사진이나 동영상으로 가져와 `[name].jpg`·`[name].mp4`와 `[name]_thumb.jpg`로 저장한다. */

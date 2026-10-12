@@ -17,10 +17,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,10 +33,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -43,6 +48,7 @@ import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.calendar.SearchCalendarRecordsUseCase
+import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.CalendarDay
 import com.naury.chageun.core.model.RecordPhoto
 import com.naury.chageun.core.model.RecordRef
@@ -215,6 +221,11 @@ private fun RecordGroup(records: List<TimelineItem>, onOpen: (RecordRef) -> Unit
                 body = listOfNotNull(timelineMileage(record), cost).joinToString(" · ").ifEmpty { null },
                 tone = record.maintenanceItem?.category?.tone() ?: record.ref.type.tone(),
                 onClick = { onOpen(record.ref) },
+                trailing = if (record.soundCount > 0) {
+                    { SoundTrailing(record.soundCount) }
+                } else {
+                    null
+                },
             )
         }
     }
@@ -240,8 +251,9 @@ private fun PhotoGroup(day: CalendarDay, actions: CalendarActions) {
             horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         ) {
             day.photos.forEach { photo ->
-                val description = photo.comment ?: stringResource(R.string.calendar_photo_on, formatDate(photo.takenOn))
-                AgendaPhoto(photo.thumbnailPath, description, isRecordPhoto = false) { actions.onOpenPhoto(photo) }
+                AgendaPhoto(photo.thumbnailPath, albumPhotoDescription(photo), isVideo = photo.isVideo) {
+                    actions.onOpenPhoto(photo)
+                }
             }
             day.recordPhotos.forEach { photo ->
                 AgendaPhoto(photo.attachment.thumbnailPath, recordPhotoDescription(photo, day), isRecordPhoto = true) {
@@ -250,6 +262,14 @@ private fun PhotoGroup(day: CalendarDay, actions: CalendarActions) {
             }
         }
     }
+}
+
+/** 동영상은 앞에 "동영상"을 붙여 사진과 구분해 읽힌다. */
+@Composable
+private fun albumPhotoDescription(photo: AlbumPhoto): String = when {
+    !photo.isVideo -> photo.comment ?: stringResource(R.string.calendar_photo_on, formatDate(photo.takenOn))
+    photo.comment != null -> stringResource(R.string.calendar_video_named, photo.comment.orEmpty())
+    else -> stringResource(R.string.calendar_video_on, formatDate(photo.takenOn))
 }
 
 @Composable
@@ -261,7 +281,13 @@ private fun recordPhotoDescription(photo: RecordPhoto, day: CalendarDay): String
 }
 
 @Composable
-private fun AgendaPhoto(path: String, description: String, isRecordPhoto: Boolean, onClick: () -> Unit) {
+private fun AgendaPhoto(
+    path: String,
+    description: String,
+    isRecordPhoto: Boolean = false,
+    isVideo: Boolean = false,
+    onClick: () -> Unit,
+) {
     val image by rememberFileImage(path)
     Box(
         Modifier
@@ -282,6 +308,47 @@ private fun AgendaPhoto(path: String, description: String, isRecordPhoto: Boolea
                     .padding(ChageunTheme.spacing.xxs),
             )
         }
+        if (isVideo) VideoMark(size = PLAY_MARK_SIZE, modifier = Modifier.align(Alignment.Center))
+    }
+}
+
+/** 동영상이라는 표시. 사진 위에 겹쳐도 보이도록 어두운 원에 흰 재생 표시를 그린다. 설명은 사진 쪽에서 읽어 준다. */
+@Composable
+internal fun VideoMark(size: Dp, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(size)
+            .background(VIDEO_MARK_FILL, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            Icons.Filled.PlayArrow,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(size * PLAY_ICON_RATIO),
+        )
+    }
+}
+
+/** 기록에 녹음한 소리가 붙었다는 표시와 여는 화살표. 개수는 "소리 n개 첨부"로 읽힌다. */
+@Composable
+private fun SoundTrailing(count: Int) {
+    val description = pluralStringResource(R.plurals.history_sound_count, count, count)
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Outlined.GraphicEq,
+                contentDescription = null,
+                tint = muted,
+                modifier = Modifier.size(SOUND_ICON),
+            )
+            Text(count.toString(), style = MaterialTheme.typography.bodySmall, color = muted)
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = muted)
     }
 }
 
@@ -325,3 +392,7 @@ private val PHOTO_SIZE = 88.dp
 private val ADD_ICON_SIZE = 18.dp
 private val RECEIPT_MARK_SIZE = 24.dp
 private const val RECEIPT_ICON_RATIO = 0.7f
+private val PLAY_MARK_SIZE = 32.dp
+private val SOUND_ICON = 16.dp
+private val VIDEO_MARK_FILL = Color.Black.copy(alpha = 0.55f)
+private const val PLAY_ICON_RATIO = 0.75f

@@ -10,11 +10,14 @@ import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.Vehicle
+import com.naury.chageun.core.model.VehicleId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,11 +26,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** 같은 날 찍은 사진 묶음. */
 data class AlbumDay(val date: LocalDate, val photos: List<AlbumPhoto>)
+
+/**
+ * 방금 지워 아직 되돌릴 수 있는 사진·동영상. 안내 문구에 쓸 수를 종류별로 들고 있다.
+ * [vehicleId]를 함께 들고 있어 화면을 떠나며 마무리할 때 차를 다시 찾지 않는다.
+ */
+data class AlbumUndo(val vehicleId: VehicleId, val ids: List<String>, val photoCount: Int, val videoCount: Int)
 
 data class AlbumUiState(
     val isLoading: Boolean = true,
@@ -49,6 +59,8 @@ data class AlbumUiState(
     val vehicle: Vehicle? = null,
     /** 공유할 때 워터마크 추천 문구에 사진 찍은 날의 주행거리를 쓴다. 최신순. */
     val mileageLog: List<MileageEntry> = emptyList(),
+    /** 방금 지워 되돌리기를 기다리는 사진. 없으면 null. */
+    val undo: AlbumUndo? = null,
 ) {
     val photos: List<AlbumPhoto> get() = days.flatMap { it.photos }
     val isPicking: Boolean get() = picked.isNotEmpty()
@@ -74,8 +86,17 @@ class AlbumViewModel @Inject constructor(
     val picks = PickedPhotos(savedStateHandle)
     private val gridStep = savedStateHandle.getStateFlow(KEY_GRID_STEP, DEFAULT_GRID_STEP)
     private val messages = MutableStateFlow(Messages())
-    private val view = combine(selectedId, editingId, picks.ids, gridStep) { selected, editing, picked, step ->
-        ViewState(selected, editing, picked.toSet(), step)
+
+    /** 지우고 되돌리기. 화면이 사라질 때 기다리던 사진을 마저 지우도록 ViewModel과 함께 닫는다. */
+    val deletes = PendingAlbumDelete(viewModelScope, albumRepository).also { addCloseable(it) }
+    private val view = combine(
+        selectedId,
+        editingId,
+        picks.ids,
+        gridStep,
+        deletes.pending,
+    ) { selected, editing, picked, step, undo ->
+        ViewState(selected, editing, picked.toSet(), step, undo)
     }
 
     val uiState: StateFlow<AlbumUiState> = vehicleRepository.observePrimaryVehicle()
@@ -101,6 +122,7 @@ class AlbumViewModel @Inject constructor(
                     gridStep = view.gridStep,
                     vehicle = vehicle,
                     mileageLog = mileage,
+                    undo = view.undo,
                 )
             }
         }
@@ -147,15 +169,18 @@ class AlbumViewModel @Inject constructor(
         }
     }
 
-    /** 여러 장을 한 번에 지운다. 고르던 사진과 열어 둔 사진도 함께 정리한다. */
+    /**
+     * 사진을 바로 목록에서 빼고 되돌리기 안내를 띄운다. 파일은 안내가 끝나거나 화면을 떠날 때 [deletes]가 지운다.
+     * 열어 둔 사진을 지우면 옆 사진으로 넘어가고, 고르던 사진에서도 뺀다.
+     */
     fun delete(ids: List<String>) {
         if (ids.isEmpty()) return
-        viewModelScope.launch {
-            val vehicleId = vehicleId()
-            ids.forEach { albumRepository.delete(vehicleId, it) }
-            if (selectedId.value in ids) select(null)
-            picks.remove(ids)
-        }
+        val photos = uiState.value.photos
+        val removed = photos.filter { it.id in ids }
+        // 목록에서 빠지기 전에 옆 사진으로 넘겨야 사진 보기가 잠깐 닫혔다 열리지 않는다.
+        if (selectedId.value in ids) select(nextAfterDelete(photos, selectedId.value.orEmpty(), ids.toSet()))
+        picks.remove(ids)
+        viewModelScope.launch { deletes.start(vehicleId(), ids, removed) }
     }
 
     /** 그날 사진을 모두 고른다. 이미 모두 골라져 있으면 그날 사진을 모두 뺀다. */
@@ -195,6 +220,7 @@ class AlbumViewModel @Inject constructor(
         val editing: String?,
         val picked: Set<String>,
         val gridStep: Int,
+        val undo: AlbumUndo?,
     )
 
     private companion object {
@@ -203,6 +229,48 @@ class AlbumViewModel @Inject constructor(
         const val KEY_GRID_STEP = "album_grid_step"
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
+}
+
+/**
+ * 되돌릴 수 있게 지운 사진 하나 묶음을 들고 있다. 새로 지우면 앞 묶음은 마저 지운다.
+ * [finish]는 화면이 사라지는 중에도 불릴 수 있어 코루틴이 이미 취소됐더라도 시작은 하게 하고, 저장소가 끝까지 지운다.
+ */
+class PendingAlbumDelete(private val scope: CoroutineScope, private val repository: AlbumRepository) : AutoCloseable {
+    private val current = MutableStateFlow<AlbumUndo?>(null)
+    val pending: StateFlow<AlbumUndo?> = current
+
+    suspend fun start(vehicleId: VehicleId, ids: List<String>, removed: List<AlbumPhoto>) {
+        finish()
+        repository.markDeleted(vehicleId, ids)
+        current.value = AlbumUndo(
+            vehicleId = vehicleId,
+            ids = ids,
+            photoCount = removed.count { !it.isVideo },
+            videoCount = removed.count { it.isVideo },
+        )
+    }
+
+    /** 방금 지운 사진을 되살린다. */
+    fun undo() {
+        val last = current.getAndUpdate { null } ?: return
+        scope.launch { repository.restoreDeleted(last.vehicleId, last.ids) }
+    }
+
+    /** 안내 시간이 끝났을 때, 화면을 떠나거나 앱이 뒤로 갈 때 기다리던 사진을 정말 지운다. */
+    fun finish() {
+        val last = current.getAndUpdate { null } ?: return
+        scope.launch(start = CoroutineStart.ATOMIC) { repository.purgeDeleted(last.vehicleId, last.ids) }
+    }
+
+    override fun close() = finish()
+}
+
+/** 지운 사진 [removedId] 다음 사진. 뒤에 남은 사진이 없으면 앞 사진이고, 모두 지웠으면 null이다. */
+internal fun nextAfterDelete(photos: List<AlbumPhoto>, removedId: String, removed: Set<String>): String? {
+    val index = photos.indexOfFirst { it.id == removedId }
+    if (index < 0) return null
+    val after = photos.drop(index + 1).firstOrNull { it.id !in removed }
+    return (after ?: photos.take(index).lastOrNull { it.id !in removed })?.id
 }
 
 /** 앨범에서 길게 눌러 고른 사진 id. 고른 순서를 지킨다. */

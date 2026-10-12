@@ -298,6 +298,47 @@ class OfflineFirstHistoryRepositoryTest {
     }
 
     @Test
+    fun sounds_areCountedApartFromPhotos_andCanBeFilteredAlone() = runTest {
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 8, 20), "Bumper", costWon = 120_000),
+            false,
+        )
+        repository.addCheck(
+            vehicleId,
+            CheckEntry(CheckKind.Repair, LocalDate.of(2026, 8, 22), "Knock", costWon = 30_000),
+            false,
+        )
+        val records = repository.observeTimeline(vehicleId, TimelineQuery()).first().associateBy { it.title }
+        val bumper = records.getValue("Bumper").ref
+        val knock = records.getValue("Knock").ref
+        val attachments = database.attachmentDao()
+        attachments.insert(
+            AttachmentEntity("p1", "v1", bumper.type.name, bumper.id, "p1.jpg", "p1_t.jpg", "image/jpeg", 10, now),
+        )
+        listOf("s1" to knock, "s2" to knock, "s3" to bumper).forEach { (id, owner) ->
+            attachments.insert(
+                AttachmentEntity(
+                    id, "v1", owner.type.name, owner.id, "$id.m4a", "", "audio/mp4", 10, now,
+                    mediaType = AttachmentEntity.MEDIA_AUDIO, durationMs = 5_000,
+                ),
+            )
+        }
+
+        val counted = repository.observeTimeline(vehicleId, TimelineQuery()).first().associateBy { it.title }
+        assertThat(counted.getValue("Bumper").attachmentCount).isEqualTo(1)
+        assertThat(counted.getValue("Bumper").soundCount).isEqualTo(1)
+        assertThat(counted.getValue("Knock").attachmentCount).isEqualTo(0)
+        assertThat(counted.getValue("Knock").soundCount).isEqualTo(2)
+        val photosOnly = repository.observeTimeline(vehicleId, TimelineQuery(withAttachmentsOnly = true)).first()
+        assertThat(photosOnly.map { it.title }).containsExactly("Bumper")
+        val soundsOnly = repository.observeTimeline(vehicleId, TimelineQuery(withSoundsOnly = true)).first()
+        assertThat(soundsOnly.map { it.title }).containsExactly("Knock", "Bumper").inOrder()
+        val totals = repository.observeMonthlyCosts(vehicleId, TimelineQuery(withSoundsOnly = true)).first()
+        assertThat(totals[YearMonth.of(2026, 8)]).isEqualTo(150_000L)
+    }
+
+    @Test
     fun mileageReadings_showOnlyWhenEnteredDirectly_andOnlyWhenAsked() = runTest {
         // 주유 기록이 남긴 주행거리(FUEL)는 그 주유 기록과 겹치므로 Timeline에 따로 나오지 않는다.
         repository.addFuel(vehicleId, fuel, advancesOdometer = true)

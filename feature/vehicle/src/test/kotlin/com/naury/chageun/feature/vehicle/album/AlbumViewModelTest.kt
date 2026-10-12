@@ -1,6 +1,10 @@
 package com.naury.chageun.feature.vehicle.album
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
@@ -73,7 +77,7 @@ class AlbumViewModelTest {
     }
 
     @Test
-    fun selection_survivesRecreation_andClearsOnDelete() = runTest {
+    fun selection_survivesRecreation_andMovesToTheNextPhotoOnDelete() = runTest {
         val handle = SavedStateHandle()
         val viewModel = viewModel(handle)
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -86,7 +90,8 @@ class AlbumViewModelTest {
         assertThat(recreated.uiState.first { it.selected != null }.selected?.id).isEqualTo(id)
 
         recreated.delete(listOf(id))
-        assertThat(recreated.uiState.first { it.photos.size == 1 }.selected).isNull()
+        val state = recreated.uiState.first { it.photos.size == 1 }
+        assertThat(state.selected?.id).isEqualTo(state.photos.single().id)
     }
 
     @Test
@@ -112,7 +117,68 @@ class AlbumViewModelTest {
         val state = viewModel.uiState.first { it.photos.size == 1 }
         assertThat(state.photos.single().id).isEqualTo(ids[0])
         assertThat(state.picked).isEmpty()
-        assertThat(state.selected).isNull()
+        assertThat(state.selected?.id).isEqualTo(ids[0])
+    }
+
+    @Test
+    fun delete_hidesAtOnce_offersUndo_andUndoBringsThemBack() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://clip.mp4", "content://c"), highQuality = false)
+        val ids = viewModel.uiState.first { it.photos.size == 3 }.photos.map { it.id }
+
+        viewModel.delete(ids.take(2))
+
+        val deleted = viewModel.uiState.first { it.undo != null }
+        assertThat(deleted.photos.map { it.id }).containsExactly(ids[2])
+        assertThat(deleted.undo?.ids).containsExactlyElementsIn(ids.take(2))
+        assertThat(deleted.undo?.photoCount).isEqualTo(1)
+        assertThat(deleted.undo?.videoCount).isEqualTo(1)
+
+        viewModel.deletes.undo()
+
+        val restored = viewModel.uiState.first { it.undo == null && it.photos.size == 3 }
+        assertThat(restored.photos.map { it.id }).containsExactlyElementsIn(ids)
+        assertThat(album.purged).isEmpty()
+    }
+
+    @Test
+    fun undoExpiry_deletesForReal_andANewDeleteFinishesThePreviousOne() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b", "content://c"), highQuality = false)
+        val ids = viewModel.uiState.first { it.photos.size == 3 }.photos.map { it.id }
+
+        viewModel.delete(listOf(ids[0]))
+        viewModel.uiState.first { it.undo?.ids == listOf(ids[0]) }
+        viewModel.delete(listOf(ids[1]))
+        viewModel.uiState.first { it.undo?.ids == listOf(ids[1]) }
+        assertThat(album.purged).containsExactly(ids[0])
+
+        viewModel.deletes.finish()
+
+        val state = viewModel.uiState.first { it.undo == null }
+        assertThat(album.purged).containsExactly(ids[0], ids[1])
+        assertThat(state.photos.map { it.id }).containsExactly(ids[2])
+        assertThat(album.photos.value.map { it.id }).containsExactly(ids[2])
+    }
+
+    @Test
+    fun leavingTheAlbum_deletesWhatWasWaitingForUndo() = runTest {
+        val store = ViewModelStore()
+        val viewModel = ViewModelProvider.create(store, viewModelFactory { initializer { viewModel() } })[
+            AlbumViewModel::class,
+        ]
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b"), highQuality = false)
+        val ids = viewModel.uiState.first { it.photos.size == 2 }.photos.map { it.id }
+        viewModel.delete(listOf(ids[0]))
+        viewModel.uiState.first { it.undo != null }
+
+        store.clear()
+
+        assertThat(album.purged).containsExactly(ids[0])
+        assertThat(album.photos.value.map { it.id }).containsExactly(ids[1])
     }
 
     @Test

@@ -13,6 +13,9 @@ import java.time.LocalDate
  * 파일은 첨부와 같은 폴더에 두어 백업과 전체 삭제가 함께 다룬다. 동영상이면 [thumbnailName]은 앞부분에서 뽑은 장면이다.
  *
  * [mediaType]은 [MEDIA_PHOTO] 또는 [MEDIA_VIDEO]이고, [width]·[height]는 화면에 보이는 방향 기준이다.
+ *
+ * [deletedAt]이 있으면 지웠지만 아직 되돌릴 수 있는 항목이다. 목록·달력·백업에서는 빠지고, 되돌리기 시간이 지나거나
+ * 다음에 앱을 열 때 행과 파일을 함께 지운다.
  */
 @Entity(
     tableName = "album_photo",
@@ -40,6 +43,7 @@ data class AlbumPhotoEntity(
     @ColumnInfo(name = "duration_ms") val durationMs: Long? = null,
     val width: Int? = null,
     val height: Int? = null,
+    @ColumnInfo(name = "deleted_at") val deletedAt: Instant? = null,
 ) {
     companion object {
         const val MEDIA_PHOTO = "PHOTO"

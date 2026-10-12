@@ -6,6 +6,7 @@ import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.model.AlbumMediaType
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.InspectionSchedule
@@ -166,6 +167,25 @@ class ObserveCalendarMonthUseCaseTest {
         assertThat(calendar.day(LocalDate.of(2026, 9, 28)).recordPhotos).hasSize(1)
         // 이번 달 사진 수에는 앞 달 칸의 첨부가 들어가지 않는다.
         assertThat(calendar.photoCount).isEqualTo(2)
+    }
+
+    @Test
+    fun days_countVideosAndRecordSounds_apart() = runTest {
+        val date = LocalDate.of(2026, 10, 3)
+        history.timeline.value = listOf(
+            record("knock", TimelineEventType.Repair, date).copy(soundCount = 2, attachmentCount = 1),
+            record("fuel", TimelineEventType.Fuel, date),
+        )
+        album.photos.value = listOf(
+            photo("still", date),
+            photo("clip", date).copy(mediaType = AlbumMediaType.Video, durationMs = 42_000),
+        )
+
+        val day = month().day(date)
+
+        assertThat(day.photoCount).isEqualTo(2)
+        assertThat(day.videoCount).isEqualTo(1)
+        assertThat(day.soundCount).isEqualTo(2)
     }
 
     @Test

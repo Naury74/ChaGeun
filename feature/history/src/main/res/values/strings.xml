@@ -174,6 +174,12 @@
     <string name="history_filter_cost_hint">Records without a cost are hidden when a range is set.</string>
     <string name="history_filter_cost_reversed">Must be at least the minimum</string>
     <string name="history_filter_attachments">Only records with photos or receipts</string>
+    <string name="history_filter_sounds">Only records with sound recordings</string>
+    <string name="history_filter_sounds_short">With sound recordings</string>
+    <plurals name="history_sound_count">
+        <item quantity="one">%1$d sound recording attached</item>
+        <item quantity="other">%1$d sound recordings attached</item>
+    </plurals>
     <string name="history_filter_reset">Reset</string>
     <string name="history_filter_apply">Apply</string>
     <plurals name="history_attachment_count">
@@ -261,6 +267,16 @@
         <item quantity="one">%1$d photo</item>
         <item quantity="other">%1$d photos</item>
     </plurals>
+    <plurals name="calendar_a11y_videos">
+        <item quantity="one">%1$d video</item>
+        <item quantity="other">%1$d videos</item>
+    </plurals>
+    <plurals name="calendar_a11y_sounds">
+        <item quantity="one">%1$d sound recording</item>
+        <item quantity="other">%1$d sound recordings</item>
+    </plurals>
+    <string name="calendar_video_on">Video from %1$s</string>
+    <string name="calendar_video_named">Video, %1$s</string>
     <plurals name="calendar_a11y_upcoming">
         <item quantity="one">%1$d upcoming</item>
         <item quantity="other">%1$d upcoming</item>

@@ -57,7 +57,9 @@ data class TimelineItem(
     val createdAt: Instant,
     /** 주행거리를 평균 주행량으로 추정한 정비 기록이다. */
     val isMileageEstimated: Boolean = false,
+    /** 붙인 사진(영수증 포함) 수. 녹음한 소리는 [soundCount]로 따로 센다. */
     val attachmentCount: Int = 0,
+    val soundCount: Int = 0,
 )
 
 sealed interface RecordDetail {

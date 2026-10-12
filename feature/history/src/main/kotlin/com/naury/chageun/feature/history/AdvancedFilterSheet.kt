@@ -72,7 +72,7 @@ internal fun AdvancedFilterSheet(
             FormHeader(Icons.Filled.Tune, ChageunTheme.colors.unknown, stringResource(R.string.history_filter_title))
             PeriodSection(draft, update, onPickRange = { isPickingRange = true })
             CostSection(draft, update)
-            AttachmentToggle(draft, update)
+            AttachmentToggles(draft, update)
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
                 TextButton(onClick = { update(AdvancedFilter()) }, modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.history_filter_reset))
@@ -160,25 +160,27 @@ private fun CostSection(draft: AdvancedFilter, update: (AdvancedFilter) -> Unit)
 }
 
 @Composable
-private fun AttachmentToggle(draft: AdvancedFilter, update: (AdvancedFilter) -> Unit) {
+private fun AttachmentToggles(draft: AdvancedFilter, update: (AdvancedFilter) -> Unit) {
+    FilterSwitchRow(stringResource(R.string.history_filter_attachments), draft.withAttachmentsOnly) {
+        update(draft.copy(withAttachmentsOnly = it))
+    }
+    FilterSwitchRow(stringResource(R.string.history_filter_sounds), draft.withSoundsOnly) {
+        update(draft.copy(withSoundsOnly = it))
+    }
+}
+
+@Composable
+private fun FilterSwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     // 제목을 눌러도 바뀌고, TalkBack이 제목과 상태를 한 번에 읽도록 행 전체를 스위치로 만든다.
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = ChageunTheme.spacing.minTouchTarget)
-            .toggleable(
-                value = draft.withAttachmentsOnly,
-                role = Role.Switch,
-                onValueChange = { update(draft.copy(withAttachmentsOnly = it)) },
-            ),
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            stringResource(R.string.history_filter_attachments),
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f),
-        )
-        Switch(checked = draft.withAttachmentsOnly, onCheckedChange = null)
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 

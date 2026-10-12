@@ -206,4 +206,56 @@ class OfflineFirstAlbumRepositoryTest {
         assertThat(File(video.thumbnailPath).exists()).isFalse()
         assertThat(directory.listFiles().orEmpty()).isEmpty()
     }
+
+    @Test
+    fun markDeleted_hidesFromAlbumCalendarAndBackup_butKeepsFiles_untilRestored() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val ids = repository.add(vehicleId, listOf("content://a", "content://b"), today).addedIds
+        val files = repository.observe(vehicleId).first().map { File(it.filePath) }
+
+        repository.markDeleted(vehicleId, listOf(ids[0]))
+
+        assertThat(repository.observe(vehicleId).first().map { it.id }).containsExactly(ids[1])
+        assertThat(repository.observeBetween(vehicleId, today, today).first().map { it.id }).containsExactly(ids[1])
+        assertThat(database.backupDao().albumPhotos().map { it.id }).containsExactly(ids[1])
+        assertThat(files.all { it.isFile }).isTrue()
+
+        repository.restoreDeleted(vehicleId, listOf(ids[0]))
+
+        assertThat(repository.observe(vehicleId).first().map { it.id }).containsExactlyElementsIn(ids)
+    }
+
+    @Test
+    fun purgeDeleted_removesRowsAndFiles_butSkipsRestoredOnes() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val ids = repository.add(vehicleId, listOf("content://a", "content://clip.mp4"), today).addedIds
+        val photos = repository.observe(vehicleId).first().associateBy { it.id }
+        repository.markDeleted(vehicleId, ids)
+        repository.restoreDeleted(vehicleId, listOf(ids[0]))
+
+        repository.purgeDeleted(vehicleId, ids)
+
+        assertThat(repository.observe(vehicleId).first().map { it.id }).containsExactly(ids[0])
+        val video = photos.getValue(ids[1])
+        assertThat(File(video.filePath).exists()).isFalse()
+        assertThat(File(video.thumbnailPath).exists()).isFalse()
+        assertThat(File(photos.getValue(ids[0]).filePath).isFile).isTrue()
+        assertThat(database.albumDao().find(vehicleId.value, ids[1])).isNull()
+    }
+
+    @Test
+    fun purgeStaleDeleted_onNextStart_finishesDeletesLeftByAKilledApp() = runTest {
+        val before = repository(StandardTestDispatcher(testScheduler))
+        val id = before.add(vehicleId, listOf("content://a"), today).addedIds.single()
+        val file = File(before.observe(vehicleId).first().single().filePath)
+        before.markDeleted(vehicleId, listOf(id))
+
+        // 되돌리기를 기다리던 중에 앱이 끝나고 다시 시작했다.
+        val restarted = repository(StandardTestDispatcher(testScheduler))
+        restarted.purgeStaleDeleted()
+
+        assertThat(database.albumDao().find(vehicleId.value, id)).isNull()
+        assertThat(file.exists()).isFalse()
+        assertThat(restarted.observe(vehicleId).first()).isEmpty()
+    }
 }

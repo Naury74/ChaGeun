@@ -41,6 +41,23 @@ interface AlbumRepository {
     suspend fun updateDetails(vehicleId: VehicleId, id: String, takenOn: LocalDate, comment: String?)
 
     suspend fun delete(vehicleId: VehicleId, id: String)
+
+    /**
+     * 되돌릴 수 있게 지운다. [observe]·[observeBetween]과 백업에서는 바로 빠지지만 파일은 남아 있어
+     * [restoreDeleted]로 되살릴 수 있다. 끝내 지우려면 [purgeDeleted]를 부른다.
+     */
+    suspend fun markDeleted(vehicleId: VehicleId, ids: List<String>)
+
+    suspend fun restoreDeleted(vehicleId: VehicleId, ids: List<String>)
+
+    /** [markDeleted]로 뺀 항목의 행과 파일을 지운다. 그사이 되살린 항목은 그대로 둔다. */
+    suspend fun purgeDeleted(vehicleId: VehicleId, ids: List<String>)
+
+    /**
+     * 지금까지 [markDeleted]로 빼 두고 마무리하지 못한 항목을 모두 지운다. 되돌리기를 기다리던 중에 앱이 끝났을 때를
+     * 위해 앱을 시작할 때 부른다.
+     */
+    suspend fun purgeStaleDeleted()
 }
 
 /** 앨범 한 곳에 너무 많은 사진이 쌓여 저장 공간을 예측할 수 없게 되지 않도록 한 번에 넣는 수를 제한한다. */

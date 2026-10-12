@@ -278,7 +278,10 @@ private fun UpcomingMark(event: UpcomingEvent, markSize: Dp) {
     }
 }
 
-/** 그날 첫 사진. 앨범 사진이 없으면 기록 첨부 사진을 쓰고 영수증 표시를 단다. 여러 장이면 개수를 단다. */
+/**
+ * 그날 첫 사진. 앨범 사진이 없으면 기록 첨부 사진을 쓰고 영수증 표시를 단다. 첫 장이 동영상이면 재생 표시를 단다.
+ * 여러 장이면 개수를 단다.
+ */
 @Composable
 private fun DayThumbnail(day: CalendarDay, style: CellStyle) {
     val album = day.photos.firstOrNull()
@@ -302,6 +305,8 @@ private fun DayThumbnail(day: CalendarDay, style: CellStyle) {
         }
         if (album == null) {
             RecordPhotoMark(size = style.markSize, modifier = Modifier.align(Alignment.TopStart))
+        } else if (album.isVideo) {
+            VideoMark(size = style.markSize, modifier = Modifier.align(Alignment.TopStart))
         }
         if (day.photoCount > 1) {
             Text(
@@ -318,8 +323,9 @@ private fun DayThumbnail(day: CalendarDay, style: CellStyle) {
 }
 
 /**
- * TalkBack 문구. 개수 뒤에 종류 이름을 덧붙인다.
- * 예: "10월 8일 목요일, 기록 2개(엔진오일 교체, 주유), 사진 1장, 예정 1개(정기검사)". 고른 상태는 selected로 따로 읽힌다.
+ * TalkBack 문구. 개수 뒤에 종류 이름을 덧붙인다. 사진·동영상·기록에 붙인 소리는 따로 센다.
+ * 예: "10월 8일 목요일, 기록 2개(엔진오일 교체, 주유), 사진 1장, 동영상 1개, 소리 1개, 예정 1개(정기검사)".
+ * 고른 상태는 selected로 따로 읽힌다.
  */
 @Composable
 internal fun dayDescription(day: CalendarDay, isToday: Boolean, isMatch: Boolean = false): String {
@@ -329,7 +335,11 @@ internal fun dayDescription(day: CalendarDay, isToday: Boolean, isMatch: Boolean
         formatLongDate(day.date),
         stringResource(R.string.calendar_a11y_today).takeIf { isToday },
         countWithNames(R.plurals.calendar_a11y_records, day.records.map { recordName(it) }),
-        day.photoCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.calendar_a11y_photos, it, it) },
+        (day.photoCount - day.videoCount).takeIf { it > 0 }?.let {
+            pluralStringResource(R.plurals.calendar_a11y_photos, it, it)
+        },
+        day.videoCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.calendar_a11y_videos, it, it) },
+        day.soundCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.calendar_a11y_sounds, it, it) },
         countWithNames(R.plurals.calendar_a11y_upcoming, planned.map { upcomingEventTitle(it) }),
         countWithNames(R.plurals.calendar_a11y_overdue, overdue.map { upcomingEventTitle(it) }),
         stringResource(R.string.calendar_a11y_match).takeIf { isMatch },
