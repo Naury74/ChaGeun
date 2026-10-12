@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
@@ -33,6 +34,7 @@ import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.R as UiR
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.feature.home.R as HomeR
 import com.naury.chageun.feature.manage.R as ManageR
 import com.naury.chageun.feature.onboarding.R as OnboardingR
 import java.text.NumberFormat
@@ -157,7 +159,25 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     fun clickText(@StringRes id: Int, vararg args: Any) = clickText(text(id, *args))
 
     /** 내비게이션 바(넓은 창에서는 레일)의 탭. 같은 글자의 화면 제목과 구분하려고 선택 가능한 노드만 찾는다. */
-    fun openTab(@StringRes labelRes: Int) = click(hasText(text(labelRes)) and isSelectable())
+    fun tab(@StringRes labelRes: Int): SemanticsMatcher = hasText(text(labelRes)) and isSelectable()
+
+    fun openTab(@StringRes labelRes: Int) = click(tab(labelRes))
+
+    /** Lazy 목록 아래쪽에 있어 아직 그려지지 않았을 수 있는 노드를 기다렸다가 화면 안으로 가져온다. */
+    fun scrollTo(matcher: SemanticsMatcher): SemanticsNodeInteraction {
+        waitForScrolling(matcher)
+        return bringIntoView(matcher)
+    }
+
+    /** 시스템 뒤로 가기. 한 칸·두 칸 배치 모두 같은 방법으로 사진 보기나 상세를 닫는다. */
+    fun pressBack() {
+        Espresso.pressBack()
+        rule.waitForIdle()
+    }
+
+    /** 홈 오른쪽 위 설정 버튼으로 설정을 연다. */
+    fun openSettingsFromHome() =
+        click(hasContentDescription(text(HomeR.string.home_open_settings)) and hasClickAction())
 
     fun inputText(field: SemanticsMatcher, value: String) {
         waitFor(field)
@@ -240,6 +260,24 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
         waitForText(text(ManageR.string.record_saved_title, itemName(item)))
         clickText(ManageR.string.record_done)
         waitUntilGone(hasText(text(ManageR.string.record_saved_title, itemName(item))))
+    }
+
+    /** 관리 탭에서 [item]의 교체 기록을 오늘 날짜로 저장하고 완료 화면까지 닫는다. */
+    fun recordReplacement(item: MaintenanceItem, mileage: Long) {
+        openManageItem(item)
+        startServiceRecord(item, mileage)
+        saveServiceRecord()
+        finishSavedRecord(item)
+    }
+
+    /**
+     * 기록 탭 목록에서 [row]에 맞는 기록을 눌러 상세를 열고, 상세 맨 위 제목([title])이 보일 때까지 기다린다.
+     * 넓은 창에서는 목록 옆에 열린다. 수정·삭제 버튼은 사진·소리 칸 아래라 짧은 화면에서는 아직 그려지지 않는다.
+     */
+    fun openHistoryRecord(row: SemanticsMatcher, title: String) {
+        openTab(R.string.nav_history)
+        click(row and hasClickAction())
+        waitFor(hasText(title) and isHeading())
     }
 
     val recordActionButton: SemanticsMatcher

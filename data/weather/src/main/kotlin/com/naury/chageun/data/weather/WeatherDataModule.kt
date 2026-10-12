@@ -14,9 +14,6 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 internal interface WeatherDataModule {
     @Binds
-    fun bindWeatherRepository(repository: MetNorwayWeatherRepository): WeatherRepository
-
-    @Binds
     fun bindMetNorwayRemote(remote: HttpMetNorwayRemote): MetNorwayRemote
 
     @Binds
@@ -36,4 +33,15 @@ internal interface WeatherDataModule {
 
     @Binds
     fun bindAreaGeocoder(geocoder: PlatformAreaGeocoder): AreaGeocoder
+}
+
+/**
+ * 날씨 저장소만 따로 묶는다. 계측 테스트는 이 모듈만 가짜 날씨로 바꿔(@TestInstallIn) MET Norway에 묻지 않고,
+ * 지역 목록·위치 같은 나머지 바인딩은 실제 것을 그대로 쓴다.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+interface WeatherRepositoryModule {
+    @Binds
+    fun bindWeatherRepository(repository: MetNorwayWeatherRepository): WeatherRepository
 }

@@ -7,15 +7,21 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.naury.chageun.MainActivity
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.feature.manage.R as ManageR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** 기획 문서 9.3 주행거리 충돌. 교체 기록의 주행거리가 현재 값이나 이전 기록과 어긋나면 저장 전에 묻는다. */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class MileageConflictFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }

@@ -11,6 +11,8 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.notification.DeepLinks.putMaintenanceItem
 import com.naury.chageun.core.notification.DeepLinks.putMileageUpdate
 import com.naury.chageun.feature.home.R as HomeR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,10 +21,14 @@ import org.junit.runner.RunWith
  * 기획 문서 9.3 알림 Deep Link. 알림의 PendingIntent와 같은 Intent로 실행 중인 앱을 다시 열어
  * onNewIntent 경로에서 알림이 가리키는 화면이 열리는지 본다.
  */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class NotificationDeepLinkFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }

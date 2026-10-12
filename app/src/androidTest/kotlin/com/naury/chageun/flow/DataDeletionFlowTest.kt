@@ -10,15 +10,21 @@ import com.naury.chageun.MainActivity
 import com.naury.chageun.feature.home.R as HomeR
 import com.naury.chageun.feature.onboarding.R as OnboardingR
 import com.naury.chageun.feature.settings.R as SettingsR
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /** 기획 문서 9.3 데이터 삭제. 설정에서 모든 데이터를 지우면 차량이 사라지고 온보딩부터 다시 시작한다. */
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class DataDeletionFlowTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val rule = createAndroidComposeRule<MainActivity>()
 
     private val robot by lazy { AppRobot(rule) }
