@@ -33,3 +33,38 @@ data class CalendarActions(
     /** 지난 날과 오늘에만 쓴다. 앞으로의 날에는 기록을 남길 수 없다. */
     val onAddOnDate: (LocalDate) -> Unit = {},
 )
+
+/**
+ * 고른 날을 바꾸는 동작마다 [closeDetail]을 먼저 부른다.
+ * 두 칸에서 기록 상세를 연 채 다른 날로 옮기면 옮긴 날 목록이 보여야 하기 때문이다.
+ */
+fun CalendarActions.closingDetailOnMove(closeDetail: () -> Unit): CalendarActions = copy(
+    onSelectDate = { date ->
+        closeDetail()
+        onSelectDate(date)
+    },
+    onShowMonth = { month ->
+        closeDetail()
+        onShowMonth(month)
+    },
+    onToday = {
+        closeDetail()
+        onToday()
+    },
+    onMoveWeek = { weeks ->
+        closeDetail()
+        onMoveWeek(weeks)
+    },
+    onPreviousResult = {
+        closeDetail()
+        onPreviousResult()
+    },
+    onNextResult = {
+        closeDetail()
+        onNextResult()
+    },
+    onOpenResult = { record ->
+        closeDetail()
+        onOpenResult(record)
+    },
+)

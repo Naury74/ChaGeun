@@ -65,6 +65,7 @@ import com.naury.chageun.feature.history.calendar.CalendarActions
 import com.naury.chageun.feature.history.calendar.HistoryCalendar
 import com.naury.chageun.feature.history.calendar.HistoryCalendarSlot
 import com.naury.chageun.feature.history.calendar.HistoryCalendarViewModel
+import com.naury.chageun.feature.history.calendar.closingDetailOnMove
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
 import java.time.LocalDate
@@ -253,7 +254,7 @@ private fun calendarActions(
         links.onOpenPhoto(photo.id)
     },
     onAddOnDate = onAddOnDate,
-)
+).closingDetailOnMove { historyViewModel.select(null) }
 
 /** [addDate]가 있으면 달력에서 그날 기록을 추가하는 중이라 입력 창 날짜를 그날로 채운다. */
 @Composable
