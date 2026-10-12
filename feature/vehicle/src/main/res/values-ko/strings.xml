@@ -153,8 +153,6 @@
     <string name="vehicle_edit_displacement">배기량 (선택)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">50cc에서 10,000cc 사이로 입력해 주세요</string>
-    <string name="album_add_edited_photo">사진 편집해서 추가</string>
-    <string name="album_add_edited_video">동영상 편집해서 추가</string>
     <string name="album_video_description">동영상, %1$s, %2$s</string>
     <plurals name="album_duration_seconds">
         <item quantity="other">%d초</item>
@@ -172,4 +170,11 @@
         <item quantity="other">동영상 %1$d개는 넣지 못했어요. 동영상은 %2$d분, %3$dMB까지 넣을 수 있어요.</item>
     </plurals>
     <string name="album_open_calendar">달력에서 이날 보기</string>
+    <string name="album_make_slideshow">선택한 사진으로 슬라이드쇼 만들기</string>
+    <string name="album_slideshow_videos_skipped">동영상은 빼고 사진으로만 만들어요.</string>
+    <string name="album_action_share">공유</string>
+    <string name="album_share_photo">이 사진 공유</string>
+    <string name="album_share_video">이 동영상 공유</string>
+    <string name="album_watermark_app">차근 정비 기록</string>
+    <string name="album_watermark_mileage">%1$skm</string>
 </resources>

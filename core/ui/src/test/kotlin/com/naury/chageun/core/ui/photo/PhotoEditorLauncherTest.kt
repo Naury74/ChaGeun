@@ -1,6 +1,9 @@
 package com.naury.chageun.core.ui.photo
 
+import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -8,10 +11,13 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.core.app.ActivityOptionsCompat
+import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.framekit.EditorChooser
+import com.naury.framekit.FrameKitRequest
 import com.naury.framekit.android.input.EditorInput
 import com.naury.framekit.android.input.MediaKind
 import com.naury.framekit.android.result.EditedMedia
@@ -21,12 +27,14 @@ import com.naury.framekit.android.result.FrameKitResult
 import com.naury.framekit.core.model.MediaType
 import com.naury.framekit.ui.config.ThemeMode
 import com.naury.framekit.ui.image.contract.ImageEditorRequest
+import com.naury.framekit.ui.motion.contract.MotionEditorRequest
 import com.naury.framekit.ui.video.contract.VideoEditorRequest
 import java.io.File
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowLooper
 import org.robolectric.shadows.ShadowToast
 
@@ -173,6 +181,83 @@ class PhotoEditorLauncherTest {
         composeRule.waitForIdle()
         assertThat(edited).isEmpty()
         assertThat(ShadowToast.shownToastCount()).isEqualTo(1)
+    }
+
+    @Test
+    fun pickWithChooser_asksWhatToDo_andHandsBackOriginalsAsCopies() {
+        show()
+        val picked = File(context.cacheDir, "picked.jpg").apply { writeText("original") }
+        composeRule.runOnIdle { launcher.pickWithChooser(maxItems = 20, tag = "album-add") }
+
+        val request = requests.single() as FrameKitRequest
+        assertThat(request.chooser).isEqualTo(EditorChooser.ASK)
+        assertThat(request.input).isEqualTo(EditorInput.Pick(MediaKind.ANY, 20))
+        composeRule.runOnIdle {
+            registry.dispatchResult(lastRequestCode, FrameKitResult.Success(media(picked).copy(isOriginal = true)))
+        }
+        composeRule.waitUntil(TIMEOUT_MS) { edited.isNotEmpty() }
+
+        val staged = File(requireNotNull(edited.single().uris.single().toUri().path))
+        assertThat(staged.parentFile?.name).isEqualTo("photo_input")
+        assertThat(staged.readText()).isEqualTo("original")
+        // 원본은 FrameKit 결과가 아니므로 그대로 남는다.
+        assertThat(picked.exists()).isTrue()
+        assertThat(edited.single().tag).isEqualTo("album-add")
+    }
+
+    @Test
+    fun makeSlideshow_needsTwoPhotos_andReturnsTheMp4AsVideo() {
+        show()
+        val photos = listOf(File(context.filesDir, "album/a.jpg"), File(context.filesDir, "album/b.jpg"))
+
+        composeRule.runOnIdle {
+            launcher.makeSlideshow(photos.take(1))
+            launcher.makeSlideshow(photos, tag = "album-slideshow:2026-10-03")
+        }
+
+        val request = requests.single() as MotionEditorRequest
+        assertThat(request.input).isEqualTo(
+            EditorInput.Multiple(
+                photos.map {
+                    EditorInput.FileSource(it.absolutePath)
+                },
+            ),
+        )
+        val output = File(context.cacheDir, "framekit-motion.mp4").apply { writeText("slideshow") }
+        composeRule.runOnIdle {
+            registry.dispatchResult(lastRequestCode, FrameKitResult.Success(media(output, MediaType.VIDEO)))
+        }
+        composeRule.waitUntil(TIMEOUT_MS) { edited.isNotEmpty() }
+        assertThat(File(requireNotNull(edited.single().uris.single().toUri().path)).extension).isEqualTo("mp4")
+        assertThat(edited.single().tag).isEqualTo("album-slideshow:2026-10-03")
+    }
+
+    @Test
+    fun share_opensChooserWithWatermark_thenSendsACopy_notTheEditorResult() {
+        show()
+        val file = File(context.filesDir, "album/a.jpg")
+        val watermark = WatermarkText("Kia Sportage · 2026.10.12")
+        composeRule.runOnIdle { launcher.share(file, watermark) }
+
+        val request = requests.single() as FrameKitRequest
+        assertThat(request.image.watermark?.text).isEqualTo("Kia Sportage · 2026.10.12")
+        val output = File(context.cacheDir, "framekit-share.jpg").apply { writeText("watermarked") }
+        composeRule.runOnIdle { registry.dispatchResult(lastRequestCode, FrameKitResult.Success(media(output))) }
+
+        val application = shadowOf(context as Application)
+        composeRule.waitUntil(TIMEOUT_MS) {
+            ShadowLooper.idleMainLooper()
+            application.peekNextStartedActivity() != null
+        }
+        val chooser = application.nextStartedActivity
+        assertThat(chooser.action).isEqualTo(Intent.ACTION_CHOOSER)
+        val send = IntentCompat.getParcelableExtra(chooser, Intent.EXTRA_INTENT, Intent::class.java)!!
+        assertThat(send.action).isEqualTo(Intent.ACTION_SEND)
+        assertThat(send.type).isEqualTo("image/jpeg")
+        val stream = IntentCompat.getParcelableExtra(send, Intent.EXTRA_STREAM, Uri::class.java)!!
+        assertThat(stream.authority).isEqualTo(PhotoFiles.authority(context))
+        assertThat(send.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION).isNotEqualTo(0)
+        assertThat(edited).isEmpty()
     }
 
     private fun media(file: File, type: MediaType = MediaType.IMAGE) = EditedMedia(

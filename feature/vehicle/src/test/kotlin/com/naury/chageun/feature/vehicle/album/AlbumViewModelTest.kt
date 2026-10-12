@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.MileageEntry
+import com.naury.chageun.core.model.MileageSource
 import com.naury.chageun.core.model.VehicleRegistration
 import com.naury.chageun.core.testing.FakeAlbumRepository
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
@@ -199,5 +201,61 @@ class AlbumViewModelTest {
 
         assertThat(viewModel.uiState.first { !it.isLoading }.photos).isEmpty()
         assertThat(album.replaced).isEmpty()
+    }
+
+    @Test
+    fun editTag_slideshow_addsAVideoOnTheLatestPickedDay_andAsksForANote() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        val day = LocalDate.of(2026, 9, 21)
+
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/slideshow.mp4"), AlbumEditTag.slideshow(day)), viewModel)
+
+        val state = viewModel.uiState.first { it.editing != null }
+        assertThat(state.editing!!.isVideo).isTrue()
+        assertThat(state.editing!!.takenOn).isEqualTo(day)
+        assertThat(state.days.single().date).isEqualTo(day)
+    }
+
+    @Test
+    fun slideshow_withUnreadableDate_fallsBackToToday() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/slideshow.mp4"), "album-slideshow:broken"), viewModel)
+
+        assertThat(viewModel.uiState.first { it.editing != null }.editing!!.takenOn).isEqualTo(today)
+    }
+
+    @Test
+    fun slideshowFromSelection_keepsPickOrder_skipsVideos_andUsesLatestDate() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b", "content://video"), highQuality = false)
+        val added = viewModel.uiState.first { it.photos.size == 3 }.photos
+        val (a, b) = added.filterNot { it.isVideo }
+        val video = added.single { it.isVideo }
+        viewModel.saveDetails(a.id, today.minusDays(10), "")
+        viewModel.uiState.first { state -> state.photos.any { it.takenOn == today.minusDays(10) } }
+        listOf(b.id, video.id, a.id).forEach(viewModel.picks::toggle)
+
+        val state = viewModel.uiState.first { it.picked.size == 3 }
+
+        assertThat(state.slideshowPhotos().map { it.id }).containsExactly(b.id, a.id).inOrder()
+        assertThat(state.hasPickedVideos).isTrue()
+        assertThat(slideshowDate(state.slideshowPhotos(), today)).isEqualTo(today)
+    }
+
+    @Test
+    fun uiState_carriesVehicleAndMileage_forWatermarkSuggestions() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        val entry = MileageEntry("m1", today, Kilometers(41_000), MileageSource.User)
+        vehicles.mileageLog.value = listOf(entry)
+
+        val state = viewModel.uiState.first { it.mileageLog.isNotEmpty() }
+
+        assertThat(state.vehicle?.model).isEqualTo("Model")
+        assertThat(state.mileageLog).containsExactly(entry)
     }
 }

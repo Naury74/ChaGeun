@@ -1,8 +1,10 @@
 package com.naury.chageun.feature.vehicle.album
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,12 +18,11 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.MovieCreation
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -54,7 +56,7 @@ import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.QuickDateField
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.photo.PhotoInput
-import com.naury.chageun.core.ui.photo.PhotoSourceOption
+import com.naury.chageun.core.ui.photo.WatermarkText
 import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.feature.vehicle.R
@@ -90,20 +92,27 @@ fun AlbumRoute(
     val editor = rememberPhotoEditorLauncher(maxVideoDurationMs = MAX_ALBUM_VIDEO_DURATION_MS) {
         AlbumEditTag.apply(it, viewModel)
     }
+    // 고른 뒤 편집할지, 사진으로 움직이는 영상을 만들지, 그대로 넣을지는 FrameKit 선택 창이 묻는다.
     PhotoInput(
         photoInput,
         maxItems = MAX_ALBUM_PHOTOS_PER_ADD,
         onPhotos = viewModel::add,
         includeVideos = true,
-        extraOptions = listOf(
-            PhotoSourceOption(stringResource(R.string.album_add_edited_photo), Icons.Filled.AutoFixHigh) {
-                editor.pickAndEdit(MAX_ALBUM_PHOTOS_PER_ADD, AlbumEditTag.ADD)
-            },
-            PhotoSourceOption(stringResource(R.string.album_add_edited_video), Icons.Filled.VideoLibrary) {
-                editor.pickAndEditVideo(AlbumEditTag.ADD)
-            },
-        ),
+        onPickFromGallery = { editor.pickWithChooser(MAX_ALBUM_PHOTOS_PER_ADD, AlbumEditTag.ADD) },
     )
+    val context = LocalContext.current
+    val watermarkLabels = rememberWatermarkLabels()
+    val watermarkFor: (AlbumPhoto) -> WatermarkText = { photo ->
+        albumWatermark(uiState.vehicle, photo.takenOn, uiState.mileageLog, watermarkLabels)
+    }
+    val slideshowNote = stringResource(R.string.album_slideshow_videos_skipped)
+    val makeSlideshow = {
+        val photos = uiState.slideshowPhotos()
+        if (uiState.hasPickedVideos) Toast.makeText(context, slideshowNote, Toast.LENGTH_SHORT).show()
+        val takenOn = slideshowDate(photos, LocalDate.now())
+        editor.makeSlideshow(photos.map { File(it.filePath) }, AlbumEditTag.slideshow(takenOn))
+        viewModel.picks.clear()
+    }
 
     val isTwoPane = isListDetailTwoPane()
     val isImmersive = !isTwoPane && uiState.selected != null
@@ -127,50 +136,26 @@ fun AlbumRoute(
         onZoomGrid = viewModel::zoomGrid,
         onEditImage = { photo ->
             val tag = AlbumEditTag.replace(photo.id)
-            if (photo.isVideo) editor.editVideo(File(photo.filePath), tag) else editor.edit(File(photo.filePath), tag)
+            val file = File(photo.filePath)
+            val watermark = watermarkFor(photo)
+            if (photo.isVideo) editor.editVideo(file, tag, watermark) else editor.edit(file, tag, watermark)
         },
+        onShare = { photo -> editor.share(File(photo.filePath), watermarkFor(photo)) },
     )
     if (!isTwoPane && uiState.selected != null) {
         // 사진 보기는 제목 바 없이 상태 표시줄 뒤까지 그린다.
         AlbumScreen(uiState, isTwoPane = false, actions = actions, modifier = Modifier.fillMaxSize())
     } else {
         BackHandler(enabled = uiState.isPicking, onBack = viewModel.picks::clear)
-        LargeTitleScaffold(
-            title = if (uiState.isPicking) {
-                pluralStringResource(R.plurals.album_picked_count, uiState.picked.size, uiState.picked.size)
-            } else {
-                stringResource(R.string.album_title)
-            },
-            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
-            navigationIcon = {
-                if (uiState.isPicking) {
-                    IconButton(onClick = viewModel.picks::clear) {
-                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.album_clear_picks))
-                    }
-                } else {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.album_back),
-                        )
-                    }
-                }
-            },
-            actions = {
-                if (uiState.isPicking) {
-                    IconButton(onClick = { deleting = uiState.picked.toList() }) {
-                        Icon(
-                            Icons.Filled.DeleteOutline,
-                            contentDescription = stringResource(R.string.album_delete_picked),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                } else {
-                    IconButton(onClick = photoInput::open) {
-                        Icon(Icons.Filled.AddAPhoto, contentDescription = stringResource(R.string.album_add))
-                    }
-                }
-            },
+        AlbumListScaffold(
+            uiState = uiState,
+            bar = AlbumBarActions(
+                onBack = onBack,
+                onClearPicks = viewModel.picks::clear,
+                onAdd = photoInput::open,
+                onMakeSlideshow = makeSlideshow,
+                onDeletePicked = { deleting = uiState.picked.toList() },
+            ),
         ) { padding ->
             AlbumScreen(uiState, isTwoPane, actions, Modifier.padding(padding), gridState)
         }
@@ -212,7 +197,81 @@ data class AlbumActions(
     val onPickDay: (LocalDate) -> Unit = {},
     /** 두 손가락으로 그리드를 벌리면 1, 오므리면 -1. */
     val onZoomGrid: (Int) -> Unit = {},
+    /** 다른 앱으로 보내기. 편집기를 붙이지 않았으면 null이고 공유 버튼을 숨긴다. */
+    val onShare: ((AlbumPhoto) -> Unit)? = null,
 )
+
+/** 그리드 화면 위쪽 버튼이 하는 일. */
+data class AlbumBarActions(
+    val onBack: () -> Unit = {},
+    val onClearPicks: () -> Unit = {},
+    val onAdd: () -> Unit = {},
+    val onMakeSlideshow: () -> Unit = {},
+    val onDeletePicked: () -> Unit = {},
+)
+
+/**
+ * 그리드 화면의 큰 제목 틀. 여러 장 고르는 중에는 제목이 고른 수로 바뀌고, 뒤로 대신 선택 취소, 추가 대신
+ * 슬라이드쇼·지우기 버튼이 놓인다.
+ */
+@Composable
+internal fun AlbumListScaffold(
+    uiState: AlbumUiState,
+    bar: AlbumBarActions,
+    content: @Composable (PaddingValues) -> Unit,
+) {
+    LargeTitleScaffold(
+        title = if (uiState.isPicking) {
+            pluralStringResource(R.plurals.album_picked_count, uiState.picked.size, uiState.picked.size)
+        } else {
+            stringResource(R.string.album_title)
+        },
+        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
+        navigationIcon = {
+            if (uiState.isPicking) {
+                IconButton(onClick = bar.onClearPicks) {
+                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.album_clear_picks))
+                }
+            } else {
+                IconButton(onClick = bar.onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.album_back))
+                }
+            }
+        },
+        actions = {
+            if (uiState.isPicking) {
+                PickingActions(
+                    canMakeSlideshow = uiState.slideshowPhotos().size >= MIN_SLIDESHOW_PHOTOS,
+                    onMakeSlideshow = bar.onMakeSlideshow,
+                    onDelete = bar.onDeletePicked,
+                )
+            } else {
+                IconButton(onClick = bar.onAdd) {
+                    Icon(Icons.Filled.AddAPhoto, contentDescription = stringResource(R.string.album_add))
+                }
+            }
+        },
+        content = content,
+    )
+}
+
+/**
+ * 여러 장 고르는 중의 위쪽 버튼. 슬라이드쇼는 사진이 두 장 이상 골라졌을 때만 누를 수 있다.
+ * 지우기는 되돌릴 수 없어 위험 색으로 둔다.
+ */
+@Composable
+private fun PickingActions(canMakeSlideshow: Boolean, onMakeSlideshow: () -> Unit, onDelete: () -> Unit) {
+    IconButton(onClick = onMakeSlideshow, enabled = canMakeSlideshow) {
+        Icon(Icons.Filled.MovieCreation, contentDescription = stringResource(R.string.album_make_slideshow))
+    }
+    IconButton(onClick = onDelete) {
+        Icon(
+            Icons.Filled.DeleteOutline,
+            contentDescription = stringResource(R.string.album_delete_picked),
+            tint = MaterialTheme.colorScheme.error,
+        )
+    }
+}
 
 @Composable
 fun AlbumScreen(

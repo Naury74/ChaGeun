@@ -34,19 +34,24 @@ class ChageunApplication :
 
     override fun onCreate() {
         super.onCreate()
-        // 사진 누끼용 `:cutout`, 영수증 글자 인식용 `:framekit_ocr` 프로세스에서는 알림 예약과 통계 동기화를 다시 하지 않는다.
-        if (!isMainProcess()) return
+        // 누끼(`:cutout`)·글자 인식(`:ocr`)과 영수증 글자 인식(`:framekit_ocr`) 프로세스도 이 onCreate를 거친다.
+        // 그곳에서는 알림 예약·통계 동기화·자동 백업을 하지 않는다.
+        if (!isMainProcess(currentProcessName(), packageName)) return
         reminderScheduler.schedule()
         usageStatsSync.start(appScope)
         autoBackupSync.start(appScope)
     }
 
-    private fun isMainProcess(): Boolean {
-        val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getProcessName()
-        } else {
-            File("/proc/self/cmdline").readText().trimEnd('\u0000')
-        }
-        return name == packageName
+    private fun currentProcessName(): String? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        getProcessName()
+    } else {
+        runCatching { File("/proc/self/cmdline").readText().trimEnd('\u0000') }.getOrNull()
     }
 }
+
+/**
+ * 앱의 기본 프로세스인지. 분리 프로세스 이름은 `패키지:이름`이다. 이름을 읽지 못하면 기본 프로세스로 보고
+ * 초기화를 한다. 알림 예약을 빠뜨리는 것보다 한 번 더 하는 편이 낫다.
+ */
+internal fun isMainProcess(processName: String?, packageName: String): Boolean =
+    processName.isNullOrEmpty() || processName == packageName

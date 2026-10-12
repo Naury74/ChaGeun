@@ -162,8 +162,6 @@
     <string name="vehicle_edit_displacement">Engine displacement (optional)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">Enter a value between 50 and 10,000 cc</string>
-    <string name="album_add_edited_photo">Edit photos, then add</string>
-    <string name="album_add_edited_video">Edit a video, then add</string>
     <string name="album_video_description">Video, %1$s, %2$s</string>
     <plurals name="album_duration_seconds">
         <item quantity="one">%d second</item>
@@ -185,4 +183,11 @@
         <item quantity="other">%1$d videos weren\'t added. Videos can be up to %2$d minutes and %3$d MB.</item>
     </plurals>
     <string name="album_open_calendar">View this day in the calendar</string>
+    <string name="album_make_slideshow">Make a slideshow from selected photos</string>
+    <string name="album_slideshow_videos_skipped">Videos are left out. The slideshow uses only your photos.</string>
+    <string name="album_action_share">Share</string>
+    <string name="album_share_photo">Share this photo</string>
+    <string name="album_share_video">Share this video</string>
+    <string name="album_watermark_app">Chageun maintenance log</string>
+    <string name="album_watermark_mileage">%1$s km</string>
 </resources>

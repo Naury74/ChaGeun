@@ -8,6 +8,8 @@ import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
 import com.naury.chageun.core.model.AlbumPhoto
+import com.naury.chageun.core.model.MileageEntry
+import com.naury.chageun.core.model.Vehicle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.File
 import java.time.Clock
@@ -43,6 +45,10 @@ data class AlbumUiState(
     val picked: Set<String> = emptySet(),
     /** 그리드를 두 손가락으로 오므리고 벌려 고른 칸 크기 단계. 클수록 칸이 크고 한 줄에 적게 들어간다. */
     val gridStep: Int = DEFAULT_GRID_STEP,
+    /** 공유할 때 워터마크 추천 문구에 차종을 쓴다. 번호판은 쓰지 않는다. */
+    val vehicle: Vehicle? = null,
+    /** 공유할 때 워터마크 추천 문구에 사진 찍은 날의 주행거리를 쓴다. 최신순. */
+    val mileageLog: List<MileageEntry> = emptyList(),
 ) {
     val photos: List<AlbumPhoto> get() = days.flatMap { it.photos }
     val isPicking: Boolean get() = picked.isNotEmpty()
@@ -75,7 +81,12 @@ class AlbumViewModel @Inject constructor(
     val uiState: StateFlow<AlbumUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
         .flatMapLatest { vehicle ->
-            combine(albumRepository.observe(vehicle.id), view, messages) { photos, view, message ->
+            combine(
+                albumRepository.observe(vehicle.id),
+                vehicleRepository.observeMileageLog(vehicle.id),
+                view,
+                messages,
+            ) { photos, mileage, view, message ->
                 val ids = photos.mapTo(HashSet()) { it.id }
                 AlbumUiState(
                     isLoading = false,
@@ -88,6 +99,8 @@ class AlbumViewModel @Inject constructor(
                     isEditFailed = message.editFailed,
                     picked = view.picked.filterTo(LinkedHashSet()) { it in ids },
                     gridStep = view.gridStep,
+                    vehicle = vehicle,
+                    mileageLog = mileage,
                 )
             }
         }
@@ -97,12 +110,19 @@ class AlbumViewModel @Inject constructor(
         savedStateHandle[KEY_SELECTED] = id
     }
 
-    /** 사진·동영상을 넣는다. 한 장만 넣었으면 바로 날짜·코멘트를 입력받는다. */
-    fun add(sourceUris: List<String>, highQuality: Boolean) {
+    /**
+     * 사진·동영상을 넣는다. 한 장만 넣었으면 바로 날짜·코멘트를 입력받는다.
+     *
+     * @param takenOn 찍은 날을 정해 넣을 때. 고른 사진으로 만든 슬라이드쇼처럼 편집기가 만든 MP4에는 찍은 날이 없거나
+     *   만든 날로 적혀 있어, 고른 사진 중 가장 늦은 날로 맞춘다. null이면 파일의 날짜, 없으면 오늘이다.
+     */
+    fun add(sourceUris: List<String>, highQuality: Boolean, takenOn: LocalDate? = null) {
         if (sourceUris.isEmpty()) return
         viewModelScope.launch {
-            val result = albumRepository.add(vehicleId(), sourceUris, LocalDate.now(clock), highQuality)
+            val vehicleId = vehicleId()
+            val result = albumRepository.add(vehicleId, sourceUris, takenOn ?: LocalDate.now(clock), highQuality)
             messages.value = Messages(failed = result.failed, tooLarge = result.tooLarge)
+            if (takenOn != null) result.addedIds.forEach { albumRepository.updateDetails(vehicleId, it, takenOn, null) }
             result.addedIds.singleOrNull()?.let { savedStateHandle[KEY_EDITING] = it }
         }
     }
