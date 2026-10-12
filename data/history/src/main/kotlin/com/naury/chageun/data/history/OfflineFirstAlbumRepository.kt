@@ -3,12 +3,16 @@ package com.naury.chageun.data.history
 import com.naury.chageun.core.common.dispatcher.ChageunDispatchers
 import com.naury.chageun.core.common.dispatcher.Dispatcher
 import com.naury.chageun.core.common.logging.AppLogger
+import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.database.dao.AlbumDao
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.domain.album.AlbumAddResult
 import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.domain.album.MAX_ALBUM_PHOTOS_PER_ADD
+import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_BYTES
+import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
+import com.naury.chageun.core.model.AlbumMediaType
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.model.VehicleId
 import java.io.File
@@ -23,7 +27,7 @@ import kotlinx.coroutines.withContext
 
 internal class OfflineFirstAlbumRepository @Inject constructor(
     private val albumDao: AlbumDao,
-    private val importer: ImageImporter,
+    private val importers: AlbumImporters,
     @param:AttachmentDirectory private val directory: File,
     private val clock: Clock,
     private val logger: AppLogger,
@@ -43,34 +47,46 @@ internal class OfflineFirstAlbumRepository @Inject constructor(
         highQuality: Boolean,
     ): AlbumAddResult = withContext(ioDispatcher) {
         val maxEdge = if (highQuality) ImageImporter.HIGH_QUALITY_EDGE_PX else ImageImporter.DEFAULT_EDGE_PX
-        val added = sourceUris.take(MAX_ALBUM_PHOTOS_PER_ADD).mapNotNull { uri ->
+        val outcomes = sourceUris.take(MAX_ALBUM_PHOTOS_PER_ADD).map { uri ->
             val id = UUID.randomUUID().toString()
-            val imported = runCatching {
-                importer.import(
-                    uri,
-                    File(directory, "album_$id.jpg"),
-                    File(directory, "album_${id}_thumb.jpg"),
-                    maxEdge,
-                )
-            }.onFailure { logger.warn("album_import_failed", error = it) }.getOrNull() ?: return@mapNotNull null
-            val now = clock.instant()
-            albumDao.insert(
-                AlbumPhotoEntity(
+            val outcome = store(uri, "album_$id", maxEdge)
+            if (outcome is StoreOutcome.Stored) {
+                val now = clock.instant()
+                val row = AlbumPhotoEntity(
                     id = id,
                     vehicleId = vehicleId.value,
-                    fileName = imported.file.name,
-                    thumbnailName = imported.thumbnail.name,
-                    sizeBytes = imported.sizeBytes,
-                    takenOn = imported.takenOn ?: fallbackDate,
+                    fileName = "",
+                    thumbnailName = "",
+                    sizeBytes = 0,
+                    takenOn = outcome.media.takenOn ?: fallbackDate,
                     comment = null,
                     createdAt = now,
                     updatedAt = now,
-                ),
-            )
-            id
+                )
+                albumDao.insert(outcome.media.applyTo(row))
+            }
+            id to outcome
         }
-        AlbumAddResult(addedIds = added, failed = sourceUris.size - added.size)
+        val added = outcomes.filter { it.second is StoreOutcome.Stored }.map { it.first }
+        val tooLarge = outcomes.count { it.second == StoreOutcome.TooLarge }
+        AlbumAddResult(addedIds = added, failed = sourceUris.size - added.size - tooLarge, tooLarge = tooLarge)
     }
+
+    override suspend fun replace(vehicleId: VehicleId, id: String, sourceUri: String): Boolean =
+        withContext(ioDispatcher) {
+            val row = albumDao.find(vehicleId.value, id) ?: return@withContext false
+            // 이름을 새로 지어 이미지 캐시가 예전 사진을 보여 주지 않게 하고, 다 쓴 뒤에 옛 파일을 지운다.
+            // 편집한 사진은 원래보다 커지지 않으므로 고화질 상한으로 가져온다.
+            val outcome = store(sourceUri, "album_${id}_${UUID.randomUUID()}", ImageImporter.HIGH_QUALITY_EDGE_PX)
+            val stored = (outcome as? StoreOutcome.Stored)?.media
+            if (stored != null) {
+                // 찍은 날짜·메모는 사용자가 정한 값이라 편집한 파일의 날짜로 바꾸지 않는다.
+                albumDao.update(stored.applyTo(row).copy(updatedAt = clock.instant()))
+                row.deleteFiles()
+            }
+            logger.debug("album_replaced", LogField.Success(stored != null))
+            stored != null
+        }
 
     override suspend fun updateDetails(vehicleId: VehicleId, id: String, takenOn: LocalDate, comment: String?) =
         albumDao.updateDetails(vehicleId.value, id, takenOn, comment?.trim()?.ifEmpty { null }, clock.instant())
@@ -78,9 +94,39 @@ internal class OfflineFirstAlbumRepository @Inject constructor(
     override suspend fun delete(vehicleId: VehicleId, id: String) = withContext(ioDispatcher) {
         val photo = albumDao.find(vehicleId.value, id) ?: return@withContext
         albumDao.delete(vehicleId.value, id)
-        File(directory, photo.fileName).delete()
-        File(directory, photo.thumbnailName).delete()
-        Unit
+        photo.deleteFiles()
+    }
+
+    /** [uri]를 사진이나 동영상으로 가져와 `[name].jpg`·`[name].mp4`와 `[name]_thumb.jpg`로 저장한다. */
+    private fun store(uri: String, name: String, maxEdge: Int): StoreOutcome = if (importers.video.isVideo(uri)) {
+        storeVideo(uri, name)
+    } else {
+        val imported = runCatching {
+            importers.image.import(uri, File(directory, "$name.jpg"), File(directory, "${name}_thumb.jpg"), maxEdge)
+        }.onFailure { logger.warn("album_import_failed", error = it) }.getOrNull()
+        imported?.let { StoreOutcome.Stored(StoredMedia.photo(it)) } ?: StoreOutcome.Failed
+    }
+
+    private fun storeVideo(uri: String, name: String): StoreOutcome {
+        val result = runCatching {
+            importers.video.import(
+                uri,
+                File(directory, "$name.mp4"),
+                File(directory, "${name}_thumb.jpg"),
+                MAX_ALBUM_VIDEO_DURATION_MS,
+                MAX_ALBUM_VIDEO_BYTES,
+            )
+        }.onFailure { logger.warn("album_video_import_failed", error = it) }.getOrDefault(VideoImport.Failed)
+        return when (result) {
+            is VideoImport.Imported -> StoreOutcome.Stored(StoredMedia.video(result.video))
+            VideoImport.TooLarge -> StoreOutcome.TooLarge
+            VideoImport.Failed -> StoreOutcome.Failed
+        }
+    }
+
+    private fun AlbumPhotoEntity.deleteFiles() {
+        File(directory, fileName).delete()
+        File(directory, thumbnailName).delete()
     }
 
     private fun AlbumPhotoEntity.asExternalModel() = AlbumPhoto(
@@ -90,5 +136,55 @@ internal class OfflineFirstAlbumRepository @Inject constructor(
         takenOn = takenOn,
         comment = comment,
         createdAt = createdAt,
+        mediaType = if (mediaType == AlbumPhotoEntity.MEDIA_VIDEO) AlbumMediaType.Video else AlbumMediaType.Photo,
+        durationMs = durationMs,
+        width = width,
+        height = height,
     )
+}
+
+private sealed interface StoreOutcome {
+    data class Stored(val media: StoredMedia) : StoreOutcome
+
+    data object TooLarge : StoreOutcome
+
+    data object Failed : StoreOutcome
+}
+
+/** 저장을 마친 파일. 행을 새로 만들 때와 편집해서 바꿀 때 같은 칸을 채운다. */
+private data class StoredMedia(
+    val file: File,
+    val thumbnail: File,
+    val sizeBytes: Long,
+    val takenOn: LocalDate?,
+    val mediaType: String,
+    val durationMs: Long? = null,
+    val width: Int? = null,
+    val height: Int? = null,
+) {
+    fun applyTo(row: AlbumPhotoEntity) = row.copy(
+        fileName = file.name,
+        thumbnailName = thumbnail.name,
+        sizeBytes = sizeBytes,
+        mediaType = mediaType,
+        durationMs = durationMs,
+        width = width,
+        height = height,
+    )
+
+    companion object {
+        fun photo(image: ImportedImage) =
+            StoredMedia(image.file, image.thumbnail, image.sizeBytes, image.takenOn, AlbumPhotoEntity.MEDIA_PHOTO)
+
+        fun video(video: ImportedVideo) = StoredMedia(
+            video.file,
+            video.poster,
+            video.sizeBytes,
+            video.takenOn,
+            AlbumPhotoEntity.MEDIA_VIDEO,
+            video.durationMs,
+            video.width,
+            video.height,
+        )
+    }
 }

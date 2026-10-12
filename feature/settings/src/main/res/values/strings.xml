@@ -20,7 +20,7 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_section_data">Data</string>
     <string name="settings_export">Export data</string>
-    <string name="settings_export_body">Saves your vehicle, records and photos as a ZIP file you choose. The plate number is saved masked.</string>
+    <string name="settings_export_body">Saves your vehicle, records, photos and album videos as a ZIP file you choose. The plate number is saved masked.</string>
     <string name="settings_export_done">Export complete</string>
     <string name="settings_export_failed">Couldn\'t export. Try another location.</string>
     <string name="settings_import">Import data</string>
@@ -72,7 +72,7 @@
     <string name="settings_account">Account</string>
     <string name="settings_account_body">Sign in with your email or Google account</string>
     <string name="settings_drive_backup">Google Drive backup</string>
-    <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it.</string>
+    <string name="settings_drive_backup_body">Back up automatically to your own Drive. Free, and only you can see it. Album videos are too large and aren\'t included. Use Export to keep them.</string>
     <string name="settings_share">Send to another device</string>
     <string name="settings_share_body">Send a backup file with Quick Share, email, or a messenger. On the new phone, choose “Restore from a backup” on the first screen.</string>
     <string name="settings_service_notice">Service notice</string>

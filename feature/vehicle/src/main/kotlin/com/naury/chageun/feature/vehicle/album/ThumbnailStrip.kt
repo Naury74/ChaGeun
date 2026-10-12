@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,7 +40,6 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AlbumPhoto
-import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.feature.vehicle.R
 
@@ -97,7 +97,7 @@ private fun StripThumbnail(
         R.string.album_strip_photo,
         position,
         count,
-        photo.comment ?: stringResource(R.string.album_photo_on, formatDate(photo.takenOn)),
+        mediaDescription(photo),
     )
     val size by animateDpAsState(if (isCurrent) CURRENT_SIZE else ITEM_SIZE, motionSpec(), label = "strip-size")
     val appear = rememberAppear(appearDelayMs)
@@ -124,6 +124,13 @@ private fun StripThumbnail(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer { alpha = if (isCurrent) 1f else DIMMED_ALPHA },
+            )
+        }
+        if (photo.isVideo) {
+            VideoDurationBadge(
+                photo.durationMs,
+                Modifier.align(Alignment.BottomEnd).padding(3.dp),
+                showDuration = false,
             )
         }
     }

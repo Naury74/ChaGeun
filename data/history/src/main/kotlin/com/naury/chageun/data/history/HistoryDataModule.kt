@@ -30,6 +30,9 @@ internal interface HistoryDataModule {
     fun bindImageImporter(importer: BitmapImageImporter): ImageImporter
 
     @Binds
+    fun bindVideoImporter(importer: MediaVideoImporter): VideoImporter
+
+    @Binds
     fun bindAlbumRepository(repository: OfflineFirstAlbumRepository): AlbumRepository
 
     @Binds

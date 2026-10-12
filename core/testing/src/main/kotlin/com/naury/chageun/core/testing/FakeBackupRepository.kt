@@ -12,8 +12,12 @@ class FakeBackupRepository : BackupRepository {
 
     override suspend fun summary() = summary
 
-    override suspend fun export(destinationUri: String): Boolean {
+    /** 마지막 내보내기에 동영상을 넣었는지. */
+    var exportedVideos: Boolean? = null
+
+    override suspend fun export(destinationUri: String, includeVideos: Boolean): Boolean {
         exportedTo += destinationUri
+        exportedVideos = includeVideos
         return exportSucceeds
     }
 

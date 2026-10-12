@@ -15,15 +15,30 @@ import com.naury.framekit.ui.config.EditorUiConfig
 import com.naury.framekit.ui.config.ThemeMode
 import com.naury.framekit.ui.image.contract.ImageEditorConfig
 import com.naury.framekit.ui.image.contract.ImageEditorRequest
+import com.naury.framekit.ui.video.contract.VideoEditorConfig
+import com.naury.framekit.ui.video.contract.VideoEditorRequest
+import com.naury.framekit.video.export.VideoExportConfig
 import java.io.File
 
-/** 편집기에 넘길 사진. FrameKit 타입을 모듈 밖에 드러내지 않으려고 따로 둔다. */
-internal sealed interface PhotoEditSource {
+/** 편집기에 넘길 사진이나 동영상. FrameKit 타입을 모듈 밖에 드러내지 않으려고 따로 둔다. */
+internal sealed interface EditSource
+
+/** 사진 편집기에 넘길 사진. */
+internal sealed interface PhotoEditSource : EditSource {
     /** 앱 저장소의 파일이나 캐시 파일, 또는 Photo Picker가 준 URI. */
     data class Existing(val uris: List<String>) : PhotoEditSource
 
     /** 시스템 Photo Picker로 [maxItems]장까지 고른 뒤 바로 편집한다. */
     data class Pick(val maxItems: Int) : PhotoEditSource
+}
+
+/** 동영상 편집기에 넘길 동영상. 결과는 늘 MP4 하나다. */
+internal sealed interface VideoEditSource : EditSource {
+    /** 앱 저장소의 파일이나 캐시 파일, 또는 Photo Picker가 준 URI. */
+    data class Existing(val uri: String) : VideoEditSource
+
+    /** 시스템 Photo Picker로 동영상 하나를 고른 뒤 바로 편집한다. 편집기 안에서 클립을 더 이어 붙일 수 있다. */
+    data object Pick : VideoEditSource
 }
 
 /**
@@ -47,6 +62,25 @@ internal fun photoEditRequest(source: PhotoEditSource, maxItems: Int, ui: Editor
             quality = JPEG_QUALITY,
             metadataPolicy = MetadataPolicy.SAFE,
         ),
+        ui = ui,
+    )
+}
+
+/**
+ * [source]를 여는 동영상 편집기 요청. 결과 길이는 [maxDurationMs]를 넘지 않고, 더 긴 원본은 앞부분만 남긴 채로 열린다.
+ * 화질은 편집기 기본값(짧은 변 1080px, 30fps)이다. 결과 파일의 위치 정보는 가져올 때 저장소가 지운다.
+ */
+internal fun videoEditRequest(source: VideoEditSource, maxDurationMs: Long, ui: EditorUiConfig): VideoEditorRequest {
+    val input = when (source) {
+        is VideoEditSource.Existing -> editorInput(source.uri)
+        VideoEditSource.Pick -> EditorInput.Pick(MediaKind.VIDEO, 1)
+    }
+    val maxDurationUs = (maxDurationMs * MICROS_PER_MILLI)
+        .coerceIn(VideoEditorConfig().minClipDurationUs, VideoEditorConfig.MAX_TIMELINE_US)
+    return VideoEditorRequest(
+        input = input,
+        config = VideoEditorConfig(maxTimelineDurationUs = maxDurationUs, maxClipCount = MAX_VIDEO_CLIPS),
+        export = VideoExportConfig(),
         ui = ui,
     )
 }
@@ -86,6 +120,10 @@ internal fun photoEditUi(colors: ColorScheme, localeTag: String): EditorUiConfig
 /** 기록 하나에 붙일 수 있는 사진 수보다 넉넉하고, 편집기 기본값(20)과 같다. */
 internal const val MAX_EDIT_ITEMS = 20
 private const val JPEG_QUALITY = 95
+
+/** 편집기에서 이어 붙일 수 있는 클립 수. 앨범 한 칸에 넣는 짧은 영상이라 몇 개면 충분하다. */
+private const val MAX_VIDEO_CLIPS = 5
+private const val MICROS_PER_MILLI = 1_000L
 
 // 앱의 카드·시트에 쓰는 medium 모양(16dp)과 맞춘다.
 private const val CORNER_RADIUS_DP = 16

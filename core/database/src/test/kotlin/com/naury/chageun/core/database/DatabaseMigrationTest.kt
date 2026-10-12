@@ -11,6 +11,7 @@ import com.naury.chageun.core.database.migration.Migration5To6
 import com.naury.chageun.core.database.migration.Migration6To7
 import com.naury.chageun.core.database.migration.Migration7To8
 import com.naury.chageun.core.database.migration.Migration8To9
+import com.naury.chageun.core.database.migration.Migration9To10
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -173,6 +174,47 @@ class DatabaseMigrationTest {
             db.query("SELECT displacement_cc FROM vehicle WHERE id = 'v1'").use { cursor ->
                 cursor.moveToFirst()
                 assertThat(cursor.getInt(0)).isEqualTo(1598)
+            }
+        }
+    }
+
+    @Test
+    fun migration9To10_keepsAlbumPhotosAsPhotos_andAcceptsVideos() {
+        helper.createDatabase(TEST_DB, 9).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO album_photo (id, vehicle_id, file_name, thumbnail_name, size_bytes, taken_on, comment, " +
+                    "created_at, updated_at) VALUES ('a1', 'v1', 'album_a1.jpg', 'album_a1_thumb.jpg', 1000, 20500, " +
+                    "'Car wash', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 10, true, Migration9To10).use { db ->
+            db.query(
+                "SELECT media_type, duration_ms, width, height, comment, taken_on FROM album_photo WHERE id = 'a1'",
+            ).use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.getString(0)).isEqualTo("PHOTO")
+                assertThat(cursor.isNull(1)).isTrue()
+                assertThat(cursor.isNull(2)).isTrue()
+                assertThat(cursor.isNull(3)).isTrue()
+                assertThat(cursor.getString(4)).isEqualTo("Car wash")
+                assertThat(cursor.getLong(5)).isEqualTo(20_500)
+            }
+            db.execSQL(
+                "INSERT INTO album_photo (id, vehicle_id, file_name, thumbnail_name, size_bytes, taken_on, " +
+                    "created_at, updated_at, media_type, duration_ms, width, height) VALUES ('a2', 'v1', " +
+                    "'album_a2.mp4', 'album_a2_thumb.jpg', 5000, 20501, 2, 2, 'VIDEO', 42000, 1080, 1920)",
+            )
+            db.query("SELECT media_type, duration_ms, width, height FROM album_photo WHERE id = 'a2'").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getString(0)).isEqualTo("VIDEO")
+                assertThat(cursor.getLong(1)).isEqualTo(42_000)
+                assertThat(cursor.getInt(2)).isEqualTo(1080)
+                assertThat(cursor.getInt(3)).isEqualTo(1920)
             }
         }
     }

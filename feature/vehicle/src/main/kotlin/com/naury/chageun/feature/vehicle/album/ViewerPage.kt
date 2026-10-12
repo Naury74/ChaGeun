@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,7 +42,6 @@ import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AlbumPhoto
-import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.feature.vehicle.R
 import kotlin.math.absoluteValue
@@ -53,6 +53,9 @@ internal data class CardFrame(val top: Dp, val bottom: Dp, val side: Dp, val rad
 /**
  * Pager의 한 페이지. 사진 비율에 맞춘 카드를 남은 자리 가운데에 두고, 옆 페이지는 조금 작고 흐리게 그려
  * 넘길 때 깊이가 느껴지게 한다. 지금 페이지에만 날짜·메모를 카드 아래쪽에 겹친다.
+ *
+ * @param isCurrent 지금 보고 있는 페이지인지. 동영상은 지금 페이지에서만 재생한다.
+ * @param showInfo 조작 막대가 보이는 지금 페이지인지. 날짜·메모와 동영상 재생 버튼을 함께 보이고 숨긴다.
  */
 @Composable
 internal fun ViewerPage(
@@ -60,6 +63,7 @@ internal fun ViewerPage(
     frame: CardFrame,
     pageOffset: () -> Float,
     zoom: PhotoZoomState,
+    isCurrent: Boolean,
     showInfo: Boolean,
     info: @Composable () -> Unit,
     onTap: () -> Unit,
@@ -88,41 +92,48 @@ internal fun ViewerPage(
                 }
                 .clip(RoundedCornerShape(frame.radius)),
         ) {
-            ViewerPageContent(photo, zoom, onTap)
-            AnimatedVisibility(
-                visible = showInfo,
-                enter = fadeIn(motionSpec()),
-                exit = fadeOut(motionSpec()),
-                modifier = Modifier.align(Alignment.BottomStart),
-            ) {
-                info()
+            val overlay: @Composable BoxScope.() -> Unit = {
+                AnimatedVisibility(
+                    visible = showInfo,
+                    enter = fadeIn(motionSpec()),
+                    exit = fadeOut(motionSpec()),
+                    modifier = Modifier.align(Alignment.BottomStart),
+                ) {
+                    info()
+                }
+            }
+            // 사진은 확대할 수 있는 이미지이고, 동영상은 포스터와 재생 버튼이다.
+            // 동영상의 재생 버튼은 날짜·메모 위에 그려야 어둡게 가려지지 않아 겹침 순서를 동영상 쪽에 맡긴다.
+            if (photo.isVideo) {
+                VideoPageContent(photo, isCurrent, showControls = showInfo, onTap = onTap, overlay = overlay)
+            } else {
+                val image by rememberFileImage(photo.filePath)
+                ZoomableImage(image = image, contentDescription = mediaDescription(photo), state = zoom, onTap = onTap)
+                overlay()
             }
         }
     }
 }
 
 /**
- * 페이지에 그릴 내용. 지금은 사진만 있지만 앨범에 동영상이 들어오면 여기서 종류에 따라 나눈다.
- * 비율을 정하는 [rememberMediaAspect]도 같은 자리에서 함께 바꾼다.
+ * 카드 비율. 저장할 때 잰 크기가 있으면 그것을, 없으면 썸네일 비율을 쓴다. 파노라마처럼 극단적인 비율은 카드가
+ * 실선처럼 납작해지지 않도록 자른다. 읽기 전에는 4:3으로 둔다.
+ *
+ * 가로 동영상은 카드를 4:3보다 납작하게 만들지 않고 위아래를 검게 둔다. 영상을 자르지 않으면서 날짜·메모와
+ * 재생 버튼이 큰 글자에서도 카드 안에 들어가게 한다.
  */
 @Composable
-private fun ViewerPageContent(photo: AlbumPhoto, zoom: PhotoZoomState, onTap: () -> Unit) {
-    val image by rememberFileImage(photo.filePath)
-    ZoomableImage(
-        image = image,
-        contentDescription = photo.comment ?: stringResource(R.string.album_photo_on, formatDate(photo.takenOn)),
-        state = zoom,
-        onTap = onTap,
-    )
-}
-
-/** 카드 비율. 파노라마처럼 극단적인 비율은 카드가 실선처럼 납작해지지 않도록 자른다. 읽기 전에는 4:3으로 둔다. */
-@Composable
 private fun rememberMediaAspect(photo: AlbumPhoto): Float {
+    val width = photo.width ?: 0
+    val height = photo.height ?: 0
     val thumbnail by rememberFileImage(photo.thumbnailPath)
-    val image = thumbnail ?: return DEFAULT_ASPECT
-    if (image.width <= 0 || image.height <= 0) return DEFAULT_ASPECT
-    return (image.width.toFloat() / image.height).coerceIn(MIN_ASPECT, MAX_ASPECT)
+    val image = thumbnail
+    val aspect = when {
+        width > 0 && height > 0 -> width.toFloat() / height
+        image != null && image.width > 0 && image.height > 0 -> image.width.toFloat() / image.height
+        else -> DEFAULT_ASPECT
+    }
+    return aspect.coerceIn(MIN_ASPECT, if (photo.isVideo) MAX_VIDEO_ASPECT else MAX_ASPECT)
 }
 
 /** 카드 아래쪽에 겹치는 날짜와 메모. 날짜를 누르면 달력으로, 메모를 누르면 정보 수정으로 간다. */
@@ -133,7 +144,13 @@ internal fun PhotoInfoOverlay(photo: AlbumPhoto, actions: AlbumActions) {
         Modifier
             .fillMaxWidth()
             .background(Brush.verticalGradient(listOf(Color.Transparent, INFO_SCRIM_MID, INFO_SCRIM_END)))
-            .padding(start = spacing.md, end = spacing.md, top = spacing.xl, bottom = spacing.xs),
+            // 동영상은 오른쪽 아래에 재생 버튼이 있어 메모가 그 밑으로 들어가지 않게 비워 둔다.
+            .padding(
+                start = spacing.md,
+                end = if (photo.isVideo) VIDEO_CONTROL_SPACE else spacing.md,
+                top = spacing.xl,
+                bottom = spacing.xs,
+            ),
     ) {
         PhotoDateChip(photo.takenOn, actions.onOpenCalendar)
         val editLabel = stringResource(R.string.album_edit_details)
@@ -174,6 +191,7 @@ private const val SIDE_PAGE_ALPHA = 0.6f
 private const val DEFAULT_ASPECT = 4f / 3f
 private const val MIN_ASPECT = 0.42f
 private const val MAX_ASPECT = 2.4f
+private const val MAX_VIDEO_ASPECT = 4f / 3f
 private const val NOTE_MAX_LINES = 3
 private val INFO_SCRIM_MID = Color.Black.copy(alpha = 0.30f)
 private val INFO_SCRIM_END = Color.Black.copy(alpha = 0.72f)

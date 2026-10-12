@@ -206,6 +206,10 @@ internal fun AlbumPhotoEntity.toDto() = AlbumPhotoDto(
     takenOn = takenOn.toString(),
     comment = comment,
     createdAt = createdAt.toString(),
+    mediaType = mediaType,
+    durationMs = durationMs,
+    width = width,
+    height = height,
 )
 
 internal fun AlbumPhotoDto.toEntity(now: Instant) = AlbumPhotoEntity(
@@ -218,4 +222,9 @@ internal fun AlbumPhotoDto.toEntity(now: Instant) = AlbumPhotoEntity(
     comment = comment,
     createdAt = Instant.parse(createdAt),
     updatedAt = now,
+    // 모르는 값은 사진으로 본다.
+    mediaType = mediaType.takeIf { it == AlbumPhotoEntity.MEDIA_VIDEO } ?: AlbumPhotoEntity.MEDIA_PHOTO,
+    durationMs = durationMs,
+    width = width,
+    height = height,
 )

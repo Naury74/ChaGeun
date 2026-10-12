@@ -9,6 +9,7 @@ import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.common.storage.AttachmentDirectory
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -40,9 +41,9 @@ internal class RoomBackupRepository @Inject constructor(
         )
     }
 
-    override suspend fun export(destinationUri: String): Boolean = withContext(ioDispatcher) {
+    override suspend fun export(destinationUri: String, includeVideos: Boolean): Boolean = withContext(ioDispatcher) {
         runCatching {
-            val document = snapshot()
+            val document = snapshot(includeVideos)
             val output: OutputStream = checkNotNull(context.contentResolver.openOutputStream(destinationUri.toUri()))
             output.use { BackupArchiveWriter.write(it, document, attachmentDirectory) }
         }.fold(
@@ -125,7 +126,8 @@ internal class RoomBackupRepository @Inject constructor(
         photos = attachments.size + albumPhotos.size,
     )
 
-    internal suspend fun snapshot(): BackupDocument = database.withTransaction {
+    /** 동영상 파일은 ZIP에 한 덩어리씩 흘려 쓰므로 크기와 상관없이 메모리에 올리지 않는다. */
+    internal suspend fun snapshot(includeVideos: Boolean = true): BackupDocument = database.withTransaction {
         BackupDocument(
             exportedAt = clock.instant().toString(),
             vehicles = backupDao.vehicles().map { it.toDto() },
@@ -136,7 +138,9 @@ internal class RoomBackupRepository @Inject constructor(
             checkRecords = backupDao.checkRecords().map { it.toDto() },
             attachments = backupDao.attachments().map { it.toDto() },
             inspectionSchedules = backupDao.inspectionSchedules().map { it.toDto() },
-            albumPhotos = backupDao.albumPhotos().map { it.toDto() },
+            albumPhotos = backupDao.albumPhotos()
+                .filter { includeVideos || it.mediaType != AlbumPhotoEntity.MEDIA_VIDEO }
+                .map { it.toDto() },
         )
     }
 

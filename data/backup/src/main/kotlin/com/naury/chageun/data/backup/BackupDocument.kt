@@ -1,5 +1,6 @@
 package com.naury.chageun.data.backup
 
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -152,4 +153,9 @@ internal data class AlbumPhotoDto(
     @SerialName("taken_on") val takenOn: String,
     val comment: String?,
     @SerialName("created_at") val createdAt: String,
+    /** 버전을 올리지 않고 추가한 필드다. 동영상이 없던 때의 파일은 모두 사진으로 가져온다. */
+    @SerialName("media_type") val mediaType: String = AlbumPhotoEntity.MEDIA_PHOTO,
+    @SerialName("duration_ms") val durationMs: Long? = null,
+    val width: Int? = null,
+    val height: Int? = null,
 )

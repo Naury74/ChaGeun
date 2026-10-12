@@ -20,7 +20,7 @@
     <string name="settings_version">버전 %1$s</string>
     <string name="settings_section_data">데이터</string>
     <string name="settings_export">데이터 내보내기</string>
-    <string name="settings_export_body">차량 정보·기록·사진을 원하는 위치에 ZIP 파일로 저장해요. 차량번호는 마스킹해서 저장해요.</string>
+    <string name="settings_export_body">차량 정보·기록·사진·앨범 동영상을 원하는 위치에 ZIP 파일로 저장해요. 차량번호는 마스킹해서 저장해요.</string>
     <string name="settings_export_done">내보내기를 완료했어요</string>
     <string name="settings_export_failed">내보내지 못했어요. 다른 위치를 선택해 주세요.</string>
     <string name="settings_import">데이터 가져오기</string>
@@ -69,7 +69,7 @@
     <string name="settings_account">계정</string>
     <string name="settings_account_body">이메일이나 Google 계정으로 로그인해요</string>
     <string name="settings_drive_backup">Google 드라이브 백업</string>
-    <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요.</string>
+    <string name="settings_drive_backup_body">내 드라이브에 자동으로 백업해요. 무료이고 나만 볼 수 있어요. 앨범 동영상은 용량이 커서 백업에 넣지 않아요. 동영상까지 보관하려면 데이터 내보내기를 써 주세요.</string>
     <string name="settings_share">다른 기기로 보내기</string>
     <string name="settings_share_body">백업 파일을 Quick Share·메일·메신저로 보내요. 새 휴대폰의 첫 화면에서 “백업에서 복원하기”로 열어요.</string>
     <string name="settings_service_notice">서비스 유의사항</string>

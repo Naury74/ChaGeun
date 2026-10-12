@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.click
@@ -38,6 +39,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.chageun.core.model.AlbumMediaType
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.uitesting.AppFrame
@@ -75,14 +77,39 @@ class AlbumScreenTest {
         )
     }
 
-    private fun state(selected: String? = "p2", isCoverUpdated: Boolean = false, picked: Set<String> = emptySet()) =
-        AlbumUiState(
-            isLoading = false,
-            days = photos.groupBy { it.takenOn }.map { (date, items) -> AlbumDay(date, items) },
-            selected = photos.firstOrNull { it.id == selected },
-            isCoverUpdated = isCoverUpdated,
-            picked = picked,
+    /** 사진 사이에 42초짜리 가로 동영상 하나를 섞은 앨범. Robolectric은 동영상을 읽지 못하므로 포스터만 그린다. */
+    private val withVideo by lazy {
+        val poster = File.createTempFile("album-video", ".jpg").apply { deleteOnExit() }
+        val bitmap = drawScene(Scene.Dusk, VIDEO_WIDTH, VIDEO_HEIGHT)
+        poster.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+        bitmap.recycle()
+        val video = AlbumPhoto(
+            "v1", "/missing/album_v1.mp4", poster.absolutePath,
+            LocalDate.of(
+                2026,
+                10,
+                3,
+            ),
+            "Highway drive", Instant.EPOCH,
+            mediaType = AlbumMediaType.Video, durationMs = 42_000, width = VIDEO_WIDTH, height = VIDEO_HEIGHT,
         )
+        listOf(photos[0], video) + photos.drop(1)
+    }
+
+    private fun state(
+        selected: String? = "p2",
+        isCoverUpdated: Boolean = false,
+        picked: Set<String> = emptySet(),
+        items: List<AlbumPhoto> = photos,
+        isEditFailed: Boolean = false,
+    ) = AlbumUiState(
+        isLoading = false,
+        days = items.groupBy { it.takenOn }.map { (date, day) -> AlbumDay(date, day) },
+        selected = items.firstOrNull { it.id == selected },
+        isCoverUpdated = isCoverUpdated,
+        isEditFailed = isEditFailed,
+        picked = picked,
+    )
 
     @Test
     fun viewer_showsCounterAndCurrentPhotoDetails() {
@@ -456,16 +483,166 @@ class AlbumScreenTest {
         composeRule.captureScreen("album_grid_ko")
     }
 
+    @Test
+    fun grid_videoCell_showsDuration_andIsReadAsAVideo() {
+        setContentWithPhotos(withVideo) {
+            ChageunTheme { AlbumScreen(state(selected = null, items = withVideo), isTwoPane = false, AlbumActions()) }
+        }
+
+        composeRule.onNodeWithText("0:42").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Video, 42 seconds, Highway drive").assertIsDisplayed()
+    }
+
+    @Test
+    fun viewer_videoPage_offersPlay_editAndNoCoverAction() {
+        val edited = mutableListOf<String>()
+        setContentWithPhotos(withVideo) {
+            ChageunTheme {
+                AlbumScreen(
+                    state(selected = "v1", items = withVideo),
+                    isTwoPane = false,
+                    actions = AlbumActions(onEditImage = { edited += it.id }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("2 / 6").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Play video").assertIsDisplayed().assertHasClickAction()
+        composeRule.onNodeWithContentDescription("Video, 42 seconds, Highway drive").assertIsDisplayed()
+        composeRule.onNodeWithText("Car photo").assertDoesNotExist()
+        composeRule.onNode(hasClickLabel("Edit this video")).performClick()
+        assertThat(edited).containsExactly("v1")
+    }
+
+    @Test
+    fun viewer_videoPage_tapTogglesControls_likePhotos() {
+        setContentWithPhotos(withVideo) {
+            ChageunTheme { AlbumScreen(state(selected = "v1", items = withVideo), isTwoPane = false, AlbumActions()) }
+        }
+
+        // 가운데는 재생 버튼이라 비켜서 누른다.
+        tapVideoBesidePlay()
+        composeRule.onNodeWithText("Details").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Play video").assertIsDisplayed()
+
+        tapVideoBesidePlay()
+        composeRule.onNodeWithText("Details").assertIsDisplayed()
+    }
+
+    @Test
+    fun viewer_editFailure_isAnnounced() {
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(isEditFailed = true), isTwoPane = false, actions = AlbumActions()) }
+        }
+
+        composeRule.onNodeWithText("Couldn't save your edit. Please try again.").assertIsDisplayed()
+    }
+
+    @Test
+    fun videoViewer_controls_haveLabelsAndLargeTouchTargets() {
+        setContentWithPhotos(withVideo) {
+            ChageunTheme {
+                AlbumScreen(
+                    state(selected = "v1", items = withVideo),
+                    isTwoPane = false,
+                    actions = AlbumActions(onOpenCalendar = {}, onEditImage = {}),
+                )
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun videoViewer_largeFont_keepsEveryTextVisible() {
+        setContentWithPhotos(withVideo) {
+            ChageunTheme {
+                AlbumScreen(
+                    state(selected = "v1", items = withVideo),
+                    isTwoPane = false,
+                    actions = AlbumActions(onOpenCalendar = {}, onEditImage = {}),
+                )
+            }
+        }
+
+        composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun videoGrid_largeFont_keepsEveryTextVisible() {
+        setContentWithPhotos(withVideo) {
+            ChageunTheme { AlbumScreen(state(selected = null, items = withVideo), isTwoPane = false, AlbumActions()) }
+        }
+
+        composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_gridWithVideoKorean() {
+        setContentWithPhotos(withVideo) {
+            AppFrame { AlbumScreen(state(selected = null, items = withVideo), isTwoPane = false, AlbumActions()) }
+        }
+        composeRule.captureScreen("album_grid_video_ko")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE_KO_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_gridWithVideoKoreanDark() {
+        setContentWithPhotos(withVideo) {
+            AppFrame { AlbumScreen(state(selected = null, items = withVideo), isTwoPane = false, AlbumActions()) }
+        }
+        composeRule.captureScreen("album_grid_video_ko_dark")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_viewerVideoKorean() {
+        setContentWithPhotos(withVideo) {
+            AppFrame {
+                AlbumScreen(
+                    state(selected = "v1", items = withVideo),
+                    isTwoPane = false,
+                    actions = AlbumActions(onOpenCalendar = {}, onEditImage = {}),
+                )
+            }
+        }
+        composeRule.captureScreen("album_viewer_video_ko")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE_KO_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_viewerVideoKoreanDark() {
+        setContentWithPhotos(withVideo) {
+            AppFrame {
+                AlbumScreen(
+                    state(selected = "v1", items = withVideo),
+                    isTwoPane = false,
+                    actions = AlbumActions(onOpenCalendar = {}, onEditImage = {}),
+                )
+            }
+        }
+        composeRule.captureScreen("album_viewer_video_ko_dark")
+    }
+
     /**
      * 사진을 한 장씩 차례로 읽어 캐시에 넣은 뒤 화면을 그린다. 여러 IO 스레드가 동시에 사진을 읽은 채로 테스트가 끝나면
      * Robolectric native 그래픽이 프로세스를 멈추고, 캡처할 때 아직 안 읽힌 사진이 빈칸으로 찍히기 때문이다.
      */
-    private fun setContentWithPhotos(content: @Composable () -> Unit) {
+    private fun setContentWithPhotos(items: List<AlbumPhoto> = photos, content: @Composable () -> Unit) {
         var preloaded by mutableIntStateOf(0)
         composeRule.setContent {
-            if (preloaded == photos.size) content() else PreloadPhoto(photos[preloaded])
+            if (preloaded == items.size) content() else PreloadPhoto(items[preloaded])
         }
-        repeat(photos.size) {
+        repeat(items.size) {
             composeRule.waitUntil(PHOTO_LOAD_TIMEOUT_MS) {
                 composeRule.onAllNodesWithTag(PRELOADED_TAG).fetchSemanticsNodes().isNotEmpty()
             }
@@ -477,15 +654,24 @@ class AlbumScreenTest {
         composeRule.waitForIdle()
     }
 
+    // 동영상은 파일 대신 포스터를 읽어 둔다.
     @Composable
     private fun PreloadPhoto(photo: AlbumPhoto) {
-        val image by rememberFileImage(photo.filePath)
+        val image by rememberFileImage(if (photo.isVideo) photo.thumbnailPath else photo.filePath)
         if (image != null) Box(Modifier.testTag(PRELOADED_TAG))
     }
 
     // 두 번 누르기를 기다리는 시간이 지나야 한 번 누르기로 처리된다.
     private fun tapPhoto(description: String) {
         composeRule.onNodeWithContentDescription(description).performTouchInput { click() }
+        composeRule.mainClock.advanceTimeBy(DOUBLE_TAP_WAIT_MS)
+        composeRule.waitForIdle()
+    }
+
+    private fun tapVideoBesidePlay() {
+        composeRule.onNodeWithContentDescription("Video, 42 seconds, Highway drive").performTouchInput {
+            click(Offset(width * 0.2f, height * 0.3f))
+        }
         composeRule.mainClock.advanceTimeBy(DOUBLE_TAP_WAIT_MS)
         composeRule.waitForIdle()
     }
@@ -505,15 +691,15 @@ class AlbumScreenTest {
     }
 
     // 실제 사진 대신 하늘·도로 위에 단순한 차 모양을 그린 가로 사진을 쓴다.
-    private fun drawScene(scene: Scene): Bitmap {
+    private fun drawScene(scene: Scene, width: Int = PHOTO_WIDTH, height: Int = PHOTO_HEIGHT): Bitmap {
         val (skyTop, skyBottom, body) = when (scene) {
             Scene.Day -> Triple(Color.rgb(120, 170, 225), Color.rgb(200, 225, 245), Color.rgb(36, 52, 90))
             Scene.Dusk -> Triple(Color.rgb(250, 150, 110), Color.rgb(255, 214, 160), Color.rgb(200, 40, 50))
             Scene.Night -> Triple(Color.rgb(15, 20, 45), Color.rgb(50, 60, 100), Color.rgb(230, 230, 235))
         }
-        val w = PHOTO_WIDTH.toFloat()
-        val h = PHOTO_HEIGHT.toFloat()
-        return Bitmap.createBitmap(PHOTO_WIDTH, PHOTO_HEIGHT, Bitmap.Config.ARGB_8888).applyCanvas {
+        val w = width.toFloat()
+        val h = height.toFloat()
+        return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).applyCanvas {
             // Robolectric native 그래픽에서 Shader를 쓰면 프로세스가 멈추므로 한 줄씩 색을 바꿔 하늘을 그린다.
             val horizon = h * 0.65f
             repeat(horizon.toInt()) { row ->
@@ -533,6 +719,9 @@ class AlbumScreenTest {
     private companion object {
         const val PHOTO_WIDTH = 800
         const val PHOTO_HEIGHT = 600
+        const val VIDEO_WIDTH = 800
+        const val VIDEO_HEIGHT = 450
+        const val PHONE_KO_DARK = "ko-w360dp-h800dp-night-hdpi"
         const val JPEG_QUALITY = 90
         const val PHOTO_LOAD_TIMEOUT_MS = 5_000L
         const val PRELOADED_TAG = "preloaded"

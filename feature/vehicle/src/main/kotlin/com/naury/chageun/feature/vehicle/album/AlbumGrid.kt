@@ -24,6 +24,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_BYTES
+import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.feature.vehicle.R
 
@@ -47,8 +49,10 @@ internal fun AlbumGrid(
         horizontalArrangement = Arrangement.spacedBy(GRID_GAP),
         verticalArrangement = Arrangement.spacedBy(GRID_GAP),
     ) {
-        if (uiState.failedCount > 0) {
-            item(key = "failed", span = { GridItemSpan(maxLineSpan) }) { FailedRow(uiState.failedCount, actions) }
+        if (uiState.failedCount > 0 || uiState.tooLargeCount > 0) {
+            item(key = "failed", span = { GridItemSpan(maxLineSpan) }) {
+                FailedRow(uiState.failedCount, uiState.tooLargeCount, actions)
+            }
         }
         uiState.days.forEach { day ->
             item(key = "day-${day.date}", span = { GridItemSpan(maxLineSpan) }) {
@@ -71,11 +75,22 @@ internal fun AlbumGrid(
     }
 }
 
+/** 넣지 못한 사진·동영상 안내. 읽지 못한 것과 너무 길거나 큰 동영상은 할 수 있는 일이 달라 따로 적는다. */
 @Composable
-private fun FailedRow(count: Int, actions: AlbumActions) {
+private fun FailedRow(failed: Int, tooLarge: Int, actions: AlbumActions) {
     Row(verticalAlignment = Alignment.CenterVertically) {
+        val lines = listOfNotNull(
+            pluralStringResource(R.plurals.album_failed, failed, failed).takeIf { failed > 0 },
+            pluralStringResource(
+                R.plurals.album_video_too_large,
+                tooLarge,
+                tooLarge,
+                MAX_ALBUM_VIDEO_DURATION_MS / MILLIS_PER_MINUTE,
+                MAX_ALBUM_VIDEO_BYTES / BYTES_PER_MEGABYTE,
+            ).takeIf { tooLarge > 0 },
+        )
         Text(
-            pluralStringResource(R.plurals.album_failed, count, count),
+            lines.joinToString("\n"),
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.weight(1f),
@@ -107,8 +122,17 @@ private fun DayHeader(day: AlbumDay, isPicking: Boolean, isDayPicked: Boolean, a
                 Text(stringResource(if (isDayPicked) R.string.album_unpick_day else R.string.album_pick_day))
             }
         } else {
+            // 동영상이 섞인 날은 "장" 대신 "개"로 센다.
+            val count = if (day.photos.any {
+                    it.isVideo
+                }
+            ) {
+                R.plurals.album_day_count_media
+            } else {
+                R.plurals.album_day_count
+            }
             Text(
-                pluralStringResource(R.plurals.album_day_count, day.photos.size, day.photos.size),
+                pluralStringResource(count, day.photos.size, day.photos.size),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -119,3 +143,5 @@ private fun DayHeader(day: AlbumDay, isPicking: Boolean, isDayPicked: Boolean, a
 // 휴대폰 폭에서 한 줄에 6·5·4·3·2장이 들어가는 크기. 넓은 창에서는 같은 단계에서 더 많이 들어간다.
 private val THUMBNAIL_MIN_SIZES = listOf(50.dp, 62.dp, 78.dp, 104.dp, 160.dp)
 private val GRID_GAP = 4.dp
+private const val MILLIS_PER_MINUTE = 60_000L
+private const val BYTES_PER_MEGABYTE = 1_024L * 1_024

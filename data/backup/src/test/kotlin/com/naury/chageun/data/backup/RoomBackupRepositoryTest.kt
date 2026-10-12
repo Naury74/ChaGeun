@@ -214,6 +214,68 @@ class RoomBackupRepositoryTest {
     }
 
     @Test
+    fun albumVideo_roundTripsInExport_butIsLeftOutOfCloudBackup() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        File(attachmentDir, "album_v1.mp4").writeText("video")
+        File(attachmentDir, "album_v1_thumb.jpg").writeText("poster")
+        database.albumDao().insert(
+            AlbumPhotoEntity(
+                "v1-clip", "v1", "album_v1.mp4", "album_v1_thumb.jpg", 5, LocalDate.of(2026, 5, 3), null, now, now,
+                mediaType = AlbumPhotoEntity.MEDIA_VIDEO, durationMs = 42_000, width = 1080, height = 1920,
+            ),
+        )
+        val full = File(workDir, "full.zip")
+        val cloud = File(workDir, "cloud.zip")
+
+        repository.export(Uri.fromFile(full).toString())
+        repository.export(Uri.fromFile(cloud).toString(), includeVideos = false)
+
+        ZipFile(cloud).use { zip ->
+            assertThat(zip.getEntry("attachments/album_v1.mp4")).isNull()
+            assertThat(zip.getEntry("attachments/album_v1_thumb.jpg")).isNull()
+            assertThat(zip.getInputStream(zip.getEntry("data.json")).bufferedReader().readText())
+                .doesNotContain("v1-clip")
+        }
+        repository.deleteAll()
+        repository.import(Uri.fromFile(full).toString())
+        val restored = database.backupDao().albumPhotos().single()
+        assertThat(restored.mediaType).isEqualTo(AlbumPhotoEntity.MEDIA_VIDEO)
+        assertThat(restored.durationMs).isEqualTo(42_000)
+        assertThat(restored.width to restored.height).isEqualTo(1080 to 1920)
+        assertThat(File(attachmentDir, "album_v1.mp4").readText()).isEqualTo("video")
+    }
+
+    @Test
+    fun deleteAll_removesAlbumVideos() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val video = File(attachmentDir, "album_v1.mp4").apply { writeText("video") }
+        database.albumDao().insert(
+            AlbumPhotoEntity(
+                "v1-clip", "v1", "album_v1.mp4", "album_v1_thumb.jpg", 5, LocalDate.of(2026, 5, 3), null, now, now,
+                mediaType = AlbumPhotoEntity.MEDIA_VIDEO,
+            ),
+        )
+
+        repository.deleteAll()
+
+        assertThat(video.exists()).isFalse()
+        assertThat(database.backupDao().albumPhotos()).isEmpty()
+    }
+
+    @Test
+    fun albumPhotoFromOlderBackup_decodesAsPhoto() {
+        val legacy = """
+            {"id": "p1", "vehicle_id": "v1", "file": "album_p1.jpg", "thumbnail": "album_p1_thumb.jpg",
+            "size_bytes": 5, "taken_on": "2026-05-03", "comment": null, "created_at": "2026-05-03T00:00:00Z"}
+        """.trimIndent()
+
+        val entity = Json.decodeFromString(AlbumPhotoDto.serializer(), legacy).toEntity(now)
+
+        assertThat(entity.mediaType).isEqualTo(AlbumPhotoEntity.MEDIA_PHOTO)
+        assertThat(entity.durationMs).isNull()
+    }
+
+    @Test
     fun import_keepsEstimatedMileageSource() = runTest {
         database.maintenanceDao().insertRecord(
             MaintenanceRecordEntity(

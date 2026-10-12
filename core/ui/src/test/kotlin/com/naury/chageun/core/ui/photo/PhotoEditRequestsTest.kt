@@ -58,6 +58,23 @@ class PhotoEditRequestsTest {
     }
 
     @Test
+    fun video_opensAppFileByPath_andCapsLengthToAlbumLimit() {
+        val request = videoEditRequest(VideoEditSource.Existing("/data/files/attachments/album_1.mp4"), 180_000, ui)
+
+        assertThat(request.input).isEqualTo(EditorInput.FileSource("/data/files/attachments/album_1.mp4"))
+        assertThat(request.config.maxTimelineDurationUs).isEqualTo(180_000_000)
+        assertThat(request.validate()).isEqualTo(ValidationResult.Valid)
+    }
+
+    @Test
+    fun videoPick_picksOneVideo_andIsValid() {
+        val request = videoEditRequest(VideoEditSource.Pick, 180_000, ui)
+
+        assertThat(request.input).isEqualTo(EditorInput.Pick(MediaKind.VIDEO, 1))
+        assertThat(request.validate()).isEqualTo(ValidationResult.Valid)
+    }
+
+    @Test
     fun ui_followsAppThemeAndLanguage() {
         val dark = darkColorScheme(primary = Color(0xFF3D7BFF), background = Color(0xFF0D0D0E))
         val light = lightColorScheme(primary = Color(0xFF1F5EFF), background = Color.White)

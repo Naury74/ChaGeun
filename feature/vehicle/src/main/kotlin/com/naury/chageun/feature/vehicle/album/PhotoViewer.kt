@@ -93,9 +93,14 @@ internal fun PhotoViewer(
     BackHandler(enabled = zoom.isZoomed) { scope.launch { zoom.animateTo(1f, Offset.Zero) } }
     val chrome = rememberChromeVisibility()
     if (immersive) LightStatusBarIcons()
-    if (uiState.isCoverUpdated) {
-        LaunchedEffect(Unit) {
-            delay(COVER_BADGE_MILLIS)
+    val notice = when {
+        uiState.isCoverUpdated -> ViewerNotice.CoverUpdated
+        uiState.isEditFailed -> ViewerNotice.EditFailed
+        else -> null
+    }
+    if (notice != null) {
+        LaunchedEffect(notice) {
+            delay(NOTICE_MILLIS)
             actions.onDismissMessage()
         }
     }
@@ -123,6 +128,7 @@ internal fun PhotoViewer(
                     frame = frame.card,
                     pageOffset = { (pager.currentPage - page) + pager.currentPageOffsetFraction },
                     zoom = if (page == pager.currentPage) zoom else idle,
+                    isCurrent = page == pager.currentPage,
                     showInfo = page == pager.currentPage && chrome.isShown,
                     info = { PhotoInfoOverlay(photos[page], actions) },
                     onTap = chrome.toggle,
@@ -148,8 +154,8 @@ internal fun PhotoViewer(
                         ),
                 )
             }
-            CoverUpdatedBadge(
-                visible = uiState.isCoverUpdated,
+            ViewerNoticeBadge(
+                notice = notice,
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = with(LocalDensity.current) { topBarHeight.toDp() }),
@@ -358,5 +364,5 @@ private val CARD_RADIUS = 24.dp
 private val DISMISS_DISTANCE = 120.dp
 private val DISMISS_VELOCITY = 1_200.dp
 private const val DISMISS_SHRINK = 0.15f
-private const val COVER_BADGE_MILLIS = 3_000L
+private const val NOTICE_MILLIS = 3_000L
 private const val CHROME_ENTER_DELAY_MILLIS = 200L
