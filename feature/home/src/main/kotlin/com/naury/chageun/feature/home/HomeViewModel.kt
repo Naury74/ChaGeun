@@ -41,9 +41,12 @@ class HomeViewModel @Inject constructor(
     private val greetingEngine = GreetingEngine()
     private val weatherRefreshes = MutableStateFlow(0)
 
-    /** 날씨를 기다리느라 홈 전체가 늦게 뜨지 않도록 처음에는 카드 없이(Off) 시작한다. */
-    private val weather: StateFlow<HomeWeather> = header.weather(weatherRefreshes)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeWeather.Off)
+    /**
+     * 처음 값은 설정과 저장해 둔 날씨만 읽고 바로 나온다(네트워크는 기다리지 않는다). 그 전에는 null이라
+     * 홈을 그리지 않아, 기본 하늘이 잠깐 보였다가 저장해 둔 날씨 하늘로 바뀌는 깜빡임이 없다.
+     */
+    private val weather: StateFlow<HomeWeather?> = header.weather(weatherRefreshes)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), null)
 
     val uiState: StateFlow<HomeUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
@@ -58,7 +61,7 @@ class HomeViewModel @Inject constructor(
                     ::HomePhoto,
                 ),
                 header.profile,
-                combine(header.usage, weather, ::Pair),
+                combine(header.usage, weather.filterNotNull(), ::Pair),
             ) { overview, recent, photo, profile, (usage, weather) ->
                 val now = LocalDateTime.now(clock)
                 val today = now.toLocalDate()

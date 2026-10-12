@@ -140,6 +140,15 @@ class HomeScreenshotTest {
         location = WeatherLocation.Region(KoreaRegion.Incheon),
     )
 
+    /** 해 지기 전 30분의 맑은 하늘. 설 연휴 다음 날 귀경길 인사와 함께 찍는다. */
+    private val duskState = weatherState(
+        WeatherScene.Dusk,
+        WeatherCondition.Clear,
+        3.0,
+        WeatherTip.Calm,
+        greeting = Greeting(GreetingSituation.SeollalTravel, seed = 0),
+    )
+
     private fun capture(
         name: String,
         paneCount: Int,
@@ -244,6 +253,23 @@ class HomeScreenshotTest {
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     fun weatherFog_ko() = capture("home_weather_fog_ko", paneCount = 1, fogState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherDusk_ko() = capture("home_weather_dusk_ko", paneCount = 1, duskState)
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherDusk_dark_ko() = capture("home_weather_dusk_dark_ko", paneCount = 1, duskState)
+
+    /** 설날 아침 인사. 날씨는 맑은 낮이다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun seollal_ko() = capture(
+        "home_seollal_ko",
+        paneCount = 1,
+        clearState.copy(greeting = Greeting(GreetingSituation.Seollal, seed = 1)),
+    )
 
     /** 날씨를 아직 안 켰을 때의 작은 켜기 알약과 닫기 버튼. */
     @Test

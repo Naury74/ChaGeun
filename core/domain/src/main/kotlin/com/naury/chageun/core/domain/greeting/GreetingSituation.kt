@@ -12,15 +12,23 @@ enum class GreetingSituation {
     FirstVisit,
     WelcomeBack,
 
-    // 공휴일·기념일
+    // 공휴일·기념일. 명절 전날·다음날은 귀성길·귀경길 운전 이야기를 한다.
+    Seollal,
+    SeollalTravel,
+    Chuseok,
+    ChuseokTravel,
+    BuddhasBirthday,
     NewYear,
     IndependenceMovementDay,
+    LaborDay,
     ChildrensDay,
     MemorialDay,
+    ConstitutionDay,
     LiberationDay,
     NationalFoundationDay,
     HangulDay,
     Christmas,
+    SubstituteHoliday,
 
     // 차와 함께한 날
     CarAnniversary,

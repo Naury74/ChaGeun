@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.domain.weather.LastWeatherRepository
 import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -33,6 +34,7 @@ data class DataUiState(
 class BackupViewModel @Inject constructor(
     private val backupRepository: BackupRepository,
     private val weatherSettings: WeatherSettingsRepository,
+    private val lastWeather: LastWeatherRepository,
 ) : ViewModel() {
 
     private val _dataState = MutableStateFlow(DataUiState())
@@ -118,9 +120,10 @@ class BackupViewModel @Inject constructor(
         _dataState.update { it.copy(pendingDeletion = null, isWorking = true) }
         viewModelScope.launch {
             backupRepository.deleteAll()
-            // 모두 지운다고 안내하므로 저장해 둔 "현재 위치"의 동네 이름도 지운다.
+            // 모두 지운다고 안내하므로 저장해 둔 "현재 위치"의 동네 이름과 마지막 날씨도 지운다.
             weatherSettings.setCurrentAreaName(null)
             weatherSettings.setCurrentLocationMissing(false)
+            lastWeather.clear()
             _dataState.update { it.copy(isWorking = false) }
         }
     }

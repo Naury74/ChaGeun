@@ -80,7 +80,9 @@ class WeatherTest {
         assertThat(repository.requested).isEmpty()
 
         location.permitted = true
-        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Shown(snapshot(), "서울 중구"))
+        assertThat(
+            load(WeatherLocation.Current),
+        ).isEqualTo(WeatherResult.Shown(snapshot(), "서울 중구", GeoPoint(37.6, 127.0)))
         assertThat(repository.requested).containsExactly(GeoPoint(37.6, 127.0))
         // 동네 이름도 날씨와 같은 반올림 좌표로만 찾고, 찾은 이름은 다음 실행을 위해 저장한다.
         assertThat(areaNames.requested).containsExactly(GeoPoint(37.6, 127.0))
@@ -94,7 +96,9 @@ class WeatherTest {
         areaNames.areaName = null
         val load = LoadWeatherUseCase(location, FakeWeatherRepository(snapshot()), areaNames, settings)
 
-        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Shown(snapshot(), areaName = null))
+        assertThat(
+            load(WeatherLocation.Current),
+        ).isEqualTo(WeatherResult.Shown(snapshot(), areaName = null, point = GeoPoint(37.5, 127.0)))
         assertThat(settings.currentAreaName.value).isEqualTo("서울 강남구")
     }
 
@@ -118,7 +122,8 @@ class WeatherTest {
                 settings,
             )
 
-        assertThat(load(WeatherLocation.Region(KoreaRegion.Jeju))).isEqualTo(WeatherResult.Shown(snapshot()))
+        assertThat(load(WeatherLocation.Region(KoreaRegion.Jeju)))
+            .isEqualTo(WeatherResult.Shown(snapshot(), point = KoreaRegion.Jeju.point.roundedForWeather()))
         assertThat(areaNames.requested).isEmpty()
     }
 

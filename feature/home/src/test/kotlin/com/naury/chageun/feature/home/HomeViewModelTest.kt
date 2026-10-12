@@ -8,7 +8,10 @@ import com.naury.chageun.core.domain.maintenance.MaintenanceInputs
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
+import com.naury.chageun.core.domain.weather.LastWeather
+import com.naury.chageun.core.domain.weather.LastWeatherCache
 import com.naury.chageun.core.domain.weather.LoadWeatherUseCase
+import com.naury.chageun.core.domain.weather.WeatherRepository
 import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.FuelType
@@ -35,6 +38,7 @@ import com.naury.chageun.core.testing.FakeAreaNameRepository
 import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
+import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeProfilePhotoRepository
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
@@ -45,8 +49,10 @@ import com.naury.chageun.core.testing.MainDispatcherRule
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -68,7 +74,10 @@ class HomeViewModelTest {
     private val location = FakeApproximateLocationProvider()
     private val weatherRepository = FakeWeatherRepository()
     private val areaNames = FakeAreaNameRepository()
-    private val viewModel = HomeViewModel(
+    private val lastWeather = FakeLastWeatherRepository()
+    private val viewModel = homeViewModel(weatherRepository)
+
+    private fun homeViewModel(weather: WeatherRepository) = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
             maintenance,
@@ -83,8 +92,11 @@ class HomeViewModelTest {
             auth,
             profilePhotos,
             usage,
-            weatherSettings,
-            LoadWeatherUseCase(location, weatherRepository, areaNames, weatherSettings),
+            HomeWeatherSources(
+                weatherSettings,
+                LoadWeatherUseCase(location, weather, areaNames, weatherSettings),
+                LastWeatherCache(lastWeather),
+            ),
             clock,
         ),
         clock = clock,
@@ -316,6 +328,73 @@ class HomeViewModelTest {
         assertThat(weatherSettings.isCurrentLocationMissing.value).isFalse()
     }
 
+    @Test
+    fun savedWeather_showsOnFirstFrame_thenFreshWeatherReplacesIt() = runTest {
+        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        weatherSettings.settings.value = WeatherSettings(location = seoul)
+        val saved = WeatherSnapshot(WeatherCondition.Snow, -1.0, 2.0, false, Instant.EPOCH)
+        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(3_600), null, seoul.toString())
+        val fresh = CompletableDeferred<WeatherSnapshot?>()
+        val viewModel = homeViewModel(GatedWeatherRepository(fresh))
+        val seen = mutableListOf<HomeWeather>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { (it as? HomeUiState.Content)?.let { content -> seen += content.weather } }
+        }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+        viewModel.uiState.first { it is HomeUiState.Content }
+
+        // 기본 하늘(Off·Loading)을 거치지 않고 저장해 둔 눈 날씨부터 그린다.
+        assertThat((seen.first() as HomeWeather.Shown).snapshot).isEqualTo(saved)
+        assertThat((seen.first() as HomeWeather.Shown).scene).isEqualTo(WeatherScene.Snow)
+
+        val rain = WeatherSnapshot(WeatherCondition.Rain, 12.0, 3.0, false, Instant.EPOCH)
+        fresh.complete(rain)
+        viewModel.uiState.first { ((it as? HomeUiState.Content)?.weather as? HomeWeather.Shown)?.snapshot == rain }
+        assertThat(lastWeather.saved?.snapshot).isEqualTo(rain)
+        assertThat(lastWeather.saved?.fetchedAt).isEqualTo(clock.instant())
+    }
+
+    @Test
+    fun savedWeather_olderThanThreeHours_isNotShown() = runTest {
+        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        weatherSettings.settings.value = WeatherSettings(location = seoul)
+        val saved = WeatherSnapshot(WeatherCondition.Snow, -1.0, 2.0, false, Instant.EPOCH)
+        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(3 * 3_600), null, seoul.toString())
+        val viewModel = homeViewModel(GatedWeatherRepository(CompletableDeferred()))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        val content = viewModel.uiState.first { it is HomeUiState.Content } as HomeUiState.Content
+
+        assertThat(content.weather).isEqualTo(HomeWeather.Loading)
+        assertThat(lastWeather.saved).isNull()
+    }
+
+    @Test
+    fun weatherFailsAfterRestart_keepsSavedWeather_andTurningOffClearsIt() = runTest {
+        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        weatherSettings.settings.value = WeatherSettings(location = seoul)
+        val saved = WeatherSnapshot(WeatherCondition.Cloudy, 15.0, 2.0, false, Instant.EPOCH)
+        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(600), null, seoul.toString())
+        weatherRepository.snapshot = null
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        // 새로 받지 못해도 아직 쓸 만한 날씨는 숨기지 않는다.
+        val shown = contentWith { it.weather is HomeWeather.Shown }.weather as HomeWeather.Shown
+        assertThat(shown.snapshot).isEqualTo(saved)
+        assertThat(weatherRepository.requested).isNotEmpty()
+
+        weatherSettings.setEnabled(false)
+        contentWith { it.weather == HomeWeather.Off }
+        assertThat(lastWeather.saved).isNull()
+    }
+
     private suspend fun contentWith(predicate: (HomeUiState.Content) -> Boolean): HomeUiState.Content =
         viewModel.uiState.first { it is HomeUiState.Content && predicate(it) } as HomeUiState.Content
+}
+
+/** [result]가 정해질 때까지 기다렸다가 돌려준다. 새 날씨를 받는 동안 홈이 무엇을 보이는지 확인한다. */
+private class GatedWeatherRepository(private val result: CompletableDeferred<WeatherSnapshot?>) : WeatherRepository {
+    override suspend fun weatherAt(point: GeoPoint): WeatherSnapshot? = result.await()
 }

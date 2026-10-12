@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
  *
  * 1. 리콜·검사 기한·밀린 정비처럼 안전과 관련된 차 상태
  * 2. 처음 온 날, 오랜만에 온 날
- * 3. 공휴일·기념일
+ * 3. 공휴일·기념일. 설·추석 전날과 다음날은 귀성길·귀경길 안전 운전 인사다.
  * 4. 차를 등록한 날, 주행거리 돌파, 방금 남긴 기록
  * 5. 요일과 출퇴근 시간, 저녁의 주행거리 확인 권유
  * 6. 계절 오후
@@ -45,8 +45,8 @@ object GreetingRules {
         ),
     )
 
-    private val holidays = KoreanHoliday.entries.map { holiday ->
-        GreetingRule(holiday.situation, { KoreanHoliday.on(it.today) == holiday })
+    private val holidays = KoreanHoliday.entries.map { it.situation }.distinct().map { situation ->
+        GreetingRule(situation, { KoreanHoliday.on(it.today)?.situation == situation })
     }
 
     private val carMoments = listOf(
@@ -90,14 +90,22 @@ object GreetingRules {
 
     private val KoreanHoliday.situation: GreetingSituation
         get() = when (this) {
+            KoreanHoliday.Seollal -> GreetingSituation.Seollal
+            KoreanHoliday.SeollalEve, KoreanHoliday.SeollalAfter -> GreetingSituation.SeollalTravel
+            KoreanHoliday.Chuseok -> GreetingSituation.Chuseok
+            KoreanHoliday.ChuseokEve, KoreanHoliday.ChuseokAfter -> GreetingSituation.ChuseokTravel
+            KoreanHoliday.BuddhasBirthday -> GreetingSituation.BuddhasBirthday
             KoreanHoliday.NewYear -> GreetingSituation.NewYear
             KoreanHoliday.IndependenceMovementDay -> GreetingSituation.IndependenceMovementDay
+            KoreanHoliday.LaborDay -> GreetingSituation.LaborDay
             KoreanHoliday.ChildrensDay -> GreetingSituation.ChildrensDay
             KoreanHoliday.MemorialDay -> GreetingSituation.MemorialDay
+            KoreanHoliday.ConstitutionDay -> GreetingSituation.ConstitutionDay
             KoreanHoliday.LiberationDay -> GreetingSituation.LiberationDay
             KoreanHoliday.NationalFoundationDay -> GreetingSituation.NationalFoundationDay
             KoreanHoliday.HangulDay -> GreetingSituation.HangulDay
             KoreanHoliday.Christmas -> GreetingSituation.Christmas
+            KoreanHoliday.SubstituteHoliday -> GreetingSituation.SubstituteHoliday
         }
 
     private fun GreetingFacts.isWeekday(): Boolean =

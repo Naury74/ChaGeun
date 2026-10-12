@@ -187,14 +187,22 @@ private val GreetingSituation.arrayRes: Int
         GreetingSituation.InspectionSoon -> R.array.home_greeting_inspection_soon
         GreetingSituation.FirstVisit -> R.array.home_greeting_first_visit
         GreetingSituation.WelcomeBack -> R.array.home_greeting_welcome_back
+        GreetingSituation.Seollal -> R.array.home_greeting_seollal
+        GreetingSituation.SeollalTravel -> R.array.home_greeting_seollal_travel
+        GreetingSituation.Chuseok -> R.array.home_greeting_chuseok
+        GreetingSituation.ChuseokTravel -> R.array.home_greeting_chuseok_travel
+        GreetingSituation.BuddhasBirthday -> R.array.home_greeting_buddhas_birthday
         GreetingSituation.NewYear -> R.array.home_greeting_new_year
         GreetingSituation.IndependenceMovementDay -> R.array.home_greeting_independence_movement_day
+        GreetingSituation.LaborDay -> R.array.home_greeting_labor_day
         GreetingSituation.ChildrensDay -> R.array.home_greeting_childrens_day
         GreetingSituation.MemorialDay -> R.array.home_greeting_memorial_day
+        GreetingSituation.ConstitutionDay -> R.array.home_greeting_constitution_day
         GreetingSituation.LiberationDay -> R.array.home_greeting_liberation_day
         GreetingSituation.NationalFoundationDay -> R.array.home_greeting_national_foundation_day
         GreetingSituation.HangulDay -> R.array.home_greeting_hangul_day
         GreetingSituation.Christmas -> R.array.home_greeting_christmas
+        GreetingSituation.SubstituteHoliday -> R.array.home_greeting_substitute_holiday
         GreetingSituation.CarAnniversary -> R.array.home_greeting_car_anniversary
         GreetingSituation.MileageMilestone -> R.array.home_greeting_mileage_milestone
         GreetingSituation.RecordedRecently -> R.array.home_greeting_recorded_recently
