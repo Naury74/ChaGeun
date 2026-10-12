@@ -86,7 +86,27 @@
     <string name="album_add">사진 추가</string>
     <string name="album_empty_title">차와 함께한 순간을 남겨 보세요</string>
     <string name="album_empty_body">세차, 새 부품, 여행처럼 기억하고 싶은 순간을 메모와 함께 저장해요. 사진은 찍은 날짜별로 정리돼요.</string>
-    <string name="album_day">%1$s · %2$d장</string>
+    <plurals name="album_day_count">
+        <item quantity="other">%1$d장</item>
+    </plurals>
+    <string name="album_counter_description">%2$d장 중 %1$d번째 사진</string>
+    <string name="album_strip_photo">%2$d장 중 %1$d번째, %3$s</string>
+    <string name="album_action_details">정보 수정</string>
+    <string name="album_action_edit_image">편집</string>
+    <string name="album_edit_image">이 사진 편집하기</string>
+    <string name="album_write_note">메모 쓰기</string>
+    <string name="album_pick">선택</string>
+    <string name="album_pick_day">모두 선택</string>
+    <string name="album_unpick_day">선택 해제</string>
+    <string name="album_clear_picks">선택 취소</string>
+    <string name="album_delete_picked">선택한 사진 삭제</string>
+    <plurals name="album_picked_count">
+        <item quantity="other">%1$d장 선택</item>
+    </plurals>
+    <plurals name="album_delete_many_title">
+        <item quantity="other">사진 %1$d장을 삭제할까요?</item>
+    </plurals>
+    <string name="album_action_cover">대표 사진</string>
     <string name="album_photo_on">%1$s에 찍은 사진</string>
     <string name="album_no_comment">아직 메모가 없어요</string>
     <string name="album_edit_details">날짜·메모 수정</string>

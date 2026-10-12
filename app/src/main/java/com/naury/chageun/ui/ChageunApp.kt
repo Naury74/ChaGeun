@@ -207,8 +207,10 @@ fun ChageunApp(
     }
 
     val itemColors = iosStyleItemColors()
+    // 앨범 사진 보기처럼 화면 전체를 쓰는 동안에는 하단 탭 바를 숨긴다.
+    var isImmersive by remember { mutableStateOf(false) }
     NavigationSuiteScaffold(
-        layoutType = navigationSuiteTypeFor(windowSizeClass),
+        layoutType = navigationSuiteTypeFor(windowSizeClass, isImmersive),
         navigationSuiteColors = NavigationSuiteDefaults.colors(
             navigationBarContainerColor = MaterialTheme.colorScheme.surface,
             navigationRailContainerColor = MaterialTheme.colorScheme.background,
@@ -277,11 +279,13 @@ fun ChageunApp(
                 entry(OpenSourceLicensesRoute) {
                     OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
                 }
-                entry<AlbumRoute> { route ->
+                // 앨범의 사진 보기는 검은 바탕을 상태 표시줄 뒤까지 그린다. 그리드는 화면 안에서 상단 인셋을 비운다.
+                entry<AlbumRoute>(metadata = DRAWS_BEHIND_STATUS_BAR) { route ->
                     AlbumScreenRoute(
                         onBack = { backStack.removeLastOrNull() },
                         focusPhotoId = route.focusPhotoId,
                         onOpenCalendar = actions.onOpenCalendar,
+                        onImmersiveChange = { isImmersive = it },
                     )
                 }
                 entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }

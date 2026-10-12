@@ -28,6 +28,11 @@ class AdaptiveNavigationTest {
     }
 
     @Test
+    fun hidesNavigation_whileImmersive() {
+        assertThat(navigationSuiteTypeFor(widthOf(360), isImmersive = true)).isEqualTo(NavigationSuiteType.None)
+    }
+
+    @Test
     fun widensGutter_withWindowWidth() {
         assertThat(spacingFor(widthOf(360))).isEqualTo(Gutters.Compact)
         assertThat(spacingFor(widthOf(700))).isEqualTo(Gutters.Medium)
