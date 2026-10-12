@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.naury.chageun.core.notification.ReminderScheduler
 import com.naury.chageun.data.cloudbackup.AutoBackupSync
+import com.naury.chageun.data.weather.KoreaRegionUpdateScheduler
 import com.naury.chageun.logging.UsageStatsSync
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -27,6 +28,8 @@ class ChageunApplication :
 
     @Inject lateinit var autoBackupSync: AutoBackupSync
 
+    @Inject lateinit var regionUpdateScheduler: KoreaRegionUpdateScheduler
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override val workManagerConfiguration: Configuration
@@ -35,11 +38,12 @@ class ChageunApplication :
     override fun onCreate() {
         super.onCreate()
         // 누끼(`:cutout`)·글자 인식(`:ocr`)과 영수증 글자 인식(`:framekit_ocr`) 프로세스도 이 onCreate를 거친다.
-        // 그곳에서는 알림 예약·통계 동기화·자동 백업을 하지 않는다.
+        // 그곳에서는 알림 예약·통계 동기화·자동 백업·지역 목록 확인 예약을 하지 않는다.
         if (!isMainProcess(currentProcessName(), packageName)) return
         reminderScheduler.schedule()
         usageStatsSync.start(appScope)
         autoBackupSync.start(appScope)
+        regionUpdateScheduler.schedule()
     }
 
     private fun currentProcessName(): String? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

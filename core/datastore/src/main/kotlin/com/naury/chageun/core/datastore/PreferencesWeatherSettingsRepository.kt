@@ -6,12 +6,15 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.naury.chageun.core.datastore.PreferencesLastWeatherRepository.Companion.removeLastWeather
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.domain.weather.KoreaRegionRepository
+import com.naury.chageun.core.domain.weather.RenamedRegionCodes
 import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -28,8 +31,11 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
 ) : WeatherSettingsRepository {
 
     // 동네 이름처럼 다른 키만 바뀌었을 때 날씨를 다시 불러오지 않게 같은 설정은 한 번만 내보낸다.
-    // 지역 목록은 지역을 고른 경우에만 읽는다.
-    override val settings: Flow<WeatherSettings> = dataStore.data.map { prefs ->
+    // 지역 목록은 지역을 고른 경우에만 읽는다. 새 지역 목록을 받으면 같은 코드도 새 목록으로 다시 푼다.
+    override val settings: Flow<WeatherSettings> = combine(
+        dataStore.data,
+        regions.listInfo.map { it.version }.distinctUntilChanged(),
+    ) { prefs, _ ->
         WeatherSettings(
             isEnabled = prefs[ENABLED] ?: true,
             location = prefs[LOCATION]?.let { decode(it) },
@@ -45,6 +51,38 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
 
     override val isCurrentLocationMissing: Flow<Boolean> =
         dataStore.data.map { it[LOCATION_MISSING] ?: false }.distinctUntilChanged()
+
+    override val isRegionChangeNoticeVisible: Flow<Boolean> =
+        dataStore.data.map { it[ENABLED] != false && it[REGION_CHANGED] == true }.distinctUntilChanged()
+
+    override suspend fun dismissRegionChangeNotice() {
+        dataStore.edit { it.remove(REGION_CHANGED) }
+    }
+
+    override suspend fun applyRegionListChange(
+        version: String,
+        renamedCodes: Map<String, String>,
+        catalog: KoreaRegionCatalog,
+    ) {
+        dataStore.edit {
+            val applied = it[REGION_LIST_VERSION]
+            if (applied != null && applied >= version) return@edit
+            it[REGION_LIST_VERSION] = version
+            it[RECENT_REGIONS]?.let { stored ->
+                it[RECENT_REGIONS] = stored.split(SEPARATOR).filter(String::isNotEmpty)
+                    .map { code -> RenamedRegionCodes.follow(code, renamedCodes) }
+                    .distinct()
+                    .joinToString(SEPARATOR)
+            }
+            val stored = it[LOCATION]?.takeIf { location -> location != CURRENT } ?: return@edit
+            val code = RenamedRegionCodes.follow(WeatherRegionMigration.codeFor(stored), renamedCodes)
+            if (code != stored) {
+                it[LOCATION] = code
+                it.removeLastWeather()
+            }
+            if (catalog.find(code) == null) it[REGION_CHANGED] = true
+        }
+    }
 
     override suspend fun setEnabled(enabled: Boolean) {
         dataStore.edit {
@@ -72,6 +110,7 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
             // 위치를 다시 고르면 예전 동네 이름은 맞지 않을 수 있다. 다음 날씨를 받을 때 새로 찾는다.
             it.remove(AREA_NAME)
             it.remove(LOCATION_MISSING)
+            it.remove(REGION_CHANGED)
         }
     }
 
@@ -124,5 +163,9 @@ internal class PreferencesWeatherSettingsRepository @Inject constructor(
         val PROMPT_DISMISSED = booleanPreferencesKey("weather_prompt_dismissed")
         val AREA_NAME = stringPreferencesKey("weather_current_area_name")
         val LOCATION_MISSING = booleanPreferencesKey("weather_current_location_missing")
+        val REGION_CHANGED = booleanPreferencesKey("weather_region_changed")
+
+        // 고른 지역 코드를 마지막으로 맞춰 둔 지역 목록 판. 같은 판으로 두 번 바꾸지 않는다.
+        val REGION_LIST_VERSION = stringPreferencesKey("weather_region_list_version")
     }
 }

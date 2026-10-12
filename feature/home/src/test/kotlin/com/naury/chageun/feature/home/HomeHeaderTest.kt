@@ -56,13 +56,20 @@ class HomeHeaderTest {
         name: String? = null,
         onSetUpWeather: () -> Unit = {},
         onDismiss: () -> Unit = {},
+        isRegionChanged: Boolean = false,
+        onDismissRegionNotice: () -> Unit = {},
     ) = composeRule.setContent {
         // 하늘 애니메이션이 계속 프레임을 요청하면 테스트가 끝나지 않으므로 한 장면으로 멈춘다.
         CompositionLocalProvider(LocalFrozenSkyTime provides 0L) {
             ChageunTheme {
                 HomeScreen(
                     uiState = content(VehicleHealthLevel.Good, emptyList())
-                        .copy(weather = weather, greeting = greeting, greetingName = name),
+                        .copy(
+                            weather = weather,
+                            greeting = greeting,
+                            greetingName = name,
+                            isWeatherRegionChanged = isRegionChanged,
+                        ),
                     paneCount = 1,
                     actions = HomeActions(
                         {},
@@ -70,6 +77,7 @@ class HomeHeaderTest {
                         {},
                         onSetUpWeather = onSetUpWeather,
                         onDismissWeatherPrompt = onDismiss,
+                        onDismissRegionNotice = onDismissRegionNotice,
                     ),
                 )
             }
@@ -240,5 +248,33 @@ class HomeHeaderTest {
 
         composeRule.assertNoClippedText()
         composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    fun regionChanged_noticeOpensPicker_andCanBeDismissed() {
+        var opened = 0
+        var dismissed = 0
+        show(
+            weather = rain,
+            onSetUpWeather = { opened++ },
+            isRegionChanged = true,
+            onDismissRegionNotice = { dismissed++ },
+        )
+
+        composeRule.onNode(hasText("Weather region changed · Choose again") and hasClickAction()).performClick()
+        composeRule.onNodeWithContentDescription("Dismiss region notice").performClick()
+
+        assertThat(opened).isEqualTo(1)
+        assertThat(dismissed).isEqualTo(1)
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp", fontScale = 2f)
+    fun largeFont_ko_regionChangedNoticeFits() {
+        show(weather = rain, isRegionChanged = true)
+
+        composeRule.onNode(hasText("날씨 지역이 바뀌었어요 · 다시 고르기") and hasClickAction()).assertIsDisplayed()
+        composeRule.assertNoClippedText()
     }
 }

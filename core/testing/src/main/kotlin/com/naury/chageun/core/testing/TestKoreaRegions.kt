@@ -1,10 +1,14 @@
 package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
+import com.naury.chageun.core.domain.weather.KoreaRegionCheck
+import com.naury.chageun.core.domain.weather.KoreaRegionListInfo
 import com.naury.chageun.core.domain.weather.KoreaRegionRepository
 import com.naury.chageun.core.domain.weather.KoreaRegionRow
+import com.naury.chageun.core.domain.weather.KoreaRegionUpdates
 import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.KoreaArea
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * 테스트용 작은 지역 목록. 앱에 넣은 기상청 목록(2026-07)에서 그대로 옮긴 줄이다.
@@ -69,8 +73,27 @@ class FakeKoreaRegionRepository(private val catalog: KoreaRegionCatalog = TestKo
     var loads = 0
         private set
 
+    override val listInfo = MutableStateFlow(KoreaRegionListInfo(version = "2026-07"))
+
     override suspend fun catalog(): KoreaRegionCatalog {
         loads++
         return catalog
+    }
+}
+
+/** [result]를 돌려주고, 몇 번 불렸는지 센다. */
+class FakeKoreaRegionUpdates(var result: KoreaRegionCheck = KoreaRegionCheck.UpToDate) : KoreaRegionUpdates {
+    var checks = 0
+        private set
+    var staleChecks = 0
+        private set
+
+    override suspend fun checkNow(): KoreaRegionCheck {
+        checks++
+        return result
+    }
+
+    override suspend fun checkIfStale() {
+        staleChecks++
     }
 }

@@ -19,6 +19,8 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.domain.weather.KoreaRegionCheck
+import com.naury.chageun.core.domain.weather.KoreaRegionListInfo
 import com.naury.chageun.core.domain.weather.LastWeather
 import com.naury.chageun.core.domain.weather.LastWeatherCache
 import com.naury.chageun.core.model.ThemeMode
@@ -30,6 +32,7 @@ import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeBackupRepository
 import com.naury.chageun.core.testing.FakeKoreaRegionRepository
+import com.naury.chageun.core.testing.FakeKoreaRegionUpdates
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
@@ -390,7 +393,7 @@ class SettingsTest {
     @Test
     fun weatherViewModel_turnsOffAndChangesRegion() = runTest {
         val repository = FakeWeatherSettingsRepository()
-        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository())
+        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository(), FakeKoreaRegionUpdates())
 
         viewModel.setLocation(WeatherLocation.Region(TestKoreaRegions.daejeon))
         viewModel.setEnabled(false)
@@ -402,7 +405,7 @@ class SettingsTest {
     @Test
     fun weatherViewModel_exposesAreaName_andClearsItWhenTurnedOff() = runTest {
         val repository = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current), "서울 강남구")
-        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository())
+        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository(), FakeKoreaRegionUpdates())
 
         assertThat(viewModel.areaName.first()).isEqualTo("서울 강남구")
 
@@ -482,12 +485,81 @@ class SettingsTest {
                         {},
                         loadRegions = { TestKoreaRegions.catalog },
                         areaName = "서울 강남구",
+                        regionList = RegionListRowState(KoreaRegionListInfo("2026-07")),
                     )
                 }
             }
         }
         composeRule.onNodeWithText("현재 위치 (서울 강남구)").assertExists()
+        composeRule.onNodeWithText("지금 목록: 2026년 7월").assertExists()
         composeRule.assertNoClippedText()
         composeRule.captureScreen("settings_weather_ko")
+    }
+
+    @Test
+    fun weatherViewModel_checksRegionList_andChecksStaleListWhenPickerOpens() = runTest {
+        val updates = FakeKoreaRegionUpdates(KoreaRegionCheck.Updated("2026-10"))
+        val viewModel = WeatherSettingsViewModel(FakeWeatherSettingsRepository(), FakeKoreaRegionRepository(), updates)
+
+        viewModel.checkRegionList()
+        assertThat(viewModel.regionListCheck.value)
+            .isEqualTo(RegionListCheckState.Done(KoreaRegionCheck.Updated("2026-10")))
+        assertThat(updates.checks).isEqualTo(1)
+
+        viewModel.regionCatalog()
+        assertThat(updates.staleChecks).isEqualTo(1)
+    }
+
+    @Test
+    fun weatherSection_regionListRow_showsVersionAndResult() {
+        var state by mutableStateOf(RegionListRowState(KoreaRegionListInfo("2026-07")))
+        var checks = 0
+        composeRule.setContent {
+            ChageunTheme {
+                WeatherSection(
+                    WeatherSettings(),
+                    {},
+                    {},
+                    loadRegions = { TestKoreaRegions.catalog },
+                    regionList = state.copy(onCheck = { checks++ }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Current list: July 2026").assertExists()
+        composeRule.onNodeWithText("Check for region list update").performClick()
+        assertThat(checks).isEqualTo(1)
+
+        state = state.copy(check = RegionListCheckState.Done(KoreaRegionCheck.UpToDate))
+        composeRule.onNodeWithText("You're up to date (July 2026)").assertExists()
+        state = state.copy(check = RegionListCheckState.Done(KoreaRegionCheck.Updated("2026-10")))
+        composeRule.onNodeWithText("Got a new region list (October 2026)").assertExists()
+        state = state.copy(check = RegionListCheckState.Done(KoreaRegionCheck.Failed(isTemporary = true)))
+        composeRule.onNodeWithText("Couldn't check. Try again later.").assertExists()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun sources_showDownloadedRegionListSourceAndVersion() {
+        var info by mutableStateOf<KoreaRegionListInfo?>(null)
+        composeRule.setContent {
+            AppFrame {
+                SettingsScreen(
+                    settings = UserSettings(),
+                    versionName = "0.1.0",
+                    onBack = {},
+                    onThemeSelected = {},
+                    onRemindersChanged = {},
+                    onOpenSystemNotifications = {},
+                    regionListInfo = info,
+                )
+            }
+        }
+        composeRule.onNodeWithText("2026년 7월", substring = true).assertExists()
+
+        info = KoreaRegionListInfo("2026-10", "기상청 단기예보 조회서비스 격자·위경도 (공공데이터포털 15084084), 저작자표시")
+        composeRule.onNodeWithText(
+            "지역 목록: 기상청 단기예보 조회서비스 격자·위경도 (공공데이터포털 15084084), 저작자표시 (2026년 10월)",
+        ).assertExists()
     }
 }

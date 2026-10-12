@@ -3,6 +3,7 @@ package com.naury.chageun.data.weather
 import com.naury.chageun.core.domain.weather.ApproximateLocationProvider
 import com.naury.chageun.core.domain.weather.AreaNameRepository
 import com.naury.chageun.core.domain.weather.KoreaRegionRepository
+import com.naury.chageun.core.domain.weather.KoreaRegionUpdates
 import com.naury.chageun.core.domain.weather.WeatherRepository
 import dagger.Binds
 import dagger.Module
@@ -26,6 +27,12 @@ internal interface WeatherDataModule {
 
     @Binds
     fun bindKoreaRegionRepository(repository: AssetKoreaRegionRepository): KoreaRegionRepository
+
+    @Binds
+    fun bindKoreaRegionUpdates(updater: KoreaRegionListUpdater): KoreaRegionUpdates
+
+    @Binds
+    fun bindKoreaRegionRemote(remote: HttpKoreaRegionRemote): KoreaRegionRemote
 
     @Binds
     fun bindAreaGeocoder(geocoder: PlatformAreaGeocoder): AreaGeocoder

@@ -8,6 +8,7 @@ import com.naury.chageun.core.domain.weather.Daylight
 import com.naury.chageun.core.domain.weather.DaylightRules
 import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.domain.weather.KoreaRegionRepository
+import com.naury.chageun.core.domain.weather.KoreaRegionUpdates
 import com.naury.chageun.core.domain.weather.LastWeatherCache
 import com.naury.chageun.core.domain.weather.LoadWeatherUseCase
 import com.naury.chageun.core.domain.weather.WeatherResult
@@ -70,6 +71,14 @@ class HomeHeaderSource @Inject constructor(
     /** 지역 고르기 창을 열 때 읽는 전국 지역 목록. */
     suspend fun regionCatalog(): KoreaRegionCatalog = weatherSources.regions.catalog()
 
+    /** 지역 고르기 창을 열 때, 지역 목록을 확인한 지 일주일이 지났으면 새 목록이 있는지 본다. */
+    suspend fun checkRegionListIfStale() = weatherSources.updates.checkIfStale()
+
+    /** 새 지역 목록에서 고른 지역이 없어졌다. 홈에 "다시 고르기" 안내를 띄운다. */
+    val isRegionChangeNoticeVisible: Flow<Boolean> = settings.isRegionChangeNoticeVisible
+
+    suspend fun dismissRegionChangeNotice() = settings.dismissRegionChangeNotice()
+
     suspend fun dismissWeatherPrompt() = settings.dismissPrompt()
 
     private fun weatherFor(settings: WeatherSettings): Flow<HomeWeather> = flow {
@@ -127,12 +136,16 @@ class HomeHeaderSource @Inject constructor(
     }
 }
 
-/** 홈 날씨 카드가 쓰는 것들. 날씨 설정, 새로 받기, 저장해 둔 마지막 날씨, 지역 고르기 창의 전국 지역 목록이다. */
+/**
+ * 홈 날씨 카드가 쓰는 것들. 날씨 설정, 새로 받기, 저장해 둔 마지막 날씨, 지역 고르기 창의 전국 지역 목록과
+ * 그 목록의 새 판 확인이다.
+ */
 class HomeWeatherSources @Inject constructor(
     val settings: WeatherSettingsRepository,
     val load: LoadWeatherUseCase,
     val saved: LastWeatherCache,
     val regions: KoreaRegionRepository,
+    val updates: KoreaRegionUpdates,
 )
 
 /** 홈 머리말의 계정 동그라미와 인사말에 쓰는 이름·사진. */

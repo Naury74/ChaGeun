@@ -5,8 +5,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
+import com.naury.chageun.core.domain.weather.KoreaRegionListInfo
+import com.naury.chageun.core.domain.weather.KoreaRegionRow
 import com.naury.chageun.core.domain.weather.LastWeather
 import com.naury.chageun.core.domain.weather.LastWeatherCache
+import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
@@ -180,6 +184,70 @@ class PreferencesWeatherSettingsRepositoryTest {
         lastWeather.save(saved)
         repository.setEnabled(false)
         assertThat(lastWeather.load()).isNull()
+    }
+
+    @Test
+    fun newRegionList_followsRenamedCodeChains_forChosenAndRecentRegions() = scope.runTest {
+        repository.setLocation(WeatherLocation.Region(TestKoreaRegions.busan))
+        repository.setLocation(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+        val renamed = mapOf("1168064000" to "1168064100", "1168064100" to "1168065000")
+
+        repository.applyRegionListChange("2026-10", renamed, TestKoreaRegions.catalog)
+
+        assertThat(repository.settings.first().location)
+            .isEqualTo(WeatherLocation.Region(TestKoreaRegions.area("1168065000")))
+        assertThat(repository.recentRegionCodes.first()).containsExactly("1168065000", "2600000000").inOrder()
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isFalse()
+    }
+
+    @Test
+    fun newRegionList_missingChosenRegion_showsNoticeOnce_andFallsBackToParent() = scope.runTest {
+        repository.setLocation(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+        val withoutYeoksam1 = KoreaRegionCatalog(
+            listOf(
+                KoreaRegionRow("1100000000", "서울특별시", GeoPoint(37.5636, 126.9800), "서울"),
+                KoreaRegionRow("1168000000", "강남구", GeoPoint(37.5146, 127.0496)),
+            ),
+        )
+
+        repository.applyRegionListChange("2026-10", emptyMap(), withoutYeoksam1)
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isTrue()
+        // 같은 목록에서는 고른 동을 위 구로 거슬러 올라가 보여 준다.
+        assertThat(withoutYeoksam1.resolve("1168064000")?.code).isEqualTo("1168000000")
+
+        repository.dismissRegionChangeNotice()
+        repository.applyRegionListChange("2026-10", emptyMap(), withoutYeoksam1)
+        repository.applyRegionListChange("2026-07", emptyMap(), withoutYeoksam1)
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isFalse()
+
+        repository.applyRegionListChange("2027-01", emptyMap(), withoutYeoksam1)
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isTrue()
+        repository.setLocation(WeatherLocation.Region(TestKoreaRegions.gangnam))
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isFalse()
+    }
+
+    @Test
+    fun newRegionList_leavesCurrentLocationAlone_andHidesNoticeWhenWeatherIsOff() = scope.runTest {
+        repository.setLocation(WeatherLocation.Current)
+        repository.applyRegionListChange("2026-10", mapOf("1168064000" to "1168065000"), TestKoreaRegions.catalog)
+        assertThat(repository.settings.first().location).isEqualTo(WeatherLocation.Current)
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isFalse()
+
+        dataStore.edit { it[LOCATION] = "1168064000" }
+        repository.setEnabled(false)
+        repository.applyRegionListChange("2026-11", emptyMap(), KoreaRegionCatalog(emptyList()))
+        assertThat(repository.isRegionChangeNoticeVisible.first()).isFalse()
+    }
+
+    @Test
+    fun newRegionList_reResolvesChosenRegionWithoutRestart() = scope.runTest {
+        repository.setLocation(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+        assertThat(repository.settings.first().location).isEqualTo(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+
+        regions.listInfo.value = KoreaRegionListInfo("2026-10", "기상청")
+
+        // 판이 바뀌면 같은 코드를 다시 풀어 새 값을 낸다(여기서는 같은 목록이라 같은 지역).
+        assertThat(repository.settings.first().location).isEqualTo(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
     }
 
     @Test

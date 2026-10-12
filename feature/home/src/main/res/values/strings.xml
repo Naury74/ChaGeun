@@ -95,6 +95,8 @@
     <string name="home_weather_attribution">Weather: MET Norway</string>
     <string name="home_weather_enable">Turn on weather driving tips</string>
     <string name="home_weather_dismiss">Dismiss weather tip</string>
+    <string name="home_weather_region_changed">Weather region changed · Choose again</string>
+    <string name="home_weather_region_changed_dismiss">Dismiss region notice</string>
     <string name="home_weather_permission">Location is off · Choose location</string>
     <string name="home_weather_location_failed">Couldn\'t find your location · Choose a region</string>
     <string name="home_weather_change_location">Change location</string>

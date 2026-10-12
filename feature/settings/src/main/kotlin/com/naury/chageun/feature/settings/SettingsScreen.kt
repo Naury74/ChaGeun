@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.ads.LocalAdConsent
 import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.weather.KoreaRegionListInfo
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.ui.BackupShare
@@ -77,8 +78,10 @@ fun SettingsRoute(
     onOpenServiceNotice: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     backupViewModel: BackupViewModel = hiltViewModel(),
+    weatherViewModel: WeatherSettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val regionListInfo by weatherViewModel.regionListInfo.collectAsStateWithLifecycle()
     val adConsent = LocalAdConsent.current
     val isAdPrivacyRequired by adConsent.isPrivacyOptionsRequired.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
@@ -128,7 +131,8 @@ fun SettingsRoute(
                 onOpenDriveBackup = onOpenDriveBackup,
             )
         },
-        weatherSection = { WeatherSectionRoute() },
+        weatherSection = { WeatherSectionRoute(weatherViewModel) },
+        regionListInfo = regionListInfo,
     )
     val shareTitle = stringResource(R.string.settings_share)
     LaunchedEffect(dataState.readyToShare) {
@@ -174,6 +178,7 @@ fun SettingsScreen(
     onOpenAdPrivacy: () -> Unit = {},
     dataSection: @Composable () -> Unit = {},
     weatherSection: @Composable () -> Unit = {},
+    regionListInfo: KoreaRegionListInfo? = null,
 ) {
     SettingsScaffold(R.string.settings_title, onBack, modifier) { padding ->
         Column(
@@ -256,6 +261,8 @@ fun SettingsScreen(
                         if (index > 0) GroupDivider()
                         ListRow(icon = icon, title = stringResource(res))
                     }
+                    GroupDivider()
+                    ListRow(icon = Icons.Filled.Map, title = regionSourceText(regionListInfo))
                 }
                 CardGroup(stringResource(R.string.settings_section_about)) {
                     ListRow(Icons.Filled.Info, stringResource(R.string.settings_version, versionName))
@@ -321,8 +328,14 @@ private val SOURCES = listOf(
     Icons.AutoMirrored.Filled.MenuBook to R.string.settings_source_generic,
     Icons.Filled.Verified to R.string.settings_source_official,
     Icons.Filled.WbSunny to R.string.settings_source_weather,
-    Icons.Filled.Map to R.string.settings_source_regions,
 )
+
+/** 내려받은 지역 목록이면 그 목록의 출처와 판을, 아니면 앱에 넣은 목록의 출처를 보인다. */
+@Composable
+private fun regionSourceText(info: KoreaRegionListInfo?): String {
+    val source = info?.source ?: return stringResource(R.string.settings_source_regions)
+    return stringResource(R.string.settings_source_regions_downloaded, source, regionListMonth(info.version))
+}
 
 private val ThemeMode.labelRes: Int
     get() = when (this) {

@@ -4,6 +4,7 @@ import com.naury.chageun.core.domain.ads.AppUsage
 import com.naury.chageun.core.domain.ads.AppUsageRepository
 import com.naury.chageun.core.domain.weather.ApproximateLocationProvider
 import com.naury.chageun.core.domain.weather.AreaNameRepository
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.domain.weather.WeatherRepository
 import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import com.naury.chageun.core.model.GeoPoint
@@ -20,6 +21,22 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
     override val currentAreaName = MutableStateFlow(areaName)
     override val isCurrentLocationMissing = MutableStateFlow(false)
     override val recentRegionCodes = MutableStateFlow<List<String>>(emptyList())
+    override val isRegionChangeNoticeVisible = MutableStateFlow(false)
+
+    /** [applyRegionListChange]로 받은 지역 목록 판. */
+    val appliedRegionListVersions = mutableListOf<String>()
+
+    override suspend fun dismissRegionChangeNotice() {
+        isRegionChangeNoticeVisible.value = false
+    }
+
+    override suspend fun applyRegionListChange(
+        version: String,
+        renamedCodes: Map<String, String>,
+        catalog: KoreaRegionCatalog,
+    ) {
+        appliedRegionListVersions += version
+    }
 
     override suspend fun clearRecentRegions() {
         recentRegionCodes.value = emptyList()
@@ -40,6 +57,7 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
         }
         currentAreaName.value = null
         isCurrentLocationMissing.value = false
+        isRegionChangeNoticeVisible.value = false
     }
 
     override suspend fun dismissPrompt() = settings.update { it.copy(isPromptDismissed = true) }

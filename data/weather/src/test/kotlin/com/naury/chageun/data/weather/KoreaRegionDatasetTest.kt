@@ -66,6 +66,13 @@ class KoreaRegionDatasetTest {
     }
 
     @Test
+    fun bundledVersion_matchesSourceDate_andPassesDownloadChecks() {
+        val header = File("src/main/assets/${KoreaRegionCsv.ASSET_PATH}").useLines { it.first() }
+        assertThat(header).contains(KoreaRegionCsv.BUNDLED_VERSION.replace("-", "") + "01")
+        KoreaRegionListCheck.validate(rows)
+    }
+
+    @Test
     fun knownPlacesLookRight() {
         assertThat(catalog.find("1168064000")?.label).isEqualTo("강남구 역삼1동")
         assertThat(catalog.find("4111100000")?.path).isEqualTo("경기 수원시 장안구")
