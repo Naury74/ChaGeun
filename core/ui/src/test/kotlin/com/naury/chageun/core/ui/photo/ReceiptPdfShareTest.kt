@@ -3,6 +3,7 @@ package com.naury.chageun.core.ui.photo
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
@@ -14,6 +15,7 @@ import com.naury.framekit.android.result.ExportWarning
 import com.naury.framekit.android.result.FrameKitResult
 import com.naury.framekit.core.model.MediaType
 import java.io.File
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -23,6 +25,13 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class ReceiptPdfShareTest {
+    // FileProvider는 경로 설정을 프로세스 전체에 캐시하는데, Robolectric은 테스트마다 데이터 폴더가 달라진다.
+    // 앞선 테스트가 만든 캐시가 남아 있으면 이 테스트의 cache 폴더를 찾지 못하므로 비우고 시작한다.
+    @Before
+    fun clearFileProviderCache() {
+        FileProvider::class.java.getDeclaredField("sCache").apply { isAccessible = true }
+            .let { (it.get(null) as MutableMap<*, *>).clear() }
+    }
 
     @get:Rule
     val temp = TemporaryFolder()
