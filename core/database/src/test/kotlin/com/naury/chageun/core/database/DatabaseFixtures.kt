@@ -121,3 +121,12 @@ internal fun attachment(
     sizeBytes = 1_000,
     createdAt = createdAt,
 )
+
+/** 녹음한 소리 첨부. 썸네일이 없어 이름이 비어 있다. */
+internal fun sound(id: String, ownerType: String, ownerId: String) = attachment(id, ownerType, ownerId).copy(
+    fileName = "$id.m4a",
+    thumbnailName = "",
+    mimeType = "audio/mp4",
+    mediaType = AttachmentEntity.MEDIA_AUDIO,
+    durationMs = 12_000,
+)

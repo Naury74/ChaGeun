@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
+import com.naury.chageun.core.database.entity.AttachmentEntity
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -197,6 +198,8 @@ class ChageunDatabaseTest {
             attachment("old-receipt", "Fuel", "old-fuel"),
             // 종류가 다르면 같은 ID라도 다른 기록이다.
             attachment("wrong-type", "Note", "fuel"),
+            // 녹음한 소리는 달력에 사진으로 놓지 않는다.
+            sound("repair-sound", "Repair", "repair"),
         ).forEach { dao.insert(it) }
 
         val rows = dao.observeBetween("vehicle-1", LocalDate.of(2026, 9, 28), LocalDate.of(2026, 10, 31)).first()
@@ -209,6 +212,25 @@ class ChageunDatabaseTest {
             LocalDate.of(2026, 10, 12),
             LocalDate.of(2026, 10, 12),
         ).inOrder()
+    }
+
+    @Test
+    fun sounds_countSeparatelyFromPhotos_andAreLeftOutOfTimelinePhotoCount() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        database.historyDao().insertCheck(check("repair", "Repair", LocalDate.of(2026, 9, 28), "Brake squeal"))
+        val dao = database.attachmentDao()
+        dao.insert(attachment("photo", "Repair", "repair"))
+        dao.insert(sound("sound-1", "Repair", "repair"))
+        dao.insert(sound("sound-2", "Repair", "repair"))
+
+        assertThat(dao.count("vehicle-1", "Repair", "repair", AttachmentEntity.MEDIA_PHOTO)).isEqualTo(1)
+        assertThat(dao.count("vehicle-1", "Repair", "repair", AttachmentEntity.MEDIA_AUDIO)).isEqualTo(2)
+        val row = database.historyDao().observeTimeline("vehicle-1", listOf("Repair"), "", emptyList()).first().single()
+        assertThat(row.attachmentCount).isEqualTo(1)
+
+        dao.updateLabel("vehicle-1", "sound-1", "Brake squeal")
+        assertThat(dao.find("vehicle-1", "sound-1")?.label).isEqualTo("Brake squeal")
+        assertThat(dao.find("vehicle-1", "sound-2")?.label).isNull()
     }
 
     @Test

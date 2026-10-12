@@ -84,8 +84,12 @@ internal fun RecordDetailPane(
     modifier: Modifier = Modifier,
     onEdit: (RecordDetail) -> Unit = {},
     onAskAi: ((RecordRef) -> Unit)? = null,
+    sounds: SoundsState? = null,
 ) {
     var isConfirmingDelete by rememberSaveable { mutableStateOf(false) }
+    // 이 기록을 보는 동안만 소리를 재생한다. 다른 기록을 열거나 상세를 닫으면 멈추고 플레이어를 놓는다.
+    val soundPlayer = rememberSoundPlayer()
+    val shownSounds = sounds?.takeIf { it.isShownFor(detail.ref) }
     // 주행거리 기록은 값 하나뿐이라 고치기·사진·AI 질문 없이 확인과 삭제만 둔다.
     val isMileage = detail is RecordDetail.Mileage
     LazyColumn(
@@ -162,6 +166,9 @@ internal fun RecordDetailPane(
                         ?.let { share -> { share(detail, attachments.items) } },
                 )
             }
+        }
+        shownSounds?.let { state ->
+            item(key = "sounds") { SoundSection(state, detail.ref, soundPlayer) }
         }
         item(key = "actions") {
             Row(

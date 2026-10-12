@@ -3,6 +3,7 @@ package com.naury.chageun.core.database
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.database.migration.Migration10To11
 import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
 import com.naury.chageun.core.database.migration.Migration3To4
@@ -215,6 +216,42 @@ class DatabaseMigrationTest {
                 assertThat(cursor.getLong(1)).isEqualTo(42_000)
                 assertThat(cursor.getInt(2)).isEqualTo(1080)
                 assertThat(cursor.getInt(3)).isEqualTo(1920)
+            }
+        }
+    }
+
+    @Test
+    fun migration10To11_keepsAttachmentsAsPhotos_andAcceptsSounds() {
+        helper.createDatabase(TEST_DB, 10).use { db ->
+            db.execSQL(
+                "INSERT INTO vehicle (id, maker, model, registration_mode, is_primary, created_at, updated_at) " +
+                    "VALUES ('v1', 'Maker', 'Model', 'Manual', 1, 0, 0)",
+            )
+            db.execSQL(
+                "INSERT INTO attachment (id, vehicle_id, owner_type, owner_id, file_name, thumbnail_name, mime_type, " +
+                    "size_bytes, created_at) VALUES ('a1', 'v1', 'Repair', 'c1', 'a1.jpg', 'a1_thumb.jpg', " +
+                    "'image/jpeg', 1000, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(TEST_DB, 11, true, Migration10To11).use { db ->
+            db.query("SELECT media_type, duration_ms, label, file_name FROM attachment WHERE id = 'a1'").use { cursor ->
+                assertThat(cursor.moveToFirst()).isTrue()
+                assertThat(cursor.getString(0)).isEqualTo("PHOTO")
+                assertThat(cursor.isNull(1)).isTrue()
+                assertThat(cursor.isNull(2)).isTrue()
+                assertThat(cursor.getString(3)).isEqualTo("a1.jpg")
+            }
+            db.execSQL(
+                "INSERT INTO attachment (id, vehicle_id, owner_type, owner_id, file_name, thumbnail_name, mime_type, " +
+                    "size_bytes, created_at, media_type, duration_ms, label) VALUES ('s1', 'v1', 'Repair', 'c1', " +
+                    "'s1.m4a', '', 'audio/mp4', 2000, 2, 'AUDIO', 12000, 'Engine knock')",
+            )
+            db.query("SELECT media_type, duration_ms, label FROM attachment WHERE id = 's1'").use { cursor ->
+                cursor.moveToFirst()
+                assertThat(cursor.getString(0)).isEqualTo("AUDIO")
+                assertThat(cursor.getLong(1)).isEqualTo(12_000)
+                assertThat(cursor.getString(2)).isEqualTo("Engine knock")
             }
         }
     }

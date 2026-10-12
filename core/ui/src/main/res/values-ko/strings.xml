@@ -92,6 +92,8 @@
     <string name="video_edit_error_unavailable">동영상을 열 수 없어요. 다시 골라 주세요.</string>
     <string name="video_edit_error_unsupported">이 동영상은 편집할 수 없어요. 다른 동영상을 골라 주세요.</string>
     <string name="video_edit_error_too_large">동영상이 너무 커서 편집할 수 없어요.</string>
+    <string name="sound_edit_error_unavailable">소리를 녹음하거나 열 수 없어요. 다시 시도해 주세요.</string>
+    <string name="sound_edit_error_unsupported">이 소리 파일은 편집할 수 없어요. 다른 파일을 골라 주세요.</string>
     <string name="photo_source_title">사진 추가</string>
     <string name="photo_source_camera">사진 찍기</string>
     <string name="photo_source_gallery">앨범에서 고르기</string>

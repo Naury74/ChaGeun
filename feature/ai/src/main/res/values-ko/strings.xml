@@ -20,7 +20,7 @@
     <string name="ai_include_costs">비용</string>
     <string name="ai_excluded_plate">차량번호</string>
     <string name="ai_excluded_owner">소유주명</string>
-    <string name="ai_excluded_location">위치·메모·사진</string>
+    <string name="ai_excluded_location">위치·메모·사진·소리</string>
     <string name="ai_show_text">보낼 내용 전체 보기</string>
     <string name="ai_hide_text">접기</string>
 

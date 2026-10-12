@@ -317,6 +317,78 @@ class RoomBackupRepositoryTest {
     }
 
     @Test
+    fun recordedSounds_roundTripInExportAndCloudBackup_butDoNotCountAsPhotos() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        insertSound()
+        val full = File(workDir, "full.zip")
+        val cloud = File(workDir, "cloud.zip")
+
+        repository.export(Uri.fromFile(full).toString())
+        repository.export(Uri.fromFile(cloud).toString(), includeVideos = false)
+
+        ZipFile(cloud).use { zip ->
+            // 소리는 작아서 드라이브 백업에도 넣는다. 썸네일이 없어 빈 이름 항목은 만들지 않는다.
+            assertThat(zip.getEntry("attachments/s1.m4a")).isNotNull()
+            assertThat(zip.entries().toList().map { it.name }).doesNotContain("attachments/")
+        }
+        assertThat(repository.summary().photos).isEqualTo(1)
+        repository.deleteAll()
+        assertThat(repository.import(Uri.fromFile(cloud).toString())).isTrue()
+
+        val restored = database.backupDao().attachments().single { it.id == "s1" }
+        assertThat(restored.mediaType).isEqualTo(AttachmentEntity.MEDIA_AUDIO)
+        assertThat(restored.durationMs).isEqualTo(12_000)
+        assertThat(restored.label).isEqualTo("Engine knock")
+        assertThat(restored.mimeType).isEqualTo("audio/mp4")
+        assertThat(restored.thumbnailName).isEmpty()
+        assertThat(File(attachmentDir, "s1.m4a").readText()).isEqualTo("sound")
+    }
+
+    @Test
+    fun attachmentFromOlderBackup_decodesAsPhoto() {
+        val legacy = """
+            {"id": "a1", "vehicle_id": "v1", "owner_type": "Fuel", "owner_id": "f1", "file": "a1.jpg",
+            "thumbnail": "a1_thumb.jpg", "size_bytes": 5, "created_at": "2026-05-03T00:00:00Z"}
+        """.trimIndent()
+
+        val entity = Json.decodeFromString(AttachmentDto.serializer(), legacy).toEntity()
+
+        assertThat(entity.mediaType).isEqualTo(AttachmentEntity.MEDIA_PHOTO)
+        assertThat(entity.mimeType).isEqualTo("image/jpeg")
+        assertThat(entity.thumbnailName).isEqualTo("a1_thumb.jpg")
+        assertThat(entity.durationMs).isNull()
+        assertThat(entity.label).isNull()
+    }
+
+    @Test
+    fun deleteAll_removesSoundsAndRecorderLeftovers() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val sound = insertSound()
+        val recording = File(context.filesDir, "framekit/recordings/rec-1.m4a").apply {
+            parentFile?.mkdirs()
+            writeText("recording")
+        }
+        val repository = repository(StandardTestDispatcher(testScheduler))
+
+        repository.deleteAll()
+
+        assertThat(sound.exists()).isFalse()
+        assertThat(recording.exists()).isFalse()
+        assertThat(database.backupDao().attachments()).isEmpty()
+    }
+
+    private suspend fun insertSound(): File {
+        database.historyDao().insertCheck(check("c1", periodicResult = null))
+        database.attachmentDao().insert(
+            AttachmentEntity(
+                "s1", "v1", "Inspection", "c1", "s1.m4a", "", "audio/mp4", 5, now,
+                mediaType = AttachmentEntity.MEDIA_AUDIO, durationMs = 12_000, label = "Engine knock",
+            ),
+        )
+        return File(attachmentDir, "s1.m4a").apply { writeText("sound") }
+    }
+
+    @Test
     fun import_keepsEstimatedMileageSource() = runTest {
         database.maintenanceDao().insertRecord(
             MaintenanceRecordEntity(

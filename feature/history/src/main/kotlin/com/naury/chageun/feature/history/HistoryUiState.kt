@@ -33,6 +33,10 @@ data class HistoryUiState(
     val hasMore: Boolean = false,
 ) {
     val isEmpty: Boolean get() = !isLoading && sections.isEmpty()
+
+    /** 상세에 붙인 사진·영수증. 소리는 [sounds]로 따로 보인다. */
+    val photos: List<Attachment> get() = attachments.filterNot { it.isSound }
+    val sounds: List<Attachment> get() = attachments.filter { it.isSound }
     val isFiltered: Boolean
         get() = filter != HistoryFilter.All || keyword.isNotBlank() || advanced.activeCount > 0
 }

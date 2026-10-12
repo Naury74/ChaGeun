@@ -176,14 +176,42 @@ internal fun CheckDto.toEntity(now: Instant) = CheckRecordEntity(
     periodicResult = periodicResult,
 )
 
-internal fun AttachmentEntity.toDto() =
-    AttachmentDto(id, vehicleId, ownerType, ownerId, fileName, thumbnailName, sizeBytes, createdAt.toString())
+internal fun AttachmentEntity.toDto() = AttachmentDto(
+    id = id,
+    vehicleId = vehicleId,
+    ownerType = ownerType,
+    ownerId = ownerId,
+    file = fileName,
+    thumbnail = thumbnailName,
+    sizeBytes = sizeBytes,
+    createdAt = createdAt.toString(),
+    mediaType = mediaType,
+    durationMs = durationMs,
+    label = label,
+)
 
-internal fun AttachmentDto.toEntity() =
-    AttachmentEntity(id, vehicleId, ownerType, ownerId, file, thumbnail, MIME_JPEG, sizeBytes, Instant.parse(createdAt))
+internal fun AttachmentDto.toEntity(): AttachmentEntity {
+    // 모르는 값은 사진으로 본다.
+    val isSound = mediaType == AttachmentEntity.MEDIA_AUDIO
+    return AttachmentEntity(
+        id = id,
+        vehicleId = vehicleId,
+        ownerType = ownerType,
+        ownerId = ownerId,
+        fileName = file,
+        thumbnailName = if (isSound) "" else thumbnail,
+        mimeType = if (isSound) MIME_M4A else MIME_JPEG,
+        sizeBytes = sizeBytes,
+        createdAt = Instant.parse(createdAt),
+        mediaType = if (isSound) AttachmentEntity.MEDIA_AUDIO else AttachmentEntity.MEDIA_PHOTO,
+        durationMs = durationMs,
+        label = label,
+    )
+}
 
 private const val SOURCE_USER = "USER"
 private const val MIME_JPEG = "image/jpeg"
+private const val MIME_M4A = "audio/mp4"
 
 internal fun InspectionScheduleEntity.toDto() =
     InspectionDto(vehicleId, nextDueDate.toString(), source, updatedAt.toString())
