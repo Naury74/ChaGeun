@@ -84,6 +84,8 @@
         <item quantity="other">사진 %1$d장을 가져오지 못했어요</item>
     </plurals>
     <string name="attachment_add_edited">편집 후 첨부</string>
+    <string name="attachment_scan_receipt">영수증 스캔</string>
+    <string name="attachment_share_pdf">영수증 PDF로 공유</string>
     <string name="attachment_edit">편집</string>
     <string name="attachment_open">사진 보기</string>
     <string name="attachment_thumbnail">첨부한 사진</string>

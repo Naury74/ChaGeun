@@ -34,7 +34,7 @@ class ChageunApplication :
 
     override fun onCreate() {
         super.onCreate()
-        // 사진 누끼용 `:cutout` 프로세스에서는 알림 예약과 통계 동기화를 다시 하지 않는다.
+        // 사진 누끼용 `:cutout`, 영수증 글자 인식용 `:framekit_ocr` 프로세스에서는 알림 예약과 통계 동기화를 다시 하지 않는다.
         if (!isMainProcess()) return
         reminderScheduler.schedule()
         usageStatsSync.start(appScope)

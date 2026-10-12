@@ -85,6 +85,8 @@
         <item quantity="other">Couldn\'t import %1$d photos</item>
     </plurals>
     <string name="attachment_add_edited">Edit, then attach</string>
+    <string name="attachment_scan_receipt">Scan receipt</string>
+    <string name="attachment_share_pdf">Share receipts as PDF</string>
     <string name="attachment_edit">Edit</string>
     <string name="attachment_open">Open photo</string>
     <string name="attachment_thumbnail">Attached photo</string>
