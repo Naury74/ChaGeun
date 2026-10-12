@@ -10,6 +10,8 @@ dependencies {
     implementation(libs.androidx.material3.adaptive)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.activity.compose)
+    // 사진 편집 화면. FrameKit 타입은 이 모듈 밖으로 내보내지 않는다.
+    implementation(libs.framekit)
     api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(projects.core.uiTesting)

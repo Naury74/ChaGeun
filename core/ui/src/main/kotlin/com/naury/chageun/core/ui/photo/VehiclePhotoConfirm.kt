@@ -5,15 +5,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoFixHigh
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,6 +49,8 @@ import kotlinx.coroutines.withContext
 /**
  * 고른 내 차 사진을 대표 사진으로 넣기 전에 배경을 지울지 고른다. 기본은 이전에 고른 방식이고,
  * 넣은 뒤에도 내 차 탭에서 언제든 바꿀 수 있다.
+ *
+ * @param onEdit 있으면 미리보기 아래에 편집 버튼을 둔다. 편집한 사진은 호출한 쪽이 [sourceUri]로 다시 넘긴다.
  */
 @Composable
 fun VehiclePhotoConfirmSheet(
@@ -50,8 +59,10 @@ fun VehiclePhotoConfirmSheet(
     isExpanded: Boolean,
     onApply: (removeBackground: Boolean) -> Unit,
     onDismiss: () -> Unit,
+    onEdit: (() -> Unit)? = null,
 ) {
-    var removeBackground by rememberSaveable(sourceUri) { mutableStateOf(initialRemoveBackground) }
+    // 편집해서 사진이 바뀌어도 고른 값은 그대로 둔다. 시트를 닫으면 상태도 함께 사라진다.
+    var removeBackground by rememberSaveable { mutableStateOf(initialRemoveBackground) }
     AdaptiveSheet(isExpanded = isExpanded, onDismiss = onDismiss) {
         Column(
             modifier = Modifier
@@ -79,6 +90,17 @@ fun VehiclePhotoConfirmSheet(
                         contentScale = ContentScale.Fit,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                }
+            }
+            onEdit?.let {
+                OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget)) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                    )
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    Text(stringResource(R.string.photo_edit_action))
                 }
             }
             CardGroup(null) {

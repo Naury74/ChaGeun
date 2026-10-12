@@ -124,6 +124,19 @@ class OfflineFirstVehiclePhotoRepositoryTest {
     }
 
     @Test
+    fun originalPath_pointsAtTheJpeg_evenWhileShowingTheCutout() = runTest {
+        val repository = repository(ScriptedCutter(CutoutResult.Success), StandardTestDispatcher(testScheduler))
+        assertThat(repository.originalPath(vehicleId)).isNull()
+
+        repository.replace(vehicleId, "content://car")
+        repository.observe(vehicleId).first { it?.endsWith(".png") == true }
+
+        val original = repository.originalPath(vehicleId)
+        assertThat(original).endsWith(".jpg")
+        assertThat(original?.let { File(it).exists() }).isTrue()
+    }
+
+    @Test
     fun replace_reportsDownloadAndProcessing_whileCutting() = runTest {
         val repository = repository(ScriptedCutter(CutoutResult.Success), StandardTestDispatcher(testScheduler))
         val statuses = mutableListOf<CutoutStatus>()

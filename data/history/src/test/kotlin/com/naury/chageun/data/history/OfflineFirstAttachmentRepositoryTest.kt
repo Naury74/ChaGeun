@@ -111,6 +111,41 @@ class OfflineFirstAttachmentRepositoryTest {
     }
 
     @Test
+    fun replace_keepsAttachmentIdAndOrder_andSwapsFiles() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attach(vehicleId, owner, listOf("content://a", "content://b"))
+        val before = repository.observe(vehicleId, owner).first()
+        val target = before.first()
+
+        val replaced = repository.replace(vehicleId, target.id, "file:///cache/edited.jpg")
+
+        val after = repository.observe(vehicleId, owner).first()
+        assertThat(replaced).isTrue()
+        assertThat(after.map { it.id }).isEqualTo(before.map { it.id })
+        val updated = after.first()
+        assertThat(updated.owner).isEqualTo(owner)
+        assertThat(updated.createdAt).isEqualTo(target.createdAt)
+        assertThat(updated.filePath).isNotEqualTo(target.filePath)
+        assertThat(File(updated.filePath).exists() && File(updated.thumbnailPath).exists()).isTrue()
+        assertThat(File(target.filePath).exists() || File(target.thumbnailPath).exists()).isFalse()
+        assertThat(after[1]).isEqualTo(before[1])
+    }
+
+    @Test
+    fun replace_keepsOldPhoto_whenEditedPhotoCannotBeRead() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attach(vehicleId, owner, listOf("content://a"))
+        val before = repository.observe(vehicleId, owner).first().single()
+
+        val replaced = repository.replace(vehicleId, before.id, "file:///cache/broken.jpg")
+
+        assertThat(replaced).isFalse()
+        assertThat(repository.observe(vehicleId, owner).first().single()).isEqualTo(before)
+        assertThat(File(before.filePath).exists()).isTrue()
+        assertThat(repository.replace(vehicleId, "missing", "file:///cache/edited.jpg")).isFalse()
+    }
+
+    @Test
     fun deleteAllFor_removesRowsAndFiles() = runTest {
         val repository = repository(StandardTestDispatcher(testScheduler))
         repository.attach(vehicleId, owner, listOf("content://a"))

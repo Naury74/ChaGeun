@@ -26,6 +26,14 @@ interface AttachmentRepository {
         highQuality: Boolean = false,
     ): AttachResult
 
+    /**
+     * 첨부 하나의 사진을 [sourceUri]로 바꾼다. 첨부 id·소유자·순서는 그대로이고, [attach]와 같은 방식으로 다시
+     * 인코딩해 썸네일도 새로 만든다. 편집한 사진이 원래보다 커지지는 않으므로 고화질 상한으로 가져온다.
+     *
+     * @return 가져오지 못했거나 첨부가 없으면 false이며 기존 사진은 그대로 남는다.
+     */
+    suspend fun replace(vehicleId: VehicleId, attachmentId: String, sourceUri: String): Boolean
+
     suspend fun delete(vehicleId: VehicleId, attachmentId: String)
 
     suspend fun deleteAllFor(vehicleId: VehicleId, owner: RecordRef)

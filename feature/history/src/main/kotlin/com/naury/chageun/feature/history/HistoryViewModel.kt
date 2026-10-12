@@ -152,6 +152,13 @@ class HistoryViewModel @Inject constructor(
         }
     }
 
+    /** 편집한 사진으로 첨부 하나를 바꾼다. 실패하면 첨부 실패 안내를 한 장으로 띄운다. */
+    fun replaceAttachment(attachmentId: String, sourceUri: String) {
+        viewModelScope.launch {
+            if (!attachmentRepository.replace(vehicleId(), attachmentId, sourceUri)) attachFailedCount.value = 1
+        }
+    }
+
     fun deleteAttachment(attachmentId: String) {
         viewModelScope.launch { attachmentRepository.delete(vehicleId(), attachmentId) }
     }

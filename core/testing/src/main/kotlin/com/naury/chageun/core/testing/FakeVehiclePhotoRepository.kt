@@ -14,6 +14,8 @@ class FakeVehiclePhotoRepository : VehiclePhotoRepository {
 
     override fun observe(vehicleId: VehicleId): Flow<String?> = photo
 
+    override suspend fun originalPath(vehicleId: VehicleId): String? = photo.value
+
     override fun observeCutout(vehicleId: VehicleId): Flow<CutoutStatus> = cutout
 
     val backgroundRemoval = MutableStateFlow(true)

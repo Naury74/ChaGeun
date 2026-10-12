@@ -95,6 +95,7 @@
     <string name="record_photos_add">사진·영수증 추가</string>
     <string name="record_photos_change">바꾸기</string>
     <string name="record_photos_clear">빼기</string>
+    <string name="record_photos_edit">사진 편집</string>
     <string name="record_photos_notice">사진은 이 기기에만 저장되고 앱을 삭제하면 함께 사라져요. 저장할 때 위치 정보는 지워져요.</string>
     <plurals name="record_photos_count">
         <item quantity="other">사진 %d장</item>

@@ -7,12 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -37,7 +43,19 @@ import androidx.compose.ui.window.Dialog
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.ui.rememberFileImage
+
+/**
+ * 첨부 사진을 사진 편집기로 고치는 동작. 편집기는 화면 배치와 상관없는 자리에서 열어야 하므로 밖에서 받는다.
+ *
+ * @property onEdit 첨부한 사진 한 장을 고쳐 그 자리에 바꿔 넣는다.
+ * @property onAddEdited 사진을 고른 뒤 편집해서 첨부한다.
+ */
+data class AttachmentPhotoEdits(
+    val onEdit: ((Attachment) -> Unit)? = null,
+    val onAddEdited: ((RecordRef) -> Unit)? = null,
+)
 
 @Composable
 internal fun AttachmentSection(
@@ -46,6 +64,8 @@ internal fun AttachmentSection(
     onAdd: () -> Unit,
     onDelete: (String) -> Unit,
     onDismissFailure: () -> Unit,
+    onEdit: ((Attachment) -> Unit)? = null,
+    onAddEdited: (() -> Unit)? = null,
 ) {
     var viewingId by rememberSaveable { mutableStateOf<String?>(null) }
     val remaining = MAX_ATTACHMENTS_PER_RECORD - attachments.size
@@ -79,6 +99,13 @@ internal fun AttachmentSection(
             enabled = remaining > 0,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD)) }
+        onAddEdited?.let {
+            TextButton(onClick = it, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.attachment_add_edited))
+            }
+        }
         Text(
             stringResource(R.string.attachment_notice),
             style = MaterialTheme.typography.bodySmall,
@@ -89,6 +116,12 @@ internal fun AttachmentSection(
     attachments.firstOrNull { it.id == viewingId }?.let { attachment ->
         AttachmentViewer(
             attachment = attachment,
+            onEdit = onEdit?.let { edit ->
+                {
+                    viewingId = null
+                    edit(attachment)
+                }
+            },
             onDelete = {
                 viewingId = null
                 onDelete(attachment.id)
@@ -119,7 +152,12 @@ private fun Thumbnail(attachment: Attachment, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AttachmentViewer(attachment: Attachment, onDelete: () -> Unit, onDismiss: () -> Unit) {
+private fun AttachmentViewer(
+    attachment: Attachment,
+    onEdit: (() -> Unit)?,
+    onDelete: () -> Unit,
+    onDismiss: () -> Unit,
+) {
     val image by rememberFileImage(attachment.filePath)
     Dialog(onDismissRequest = onDismiss) {
         Surface(shape = MaterialTheme.shapes.large) {
@@ -139,6 +177,7 @@ private fun AttachmentViewer(attachment: Attachment, onDelete: () -> Unit, onDis
                     }
                 }
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                    onEdit?.let { TextButton(onClick = it) { Text(stringResource(R.string.attachment_edit)) } }
                     TextButton(onClick = onDelete) { Text(stringResource(R.string.history_delete)) }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.attachment_close)) }
                 }

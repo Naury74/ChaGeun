@@ -1,5 +1,6 @@
 package com.naury.chageun.data.backup
 
+import android.content.Context
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -139,6 +140,28 @@ class RoomBackupRepositoryTest {
         assertThat(repository.summary().vehicles).isEqualTo(0)
         assertThat(repository.summary().records).isEqualTo(0)
         assertThat(attachmentDir.exists()).isFalse()
+    }
+
+    @Test
+    fun deleteAll_alsoRemovesPhotoEditorLeftovers() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val leftovers = listOf(
+            File(context.filesDir, "framekit/sessions/s1/project.snapshot"),
+            File(context.filesDir, "framekit/exports/edited.jpg"),
+            File(context.cacheDir, "framekit/captures/shot.jpg"),
+            File(context.cacheDir, "photo_input/staged.jpg"),
+        ).onEach {
+            it.parentFile?.mkdirs()
+            it.writeText("photo")
+        }
+        val repository = repository(StandardTestDispatcher(testScheduler))
+
+        repository.deleteAll()
+
+        assertThat(leftovers.none(File::exists)).isTrue()
+        assertThat(File(context.filesDir, "framekit").exists()).isFalse()
+        assertThat(File(context.cacheDir, "framekit").exists()).isFalse()
+        assertThat(File(context.cacheDir, "photo_input").exists()).isFalse()
     }
 
     @Test

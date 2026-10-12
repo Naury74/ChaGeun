@@ -362,6 +362,7 @@ class VehicleScreenTest {
                     VehicleUiState.Content(vehicle, log, dueIn(14), photoPath = photo.absolutePath),
                     isTwoPane = false,
                     onUpdateMileage = {},
+                    photoActions = VehiclePhotoActions(onEdit = {}),
                 )
             }
         }
@@ -370,6 +371,64 @@ class VehicleScreenTest {
             composeRule.onAllNodesWithContentDescription("Photo of your car").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.captureScreen("vehicle_phone_photo")
+    }
+
+    @Test
+    fun currentPhoto_offersEditing() {
+        var edits = 0
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14), photoPath = "/missing/car.jpg"),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                    photoActions = VehiclePhotoActions(onEdit = { edits++ }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Edit photo").performClick()
+
+        assertThat(edits).isEqualTo(1)
+    }
+
+    @Test
+    fun photoConfirm_offersEditing_beforeApplying() {
+        var edits = 0
+        var applied: Boolean? = null
+        composeRule.setContent {
+            ChageunTheme {
+                VehiclePhotoConfirmSheet(
+                    sourceUri = "file:///missing/pick.jpg",
+                    initialRemoveBackground = false,
+                    isExpanded = true,
+                    onApply = { applied = it },
+                    onDismiss = {},
+                    onEdit = { edits++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Edit").performClick()
+        composeRule.onNodeWithText("Use photo").performClick()
+
+        assertThat(edits).isEqualTo(1)
+        assertThat(applied).isFalse()
+    }
+
+    @Test
+    fun withoutEditor_noEditButton() {
+        composeRule.setContent {
+            ChageunTheme {
+                VehicleScreen(
+                    VehicleUiState.Content(vehicle, log, dueIn(14), photoPath = "/missing/car.jpg"),
+                    isTwoPane = false,
+                    onUpdateMileage = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Edit photo").assertDoesNotExist()
     }
 
     private companion object {
@@ -397,6 +456,7 @@ class VehicleScreenTest {
                     isExpanded = true,
                     onApply = {},
                     onDismiss = {},
+                    onEdit = {},
                 )
             }
         }

@@ -56,6 +56,7 @@ import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.calendar.CalendarActions
@@ -65,6 +66,7 @@ import com.naury.chageun.feature.history.calendar.HistoryCalendarViewModel
 import com.naury.chageun.feature.history.calendar.closingDetailOnMove
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
+import java.io.File
 import java.time.LocalDate
 import java.time.temporal.WeekFields
 
@@ -112,6 +114,19 @@ fun HistoryRoute(
         showQualityOption = true,
         onPhotos = { uris, highQuality ->
             photoTarget?.toRecordRef()?.let { viewModel.attach(it, uris, highQuality) }
+        },
+    )
+    // 사진 편집기도 같은 이유로 여기서 연다. 어느 기록·첨부의 편집인지는 태그로 남긴다.
+    val photoEditor = rememberPhotoEditorLauncher { HistoryPhotoEditTag.apply(it, viewModel) }
+    val photoEdits = AttachmentPhotoEdits(
+        onEdit = { attachment ->
+            photoEditor.edit(File(attachment.filePath), tag = HistoryPhotoEditTag.replace(attachment.id))
+        },
+        onAddEdited = { ref ->
+            photoEditor.pickAndEdit(
+                maxItems = MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size,
+                tag = HistoryPhotoEditTag.add(ref),
+            )
         },
     )
     // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
@@ -189,6 +204,7 @@ fun HistoryRoute(
                 view = shownView,
                 calendar = HistoryCalendarSlot(calendarState, calendarActions),
                 modifier = Modifier.weight(1f),
+                photoEdits = photoEdits,
             )
         }
     }
@@ -327,6 +343,7 @@ fun HistoryScreen(
     isThreePane: Boolean = false,
     view: HistoryView = HistoryView.List,
     calendar: HistoryCalendarSlot? = null,
+    photoEdits: AttachmentPhotoEdits = AttachmentPhotoEdits(),
 ) {
     val attachments =
         AttachmentsState(
@@ -335,6 +352,8 @@ fun HistoryScreen(
             onAddPhotos,
             onDeleteAttachment,
             onDismissAttachFailure,
+            photoEdits.onEdit,
+            photoEdits.onAddEdited,
         )
     if (uiState.isLoading) {
         Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }

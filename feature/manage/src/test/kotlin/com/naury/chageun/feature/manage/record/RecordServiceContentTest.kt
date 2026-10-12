@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.Kilometers
@@ -89,6 +90,23 @@ class RecordServiceContentTest {
         composeRule.onNodeWithText("Done").performClick()
 
         assertThat(dismissed).isTrue()
+    }
+
+    @Test
+    fun pickedPhotos_canBeEditedBeforeSaving() {
+        var edits = 0
+        composeRule.setContent {
+            ChageunTheme {
+                RecordServiceContent(
+                    base.copy(shopName = "Shop", photos = listOf("content://picker/1", "content://picker/2")),
+                    actions.copy(onEditPhotos = { edits++ }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Edit photos").performScrollTo().performClick()
+
+        assertThat(edits).isEqualTo(1)
     }
 
     @Test

@@ -80,6 +80,14 @@
     <string name="photo_editor_aspect_16_9">16:9</string>
     <string name="photo_editor_high_quality">Save in high quality</string>
     <string name="photo_editor_high_quality_hint">Keeps more detail for receipts and small text. Uses more storage.</string>
+    <!-- FrameKit 편집기 문구 언어. 앱 문구가 실제로 쓰는 언어와 같게 values-ko에서 바꾼다. -->
+    <string name="photo_edit_locale_tag">en</string>
+    <string name="photo_edit_action">Edit</string>
+    <string name="photo_edit_error_unavailable">Couldn\'t open the photo. Please choose it again.</string>
+    <string name="photo_edit_error_unsupported">This photo can\'t be edited. Try another one.</string>
+    <string name="photo_edit_error_too_large">This photo is too large to edit.</string>
+    <string name="photo_edit_error_storage">Not enough storage. Free up some space and try again.</string>
+    <string name="photo_edit_error_generic">Couldn\'t finish editing. Please try again.</string>
     <string name="photo_source_title">Add photo</string>
     <string name="photo_source_camera">Take a photo</string>
     <string name="photo_source_gallery">Choose from photos</string>
