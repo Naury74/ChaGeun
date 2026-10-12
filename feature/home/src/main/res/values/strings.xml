@@ -79,7 +79,7 @@
     <string name="home_mileage_value">%1$s km</string>
     <string name="home_dashboard_unavailable">Reading photos isn\'t available on this device right now. Please type the mileage in.</string>
     <string name="home_open_account">Account</string>
-    <string name="home_open_account_named">Account: %1$s</string>
+    <string name="home_open_account_named">Account, %1$s</string>
     <string name="home_stat_recent">Last record</string>
     <string name="home_stat_recent_none">None</string>
     <string name="home_dashboard_downloading">Downloading text recognition (first time only)</string>

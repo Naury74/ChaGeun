@@ -57,9 +57,9 @@ class HomeViewModel @Inject constructor(
                     photoRepository.observeCutout(vehicle.id),
                     ::HomePhoto,
                 ),
-                header.greetingName,
+                header.profile,
                 combine(header.usage, weather, ::Pair),
-            ) { overview, recent, photo, name, (usage, weather) ->
+            ) { overview, recent, photo, profile, (usage, weather) ->
                 val now = LocalDateTime.now(clock)
                 val today = now.toLocalDate()
                 HomeUiState.Content(
@@ -70,7 +70,8 @@ class HomeViewModel @Inject constructor(
                     photoPath = photo.path,
                     cutout = photo.cutout,
                     isBackgroundRemovalEnabled = photo.removeBackground,
-                    greetingName = name,
+                    greetingName = profile.name,
+                    avatarPath = profile.avatarPath,
                     greeting = greetingEngine.greet(greetingFacts(now, clock.zone, vehicle, overview, recent, usage)),
                     weather = weather,
                     // 정비 개요를 한 번만 계산하도록 달력과 같은 규칙으로 여기서 바로 고른다.

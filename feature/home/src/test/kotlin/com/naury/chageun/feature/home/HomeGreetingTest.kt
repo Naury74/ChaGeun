@@ -34,6 +34,22 @@ class HomeGreetingTest {
     }
 
     @Test
+    fun greetingName_usesGoogleName_whenAccountHasNoNameOfItsOwn() {
+        // 이메일로 가입한 뒤 Google을 연결한 계정. 계정 이름이 비어 있어 이메일 앞부분 대신 Google 이름을 부른다.
+        val linked = AuthUser(
+            uid = "u",
+            email = "naury@gmail.com",
+            displayName = null,
+            isEmailVerified = true,
+            methods = setOf(AuthMethod.Email, AuthMethod.Google),
+            googleName = "나우리",
+        )
+
+        assertThat(linked.greetingName()).isEqualTo("나우리")
+        assertThat(linked.copy(displayName = "차근이").greetingName()).isEqualTo("차근이")
+    }
+
+    @Test
     fun facts_collectSafetyState() {
         val state = content(
             VehicleHealthLevel.NeedsAttention,

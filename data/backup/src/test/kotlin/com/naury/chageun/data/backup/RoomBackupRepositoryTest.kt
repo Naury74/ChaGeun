@@ -150,6 +150,7 @@ class RoomBackupRepositoryTest {
             File(context.filesDir, "framekit/exports/edited.jpg"),
             File(context.cacheDir, "framekit/captures/shot.jpg"),
             File(context.cacheDir, "photo_input/staged.jpg"),
+            File(context.filesDir, "profile/avatar-0123456789abcdef.jpg"),
         ).onEach {
             it.parentFile?.mkdirs()
             it.writeText("photo")
@@ -162,6 +163,7 @@ class RoomBackupRepositoryTest {
         assertThat(File(context.filesDir, "framekit").exists()).isFalse()
         assertThat(File(context.cacheDir, "framekit").exists()).isFalse()
         assertThat(File(context.cacheDir, "photo_input").exists()).isFalse()
+        assertThat(File(context.filesDir, "profile").exists()).isFalse()
     }
 
     @Test

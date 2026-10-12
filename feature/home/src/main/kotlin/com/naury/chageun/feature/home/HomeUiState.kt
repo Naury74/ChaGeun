@@ -30,6 +30,8 @@ sealed interface HomeUiState {
         val isBackgroundRemovalEnabled: Boolean = true,
         /** 로그인한 사용자를 부를 이름. 로그인하지 않았으면 이름 없이 인사한다. */
         val greetingName: String? = null,
+        /** 받아 둔 계정 프로필 사진 파일. 없으면 이름 첫 글자를 보인다. */
+        val avatarPath: String? = null,
         /** 상황에 맞춰 고른 인사말. 문구는 화면이 리소스에서 고른다. */
         val greeting: Greeting = Greeting(GreetingSituation.Morning, seed = 0),
         val weather: HomeWeather = HomeWeather.Off,

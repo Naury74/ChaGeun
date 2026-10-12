@@ -9,6 +9,7 @@ import com.naury.chageun.core.domain.auth.GoogleIdTokenResult
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeAuthRepository
+import com.naury.chageun.core.testing.FakeProfilePhotoRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -30,7 +31,24 @@ class AccountViewModelTest {
     private val google = FakeGoogleIdTokens()
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    private fun viewModel() = AccountViewModel(auth, google, analytics)
+    private val profilePhotos = FakeProfilePhotoRepository()
+
+    private fun viewModel() = AccountViewModel(auth, google, analytics, profilePhotos)
+
+    @Test
+    fun googleSignIn_showsGoogleNameAndPhoto() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        auth.googlePhotoUrl = "https://lh3.googleusercontent.com/a/photo=s96-c"
+        google.next = GoogleIdTokenResult.Token("token")
+
+        viewModel.signInWithGoogle(context)
+        profilePhotos.photoPath.value = "/files/profile/avatar.jpg"
+
+        val state = viewModel.uiState.first { it.user != null && it.photoPath != null }
+        assertThat(state.user?.profileName).isEqualTo("Driver")
+        assertThat(state.photoPath).isEqualTo("/files/profile/avatar.jpg")
+    }
 
     @Test
     fun newGoogleAccount_signsIn_andTracksSignUp() = runTest {
@@ -110,7 +128,8 @@ class AccountStartOverTest {
     fun startOver_deletesUnverifiedAccount() = runTest {
         val auth = FakeAuthRepository()
         auth.signUpWithEmail("typo@example.com", "chageun1")
-        val viewModel = AccountViewModel(auth, FakeGoogleIdTokens(), FakeAnalyticsTracker())
+        val viewModel =
+            AccountViewModel(auth, FakeGoogleIdTokens(), FakeAnalyticsTracker(), FakeProfilePhotoRepository())
         backgroundScope.launch { viewModel.uiState.collect {} }
 
         viewModel.startOver()

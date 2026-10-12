@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.account
 
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.naury.chageun.core.domain.auth.AuthError
@@ -8,16 +9,20 @@ import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
 import com.naury.chageun.core.testing.FakeCloudBackupRepository
+import com.naury.chageun.core.ui.PROFILE_AVATAR_PHOTO_TAG
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import com.naury.chageun.core.uitesting.captureScreen
+import com.naury.chageun.core.uitesting.writeSampleProfilePhoto
+import java.io.File
 import java.time.Instant
 import java.util.TimeZone
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -29,6 +34,9 @@ class AccountScreenshotTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     // 백업 시각은 기기 시간대로 보여 준다. CI(UTC)와 개발 PC에서 같은 그림이 나오게 고정한다.
     private val originalTimeZone = TimeZone.getDefault()
@@ -102,6 +110,37 @@ class AccountScreenshotTest {
         composeRule.onNodeWithText("Signed in with Google").assertExists()
         composeRule.captureScreen("account_home_dark")
     }
+
+    private val googleUser = AuthUser(
+        uid = "uid",
+        email = "naury@gmail.com",
+        displayName = "나우리",
+        isEmailVerified = true,
+        methods = setOf(AuthMethod.Google),
+        googleName = "나우리",
+        photoUrl = "https://lh3.googleusercontent.com/a/sample=s96-c",
+    )
+
+    private fun googleWithPhoto(name: String) {
+        val photo = writeSampleProfilePhoto(File(folder.root, "avatar.jpg"))
+        account(AccountUiState(isLoading = false, user = googleUser, photoPath = photo.path))
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodes(hasTestTag(PROFILE_AVATAR_PHOTO_TAG)).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("나우리").assertExists()
+        composeRule.onNodeWithText("naury@gmail.com").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen(name)
+    }
+
+    /** Google로 로그인하면 계정 화면 맨 위에 Google 사진과 이름이 바로 보인다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun home_googlePhoto_ko() = googleWithPhoto("account_home_google_photo_ko")
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h800dp-night-hdpi")
+    fun home_googlePhoto_dark_ko() = googleWithPhoto("account_home_google_photo_dark_ko")
 
     private val backups = listOf(
         FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z")),
