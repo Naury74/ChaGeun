@@ -16,10 +16,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.album.MAX_ALBUM_PHOTOS_PER_ADD
+import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.ChageunDialog
@@ -51,8 +54,11 @@ import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.QuickDateField
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.photo.PhotoInput
+import com.naury.chageun.core.ui.photo.PhotoSourceOption
+import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.feature.vehicle.R
+import java.io.File
 import java.time.LocalDate
 
 /**
@@ -80,7 +86,24 @@ fun AlbumRoute(
             isFocusHandled = true
         }
     }
-    PhotoInput(photoInput, maxItems = MAX_ALBUM_PHOTOS_PER_ADD, onPhotos = viewModel::add)
+    // 사진 편집기는 접거나 펴도 결과를 받을 수 있게 배치와 상관없는 이 자리에서 연다. 무엇을 고치는지는 태그로 남긴다.
+    val editor = rememberPhotoEditorLauncher(maxVideoDurationMs = MAX_ALBUM_VIDEO_DURATION_MS) {
+        AlbumEditTag.apply(it, viewModel)
+    }
+    PhotoInput(
+        photoInput,
+        maxItems = MAX_ALBUM_PHOTOS_PER_ADD,
+        onPhotos = viewModel::add,
+        includeVideos = true,
+        extraOptions = listOf(
+            PhotoSourceOption(stringResource(R.string.album_add_edited_photo), Icons.Filled.AutoFixHigh) {
+                editor.pickAndEdit(MAX_ALBUM_PHOTOS_PER_ADD, AlbumEditTag.ADD)
+            },
+            PhotoSourceOption(stringResource(R.string.album_add_edited_video), Icons.Filled.VideoLibrary) {
+                editor.pickAndEditVideo(AlbumEditTag.ADD)
+            },
+        ),
+    )
 
     val isTwoPane = isListDetailTwoPane()
     val isImmersive = !isTwoPane && uiState.selected != null
@@ -94,7 +117,7 @@ fun AlbumRoute(
     val actions = AlbumActions(
         onSelect = viewModel::select,
         onAdd = photoInput::open,
-        onEdit = viewModel::startEditing,
+        onEdit = viewModel::editDetails,
         onDelete = { deleting = listOf(it) },
         onSetCover = viewModel::setAsCover,
         onDismissMessage = viewModel::dismissMessage,
@@ -102,6 +125,10 @@ fun AlbumRoute(
         onTogglePick = viewModel.picks::toggle,
         onPickDay = viewModel::pickDay,
         onZoomGrid = viewModel::zoomGrid,
+        onEditImage = { photo ->
+            val tag = AlbumEditTag.replace(photo.id)
+            if (photo.isVideo) editor.editVideo(File(photo.filePath), tag) else editor.edit(File(photo.filePath), tag)
+        },
     )
     if (!isTwoPane && uiState.selected != null) {
         // 사진 보기는 제목 바 없이 상태 표시줄 뒤까지 그린다.
@@ -153,12 +180,13 @@ fun AlbumRoute(
         DetailsDialog(
             photo = photo,
             onSave = { date, comment -> viewModel.saveDetails(photo.id, date, comment) },
-            onDismiss = viewModel::stopEditing,
+            onDismiss = { viewModel.editDetails(null) },
         )
     }
     deleting?.let { ids ->
         DeleteDialog(
             count = ids.size,
+            isVideo = ids.singleOrNull()?.let { id -> uiState.photos.firstOrNull { it.id == id }?.isVideo } == true,
             onConfirm = {
                 viewModel.delete(ids)
                 deleting = null
@@ -177,7 +205,7 @@ data class AlbumActions(
     val onDismissMessage: () -> Unit = {},
     /** 사진 날짜를 누르면 기록 탭 달력의 그날로 간다. null이면 날짜는 글자로만 보인다. */
     val onOpenCalendar: ((LocalDate) -> Unit)? = null,
-    /** 사진 자체를 고치는 편집기. 아직 붙이지 않았으면 null이고 편집 버튼을 숨긴다. */
+    /** 사진·동영상 자체를 고치는 편집기. 붙이지 않았으면 null이고 편집 버튼을 숨긴다. */
     val onEditImage: ((AlbumPhoto) -> Unit)? = null,
     /** 길게 눌러 여러 장 고르기. 고르는 중에는 사진을 누를 때도 이것을 부른다. */
     val onTogglePick: (String) -> Unit = {},
@@ -237,12 +265,12 @@ fun AlbumScreen(
 
 /** 한 장이든 여러 장이든 같은 창으로 묻는다. 되돌릴 수 없으므로 위험 색으로 표시한다. */
 @Composable
-private fun DeleteDialog(count: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun DeleteDialog(count: Int, isVideo: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     ChageunDialog(
-        title = if (count == 1) {
-            stringResource(R.string.album_delete_title)
-        } else {
-            pluralStringResource(R.plurals.album_delete_many_title, count, count)
+        title = when {
+            count > 1 -> pluralStringResource(R.plurals.album_delete_many_title, count, count)
+            isVideo -> stringResource(R.string.album_delete_video_title)
+            else -> stringResource(R.string.album_delete_title)
         },
         message = stringResource(R.string.album_delete_body),
         icon = Icons.Filled.DeleteOutline,

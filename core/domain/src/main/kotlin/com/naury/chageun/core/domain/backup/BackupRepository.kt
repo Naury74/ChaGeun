@@ -16,9 +16,11 @@ interface BackupRepository {
 
     /**
      * `data.json`과 첨부 이미지를 담은 ZIP을 사용자가 고른 문서인 [destinationUri]에 쓴다.
+     *
+     * @param includeVideos false면 앨범 동영상은 행과 파일 모두 빼고 쓴다. 크기 한도가 있는 클라우드 백업에서 쓴다.
      * @return 대상에 쓰지 못하면 false.
      */
-    suspend fun export(destinationUri: String): Boolean
+    suspend fun export(destinationUri: String, includeVideos: Boolean = true): Boolean
 
     suspend fun previewImport(sourceUri: String): ImportPreview
 

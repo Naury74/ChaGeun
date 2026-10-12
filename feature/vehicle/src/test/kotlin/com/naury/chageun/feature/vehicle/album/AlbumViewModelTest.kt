@@ -9,6 +9,7 @@ import com.naury.chageun.core.testing.FakeAlbumRepository
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.ui.photo.EditedPhotos
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -127,5 +128,76 @@ class AlbumViewModelTest {
         val recreated = viewModel(handle)
         backgroundScope.launch { recreated.uiState.collect {} }
         assertThat(recreated.uiState.first { !it.isLoading }.gridStep).isEqualTo(0)
+    }
+
+    @Test
+    fun videos_areAdded_andTooLargeOnesAreReportedSeparately() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.add(listOf("content://video/1", "content://huge-video/2", "content://broken"), highQuality = false)
+
+        val state = viewModel.uiState.first { it.photos.size == 1 }
+        assertThat(state.photos.single().isVideo).isTrue()
+        assertThat(state.tooLargeCount).isEqualTo(1)
+        assertThat(state.failedCount).isEqualTo(1)
+        viewModel.dismissMessage()
+        assertThat(viewModel.uiState.first { it.tooLargeCount == 0 }.failedCount).isEqualTo(0)
+    }
+
+    @Test
+    fun editTag_add_putsEditedMediaInTheAlbum() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/edited.mp4"), AlbumEditTag.ADD), viewModel)
+
+        val state = viewModel.uiState.first { it.editing != null }
+        assertThat(state.photos.single().isVideo).isTrue()
+    }
+
+    @Test
+    fun editTag_replace_swapsTheFileInPlace_keepingDateAndNote() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b"), highQuality = false)
+        val target = viewModel.uiState.first { it.photos.size == 2 }.photos.last()
+        viewModel.saveDetails(target.id, today.minusDays(1), "Road trip")
+        viewModel.uiState.first { state -> state.photos.any { it.comment == "Road trip" } }
+
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/edited.jpg"), AlbumEditTag.replace(target.id)), viewModel)
+
+        val replaced = viewModel.uiState.first { state -> state.photos.any { it.filePath.endsWith("edited.jpg") } }
+            .photos.single { it.id == target.id }
+        assertThat(replaced.comment).isEqualTo("Road trip")
+        assertThat(replaced.takenOn).isEqualTo(today.minusDays(1))
+        assertThat(album.replaced).containsExactly(target.id to "file:///cache/edited.jpg")
+    }
+
+    @Test
+    fun replaceFailure_showsNotice_untilDismissed() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b"), highQuality = false)
+        val original = viewModel.uiState.first { it.photos.size == 2 }.photos.first()
+
+        viewModel.replaceMedia(original.id, "file:///cache/broken.jpg")
+
+        val failed = viewModel.uiState.first { it.isEditFailed }
+        assertThat(failed.photos.single { it.id == original.id }.filePath).isEqualTo(original.filePath)
+        viewModel.dismissMessage()
+        assertThat(viewModel.uiState.first { !it.isEditFailed }.isEditFailed).isFalse()
+    }
+
+    @Test
+    fun editTag_withoutKnownTag_isIgnored() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/edited.jpg"), tag = null), viewModel)
+        AlbumEditTag.apply(EditedPhotos(listOf("file:///cache/edited.jpg"), tag = "replace:a1"), viewModel)
+
+        assertThat(viewModel.uiState.first { !it.isLoading }.photos).isEmpty()
+        assertThat(album.replaced).isEmpty()
     }
 }

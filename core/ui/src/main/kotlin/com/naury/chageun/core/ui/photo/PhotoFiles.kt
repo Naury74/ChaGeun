@@ -20,6 +20,10 @@ object PhotoFiles {
     private const val DIRECTORY = "photo_input"
     private const val STALE_MILLIS = 24 * 60 * 60 * 1000L
     private const val JPEG_QUALITY = 95
+    private const val JPEG_EXTENSION = "jpg"
+
+    /** 동영상 편집기 결과를 옮길 때 쓰는 확장자. */
+    const val VIDEO_EXTENSION = "mp4"
 
     /** 편집할 때 다루는 최대 크기. 저장할 때는 저장소가 다시 크기를 정한다. */
     const val MAX_EDIT_EDGE_PX = 4_096
@@ -52,12 +56,12 @@ object PhotoFiles {
 
     /**
      * [sourceUri]의 바이트를 그대로 캐시 파일로 옮긴다. 다른 곳의 임시 파일을 바로 지워도
-     * 저장소가 나중에 가져갈 수 있게 할 때 쓴다.
+     * 저장소가 나중에 가져갈 수 있게 할 때 쓴다. 저장소는 확장자로 사진·동영상을 가리므로 [extension]을 맞춘다.
      *
      * @return 복사한 파일의 URI. 읽을 수 없으면 null이고 반쯤 쓴 파일은 남기지 않는다.
      */
-    fun copyIn(context: Context, sourceUri: Uri): String? {
-        val target = newFile(context)
+    fun copyIn(context: Context, sourceUri: Uri, extension: String = JPEG_EXTENSION): String? {
+        val target = newFile(context, extension)
         val copied = runCatching {
             context.contentResolver.openInputStream(sourceUri)?.use { input ->
                 target.outputStream().use { input.copyTo(it) }
@@ -111,7 +115,8 @@ object PhotoFiles {
 
     private fun directory(context: Context) = File(context.cacheDir, DIRECTORY).apply { mkdirs() }
 
-    private fun newFile(context: Context) = File(directory(context), "${UUID.randomUUID()}.jpg")
+    private fun newFile(context: Context, extension: String = JPEG_EXTENSION) =
+        File(directory(context), "${UUID.randomUUID()}.$extension")
 
     private const val QUARTER_DEGREES = 90
     private const val FULL_TURN_DEGREES = 360

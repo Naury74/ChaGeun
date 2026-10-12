@@ -86,12 +86,16 @@
     <string name="vehicle_title">My car</string>
     <string name="album_title">Car album</string>
     <string name="album_back">Back</string>
-    <string name="album_add">Add photos</string>
+    <string name="album_add">Add photos or videos</string>
     <string name="album_empty_title">Keep your car\'s moments</string>
-    <string name="album_empty_body">Save car washes, new parts, road trips or anything else with a note. Photos are grouped by the day they were taken.</string>
+    <string name="album_empty_body">Save car washes, new parts, road trips or anything else as photos or videos with a note. They\'re grouped by the day they were taken.</string>
     <plurals name="album_day_count">
         <item quantity="one">%1$d photo</item>
         <item quantity="other">%1$d photos</item>
+    </plurals>
+    <plurals name="album_day_count_media">
+        <item quantity="one">%1$d item</item>
+        <item quantity="other">%1$d items</item>
     </plurals>
     <string name="album_counter" translatable="false">%1$d / %2$d</string>
     <string name="album_counter_description">Photo %1$d of %2$d</string>
@@ -158,5 +162,27 @@
     <string name="vehicle_edit_displacement">Engine displacement (optional)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">Enter a value between 50 and 10,000 cc</string>
+    <string name="album_add_edited_photo">Edit photos, then add</string>
+    <string name="album_add_edited_video">Edit a video, then add</string>
+    <string name="album_video_description">Video, %1$s, %2$s</string>
+    <plurals name="album_duration_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <plurals name="album_duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="album_duration_minutes_seconds">%1$s %2$s</string>
+    <string name="album_video_play">Play video</string>
+    <string name="album_video_pause">Pause video</string>
+    <string name="album_video_progress" translatable="false">%1$s / %2$s</string>
+    <string name="album_edit_video">Edit this video</string>
+    <string name="album_delete_video_title">Delete this video?</string>
+    <string name="album_edit_failed">Couldn\'t save your edit. Please try again.</string>
+    <plurals name="album_video_too_large">
+        <item quantity="one">%1$d video wasn\'t added. Videos can be up to %2$d minutes and %3$d MB.</item>
+        <item quantity="other">%1$d videos weren\'t added. Videos can be up to %2$d minutes and %3$d MB.</item>
+    </plurals>
     <string name="album_open_calendar">View this day in the calendar</string>
 </resources>

@@ -84,11 +84,14 @@
     <string name="vehicle_title">내 차</string>
     <string name="album_title">내 차 앨범</string>
     <string name="album_back">뒤로</string>
-    <string name="album_add">사진 추가</string>
+    <string name="album_add">사진·동영상 추가</string>
     <string name="album_empty_title">차와 함께한 순간을 남겨 보세요</string>
-    <string name="album_empty_body">세차, 새 부품, 여행처럼 기억하고 싶은 순간을 메모와 함께 저장해요. 사진은 찍은 날짜별로 정리돼요.</string>
+    <string name="album_empty_body">세차, 새 부품, 여행처럼 기억하고 싶은 순간을 사진·동영상과 메모로 남겨요. 찍은 날짜별로 정리돼요.</string>
     <plurals name="album_day_count">
         <item quantity="other">%1$d장</item>
+    </plurals>
+    <plurals name="album_day_count_media">
+        <item quantity="other">%1$d개</item>
     </plurals>
     <string name="album_counter_description">%2$d장 중 %1$d번째 사진</string>
     <string name="album_strip_photo">%2$d장 중 %1$d번째, %3$s</string>
@@ -150,5 +153,23 @@
     <string name="vehicle_edit_displacement">배기량 (선택)</string>
     <string name="vehicle_edit_displacement_unit">cc</string>
     <string name="vehicle_edit_error_displacement">50cc에서 10,000cc 사이로 입력해 주세요</string>
+    <string name="album_add_edited_photo">사진 편집해서 추가</string>
+    <string name="album_add_edited_video">동영상 편집해서 추가</string>
+    <string name="album_video_description">동영상, %1$s, %2$s</string>
+    <plurals name="album_duration_seconds">
+        <item quantity="other">%d초</item>
+    </plurals>
+    <plurals name="album_duration_minutes">
+        <item quantity="other">%d분</item>
+    </plurals>
+    <string name="album_duration_minutes_seconds">%1$s %2$s</string>
+    <string name="album_video_play">동영상 재생</string>
+    <string name="album_video_pause">동영상 일시 정지</string>
+    <string name="album_edit_video">이 동영상 편집하기</string>
+    <string name="album_delete_video_title">이 동영상을 삭제할까요?</string>
+    <string name="album_edit_failed">편집한 내용을 저장하지 못했어요. 다시 시도해 주세요.</string>
+    <plurals name="album_video_too_large">
+        <item quantity="other">동영상 %1$d개는 넣지 못했어요. 동영상은 %2$d분, %3$dMB까지 넣을 수 있어요.</item>
+    </plurals>
     <string name="album_open_calendar">달력에서 이날 보기</string>
 </resources>

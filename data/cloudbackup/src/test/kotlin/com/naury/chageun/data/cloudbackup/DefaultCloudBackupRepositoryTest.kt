@@ -39,8 +39,8 @@ class DefaultCloudBackupRepositoryTest {
 
     /** 실제 내보내기처럼 받은 URI의 파일에 내용을 쓴다. */
     private val writingLocal = object : BackupRepository by local {
-        override suspend fun export(destinationUri: String): Boolean {
-            if (!local.export(destinationUri)) return false
+        override suspend fun export(destinationUri: String, includeVideos: Boolean): Boolean {
+            if (!local.export(destinationUri, includeVideos)) return false
             File(checkNotNull(Uri.parse(destinationUri).path)).writeText("zip")
             return true
         }
@@ -84,6 +84,8 @@ class DefaultCloudBackupRepositoryTest {
         assertThat(backup.recordCount).isEqualTo(12)
         assertThat(backup.sizeBytes).isEqualTo(3)
         assertThat(directory.listFiles().orEmpty()).isEmpty()
+        // 앨범 동영상은 200MB 한도를 넘기기 쉬워 드라이브 백업에 넣지 않는다.
+        assertThat(local.exportedVideos).isFalse()
     }
 
     @Test

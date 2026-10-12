@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -51,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
 import com.naury.chageun.core.model.AlbumPhoto
-import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.feature.vehicle.R
 
@@ -72,7 +72,7 @@ internal fun AlbumThumbnail(
     modifier: Modifier = Modifier,
 ) {
     val image by rememberFileImage(photo.thumbnailPath)
-    val description = photo.comment ?: stringResource(R.string.album_photo_on, formatDate(photo.takenOn))
+    val description = mediaDescription(photo)
     val haptics = LocalHapticFeedback.current
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -152,6 +152,16 @@ internal fun AlbumThumbnail(
                     .clip(SHAPE),
             )
         }
+        if (photo.isVideo) {
+            // 아주 작은 칸에서는 길이를 빼고 재생 표시만 남겨 사진을 덜 가린다.
+            BoxWithConstraints(Modifier.matchParentSize(), contentAlignment = Alignment.BottomEnd) {
+                VideoDurationBadge(
+                    photo.durationMs,
+                    Modifier.padding(5.dp),
+                    showDuration = maxWidth >= MIN_WIDTH_FOR_DURATION,
+                )
+            }
+        }
         if (pick != PickState.None) {
             PickMark(pick == PickState.Picked, Modifier.align(Alignment.TopEnd).padding(6.dp))
         }
@@ -227,3 +237,4 @@ private const val PRESS_DAMPING = 0.55f
 private const val PICKED_SCALE = 0.86f
 private const val PINCH_OUT = 1.25f
 private const val PINCH_IN = 0.8f
+private val MIN_WIDTH_FOR_DURATION = 72.dp

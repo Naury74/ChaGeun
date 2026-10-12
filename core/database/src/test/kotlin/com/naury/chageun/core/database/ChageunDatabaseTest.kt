@@ -3,6 +3,7 @@ package com.naury.chageun.core.database
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -149,6 +150,33 @@ class ChageunDatabaseTest {
             .map { it.id }
 
         assertThat(ids).containsExactly("start", "middle-early", "middle-late", "end").inOrder()
+    }
+
+    @Test
+    fun albumUpdate_replacesFileAndMedia_keepingDateAndNote() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        val dao = database.albumDao()
+        val original = albumPhoto("p1", LocalDate.of(2026, 10, 1)).copy(comment = "Road trip")
+        dao.insert(original)
+
+        dao.update(
+            original.copy(
+                fileName = "album_new.mp4",
+                thumbnailName = "album_new_thumb.jpg",
+                mediaType = AlbumPhotoEntity.MEDIA_VIDEO,
+                durationMs = 42_000,
+                width = 1080,
+                height = 1920,
+            ),
+        )
+
+        val saved = dao.find("vehicle-1", "p1")!!
+        assertThat(saved.fileName).isEqualTo("album_new.mp4")
+        assertThat(saved.mediaType).isEqualTo(AlbumPhotoEntity.MEDIA_VIDEO)
+        assertThat(saved.durationMs).isEqualTo(42_000)
+        assertThat(saved.takenOn).isEqualTo(LocalDate.of(2026, 10, 1))
+        assertThat(saved.comment).isEqualTo("Road trip")
+        assertThat(albumPhoto("p2", LocalDate.of(2026, 10, 1)).mediaType).isEqualTo(AlbumPhotoEntity.MEDIA_PHOTO)
     }
 
     @Test

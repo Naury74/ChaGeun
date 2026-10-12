@@ -103,6 +103,7 @@ import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
+import com.naury.chageun.feature.vehicle.album.VideoDurationBadge
 import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
 import java.io.File
 import java.time.LocalDate
@@ -633,6 +634,15 @@ private fun AlbumPreview(state: VehicleUiState.Content, onOpenAlbum: () -> Unit)
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                        if (photo.isVideo) {
+                            VideoDurationBadge(
+                                photo.durationMs,
+                                Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(4.dp),
+                                showDuration = false,
                             )
                         }
                     }

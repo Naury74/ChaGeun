@@ -3,6 +3,7 @@ package com.naury.chageun.core.database.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import java.time.Instant
 import java.time.LocalDate
@@ -28,6 +29,10 @@ interface AlbumDao {
 
     @Insert
     suspend fun insert(photo: AlbumPhotoEntity)
+
+    /** 편집한 사진·동영상으로 파일만 바꿀 때 쓴다. id·날짜·메모·만든 시각은 그대로 넘긴다. */
+    @Update
+    suspend fun update(photo: AlbumPhotoEntity)
 
     @Query(
         """

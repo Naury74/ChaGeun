@@ -34,7 +34,11 @@ data class AlbumUiState(
     /** 방금 한 장을 넣었거나 수정을 눌러 날짜·코멘트를 입력받는 사진. */
     val editing: AlbumPhoto? = null,
     val failedCount: Int = 0,
+    /** 너무 길거나 커서 넣지 않은 동영상 수. */
+    val tooLargeCount: Int = 0,
     val isCoverUpdated: Boolean = false,
+    /** 편집한 사진·동영상을 그 자리에 저장하지 못했다. 사진 보기에 잠깐 알린다. */
+    val isEditFailed: Boolean = false,
     /** 길게 눌러 여러 장을 고르는 중인 사진들. 비어 있으면 고르는 중이 아니다. */
     val picked: Set<String> = emptySet(),
     /** 그리드를 두 손가락으로 오므리고 벌려 고른 칸 크기 단계. 클수록 칸이 크고 한 줄에 적게 들어간다. */
@@ -79,7 +83,9 @@ class AlbumViewModel @Inject constructor(
                     selected = photos.firstOrNull { it.id == view.selected },
                     editing = photos.firstOrNull { it.id == view.editing },
                     failedCount = message.failed,
+                    tooLargeCount = message.tooLarge,
                     isCoverUpdated = message.coverUpdated,
+                    isEditFailed = message.editFailed,
                     picked = view.picked.filterTo(LinkedHashSet()) { it in ids },
                     gridStep = view.gridStep,
                 )
@@ -91,28 +97,33 @@ class AlbumViewModel @Inject constructor(
         savedStateHandle[KEY_SELECTED] = id
     }
 
-    /** 한 장만 넣었으면 바로 날짜·코멘트를 입력받는다. */
+    /** 사진·동영상을 넣는다. 한 장만 넣었으면 바로 날짜·코멘트를 입력받는다. */
     fun add(sourceUris: List<String>, highQuality: Boolean) {
         if (sourceUris.isEmpty()) return
         viewModelScope.launch {
             val result = albumRepository.add(vehicleId(), sourceUris, LocalDate.now(clock), highQuality)
-            messages.value = Messages(failed = result.failed)
+            messages.value = Messages(failed = result.failed, tooLarge = result.tooLarge)
             result.addedIds.singleOrNull()?.let { savedStateHandle[KEY_EDITING] = it }
         }
     }
 
-    fun startEditing(id: String) {
-        savedStateHandle[KEY_EDITING] = id
+    /** 편집기에서 고친 파일을 같은 자리에 넣는다. 날짜·메모·순서는 그대로다. */
+    fun replaceMedia(id: String, sourceUri: String) {
+        viewModelScope.launch {
+            val replaced = albumRepository.replace(vehicleId(), id, sourceUri)
+            if (!replaced) messages.value = Messages(editFailed = true)
+        }
     }
 
-    fun stopEditing() {
-        savedStateHandle[KEY_EDITING] = null
+    /** [id]의 날짜·메모 입력 창을 연다. null이면 닫는다. */
+    fun editDetails(id: String?) {
+        savedStateHandle[KEY_EDITING] = id
     }
 
     fun saveDetails(id: String, takenOn: LocalDate, comment: String) {
         viewModelScope.launch {
             albumRepository.updateDetails(vehicleId(), id, takenOn, comment)
-            stopEditing()
+            editDetails(null)
         }
     }
 
@@ -152,7 +163,12 @@ class AlbumViewModel @Inject constructor(
 
     private suspend fun vehicleId() = vehicleRepository.observePrimaryVehicle().filterNotNull().first().id
 
-    private data class Messages(val failed: Int = 0, val coverUpdated: Boolean = false)
+    private data class Messages(
+        val failed: Int = 0,
+        val tooLarge: Int = 0,
+        val coverUpdated: Boolean = false,
+        val editFailed: Boolean = false,
+    )
 
     private data class ViewState(
         val selected: String?,

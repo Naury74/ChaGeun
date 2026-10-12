@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.FilledIconButton
@@ -32,6 +33,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -85,34 +88,41 @@ internal fun ViewerTopBar(index: Int, count: Int, onBack: (() -> Unit)?, modifie
     }
 }
 
-/** 대표 사진으로 바꾼 직전에만 잠깐 떠오르는 알림. TalkBack에도 바로 읽어 준다. */
+/** 사진 보기 위쪽에 잠깐 떠오르는 알림. */
+internal enum class ViewerNotice { CoverUpdated, EditFailed }
+
+/** 대표 사진으로 바꿨거나 편집한 내용을 저장하지 못한 직후에만 잠깐 떠오르는 알림. TalkBack에도 바로 읽어 준다. */
 @Composable
-internal fun CoverUpdatedBadge(visible: Boolean, modifier: Modifier = Modifier) {
-    val good = ChageunTheme.colors.good
+internal fun ViewerNoticeBadge(notice: ViewerNotice?, modifier: Modifier = Modifier) {
+    // 사라지는 동안에도 마지막 문구를 그대로 보여 준다.
+    val last = remember { mutableStateOf(notice) }
+    if (notice != null) last.value = notice
     AnimatedVisibility(
-        visible = visible,
+        visible = notice != null,
         enter = fadeIn(motionSpec()) + scaleIn(motionSpec(), initialScale = BADGE_START_SCALE),
         exit = fadeOut(motionSpec()) + scaleOut(motionSpec(), targetScale = BADGE_START_SCALE),
         modifier = modifier,
     ) {
+        val isError = last.value == ViewerNotice.EditFailed
+        val tone = if (isError) ChageunTheme.colors.critical else ChageunTheme.colors.good
         Row(
             Modifier
-                .background(good.container, CircleShape)
+                .background(tone.container, CircleShape)
                 .padding(horizontal = ChageunTheme.spacing.sm, vertical = ChageunTheme.spacing.xs)
                 .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
             horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                Icons.Filled.CheckCircle,
+                if (isError) Icons.Filled.ErrorOutline else Icons.Filled.CheckCircle,
                 contentDescription = null,
-                tint = good.content,
+                tint = tone.content,
                 modifier = Modifier.size(18.dp),
             )
             Text(
-                stringResource(R.string.album_cover_updated),
+                stringResource(if (isError) R.string.album_edit_failed else R.string.album_cover_updated),
                 style = MaterialTheme.typography.labelLarge,
-                color = good.content,
+                color = tone.content,
             )
         }
     }
@@ -153,8 +163,8 @@ internal fun PhotoDateChip(date: LocalDate, onOpenCalendar: ((LocalDate) -> Unit
 }
 
 /**
- * 정보 수정·이미지 편집·대표 사진·삭제. 둥근 아이콘 아래에 짧은 이름을 두고, TalkBack에는 하는 일을 길게 알려 준다.
- * 이미지 편집은 편집기를 붙인 뒤에만 보인다.
+ * 정보 수정·편집·대표 사진·삭제. 둥근 아이콘 아래에 짧은 이름을 두고, TalkBack에는 하는 일을 길게 알려 준다.
+ * 편집은 편집기를 붙인 뒤에만 보이고, 대표 사진은 동영상에서는 보이지 않는다.
  */
 @Composable
 internal fun ViewerActionRow(photo: AlbumPhoto, actions: AlbumActions, modifier: Modifier = Modifier) {
@@ -169,20 +179,27 @@ internal fun ViewerActionRow(photo: AlbumPhoto, actions: AlbumActions, modifier:
             ViewerAction(
                 icon = Icons.Filled.Tune,
                 label = stringResource(R.string.album_action_edit_image),
-                clickLabel = stringResource(R.string.album_edit_image),
+                clickLabel = stringResource(
+                    if (photo.isVideo) R.string.album_edit_video else R.string.album_edit_image,
+                ),
                 onClick = { editImage(photo) },
             )
         }
-        ViewerAction(
-            icon = Icons.Filled.DirectionsCar,
-            label = stringResource(R.string.album_action_cover),
-            clickLabel = stringResource(R.string.album_set_cover),
-            onClick = { actions.onSetCover(photo) },
-        )
+        // 대표 사진은 사진으로만 정한다. 동영상의 포스터는 작아서 대표 사진으로 쓰기에 흐리다.
+        if (!photo.isVideo) {
+            ViewerAction(
+                icon = Icons.Filled.DirectionsCar,
+                label = stringResource(R.string.album_action_cover),
+                clickLabel = stringResource(R.string.album_set_cover),
+                onClick = { actions.onSetCover(photo) },
+            )
+        }
         ViewerAction(
             icon = Icons.Filled.DeleteOutline,
             label = stringResource(R.string.album_delete),
-            clickLabel = stringResource(R.string.album_delete_title),
+            clickLabel = stringResource(
+                if (photo.isVideo) R.string.album_delete_video_title else R.string.album_delete_title,
+            ),
             onClick = { actions.onDelete(photo.id) },
             tint = MaterialTheme.colorScheme.error,
         )

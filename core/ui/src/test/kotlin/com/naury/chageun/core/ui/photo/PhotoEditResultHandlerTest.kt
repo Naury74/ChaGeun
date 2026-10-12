@@ -19,9 +19,9 @@ class PhotoEditResultHandlerTest {
     private val deleted = mutableListOf<Uri>()
     private var stageFails = false
     private val handler = PhotoEditResultHandler(
-        stage = { uri ->
+        stage = { uri, isVideo ->
             staged += uri
-            if (stageFails) null else "file:///cache/${uri.lastPathSegment}"
+            if (stageFails) null else "file:///cache/${uri.lastPathSegment}" + if (isVideo) "#video" else ""
         },
         deleteOutput = { deleted += it },
     )
@@ -50,6 +50,30 @@ class PhotoEditResultHandlerTest {
     }
 
     @Test
+    fun success_stagesVideoAsVideo_andDeletesIt() {
+        val video = media("clip.mp4", MediaType.VIDEO)
+
+        val outcome = handler.handle(FrameKitResult.Success(video), isVideo = true)
+
+        assertThat(outcome).isEqualTo(PhotoEditOutcome.Edited(listOf("file:///cache/clip.mp4#video")))
+        assertThat(deleted).containsExactly(video.uri)
+    }
+
+    @Test
+    fun videoFailure_talksAboutTheVideo() {
+        val outcome = handler.handle(
+            FrameKitResult.Failure(EditorError(EditorErrorCode.UNSUPPORTED_FORMAT)),
+            isVideo = true,
+        )
+
+        assertThat(outcome).isEqualTo(PhotoEditOutcome.Failed(R.string.video_edit_error_unsupported))
+        assertThat(EditorErrorCode.SOURCE_UNAVAILABLE.messageRes(isVideo = true))
+            .isEqualTo(R.string.video_edit_error_unavailable)
+        assertThat(EditorErrorCode.SOURCE_TOO_LARGE.messageRes(isVideo = true))
+            .isEqualTo(R.string.video_edit_error_too_large)
+    }
+
+    @Test
     fun stagingFailure_reportsGenericError_andLeavesNoOutputBehind() {
         stageFails = true
         val photo = media("a.jpg")
@@ -62,7 +86,7 @@ class PhotoEditResultHandlerTest {
 
     @Test
     fun stagingCrash_stillDeletesOutput() {
-        val crashing = PhotoEditResultHandler(stage = { error("disk") }, deleteOutput = { deleted += it })
+        val crashing = PhotoEditResultHandler(stage = { _, _ -> error("disk") }, deleteOutput = { deleted += it })
         val photo = media("a.jpg")
 
         runCatching { crashing.handle(FrameKitResult.Success(photo)) }
@@ -108,7 +132,11 @@ class PhotoEditResultHandlerTest {
         width = 100,
         height = 100,
         durationMs = null,
-        mimeType = if (type == MediaType.IMAGE) "image/jpeg" else "application/pdf",
+        mimeType = when (type) {
+            MediaType.IMAGE -> "image/jpeg"
+            MediaType.VIDEO -> "video/mp4"
+            else -> "application/pdf"
+        },
         fileSize = 10,
     )
 }

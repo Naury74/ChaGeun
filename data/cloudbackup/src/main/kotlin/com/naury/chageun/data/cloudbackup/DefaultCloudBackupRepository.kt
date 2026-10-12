@@ -49,7 +49,9 @@ internal class DefaultCloudBackupRepository @Inject constructor(
         val archive = File(environment.workDirectory, "$name.zip")
         try {
             archive.parentFile?.mkdirs()
-            if (!local.export(Uri.fromFile(archive).toString())) throw CloudBackupException(CloudBackupError.Unknown)
+            // 앨범 동영상은 한 개만으로도 한도(200MB)를 넘길 수 있어 클라우드 백업에서는 뺀다.
+            val exported = local.export(Uri.fromFile(archive).toString(), includeVideos = false)
+            if (!exported) throw CloudBackupException(CloudBackupError.Unknown)
             val size = withContext(ioDispatcher) { archive.length() }
             if (size >= MAX_ARCHIVE_BYTES) throw CloudBackupException(CloudBackupError.TooLarge)
             val backup = remote.upload(
