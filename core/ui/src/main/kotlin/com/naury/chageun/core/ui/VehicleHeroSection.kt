@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.LinearGradientShader
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -63,6 +65,14 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 
+/**
+ * Hero 바탕 하늘의 색을 바꿀 때 쓴다. [top]은 맨 위 하늘색, [glow]는 오른쪽 위의 햇빛 번짐이다.
+ * 아래로 갈수록 화면 배경으로 이어지는 것은 기본 하늘과 같다.
+ * [secondaryText]를 주면 차 이름 아래 설명을 그 색으로 써서 어두운 하늘에서도 대비를 지킨다.
+ */
+@Immutable
+data class HeroSky(val top: Color, val glow: Color, val secondaryText: Color = Color.Unspecified)
+
 /** Hero 아래 요약 카드의 한 칸. [unit]은 값보다 작게 붙는다(예: "42,800" + "km"). */
 data class HeroStat(val label: String, val value: String, val unit: String? = null)
 
@@ -76,6 +86,8 @@ data class HeroStat(val label: String, val value: String, val unit: String? = nu
  * @param skyFromTop 화면 맨 위에서 시작하면 true. 큰 제목 아래처럼 중간에서 시작하면 false로 두어
  *   하늘이 위에서 서서히 나타나게 한다. 그러지 않으면 제목 영역과 하늘 사이에 경계선이 보인다.
  * @param skyFadesAtEnd 옆에 다른 칸이 나란히 있으면 true. 하늘 오른쪽 끝을 화면 배경으로 흐리게 해 세로 경계선을 없앤다.
+ * @param sky 하늘색을 바꿀 때(예: 홈의 날씨). null이면 기본 하늘이다.
+ * @param skyOverlay 하늘 위, 내용 아래에 그릴 장식(빗줄기·구름 등). Hero 전체 크기로 놓인다.
  */
 @Composable
 fun VehicleHeroSection(
@@ -91,8 +103,40 @@ fun VehicleHeroSection(
     skyFadesAtEnd: Boolean = false,
     photoStatus: (@Composable () -> Unit)? = null,
     action: (@Composable () -> Unit)? = null,
+    sky: HeroSky? = null,
+    skyOverlay: (@Composable () -> Unit)? = null,
 ) {
-    Column(modifier.fillMaxWidth().skyBackdrop(skyFromTop, skyFadesAtEnd)) {
+    Box(modifier.fillMaxWidth().skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
+        if (skyOverlay != null) Box(Modifier.matchParentSize()) { skyOverlay() }
+        HeroContent(
+            title = title,
+            subtitle = subtitle,
+            subtitleColor = sky?.secondaryText?.takeIf { it.isSpecified } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+            stats = stats,
+            footnote = footnote,
+            photoPath = photoPath,
+            bodyType = bodyType,
+            header = header,
+            photoStatus = photoStatus,
+            action = action,
+        )
+    }
+}
+
+@Composable
+private fun HeroContent(
+    title: String,
+    subtitle: String,
+    subtitleColor: Color,
+    stats: List<HeroStat>,
+    footnote: String?,
+    photoPath: String?,
+    bodyType: VehicleBodyType,
+    header: (@Composable () -> Unit)?,
+    photoStatus: (@Composable () -> Unit)?,
+    action: (@Composable () -> Unit)?,
+) {
+    Column(Modifier.fillMaxWidth()) {
         header?.invoke()
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.gutter),
@@ -108,7 +152,7 @@ fun VehicleHeroSection(
                 Text(
                     subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = subtitleColor,
                 )
             }
             HeroImage(photoPath, bodyType)
@@ -121,14 +165,16 @@ fun VehicleHeroSection(
 
 /** 위는 하늘색, 아래는 화면 배경. 오른쪽 위에 햇빛처럼 은은하게 밝은 부분을 둔다. */
 @Composable
-private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean): Modifier {
+private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean, custom: HeroSky?): Modifier {
     val colors = ChageunTheme.colors
+    val skyColor = custom?.top ?: colors.heroSky
+    val glowColor = custom?.glow ?: colors.heroGlow
     val sky = if (fromTop) {
-        Brush.verticalGradient(0f to colors.heroSky, SKY_END to colors.heroBackground)
+        Brush.verticalGradient(0f to skyColor, SKY_END to colors.heroBackground)
     } else {
         Brush.verticalGradient(
             0f to colors.heroBackground,
-            SKY_PEAK to colors.heroSky,
+            SKY_PEAK to skyColor,
             SKY_END to colors.heroBackground,
         )
     }
@@ -136,7 +182,7 @@ private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean): Modifie
         drawRect(sky)
         drawRect(
             Brush.radialGradient(
-                colors = listOf(colors.heroGlow, Color.Transparent),
+                colors = listOf(glowColor, Color.Transparent),
                 center = Offset(size.width * GLOW_X, if (fromTop) 0f else size.height * SKY_PEAK),
                 radius = size.width * GLOW_RADIUS,
             ),

@@ -4,8 +4,16 @@ import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.flow.Flow
 
-/** 첫 실행 시각과 실행 횟수. 광고 노출 자격(기획서 17.3) 판단에만 쓴다. */
-data class AppUsage(val firstLaunchAt: Instant?, val launchCount: Int)
+/**
+ * 첫 실행 시각과 실행 횟수. 광고 노출 자격(기획서 17.3)과 홈 인사말("오랜만이에요")에 쓴다.
+ * [lastLaunchAt]은 가장 최근 실행, [previousLaunchAt]은 그 바로 전 실행이다.
+ */
+data class AppUsage(
+    val firstLaunchAt: Instant?,
+    val launchCount: Int,
+    val lastLaunchAt: Instant? = null,
+    val previousLaunchAt: Instant? = null,
+)
 
 interface AppUsageRepository {
     val usage: Flow<AppUsage>

@@ -87,4 +87,12 @@
     <string name="service_ads_body">차근은 무료로 제공되며 화면 일부에 광고가 표시돼요. 광고 내용은 광고주가 제공해요.</string>
     <string name="service_changes_title">바뀔 수 있어요</string>
     <string name="service_changes_body">기능과 이 안내는 앱 업데이트에 따라 바뀔 수 있어요.</string>
+    <string name="settings_section_weather">날씨</string>
+    <string name="settings_weather_enabled">홈에 날씨 보여 주기</string>
+    <string name="settings_weather_enabled_body">비·눈·빙판길 소식에 맞춘 운전 팁을 보여 줘요. MET Norway에는 대략적인 위치만 보내요.</string>
+    <string name="settings_weather_location">날씨 위치</string>
+    <string name="settings_weather_location_none">아직 고르지 않았어요</string>
+    <string name="settings_source_weather">날씨: MET Norway Locationforecast (CC BY 4.0)</string>
+    <string name="privacy_weather_title">날씨</string>
+    <string name="privacy_weather_body">홈 날씨는 선택 기능이에요. “현재 위치”를 고를 때만 대략적인 위치 권한을 묻고, 위치를 약 10km 단위로 반올림해 날씨를 받기 위해 노르웨이 기상청(MET Norway)에 보내요. 지역을 직접 고르면 그 지역의 대표 지점만 보내요. 차근은 위치를 저장하거나 로그에 남기지 않고, 받은 날씨는 기기 메모리에만 1시간쯤 두어요. 설정 › 날씨에서 끄거나 위치를 바꿀 수 있어요.</string>
 </resources>

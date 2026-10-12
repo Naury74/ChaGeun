@@ -19,6 +19,8 @@ internal class PreferencesAppUsageRepository @Inject constructor(private val dat
         AppUsage(
             firstLaunchAt = prefs[FIRST_LAUNCH_EPOCH_MS]?.let(Instant::ofEpochMilli),
             launchCount = prefs[LAUNCH_COUNT] ?: 0,
+            lastLaunchAt = prefs[LAST_LAUNCH_EPOCH_MS]?.let(Instant::ofEpochMilli),
+            previousLaunchAt = prefs[PREVIOUS_LAUNCH_EPOCH_MS]?.let(Instant::ofEpochMilli),
         )
     }
 
@@ -26,11 +28,15 @@ internal class PreferencesAppUsageRepository @Inject constructor(private val dat
         dataStore.edit { prefs ->
             if (prefs[FIRST_LAUNCH_EPOCH_MS] == null) prefs[FIRST_LAUNCH_EPOCH_MS] = at.toEpochMilli()
             prefs[LAUNCH_COUNT] = (prefs[LAUNCH_COUNT] ?: 0) + 1
+            prefs[LAST_LAUNCH_EPOCH_MS]?.let { prefs[PREVIOUS_LAUNCH_EPOCH_MS] = it }
+            prefs[LAST_LAUNCH_EPOCH_MS] = at.toEpochMilli()
         }
     }
 
     private companion object {
         val FIRST_LAUNCH_EPOCH_MS = longPreferencesKey("first_launch_epoch_ms")
         val LAUNCH_COUNT = intPreferencesKey("launch_count")
+        val LAST_LAUNCH_EPOCH_MS = longPreferencesKey("last_launch_epoch_ms")
+        val PREVIOUS_LAUNCH_EPOCH_MS = longPreferencesKey("previous_launch_epoch_ms")
     }
 }

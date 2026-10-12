@@ -1,11 +1,16 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.chageun.core.domain.greeting.Greeting
+import com.naury.chageun.core.domain.greeting.GreetingSituation
+import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
@@ -15,7 +20,11 @@ import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.VehicleHealthLevel
+import com.naury.chageun.core.model.WeatherCondition
+import com.naury.chageun.core.model.WeatherLocation
+import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.SKY_COLOR_TOLERANCE
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.captureScreen
 import java.time.Instant
@@ -33,7 +42,7 @@ class HomeScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private val state = content(
+    private val baseState = content(
         VehicleHealthLevel.NeedsAttention,
         listOf(
             HealthReason.SafetyItemOverdue(MaintenanceItem.Tire),
@@ -59,6 +68,66 @@ class HomeScreenshotTest {
         ),
     )
 
+    /** 처음 설치한 사용자가 보는 홈. 날씨는 위치를 고르기 전이라 "날씨 맞춤 운전 팁 켜기" 알약이 나온다. */
+    private val state = baseState.copy(weather = HomeWeather.Setup)
+
+    private fun weatherState(
+        scene: WeatherScene,
+        condition: WeatherCondition,
+        temperatureC: Double,
+        tip: WeatherTip,
+        location: WeatherLocation = WeatherLocation.Region(KoreaRegion.Seoul),
+        greeting: Greeting = Greeting(GreetingSituation.CommuteMorning, seed = 0),
+    ) = baseState.copy(
+        greetingName = "나우리",
+        greeting = greeting,
+        weather = HomeWeather.Shown(
+            WeatherSnapshot(condition, temperatureC, 3.0, scene == WeatherScene.ClearNight, Instant.EPOCH),
+            location,
+            tip,
+            scene,
+        ),
+    )
+
+    private val rainyState = weatherState(
+        WeatherScene.Rain,
+        WeatherCondition.Rain,
+        17.9,
+        WeatherTip.Rain,
+        location = WeatherLocation.Current,
+    )
+    private val clearState =
+        weatherState(WeatherScene.ClearDay, WeatherCondition.Clear, 22.0, WeatherTip.NiceDay)
+    private val nightState = weatherState(
+        WeatherScene.ClearNight,
+        WeatherCondition.Clear,
+        14.0,
+        WeatherTip.Calm,
+        greeting = Greeting(GreetingSituation.Evening, seed = 0),
+    )
+    private val cloudyState = weatherState(
+        WeatherScene.Cloudy,
+        WeatherCondition.Cloudy,
+        27.0,
+        WeatherTip.Calm,
+        greeting = Greeting(GreetingSituation.AutumnAfternoon, seed = 0),
+    )
+    private val snowState = weatherState(
+        WeatherScene.Snow,
+        WeatherCondition.Snow,
+        -3.0,
+        WeatherTip.Snow,
+        location = WeatherLocation.Region(KoreaRegion.Gangwon),
+        greeting = Greeting(GreetingSituation.MaintenanceOverdue, seed = 0, number = 1),
+    )
+    private val fogState = weatherState(
+        WeatherScene.Fog,
+        WeatherCondition.Fog,
+        9.0,
+        WeatherTip.Fog,
+        location = WeatherLocation.Region(KoreaRegion.Incheon),
+    )
+
     private fun capture(
         name: String,
         paneCount: Int,
@@ -66,11 +135,19 @@ class HomeScreenshotTest {
         spacing: ChageunSpacing = Gutters.Compact,
     ) {
         composeRule.setContent {
-            AppFrame(spacing) {
-                HomeScreen(uiState = uiState, paneCount = paneCount, actions = HomeActions({}, {}, {}, onAddPhoto = {}))
+            // 하늘 애니메이션은 정해진 시각의 한 장면으로 찍는다.
+            CompositionLocalProvider(LocalFrozenSkyTime provides SKY_FRAME_MS) {
+                AppFrame(spacing) {
+                    HomeScreen(
+                        uiState = uiState,
+                        paneCount = paneCount,
+                        actions = HomeActions({}, {}, {}, onAddPhoto = {}),
+                    )
+                }
             }
         }
-        composeRule.captureScreen(name)
+        // 날씨 하늘의 흐림·빗줄기는 OS마다 1~2단계 다르게 그려진다.
+        composeRule.captureScreen(name, colorTolerance = SKY_COLOR_TOLERANCE)
     }
 
     @Test
@@ -84,12 +161,72 @@ class HomeScreenshotTest {
     /** 로그인한 사용자는 이름으로 인사하고 계정 버튼에 첫 글자를 보여 준다. */
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
-    fun phoneSignedIn_ko() =
-        capture("home_phone_signed_in_ko", paneCount = 1, state.copy(greetingName = "나우리", dayPart = DayPart.Evening))
+    fun phoneSignedIn_ko() = capture(
+        "home_phone_signed_in_ko",
+        paneCount = 1,
+        state.copy(greetingName = "나우리", greeting = Greeting(GreetingSituation.Evening, seed = 0)),
+    )
 
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)
-    fun tablet() = capture("home_tablet", paneCount = 3)
+    fun tablet() = capture("home_tablet", paneCount = 3, clearState)
+
+    /** 세 칸에서도 하늘은 왼쪽 칸 머리에만 깔리고 오른쪽으로 갈수록 흐려진다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.LARGE_KO)
+    fun largeRain_ko() = capture("home_large_rain_ko", paneCount = 3, rainyState, spacing = Gutters.Expanded)
+
+    /** 비 오는 출근길: 차가운 회청색 하늘에 가는 빗줄기, 인사말 아래 날씨 한 줄. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherRain_ko() = capture("home_weather_rain_ko", paneCount = 1, rainyState)
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherRain_dark_ko() = capture("home_weather_rain_dark_ko", paneCount = 1, rainyState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherClear_ko() = capture("home_weather_clear_ko", paneCount = 1, clearState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherNight_ko() = capture("home_weather_night_ko", paneCount = 1, nightState)
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherNight_dark_ko() = capture("home_weather_night_dark_ko", paneCount = 1, nightState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherCloudy_ko() = capture("home_weather_cloudy_ko", paneCount = 1, cloudyState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherSnow_ko() = capture("home_weather_snow_ko", paneCount = 1, snowState)
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherSnow_dark_ko() = capture("home_weather_snow_dark_ko", paneCount = 1, snowState)
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherFog_ko() = capture("home_weather_fog_ko", paneCount = 1, fogState)
+
+    /** 날씨를 아직 안 켰을 때의 작은 켜기 알약과 닫기 버튼. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherSetup_ko() = capture("home_weather_setup_ko", paneCount = 1)
+
+    /** 설정에서 날씨를 끄면 인사말과 날짜만 남는다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherOff_ko() = capture("home_weather_off_ko", paneCount = 1, baseState.copy(weather = HomeWeather.Off))
+
+    /** 펼친 폴더블 안쪽 화면. 넓은 폭에서도 하늘과 날씨 줄이 어색하지 않은지 본다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.FOLD_KO)
+    fun fold_ko() = capture("home_fold_ko", paneCount = 1, rainyState, spacing = Gutters.Medium)
 
     /** 600dp에서는 Rail이 옆에 붙어도 홈은 한 칸이다. 두 칸이면 상세 쪽이 360dp보다 좁아진다. */
     @Test
@@ -99,7 +236,7 @@ class HomeScreenshotTest {
     /** 840dp부터는 차량·상태 요약과 할 일 목록을 나란히 둔다. */
     @Test
     @Config(qualifiers = ScreenshotDevices.EXPANDED_KO)
-    fun expanded_ko() = capture("home_expanded_ko", paneCount = 2, spacing = Gutters.Expanded)
+    fun expanded_ko() = capture("home_expanded_ko", paneCount = 2, rainyState, spacing = Gutters.Expanded)
 
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
@@ -162,4 +299,9 @@ class HomeScreenshotTest {
             ),
         ),
     )
+
+    private companion object {
+        const val DARK_KO = "ko-w360dp-h800dp-night-hdpi"
+        const val SKY_FRAME_MS = 2_400L
+    }
 }

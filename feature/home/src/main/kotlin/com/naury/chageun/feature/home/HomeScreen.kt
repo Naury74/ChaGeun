@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.ads.LocalAdsEnabled
@@ -58,6 +59,7 @@ import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.ui.VehicleHeroSection
+import com.naury.chageun.core.ui.WeatherLocationPicker
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatMonthDay
@@ -89,6 +91,21 @@ fun HomeRoute(
     val photoInput = rememberPhotoInputState()
     // 고른 사진은 바로 넣지 않고, 배경을 지울지 확인한 뒤 넣는다.
     var pendingPhoto by rememberSaveable { mutableStateOf<String?>(null) }
+    var picksWeatherLocation by rememberSaveable { mutableStateOf(false) }
+    // 다른 앱에 다녀오거나 화면을 다시 켰을 때 날씨가 오래됐으면 새로 받는다. 한 시간 안이면 캐시를 쓴다.
+    LifecycleStartEffect(viewModel) {
+        viewModel.refreshWeather()
+        onStopOrDispose { }
+    }
+    if (picksWeatherLocation) {
+        WeatherLocationPicker(
+            onPicked = { location ->
+                picksWeatherLocation = false
+                viewModel.setWeatherLocation(location)
+            },
+            onDismiss = { picksWeatherLocation = false },
+        )
+    }
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })
     val photoEditor = rememberPhotoEditorLauncher { edited -> edited.uris.firstOrNull()?.let { pendingPhoto = it } }
     pendingPhoto?.let { uri ->
@@ -130,6 +147,8 @@ fun HomeRoute(
                 analytics.track(AnalyticsEvent.HomeActionOpened(HomeAction.OpenCalendar))
                 onOpenCalendar(date)
             },
+            onSetUpWeather = { picksWeatherLocation = true },
+            onDismissWeatherPrompt = viewModel::dismissWeatherPrompt,
         ),
     )
 }
@@ -153,6 +172,10 @@ data class HomeActions(
     val onRemoveBackground: () -> Unit = {},
     /** 기록 탭 달력을 그 날짜로 연다. */
     val onOpenCalendar: (LocalDate) -> Unit = {},
+    /** 날씨 켜기 안내나 날씨 줄을 눌렀을 때. 위치를 고르는 창을 연다. */
+    val onSetUpWeather: () -> Unit = {},
+    /** 날씨 켜기 안내의 ✕. 다시는 홈에 안내하지 않는다. */
+    val onDismissWeatherPrompt: () -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -386,6 +409,9 @@ private fun HomeHero(
 ) {
     val vehicle = state.vehicle
     val mileage = state.overview.currentMileage
+    // 날씨를 받았으면 Hero 하늘을 그 날씨로 바꾼다. 없으면 기본 하늘이다.
+    val isDark = isDarkBackground()
+    val skyPalette = (state.weather as? HomeWeather.Shown)?.let { skyPalette(it.scene, isDark) }
     val subtitleParts = listOfNotNull(
         vehicle.modelYear?.toString(),
         vehicle.fuelType?.let { stringResource(it.labelRes) },
@@ -408,11 +434,18 @@ private fun HomeHero(
             }
         },
         skyFadesAtEnd = isSideBySide,
+        sky = skyPalette?.sky?.copy(secondaryText = skyVariantText()),
+        skyOverlay = (state.weather as? HomeWeather.Shown)?.let { shown ->
+            { WeatherSkyOverlay(shown.scene, checkNotNull(skyPalette), fadesAtEnd = isSideBySide) }
+        },
         header = {
             HomeGreetingBar(
                 name = state.greetingName,
-                dayPart = state.dayPart,
+                greeting = state.greeting,
                 today = state.today,
+                weather = state.weather,
+                onSetUpWeather = actions.onSetUpWeather,
+                onDismissWeatherPrompt = actions.onDismissWeatherPrompt,
                 onOpenAccount = actions.onOpenAccount,
                 onOpenSettings = actions.onOpenSettings,
                 modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),

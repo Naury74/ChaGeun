@@ -157,6 +157,7 @@ dependencies {
     implementation(projects.data.maintenance)
     implementation(projects.data.vehicle)
     implementation(projects.data.cloudbackup)
+    implementation(projects.data.weather)
     implementation(projects.feature.account)
     implementation(projects.feature.ai)
     implementation(projects.feature.history)

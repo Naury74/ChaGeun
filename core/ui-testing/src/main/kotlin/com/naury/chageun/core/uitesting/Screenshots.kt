@@ -9,7 +9,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import com.dropbox.differ.SimpleImageComparator
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -38,16 +40,27 @@ object ScreenshotDevices {
 /**
  * 기록할 때는 창 전체를 `src/test/screenshots/<name>.png`로 저장하고, 검증할 때는 비교한다.
  * 일반 Unit Test 실행에서는 아무것도 하지 않는다.
+ *
+ * [colorTolerance]는 픽셀마다 허용하는 색 차이(RGBA 0..1 거리)다. 흐림 효과나 가는 사선은 macOS와 CI(Linux)에서
+ * 1~2단계 다르게 그려지므로 그런 화면에만 [SKY_COLOR_TOLERANCE]를 넘긴다.
  */
 @OptIn(ExperimentalRoborazziApi::class)
-fun ComposeTestRule.captureScreen(name: String) {
+fun ComposeTestRule.captureScreen(name: String, colorTolerance: Float? = null) {
     // 정적인 화면은 한 번만 그려지는데, 같은 Sandbox의 두 번째 테스트부터는 그 그리기가 창에 반영되지 않는다.
     // 캡처 직전에 프레임을 한 번 더 요청한다.
     runOnUiThread { frameView?.rootView?.invalidate() }
     waitForIdle()
     // 창 전체를 캡처하므로 콘텐츠 위의 Dialog와 Sheet도 함께 찍힌다.
-    captureScreenRoboImage("src/test/screenshots/$name.png")
+    val options = colorTolerance?.let {
+        RoborazziOptions(
+            compareOptions = RoborazziOptions.CompareOptions(imageComparator = SimpleImageComparator(maxDistance = it)),
+        )
+    } ?: RoborazziOptions()
+    captureScreenRoboImage("src/test/screenshots/$name.png", options)
 }
+
+/** 채널마다 2단계(2/255)씩 다른 정도. 눈으로는 구분되지 않는다. */
+const val SKY_COLOR_TOLERANCE = 0.015f
 
 /**
  * ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다.

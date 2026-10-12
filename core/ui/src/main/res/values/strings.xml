@@ -124,4 +124,30 @@
     <string name="upcoming_confidence_high">Based on the interval</string>
     <string name="upcoming_confidence_medium">Based on recent driving</string>
     <string name="upcoming_confidence_low">Rough guess, few records</string>
+    <!-- 홈 날씨 위치 고르기 -->
+    <string name="weather_location_title">Where should we check the weather?</string>
+    <string name="weather_location_message">Only an approximate location (about 10 km) is sent to get the weather. It isn\'t stored.</string>
+    <string name="weather_location_current">Current location (approximate)</string>
+    <string name="weather_location_pick_region">Choose a region</string>
+    <string name="weather_location_regions_title">Choose a region</string>
+    <string name="weather_location_denied_message">No location permission? Pick the region closest to you and you\'ll still get the weather.</string>
+    <string name="weather_location_cancel">Cancel</string>
+    <string name="weather_location_current_short">Current location</string>
+    <string name="weather_region_seoul">Seoul</string>
+    <string name="weather_region_busan">Busan</string>
+    <string name="weather_region_daegu">Daegu</string>
+    <string name="weather_region_incheon">Incheon</string>
+    <string name="weather_region_gwangju">Gwangju</string>
+    <string name="weather_region_daejeon">Daejeon</string>
+    <string name="weather_region_ulsan">Ulsan</string>
+    <string name="weather_region_sejong">Sejong</string>
+    <string name="weather_region_gyeonggi">Gyeonggi</string>
+    <string name="weather_region_gangwon">Gangwon</string>
+    <string name="weather_region_chungbuk">North Chungcheong</string>
+    <string name="weather_region_chungnam">South Chungcheong</string>
+    <string name="weather_region_jeonbuk">North Jeolla</string>
+    <string name="weather_region_jeonnam">South Jeolla</string>
+    <string name="weather_region_gyeongbuk">North Gyeongsang</string>
+    <string name="weather_region_gyeongnam">South Gyeongsang</string>
+    <string name="weather_region_jeju">Jeju</string>
 </resources>

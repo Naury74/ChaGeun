@@ -8,6 +8,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import com.naury.chageun.core.domain.ads.AppUsageRepository
 import com.naury.chageun.core.domain.reminder.MileageReminderLog
 import com.naury.chageun.core.domain.settings.SettingsRepository
+import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -36,4 +37,7 @@ internal interface SettingsBindingModule {
 
     @Binds
     fun bindAppUsageRepository(repository: PreferencesAppUsageRepository): AppUsageRepository
+
+    @Binds
+    fun bindWeatherSettingsRepository(repository: PreferencesWeatherSettingsRepository): WeatherSettingsRepository
 }

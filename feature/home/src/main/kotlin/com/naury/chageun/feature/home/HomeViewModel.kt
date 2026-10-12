@@ -2,26 +2,29 @@ package com.naury.chageun.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.calendar.UpcomingEventPlanner
 import com.naury.chageun.core.domain.calendar.within
+import com.naury.chageun.core.domain.greeting.GreetingEngine
 import com.naury.chageun.core.domain.history.HistoryRepository
 import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.model.CutoutStatus
+import com.naury.chageun.core.model.WeatherLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
-import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -31,9 +34,16 @@ class HomeViewModel @Inject constructor(
     observeMaintenanceOverview: ObserveMaintenanceOverviewUseCase,
     historyRepository: HistoryRepository,
     private val photoRepository: VehiclePhotoRepository,
-    authRepository: AuthRepository,
-    clock: Clock,
+    private val header: HomeHeaderSource,
+    private val clock: Clock,
 ) : ViewModel() {
+
+    private val greetingEngine = GreetingEngine()
+    private val weatherRefreshes = MutableStateFlow(0)
+
+    /** 날씨를 기다리느라 홈 전체가 늦게 뜨지 않도록 처음에는 카드 없이(Off) 시작한다. */
+    private val weather: StateFlow<HomeWeather> = header.weather(weatherRefreshes)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), HomeWeather.Off)
 
     val uiState: StateFlow<HomeUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
@@ -44,22 +54,25 @@ class HomeViewModel @Inject constructor(
                 combine(
                     photoRepository.observe(vehicle.id),
                     photoRepository.observeBackgroundRemoval(vehicle.id),
-                    ::Pair,
+                    photoRepository.observeCutout(vehicle.id),
+                    ::HomePhoto,
                 ),
-                photoRepository.observeCutout(vehicle.id),
-                authRepository.currentUser,
-            ) { overview, recent, (photo, removeBackground), cutout, user ->
-                val today = LocalDate.now(clock)
+                header.greetingName,
+                combine(header.usage, weather, ::Pair),
+            ) { overview, recent, photo, name, (usage, weather) ->
+                val now = LocalDateTime.now(clock)
+                val today = now.toLocalDate()
                 HomeUiState.Content(
                     vehicle = vehicle,
                     overview = overview,
                     today = today,
                     recentRecords = recent,
-                    photoPath = photo,
-                    cutout = cutout,
-                    isBackgroundRemovalEnabled = removeBackground,
-                    greetingName = user?.greetingName(),
-                    dayPart = DayPart.of(LocalTime.now(clock)),
+                    photoPath = photo.path,
+                    cutout = photo.cutout,
+                    isBackgroundRemovalEnabled = photo.removeBackground,
+                    greetingName = name,
+                    greeting = greetingEngine.greet(greetingFacts(now, clock.zone, vehicle, overview, recent, usage)),
+                    weather = weather,
                     // 정비 개요를 한 번만 계산하도록 달력과 같은 규칙으로 여기서 바로 고른다.
                     upcomingEvents = UpcomingEventPlanner.plan(overview, today)
                         .within(today, today.plusDays(UPCOMING_DAYS))
@@ -82,6 +95,24 @@ class HomeViewModel @Inject constructor(
         photoRepository.removeBackground(vehicle.id)
     }
 
+    /** 홈이 다시 보일 때 부른다. 마지막으로 받은 지 한 시간이 안 됐으면 저장소가 캐시를 돌려준다. */
+    fun refreshWeather() {
+        weatherRefreshes.update { it + 1 }
+    }
+
+    /** 홈의 날씨 켜기 안내를 닫는다. 그 뒤로는 설정 › 날씨에서만 켤 수 있다. */
+    fun dismissWeatherPrompt() {
+        viewModelScope.launch { header.dismissWeatherPrompt() }
+    }
+
+    /** 같은 위치를 다시 골라도(예: 권한을 다시 허용) 새로 가져오도록 새로 고침도 함께 한다. */
+    fun setWeatherLocation(location: WeatherLocation) {
+        viewModelScope.launch {
+            header.setWeatherLocation(location)
+            refreshWeather()
+        }
+    }
+
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
         const val RECENT_RECORD_COUNT = 3
@@ -89,3 +120,5 @@ class HomeViewModel @Inject constructor(
         const val UPCOMING_COUNT = 3
     }
 }
+
+private data class HomePhoto(val path: String?, val removeBackground: Boolean, val cutout: CutoutStatus)

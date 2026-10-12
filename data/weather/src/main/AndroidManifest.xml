@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 사용자가 홈 날씨를 켜고 위치를 고른 뒤에만 MET Norway에 날씨를 묻는다. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!--
+        홈 날씨에 쓰는 대략적인 위치. 정확한 위치(FINE)는 요청하지 않는다.
+        홈 날씨 카드에서 "현재 위치"를 고를 때만 묻고, 거절하면 시·도를 직접 고를 수 있다.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+</manifest>

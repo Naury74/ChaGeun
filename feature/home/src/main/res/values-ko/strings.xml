@@ -75,14 +75,6 @@
     <string name="home_dashboard_unavailable">지금 이 기기에서는 사진으로 읽을 수 없어요. 주행거리를 직접 입력해 주세요.</string>
     <string name="home_open_account">계정</string>
     <string name="home_open_account_named">계정: %1$s</string>
-    <string name="home_greeting_morning">좋은 아침이에요</string>
-    <string name="home_greeting_morning_named">%1$s님, 좋은 아침이에요</string>
-    <string name="home_greeting_afternoon">좋은 오후예요</string>
-    <string name="home_greeting_afternoon_named">%1$s님, 좋은 오후예요</string>
-    <string name="home_greeting_evening">편안한 저녁이에요</string>
-    <string name="home_greeting_evening_named">%1$s님, 편안한 저녁이에요</string>
-    <string name="home_greeting_night">오늘 하루도 수고했어요</string>
-    <string name="home_greeting_night_named">%1$s님, 오늘 하루도 수고했어요</string>
     <string name="home_stat_recent">최근 기록</string>
     <string name="home_stat_recent_none">없음</string>
     <string name="home_dashboard_downloading">글자 인식 기능을 내려받는 중이에요 (처음 한 번만)</string>
@@ -91,4 +83,207 @@
     <string name="home_section_schedule">다가오는 일정</string>
     <string name="home_schedule_calendar">달력에서 보기</string>
     <string name="home_schedule_today">오늘</string>
+
+    <!-- 홈 인사말. 같은 날에는 같은 문구, 다음 날에는 다음 문구가 나온다(GreetingEngine). -->
+    <string name="home_greeting_named">%1$s님, %2$s</string>
+    <string name="home_weather_summary">%1$s° %2$s</string>
+    <string name="home_weather_attribution">날씨: MET Norway</string>
+    <string name="home_weather_enable">날씨 맞춤 운전 팁 켜기</string>
+    <string name="home_weather_dismiss">날씨 안내 닫기</string>
+    <string name="home_weather_permission">위치 권한이 꺼져 있어요 · 위치 고르기</string>
+    <string name="home_weather_change_location">위치 바꾸기</string>
+    <string name="home_weather_spoken">%1$s %2$s도 %3$s. %4$s</string>
+    <string name="home_weather_loading">날씨를 확인하고 있어요…</string>
+    <string-array name="home_greeting_recall">
+        <item>리콜 소식이 있어요, 꼭 확인해 주세요</item>
+        <item>안전 리콜이 있어요, 먼저 챙겨 봐요</item>
+    </string-array>
+    <string-array name="home_greeting_inspection_overdue">
+        <item>자동차 검사 기한이 지났어요</item>
+        <item>검사 기한이 지났어요, 오늘 예약해 봐요</item>
+    </string-array>
+    <string-array name="home_greeting_maintenance_overdue">
+        <item>밀린 정비가 %1$s개 있어요</item>
+        <item>오늘은 밀린 정비 %1$s개부터 챙겨요</item>
+        <item>교체 시기가 지난 항목이 %1$s개예요</item>
+    </string-array>
+    <string-array name="home_greeting_inspection_soon">
+        <item>자동차 검사 D-%1$s, 미리 예약해 둬요</item>
+        <item>검사 기한이 다가와요, 미리 챙겨 둬요</item>
+    </string-array>
+    <string-array name="home_greeting_first_visit">
+        <item>차근에 오신 걸 환영해요</item>
+        <item>반가워요, 오늘부터 차근차근 챙겨요</item>
+    </string-array>
+    <string-array name="home_greeting_welcome_back">
+        <item>오랜만이에요, %1$s일 만이네요</item>
+        <item>다시 와 줘서 반가워요</item>
+        <item>오랜만이에요, 그동안 잘 달렸나요?</item>
+    </string-array>
+    <string-array name="home_greeting_new_year">
+        <item>새해 복 많이 받으세요</item>
+        <item>새해에도 안전 운전해요</item>
+    </string-array>
+    <string-array name="home_greeting_independence_movement_day">
+        <item>오늘은 삼일절이에요</item>
+        <item>삼일절이에요, 태극기 달았나요?</item>
+    </string-array>
+    <string-array name="home_greeting_childrens_day">
+        <item>즐거운 어린이날 보내요</item>
+        <item>어린이날이에요, 아이들 곁에선 더 천천히</item>
+    </string-array>
+    <string-array name="home_greeting_memorial_day">
+        <item>오늘은 현충일이에요</item>
+        <item>고마운 분들을 기억하는 현충일이에요</item>
+    </string-array>
+    <string-array name="home_greeting_liberation_day">
+        <item>오늘은 광복절이에요</item>
+        <item>광복절이에요, 뜻깊은 하루 보내요</item>
+    </string-array>
+    <string-array name="home_greeting_national_foundation_day">
+        <item>하늘이 열린 날, 개천절이에요</item>
+        <item>개천절 연휴, 나들이 길 조심해요</item>
+    </string-array>
+    <string-array name="home_greeting_hangul_day">
+        <item>오늘은 한글날이에요</item>
+        <item>한글날이에요, 차근도 예쁜 우리말이에요</item>
+    </string-array>
+    <string-array name="home_greeting_christmas">
+        <item>메리 크리스마스</item>
+        <item>따뜻한 성탄절 보내요</item>
+    </string-array>
+    <string-array name="home_greeting_car_anniversary">
+        <item>내 차와 함께한 지 %1$s년이 됐어요</item>
+        <item>오늘은 우리 차 %1$s번째 생일이에요</item>
+    </string-array>
+    <string-array name="home_greeting_mileage_milestone">
+        <item>주행거리 %1$s\u00A0km 돌파, 축하해요</item>
+        <item>벌써 %1$s\u00A0km를 함께 달렸어요</item>
+    </string-array>
+    <string-array name="home_greeting_recorded_recently">
+        <item>기록 남겨 줘서 고마워요</item>
+        <item>꾸준한 기록, 멋져요</item>
+        <item>차근차근 잘 쌓이고 있어요</item>
+    </string-array>
+    <string-array name="home_greeting_monday_morning">
+        <item>한 주의 시작, 힘내요</item>
+        <item>월요일 아침이에요, 여유 있게 출발해요</item>
+    </string-array>
+    <string-array name="home_greeting_friday_evening">
+        <item>한 주 동안 수고 많았어요</item>
+        <item>금요일이에요, 주말 드라이브 어때요?</item>
+    </string-array>
+    <string-array name="home_greeting_commute_morning">
+        <item>출근길 안전 운전해요</item>
+        <item>오늘도 여유 있게 출발해요</item>
+        <item>좋은 아침, 출근길 조심해요</item>
+    </string-array>
+    <string-array name="home_greeting_commute_evening">
+        <item>퇴근길도 안전하게 가요</item>
+        <item>오늘도 수고했어요, 조심히 들어가요</item>
+    </string-array>
+    <string-array name="home_greeting_weekend">
+        <item>즐거운 주말이에요</item>
+        <item>나들이 가기 좋은 주말이에요</item>
+        <item>주말엔 차도 한숨 돌려요</item>
+    </string-array>
+    <string-array name="home_greeting_mileage_stale">
+        <item>주행거리, 오랜만에 적어 볼까요?</item>
+        <item>오늘 계기판 한번 찍어 둘까요?</item>
+    </string-array>
+    <string-array name="home_greeting_spring_afternoon">
+        <item>봄볕 좋은 오후예요</item>
+        <item>꽃구경 가기 좋은 봄날이에요</item>
+    </string-array>
+    <string-array name="home_greeting_summer_afternoon">
+        <item>더운 오후, 시원하게 보내요</item>
+        <item>한여름 오후, 물 한 잔 챙겨요</item>
+    </string-array>
+    <string-array name="home_greeting_autumn_afternoon">
+        <item>선선한 가을 오후예요</item>
+        <item>드라이브하기 좋은 가을이에요</item>
+    </string-array>
+    <string-array name="home_greeting_winter_afternoon">
+        <item>포근한 겨울 오후 보내요</item>
+        <item>따뜻하게 입고 다녀요</item>
+    </string-array>
+    <string-array name="home_greeting_dawn">
+        <item>늦은 시간이에요, 졸음운전 조심해요</item>
+        <item>새벽 운전은 천천히, 쉬어 가요</item>
+    </string-array>
+    <string-array name="home_greeting_morning">
+        <item>좋은 아침이에요</item>
+        <item>상쾌한 아침이에요</item>
+        <item>오늘도 차근차근 시작해요</item>
+    </string-array>
+    <string-array name="home_greeting_lunch">
+        <item>점심 맛있게 드세요</item>
+        <item>든든한 점심 시간이에요</item>
+    </string-array>
+    <string-array name="home_greeting_afternoon">
+        <item>좋은 오후예요</item>
+        <item>나른한 오후, 기지개 한번 켜요</item>
+    </string-array>
+    <string-array name="home_greeting_evening">
+        <item>편안한 저녁이에요</item>
+        <item>오늘 하루도 수고했어요</item>
+    </string-array>
+    <string-array name="home_greeting_night">
+        <item>오늘 하루도 수고했어요</item>
+        <item>편안한 밤 보내요</item>
+    </string-array>
+    <!-- 날씨 운전 팁(WeatherTips). 값을 넣지 않으므로 %를 그대로 쓴다. -->
+    <string-array name="home_weather_tip_snow" formatted="false">
+        <item>눈길엔 평소보다 천천히, 급제동은 피해요</item>
+        <item>눈이 와요, 차간거리를 두 배로 둬요</item>
+    </string-array>
+    <string-array name="home_weather_tip_thunder" formatted="false">
+        <item>뇌우가 있어요, 감속하고 전조등을 켜요</item>
+        <item>천둥번개가 쳐요, 깊은 물웅덩이는 피해요</item>
+    </string-array>
+    <string-array name="home_weather_tip_heavy_rain" formatted="false">
+        <item>폭우예요, 절반으로 감속하고 물웅덩이는 피해요</item>
+        <item>비가 많이 와요, 차간거리를 넉넉히 둬요</item>
+    </string-array>
+    <string-array name="home_weather_tip_rain" formatted="false">
+        <item>빗길엔 20% 감속, 차간거리는 넉넉히</item>
+        <item>비가 와요, 와이퍼와 전조등을 켜요</item>
+    </string-array>
+    <string-array name="home_weather_tip_fog" formatted="false">
+        <item>안개가 짙어요, 안개등 켜고 천천히 가요</item>
+        <item>앞이 흐려요, 감속하고 차간거리를 넉넉히 둬요</item>
+    </string-array>
+    <string-array name="home_weather_tip_strong_wind" formatted="false">
+        <item>바람이 강해요, 핸들을 두 손으로 꼭 잡아요</item>
+        <item>강풍이에요, 다리 위와 터널 출구 조심해요</item>
+    </string-array>
+    <string-array name="home_weather_tip_cold" formatted="false">
+        <item>강추위예요, 배터리를 점검하고 잠깐 예열해요</item>
+        <item>많이 추워요, 블랙아이스와 배터리 방전 조심해요</item>
+    </string-array>
+    <string-array name="home_weather_tip_freezing" formatted="false">
+        <item>영하예요, 다리 위·그늘진 길 블랙아이스 조심해요</item>
+        <item>길이 얼 수 있어요, 천천히 출발해요</item>
+    </string-array>
+    <string-array name="home_weather_tip_heat" formatted="false">
+        <item>폭염이에요, 차 안에 아이·반려동물·라이터를 두지 마요</item>
+        <item>무더워요, 타이어 공기압을 확인해 봐요</item>
+    </string-array>
+    <string-array name="home_weather_tip_nice_day" formatted="false">
+        <item>맑은 날이에요, 세차하기 딱 좋아요</item>
+        <item>드라이브하기 좋은 날씨예요</item>
+    </string-array>
+    <string-array name="home_weather_tip_calm" formatted="false">
+        <item>오늘도 안전 운전해요</item>
+        <item>편안한 운전 되세요</item>
+    </string-array>
+    <string name="home_weather_condition_clear">맑음</string>
+    <string name="home_weather_condition_partly_cloudy">구름 조금</string>
+    <string name="home_weather_condition_cloudy">흐림</string>
+    <string name="home_weather_condition_fog">안개</string>
+    <string name="home_weather_condition_rain">비</string>
+    <string name="home_weather_condition_heavy_rain">강한 비</string>
+    <string name="home_weather_condition_thunder">뇌우</string>
+    <string name="home_weather_condition_sleet">진눈깨비</string>
+    <string name="home_weather_condition_snow">눈</string>
 </resources>

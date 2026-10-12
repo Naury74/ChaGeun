@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.home
 
 import android.text.format.DateFormat
+import androidx.annotation.ArrayRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -21,41 +23,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunBrandTitle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.ads.AppUsage
+import com.naury.chageun.core.domain.greeting.Greeting
+import com.naury.chageun.core.domain.greeting.GreetingFacts
+import com.naury.chageun.core.domain.greeting.GreetingSituation
 import com.naury.chageun.core.model.AuthUser
+import com.naury.chageun.core.model.HealthReason
+import com.naury.chageun.core.model.InspectionState
+import com.naury.chageun.core.model.MaintenanceOverview
+import com.naury.chageun.core.model.MaintenanceState
+import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.model.Vehicle
+import java.text.NumberFormat
+import java.time.Duration
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
-/** 인사말을 고르는 시간대. 새벽 5시부터 아침으로 본다. */
-enum class DayPart {
-    Morning,
-    Afternoon,
-    Evening,
-    Night,
-    ;
-
-    companion object {
-        fun of(time: LocalTime): DayPart = when (time.hour) {
-            in MORNING_START until AFTERNOON_START -> Morning
-            in AFTERNOON_START until EVENING_START -> Afternoon
-            in EVENING_START until NIGHT_START -> Evening
-            else -> Night
-        }
-
-        private const val MORNING_START = 5
-        private const val AFTERNOON_START = 12
-        private const val EVENING_START = 18
-        private const val NIGHT_START = 22
-    }
-}
 
 /**
  * 인사말에 부를 이름. Google 계정은 표시 이름, 이메일 계정은 @ 앞부분을 쓴다.
@@ -67,56 +61,98 @@ fun AuthUser.greetingName(): String? {
         ?: email?.substringBefore('@')?.takeIf { it.isNotEmpty() }
 }
 
-/** 홈 맨 위. 브랜드, 시간대 인사말, 오늘 날짜와 계정·설정 버튼을 둔다. */
+/**
+ * 홈 화면 상태에서 인사말 규칙에 넘길 사실을 모은다.
+ *
+ * 이번 실행은 홈이 뜨기 직전에 기록되므로, 마지막 실행이 방금 전이면 그 전 실행을 지난 방문으로 본다.
+ */
+internal fun greetingFacts(
+    now: LocalDateTime,
+    zone: ZoneId,
+    vehicle: Vehicle,
+    overview: MaintenanceOverview,
+    recent: List<TimelineItem>,
+    usage: AppUsage,
+): GreetingFacts {
+    val nowInstant = now.atZone(zone).toInstant()
+    val previousVisit = usage.lastLaunchAt?.takeIf { Duration.between(it, nowInstant) > THIS_LAUNCH_WINDOW }
+        ?: usage.previousLaunchAt
+    return GreetingFacts(
+        now = now,
+        hasActiveRecall = HealthReason.ActiveSafetyRecall in overview.health.reasons,
+        isInspectionOverdue = overview.inspection.state == InspectionState.Overdue,
+        overdueItemCount = overview.statuses.count { it.state == MaintenanceState.Overdue },
+        isInspectionDueSoon = overview.inspection.state == InspectionState.DueSoon,
+        inspectionDaysLeft = overview.inspection.daysLeft,
+        lastRecordDate = recent.mapNotNull { it.date }.maxOrNull(),
+        mileage = overview.currentMileage,
+        firstRegistrationDate = vehicle.firstRegistrationDate,
+        isFirstVisit = usage.launchCount <= 1 && usage.previousLaunchAt == null,
+        previousVisitDate = previousVisit?.atZone(zone)?.toLocalDate(),
+    )
+}
+
+private val THIS_LAUNCH_WINDOW: Duration = Duration.ofMinutes(10)
+
+/** 홈 맨 위. 차근 로고, 계정·설정 버튼, 상황별 인사말, 오늘 날짜와 날씨 한 줄을 둔다. */
 @Composable
 internal fun HomeGreetingBar(
     name: String?,
-    dayPart: DayPart,
+    greeting: Greeting,
     today: LocalDate,
+    weather: HomeWeather,
+    onSetUpWeather: () -> Unit,
+    onDismissWeatherPrompt: () -> Unit,
     onOpenAccount: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(start = ChageunTheme.spacing.gutter, end = ChageunTheme.spacing.xs, top = ChageunTheme.spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(
-                stringResource(R.string.home_brand),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                greeting(name, dayPart),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                todayLabel(today),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        IconButton(onClick = onOpenAccount) {
-            if (name != null) {
-                Initial(name)
-            } else {
-                Icon(
-                    Icons.Filled.AccountCircle,
-                    contentDescription = stringResource(R.string.home_open_account),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(AVATAR_SIZE),
-                )
+    val spacing = ChageunTheme.spacing
+    Column(modifier.fillMaxWidth().padding(top = spacing.xs)) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(start = spacing.gutter, end = spacing.xs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // 버튼 자리를 먼저 잡고 남은 폭을 로고에 준다. 큰 글꼴에서도 버튼이 밀려나지 않는다.
+            ChageunBrandTitle(stringResource(R.string.home_brand), Modifier.weight(1f))
+            AccountButton(name, onOpenAccount)
+            IconButton(onClick = onOpenSettings) {
+                Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_open_settings))
             }
         }
-        IconButton(onClick = onOpenSettings) {
-            Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_open_settings))
+        Column(Modifier.padding(horizontal = spacing.gutter).padding(top = spacing.xs)) {
+            Text(
+                greetingText(greeting, name),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(todayLabel(today), style = MaterialTheme.typography.bodySmall, color = skyVariantText())
+            HomeWeatherLine(
+                weather = weather,
+                seed = greeting.seed,
+                onChooseLocation = onSetUpWeather,
+                onDismissPrompt = onDismissWeatherPrompt,
+                modifier = Modifier.padding(top = spacing.xxs),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountButton(name: String?, onOpenAccount: () -> Unit) {
+    IconButton(onClick = onOpenAccount) {
+        if (name != null) {
+            Initial(name)
+        } else {
+            Icon(
+                Icons.Filled.AccountCircle,
+                contentDescription = stringResource(R.string.home_open_account),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(AVATAR_SIZE),
+            )
         }
     }
 }
@@ -132,24 +168,37 @@ private fun Initial(name: String) {
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
+        // 동그라미 크기가 고정이라 첫 글자도 글꼴 크기 설정을 따르지 않게 한다. 읽을 이름은 설명으로 따로 준다.
+        val glyphSize = with(LocalDensity.current) { INITIAL_SIZE.toSp() }
         Text(
             name.take(1).uppercase(),
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleSmall.copy(fontSize = glyphSize, lineHeight = glyphSize),
             color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.wrapContentSize(unbounded = true),
         )
     }
 }
 
+/**
+ * [greeting]의 문구 목록에서 오늘의 문구를 골라 값과 이름을 넣는다.
+ * 값이 없으면 값을 넣는 자리가 없는 문구만 쓴다.
+ */
 @Composable
-private fun greeting(name: String?, dayPart: DayPart): String {
-    val (plain, named) = when (dayPart) {
-        DayPart.Morning -> R.string.home_greeting_morning to R.string.home_greeting_morning_named
-        DayPart.Afternoon -> R.string.home_greeting_afternoon to R.string.home_greeting_afternoon_named
-        DayPart.Evening -> R.string.home_greeting_evening to R.string.home_greeting_evening_named
-        DayPart.Night -> R.string.home_greeting_night to R.string.home_greeting_night_named
+internal fun greetingText(greeting: Greeting, name: String?): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val variants = stringArrayResource(greeting.situation.arrayRes).toList()
+    val number = greeting.number
+    val usable = if (number == null) variants.filterNot { NUMBER_SLOT in it }.ifEmpty { variants } else variants
+    val template = usable[greeting.variantIndex(usable.size)]
+    val message = if (NUMBER_SLOT in template && number != null) {
+        String.format(locale, template, NumberFormat.getIntegerInstance(locale).format(number))
+    } else {
+        template
     }
-    return if (name == null) stringResource(plain) else stringResource(named, name)
+    return if (name == null) message else stringResource(R.string.home_greeting_named, name, message)
 }
+
+private const val NUMBER_SLOT = "%1\$s"
 
 /** "10월 6일 화요일"처럼 지역 표기에 맞춘 날짜. */
 @Composable
@@ -161,3 +210,42 @@ private fun todayLabel(today: LocalDate): String {
 }
 
 private val AVATAR_SIZE = 32.dp
+private val INITIAL_SIZE = 14.dp
+
+@get:ArrayRes
+private val GreetingSituation.arrayRes: Int
+    get() = when (this) {
+        GreetingSituation.Recall -> R.array.home_greeting_recall
+        GreetingSituation.InspectionOverdue -> R.array.home_greeting_inspection_overdue
+        GreetingSituation.MaintenanceOverdue -> R.array.home_greeting_maintenance_overdue
+        GreetingSituation.InspectionSoon -> R.array.home_greeting_inspection_soon
+        GreetingSituation.FirstVisit -> R.array.home_greeting_first_visit
+        GreetingSituation.WelcomeBack -> R.array.home_greeting_welcome_back
+        GreetingSituation.NewYear -> R.array.home_greeting_new_year
+        GreetingSituation.IndependenceMovementDay -> R.array.home_greeting_independence_movement_day
+        GreetingSituation.ChildrensDay -> R.array.home_greeting_childrens_day
+        GreetingSituation.MemorialDay -> R.array.home_greeting_memorial_day
+        GreetingSituation.LiberationDay -> R.array.home_greeting_liberation_day
+        GreetingSituation.NationalFoundationDay -> R.array.home_greeting_national_foundation_day
+        GreetingSituation.HangulDay -> R.array.home_greeting_hangul_day
+        GreetingSituation.Christmas -> R.array.home_greeting_christmas
+        GreetingSituation.CarAnniversary -> R.array.home_greeting_car_anniversary
+        GreetingSituation.MileageMilestone -> R.array.home_greeting_mileage_milestone
+        GreetingSituation.RecordedRecently -> R.array.home_greeting_recorded_recently
+        GreetingSituation.MondayMorning -> R.array.home_greeting_monday_morning
+        GreetingSituation.FridayEvening -> R.array.home_greeting_friday_evening
+        GreetingSituation.CommuteMorning -> R.array.home_greeting_commute_morning
+        GreetingSituation.CommuteEvening -> R.array.home_greeting_commute_evening
+        GreetingSituation.Weekend -> R.array.home_greeting_weekend
+        GreetingSituation.MileageStale -> R.array.home_greeting_mileage_stale
+        GreetingSituation.SpringAfternoon -> R.array.home_greeting_spring_afternoon
+        GreetingSituation.SummerAfternoon -> R.array.home_greeting_summer_afternoon
+        GreetingSituation.AutumnAfternoon -> R.array.home_greeting_autumn_afternoon
+        GreetingSituation.WinterAfternoon -> R.array.home_greeting_winter_afternoon
+        GreetingSituation.Dawn -> R.array.home_greeting_dawn
+        GreetingSituation.Morning -> R.array.home_greeting_morning
+        GreetingSituation.Lunch -> R.array.home_greeting_lunch
+        GreetingSituation.Afternoon -> R.array.home_greeting_afternoon
+        GreetingSituation.Evening -> R.array.home_greeting_evening
+        GreetingSituation.Night -> R.array.home_greeting_night
+    }
