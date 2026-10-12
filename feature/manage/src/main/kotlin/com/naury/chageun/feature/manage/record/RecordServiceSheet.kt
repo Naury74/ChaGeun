@@ -75,12 +75,13 @@ fun RecordServiceHost(
     onDismiss: () -> Unit,
     editingRecordId: String? = null,
     sessionKey: Int = 0,
+    initialDate: LocalDate? = null,
 ) {
     val target = editingRecordId?.let { "${item.name}-edit-$it" } ?: item.name
     val viewModel = hiltViewModel<RecordServiceViewModel, RecordServiceViewModel.Factory>(
         key = "$target-$sessionKey",
     ) {
-        it.create(RecordServiceTarget(item, editingRecordId))
+        it.create(RecordServiceTarget(item, editingRecordId, initialDate))
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(uiState.isEditSaved) { if (uiState.isEditSaved) onDismiss() }

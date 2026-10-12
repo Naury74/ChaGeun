@@ -33,6 +33,9 @@ internal class OfflineFirstAlbumRepository @Inject constructor(
     override fun observe(vehicleId: VehicleId): Flow<List<AlbumPhoto>> =
         albumDao.observe(vehicleId.value).map { rows -> rows.map { it.asExternalModel() } }
 
+    override fun observeBetween(vehicleId: VehicleId, from: LocalDate, to: LocalDate): Flow<List<AlbumPhoto>> =
+        albumDao.observeBetween(vehicleId.value, from, to).map { rows -> rows.map { it.asExternalModel() } }
+
     override suspend fun add(
         vehicleId: VehicleId,
         sourceUris: List<String>,

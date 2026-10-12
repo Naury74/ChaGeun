@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -23,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
@@ -75,12 +77,26 @@ import java.time.LocalDate
 
 /**
  * 내 차 앨범. 사진 입력·확인 창은 배치(한 칸·두 칸)와 상관없는 이 자리에 두어 접거나 펴도 이어진다.
+ * [focusPhotoId]가 있으면 그 사진을 열어 둔 채로 시작한다. 달력에서 사진을 눌러 들어올 때 쓴다.
  */
 @Composable
-fun AlbumRoute(onBack: () -> Unit, viewModel: AlbumViewModel = hiltViewModel()) {
+fun AlbumRoute(
+    onBack: () -> Unit,
+    focusPhotoId: String? = null,
+    onOpenCalendar: ((LocalDate) -> Unit)? = null,
+    viewModel: AlbumViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val photoInput = rememberPhotoInputState()
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
+    // 처음 열 때 한 번만 고른다. 그 뒤 사용자가 다른 사진으로 넘기거나 닫으면 그대로 둔다.
+    var isFocusHandled by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(focusPhotoId) {
+        if (focusPhotoId != null && !isFocusHandled) {
+            viewModel.select(focusPhotoId)
+            isFocusHandled = true
+        }
+    }
     PhotoInput(photoInput, maxItems = MAX_ALBUM_PHOTOS_PER_ADD, onPhotos = viewModel::add)
 
     LargeTitleScaffold(
@@ -106,6 +122,7 @@ fun AlbumRoute(onBack: () -> Unit, viewModel: AlbumViewModel = hiltViewModel()) 
                 onDelete = { deleting = it },
                 onSetCover = viewModel::setAsCover,
                 onDismissMessage = viewModel::dismissMessage,
+                onOpenCalendar = onOpenCalendar,
             ),
             modifier = Modifier.padding(padding),
         )
@@ -145,6 +162,8 @@ data class AlbumActions(
     val onDelete: (String) -> Unit = {},
     val onSetCover: (AlbumPhoto) -> Unit = {},
     val onDismissMessage: () -> Unit = {},
+    /** 사진 날짜를 누르면 기록 탭 달력의 그날로 간다. null이면 날짜는 글자로만 보인다. */
+    val onOpenCalendar: ((LocalDate) -> Unit)? = null,
 )
 
 @Composable
@@ -290,7 +309,7 @@ private fun PhotoDetail(
             Modifier.padding(ChageunTheme.spacing.gutter),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         ) {
-            Text(formatDate(photo.takenOn), style = MaterialTheme.typography.titleMedium)
+            PhotoDate(photo.takenOn, actions.onOpenCalendar)
             Text(
                 photo.comment ?: stringResource(R.string.album_no_comment),
                 style = MaterialTheme.typography.bodyLarge,
@@ -319,6 +338,25 @@ private fun PhotoDetail(
                 })
             }
         }
+    }
+}
+
+@Composable
+private fun PhotoDate(date: LocalDate, onOpenCalendar: ((LocalDate) -> Unit)?) {
+    if (onOpenCalendar == null) {
+        Text(formatDate(date), style = MaterialTheme.typography.titleMedium)
+        return
+    }
+    val label = stringResource(R.string.album_open_calendar)
+    Row(
+        modifier = Modifier
+            .heightIn(min = ChageunTheme.spacing.minTouchTarget)
+            .pressable(onClick = { onOpenCalendar(date) }, onClickLabel = label),
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(formatDate(date), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Filled.CalendarMonth, contentDescription = label, tint = MaterialTheme.colorScheme.primary)
     }
 }
 

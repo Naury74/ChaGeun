@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.analytics
 
 import com.naury.chageun.core.model.AuthMethod
+import com.naury.chageun.core.model.HistoryView
 
 /**
  * 기획서 29.1 제품 이벤트.
@@ -92,7 +93,25 @@ sealed interface AnalyticsEvent {
     data object AccountDeleted : AnalyticsEvent {
         override val name = "account_deleted"
     }
+
+    /** 기록 탭에서 목록·달력 보기를 바꿨다. */
+    data class HistoryViewChanged(val view: HistoryView) : AnalyticsEvent {
+        override val name = "history_view_changed"
+        override val params = mapOf("view" to view.key)
+    }
+
+    /** 달력에서 항목을 눌러 그 화면으로 이동했다. */
+    data class CalendarItemOpened(val kind: CalendarItemKind) : AnalyticsEvent {
+        override val name = "calendar_item_opened"
+        override val params = mapOf("kind" to kind.key)
+    }
 }
+
+private val HistoryView.key: String
+    get() = when (this) {
+        HistoryView.List -> "list"
+        HistoryView.Calendar -> "calendar"
+    }
 
 private val AuthMethod.key: String
     get() = when (this) {
@@ -106,10 +125,19 @@ enum class HomeAction(val key: String) {
     OpenHistory("open_history"),
     AskAi("ask_ai"),
     OpenInspection("open_inspection"),
+    OpenCalendar("open_calendar"),
 }
 
 // 정비 키는 정비·검사를 함께 켜던 때와 같은 "maintenance"를 그대로 써서 기존 집계와 이어지게 한다.
 enum class ReminderKind(val key: String) { Maintenance("maintenance"), Inspection("inspection"), Mileage("mileage") }
+
+enum class CalendarItemKind(val key: String) {
+    MaintenanceDue("maintenance_due"),
+    InspectionDue("inspection_due"),
+    MileageUpdate("mileage_update"),
+    Record("record"),
+    Photo("photo"),
+}
 
 enum class AiTarget(val key: String) { ChatGpt("chatgpt"), Claude("claude"), Gemini("gemini"), Other("other") }
 

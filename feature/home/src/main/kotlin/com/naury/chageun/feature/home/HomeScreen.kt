@@ -68,6 +68,7 @@ import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
+import java.time.LocalDate
 
 @Composable
 fun HomeRoute(
@@ -79,6 +80,7 @@ fun HomeRoute(
     onOpenInspection: () -> Unit,
     onOpenItem: (MaintenanceItem) -> Unit = {},
     onOpenAccount: () -> Unit = {},
+    onOpenCalendar: (LocalDate) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val analytics = LocalAnalyticsTracker.current
@@ -121,6 +123,10 @@ fun HomeRoute(
             onOpenItem = onOpenItem,
             onAddPhoto = photoInput::open,
             onRemoveBackground = viewModel::removeBackground,
+            onOpenCalendar = { date ->
+                analytics.track(AnalyticsEvent.HomeActionOpened(HomeAction.OpenCalendar))
+                onOpenCalendar(date)
+            },
         ),
     )
 }
@@ -142,6 +148,8 @@ data class HomeActions(
     /** null이면 사진 넣기 버튼을 보이지 않는다. */
     val onAddPhoto: (() -> Unit)? = null,
     val onRemoveBackground: () -> Unit = {},
+    /** 기록 탭 달력을 그 날짜로 연다. */
+    val onOpenCalendar: (LocalDate) -> Unit = {},
 )
 
 /** Medium 너비에서는 Pane 하나만 둔다. Rail 옆에 두 Pane을 놓으면 상세 영역이 최소 너비 360dp보다 좁아진다. */
@@ -341,6 +349,16 @@ private fun LazyListScope.recentPane(
     showAd: Boolean,
     showsAi: Boolean,
 ) {
+    if (state.upcomingEvents.isNotEmpty()) {
+        item(key = "schedule") {
+            UpcomingScheduleCard(
+                events = state.upcomingEvents,
+                today = state.today,
+                onOpenCalendar = actions.onOpenCalendar,
+                modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+            )
+        }
+    }
     // 기획서 UI 6.1: 다가오는 관리 다음, 최근 기록 앞에 한 칸만 둔다. 광고를 쓰지 않으면 목록 간격도 남기지 않는다.
     if (showAd) item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
     item(key = "recent") {

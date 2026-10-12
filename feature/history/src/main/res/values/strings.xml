@@ -162,4 +162,49 @@
     <string name="history_filter_cost_from">%1$s or more</string>
     <string name="history_filter_cost_to">Up to %1$s</string>
     <string name="history_filter_attachments_short">With photos or receipts</string>
+    <string name="history_view_list">List</string>
+    <string name="history_view_calendar">Calendar</string>
+    <string name="calendar_previous_month">Previous month</string>
+    <string name="calendar_next_month">Next month</string>
+    <string name="calendar_today">Today</string>
+    <string name="calendar_layer_records">Records</string>
+    <string name="calendar_layer_photos">Photos</string>
+    <string name="calendar_layer_upcoming">Upcoming</string>
+    <string name="calendar_side_layers">Show on calendar</string>
+    <string name="calendar_side_spent">Spent</string>
+    <string name="calendar_side_summary">This month</string>
+    <plurals name="calendar_summary_records">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
+    <plurals name="calendar_summary_photos">
+        <item quantity="one">%1$d photo</item>
+        <item quantity="other">%1$d photos</item>
+    </plurals>
+    <string name="calendar_section_upcoming">Upcoming</string>
+    <string name="calendar_section_records">Records</string>
+    <string name="calendar_section_photos">Photos</string>
+    <string name="calendar_section_next_days">Next 30 days</string>
+    <string name="calendar_empty_day">Nothing recorded this day</string>
+    <string name="calendar_empty_future_day">Nothing planned this day</string>
+    <string name="calendar_add_on_day">Add a record for this day</string>
+    <string name="calendar_more">+%1$d</string>
+    <string name="calendar_photo_on">Photo from %1$s</string>
+    <string name="calendar_a11y_today">today</string>
+    <plurals name="calendar_a11y_records">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
+    <plurals name="calendar_a11y_photos">
+        <item quantity="one">%1$d photo</item>
+        <item quantity="other">%1$d photos</item>
+    </plurals>
+    <plurals name="calendar_a11y_upcoming">
+        <item quantity="one">%1$d upcoming</item>
+        <item quantity="other">%1$d upcoming</item>
+    </plurals>
+    <plurals name="calendar_a11y_overdue">
+        <item quantity="one">%1$d overdue</item>
+        <item quantity="other">%1$d overdue</item>
+    </plurals>
 </resources>

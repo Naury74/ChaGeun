@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -47,6 +48,7 @@ import com.naury.chageun.feature.account.DeleteAccountRoute
 import com.naury.chageun.feature.account.DriveBackupRoute as DriveBackupScreenRoute
 import com.naury.chageun.feature.account.EmailAuthRoute
 import com.naury.chageun.feature.ai.AiHubRoute
+import com.naury.chageun.feature.history.HistoryCalendarLinks
 import com.naury.chageun.feature.history.HistoryRoute
 import com.naury.chageun.feature.home.HomeRoute
 import com.naury.chageun.feature.home.MileageUpdateHost
@@ -70,6 +72,7 @@ import com.naury.chageun.navigation.ServiceNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
+import java.time.LocalDate
 
 /** feature 모듈끼리 서로 의존하지 않도록 앱 셸이 처리하는 feature 간 액션. */
 data class AppActions(
@@ -93,6 +96,14 @@ data class AppActions(
     val onOpenInspection: () -> Unit = {},
     val pendingInspection: Boolean = false,
     val onPendingInspectionHandled: () -> Unit = {},
+    /** 홈·앨범에서 기록 탭 달력을 그 날짜로 연다. */
+    val onOpenCalendar: (LocalDate) -> Unit = {},
+    val pendingCalendarDate: LocalDate? = null,
+    val onPendingCalendarDateHandled: () -> Unit = {},
+    /** 달력에서 누른 사진을 앨범에서 연다. */
+    val onOpenAlbumPhoto: (String) -> Unit = {},
+    /** 달력의 [이날 기록 추가]에서 교체 기록 창을 그 날짜로 연다. */
+    val onRecordServiceOn: (MaintenanceItem, LocalDate) -> Unit = { item, _ -> onRecordService(item) },
 )
 
 @Composable
@@ -105,6 +116,8 @@ fun ChageunApp(
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
     var recordingItem by rememberSaveable { mutableStateOf<MaintenanceItem?>(null) }
     var editingServiceId by rememberSaveable { mutableStateOf<String?>(null) }
+    var recordingDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    var calendarDate by rememberSaveable { mutableStateOf<LocalDate?>(null) }
     // 입력 시트를 열 때마다 늘린다. 회전·접기에는 유지되고, 다시 열면 새 ViewModel을 쓴다.
     var recordSession by rememberSaveable { mutableIntStateOf(0) }
     var mileageSession by rememberSaveable { mutableIntStateOf(0) }
@@ -123,11 +136,13 @@ fun ChageunApp(
     val actions = AppActions(
         onRecordService = {
             editingServiceId = null
+            recordingDate = null
             recordSession++
             recordingItem = it
         },
         onEditService = { item, recordId ->
             editingServiceId = recordId
+            recordingDate = null
             recordSession++
             recordingItem = item
         },
@@ -140,7 +155,7 @@ fun ChageunApp(
         onAskAiAboutRecord = { ref -> backStack.add(AiRoute(focusRecord = "${ref.type.name}:${ref.id}")) },
         onOpenSettings = { backStack.add(SettingsRoute) },
         onOpenAccount = { backStack.add(AccountRoute) },
-        onOpenAlbum = { backStack.add(AlbumRoute) },
+        onOpenAlbum = { backStack.add(AlbumRoute()) },
         onOpenManageItem = { item ->
             openedManageItem = item
             navigateTo(TopLevelDestination.Manage)
@@ -156,6 +171,21 @@ fun ChageunApp(
         },
         pendingInspection = isOpeningInspection,
         onPendingInspectionHandled = { isOpeningInspection = false },
+        onOpenCalendar = { date ->
+            calendarDate = date
+            // 앨범처럼 탭 위에 겹쳐 연 화면에서 오면, 같은 탭이어도 겹친 화면을 닫아야 달력이 보인다.
+            backStack.popToTopLevel()
+            navigateTo(TopLevelDestination.History)
+        },
+        pendingCalendarDate = calendarDate,
+        onPendingCalendarDateHandled = { calendarDate = null },
+        onOpenAlbumPhoto = { id -> backStack.add(AlbumRoute(focusPhotoId = id)) },
+        onRecordServiceOn = { item, date ->
+            editingServiceId = null
+            recordingDate = date
+            recordSession++
+            recordingItem = item
+        },
     )
     val adFreeDestination = rememberAdFreeDestination(deepLink, currentTopLevel)
     LaunchedEffect(deepLink) {
@@ -247,7 +277,13 @@ fun ChageunApp(
                 entry(OpenSourceLicensesRoute) {
                     OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
                 }
-                entry(AlbumRoute) { AlbumScreenRoute(onBack = { backStack.removeLastOrNull() }) }
+                entry<AlbumRoute> { route ->
+                    AlbumScreenRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        focusPhotoId = route.focusPhotoId,
+                        onOpenCalendar = actions.onOpenCalendar,
+                    )
+                }
                 entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
                 entry(ServiceNoticeRoute) { ServiceNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
                 entry<AiRoute> { route ->
@@ -273,9 +309,11 @@ fun ChageunApp(
             onDismiss = {
                 recordingItem = null
                 editingServiceId = null
+                recordingDate = null
             },
             editingRecordId = editingServiceId,
             sessionKey = recordSession,
+            initialDate = recordingDate,
         )
     }
     if (isUpdatingMileage) {
@@ -299,6 +337,7 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onOpenInspection = actions.onOpenInspection,
             onOpenItem = actions.onOpenManageItem,
             onOpenAccount = actions.onOpenAccount,
+            onOpenCalendar = actions.onOpenCalendar,
         )
         TopLevelDestination.Manage -> ManageRoute(
             onRecordService = actions.onRecordService,
@@ -310,6 +349,15 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onRecordService = actions.onRecordService,
             onEditService = actions.onEditService,
             onAskAi = actions.onAskAiAboutRecord.takeIf { LocalFeatureFlags.current.aiShareEnabled },
+            calendarLinks = HistoryCalendarLinks(
+                onOpenManageItem = actions.onOpenManageItem,
+                onOpenInspection = actions.onOpenInspection,
+                onUpdateMileage = actions.onUpdateMileage,
+                onOpenPhoto = actions.onOpenAlbumPhoto,
+                onRecordServiceOn = actions.onRecordServiceOn,
+                pendingDate = actions.pendingCalendarDate,
+                onPendingDateHandled = actions.onPendingCalendarDateHandled,
+            ),
         )
         TopLevelDestination.Vehicle -> VehicleRoute(
             onUpdateMileage = actions.onUpdateMileage,
@@ -389,4 +437,9 @@ private fun rememberAdFreeDestination(deepLink: DeepLink?, currentTopLevel: TopL
 @Composable
 private fun WithoutAds(hidden: Boolean, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalAdsEnabled provides (LocalAdsEnabled.current && !hidden), content = content)
+}
+
+/** 탭 화면 위에 겹쳐 연 화면(앨범, 설정 등)을 모두 닫는다. */
+private fun MutableList<NavKey>.popToTopLevel() {
+    while (size > 1) removeAt(lastIndex)
 }

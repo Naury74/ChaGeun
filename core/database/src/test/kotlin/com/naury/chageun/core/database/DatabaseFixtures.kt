@@ -1,5 +1,6 @@
 package com.naury.chageun.core.database
 
+import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.database.entity.CheckRecordEntity
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.MaintenanceRecordEntity
@@ -83,4 +84,21 @@ internal fun check(id: String, kind: String, on: LocalDate, title: String) = Che
     memo = null,
     createdAt = FIXED_NOW,
     updatedAt = FIXED_NOW,
+)
+
+internal fun albumPhoto(
+    id: String,
+    takenOn: LocalDate,
+    createdAt: Instant = FIXED_NOW,
+    vehicleId: String = "vehicle-1",
+) = AlbumPhotoEntity(
+    id = id,
+    vehicleId = vehicleId,
+    fileName = "album_$id.jpg",
+    thumbnailName = "album_${id}_thumb.jpg",
+    sizeBytes = 1_000,
+    takenOn = takenOn,
+    comment = null,
+    createdAt = createdAt,
+    updatedAt = createdAt,
 )

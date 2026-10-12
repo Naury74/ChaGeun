@@ -14,6 +14,15 @@ interface AlbumDao {
     @Query("SELECT * FROM album_photo WHERE vehicle_id = :vehicleId ORDER BY taken_on DESC, created_at DESC")
     fun observe(vehicleId: String): Flow<List<AlbumPhotoEntity>>
 
+    /** 찍은 날짜가 [from]~[to](양 끝 포함)인 사진. (vehicle_id, taken_on) 인덱스로 범위를 읽는다. */
+    @Query(
+        """
+        SELECT * FROM album_photo WHERE vehicle_id = :vehicleId AND taken_on BETWEEN :from AND :to
+        ORDER BY taken_on ASC, created_at ASC
+        """,
+    )
+    fun observeBetween(vehicleId: String, from: LocalDate, to: LocalDate): Flow<List<AlbumPhotoEntity>>
+
     @Query("SELECT * FROM album_photo WHERE vehicle_id = :vehicleId AND id = :id")
     suspend fun find(vehicleId: String, id: String): AlbumPhotoEntity?
 

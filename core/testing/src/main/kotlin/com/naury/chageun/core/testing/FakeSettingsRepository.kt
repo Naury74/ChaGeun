@@ -1,6 +1,7 @@
 package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.settings.SettingsRepository
+import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,4 +29,6 @@ class FakeSettingsRepository : SettingsRepository {
 
     override suspend fun setVehiclePhotoCutoutEnabled(enabled: Boolean) =
         settings.update { it.copy(isVehiclePhotoCutoutEnabled = enabled) }
+
+    override suspend fun setHistoryView(view: HistoryView) = settings.update { it.copy(historyView = view) }
 }

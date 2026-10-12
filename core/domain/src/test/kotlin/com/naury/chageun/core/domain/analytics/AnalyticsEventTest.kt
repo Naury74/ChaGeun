@@ -1,6 +1,7 @@
 package com.naury.chageun.core.domain.analytics
 
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.model.HistoryView
 import org.junit.Test
 
 class AnalyticsEventTest {
@@ -17,7 +18,9 @@ class AnalyticsEventTest {
         AnalyticsEvent.AiQuestionStarted,
     ) + HomeAction.entries.map(AnalyticsEvent::HomeActionOpened) +
         ReminderKind.entries.map(AnalyticsEvent::ReminderEnabled) +
-        AiTarget.entries.map(AnalyticsEvent::AiShareCompleted)
+        AiTarget.entries.map(AnalyticsEvent::AiShareCompleted) +
+        HistoryView.entries.map(AnalyticsEvent::HistoryViewChanged) +
+        CalendarItemKind.entries.map(AnalyticsEvent::CalendarItemOpened)
 
     @Test
     fun namesAndKeys_areSnakeCase_withinFirebaseLimits() {
@@ -26,6 +29,13 @@ class AnalyticsEventTest {
             assertThat(event.name).matches(snakeCase.toPattern())
             event.params.keys.forEach { assertThat(it).matches(snakeCase.toPattern()) }
         }
+    }
+
+    @Test
+    fun calendarEvents_carryOnlyEnumKeys() {
+        assertThat(AnalyticsEvent.HistoryViewChanged(HistoryView.Calendar).params).containsExactly("view", "calendar")
+        assertThat(AnalyticsEvent.CalendarItemOpened(CalendarItemKind.MaintenanceDue).params)
+            .containsExactly("kind", "maintenance_due")
     }
 
     @Test

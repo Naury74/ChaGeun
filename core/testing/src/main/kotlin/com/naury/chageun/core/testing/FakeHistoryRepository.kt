@@ -29,13 +29,14 @@ class FakeHistoryRepository : HistoryRepository {
         lastQuery = query
         lastLimit = limit
         return timeline.map { items ->
-            items.filter { it.ref.type in query.types }.let { if (limit != null) it.take(limit) else it }
+            items.filter { it.ref.type in query.types && it.isWithin(query) }
+                .let { if (limit != null) it.take(limit) else it }
         }
     }
 
     override fun observeMonthlyCosts(vehicleId: VehicleId, query: TimelineQuery): Flow<Map<YearMonth?, Long>> =
         timeline.map { items ->
-            items.filter { it.ref.type in query.types && it.costWon != null }
+            items.filter { it.ref.type in query.types && it.costWon != null && it.isWithin(query) }
                 .groupBy { item -> item.date?.let(YearMonth::from) }
                 .mapValues { (_, monthItems) -> monthItems.sumOf { it.costWon ?: 0L } }
         }
@@ -66,4 +67,11 @@ class FakeHistoryRepository : HistoryRepository {
         deleted += ref
         timeline.value = timeline.value.filterNot { it.ref == ref }
     }
+}
+
+/** 실제 저장소처럼 기간을 정하면 날짜 없는 기록은 빠진다. */
+private fun TimelineItem.isWithin(query: TimelineQuery): Boolean {
+    if (query.dateFrom == null && query.dateTo == null) return true
+    val date = date ?: return false
+    return (query.dateFrom?.let { !date.isBefore(it) } ?: true) && (query.dateTo?.let { !date.isAfter(it) } ?: true)
 }

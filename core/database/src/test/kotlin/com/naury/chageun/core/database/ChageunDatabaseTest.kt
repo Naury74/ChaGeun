@@ -131,6 +131,27 @@ class ChageunDatabaseTest {
     }
 
     @Test
+    fun albumObserveBetween_includesBothEnds_inDateOrder() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        database.vehicleDao().upsert(vehicle(id = "vehicle-2", isPrimary = false))
+        val dao = database.albumDao()
+        listOf(
+            albumPhoto("before", LocalDate.of(2026, 9, 27)),
+            albumPhoto("start", LocalDate.of(2026, 9, 28)),
+            albumPhoto("middle-late", LocalDate.of(2026, 10, 12), FIXED_NOW.plusSeconds(60)),
+            albumPhoto("middle-early", LocalDate.of(2026, 10, 12)),
+            albumPhoto("end", LocalDate.of(2026, 11, 8)),
+            albumPhoto("after", LocalDate.of(2026, 11, 9)),
+            albumPhoto("other-vehicle", LocalDate.of(2026, 10, 12), vehicleId = "vehicle-2"),
+        ).forEach { dao.insert(it) }
+
+        val ids = dao.observeBetween("vehicle-1", LocalDate.of(2026, 9, 28), LocalDate.of(2026, 11, 8)).first()
+            .map { it.id }
+
+        assertThat(ids).containsExactly("start", "middle-early", "middle-late", "end").inOrder()
+    }
+
+    @Test
     fun deletingVehicle_cascadesToRecords() = runTest {
         database.vehicleDao().upsert(vehicle())
         database.mileageRecordDao().insert(mileage("a", 41_000, LocalDate.of(2026, 9, 1)))

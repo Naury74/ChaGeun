@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FeatureFlags
@@ -19,11 +20,13 @@ import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
+import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
+import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -255,5 +258,37 @@ class HomeScreenTest {
         val update = composeRule.onAllNodesWithText("Update mileage")
         update.assertCountEquals(1)
         assertThat(update[0].getBoundsInRoot().top.value).isAtLeast(358f)
+    }
+
+    private val upcomingEvents = listOf(
+        UpcomingEvent.MaintenanceDue(MaintenanceItem.Wiper, TODAY, false, null, isOverdue = true),
+        UpcomingEvent.InspectionDue(TODAY.plusDays(9)),
+    )
+
+    @Test
+    fun upcomingSchedule_opensTheCalendarOnThatDate() {
+        val opened = mutableListOf<LocalDate>()
+        composeRule.setContent {
+            ChageunTheme {
+                HomeScreen(
+                    uiState = content(VehicleHealthLevel.Good, emptyList()).copy(upcomingEvents = upcomingEvents),
+                    paneCount = 1,
+                    actions = HomeActions({}, {}, {}, onOpenCalendar = { opened += it }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Coming up").performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithText("Periodic inspection").performScrollTo().performClick()
+        composeRule.onNodeWithText("View in calendar").performScrollTo().performClick()
+
+        assertThat(opened).containsExactly(TODAY.plusDays(9), TODAY).inOrder()
+    }
+
+    @Test
+    fun upcomingSchedule_isHiddenWithoutEvents() {
+        show(content(VehicleHealthLevel.Good, emptyList()))
+
+        composeRule.onAllNodesWithText("Coming up").assertCountEquals(0)
     }
 }

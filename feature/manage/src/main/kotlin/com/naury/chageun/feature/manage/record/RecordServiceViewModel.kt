@@ -46,7 +46,9 @@ class RecordServiceViewModel @AssistedInject constructor(
     private val _uiState = MutableStateFlow(
         RecordServiceUiState(
             item = item,
-            date = savedStateHandle.get<Long>(KEY_DATE)?.let(LocalDate::ofEpochDay) ?: LocalDate.now(clock),
+            date = savedStateHandle.get<Long>(KEY_DATE)?.let(LocalDate::ofEpochDay)
+                ?: target.initialDate
+                ?: LocalDate.now(clock),
             mileage = savedStateHandle[KEY_MILEAGE] ?: "",
             cost = savedStateHandle[KEY_COST] ?: "",
             shopName = savedStateHandle[KEY_SHOP] ?: "",

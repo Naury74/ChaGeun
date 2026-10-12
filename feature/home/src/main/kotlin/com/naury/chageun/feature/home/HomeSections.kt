@@ -24,14 +24,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.model.UpcomingEvent
+import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
+import com.naury.chageun.core.ui.formatMonthDay
 import com.naury.chageun.core.ui.formatNumber
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.timelineMileage
 import com.naury.chageun.core.ui.timelineTitle
+import com.naury.chageun.core.ui.tone
+import com.naury.chageun.core.ui.upcomingEventStatus
+import com.naury.chageun.core.ui.upcomingEventTitle
+import java.time.LocalDate
 
 @Composable
 internal fun MileagePromptCard(onUpdate: () -> Unit, modifier: Modifier = Modifier) {
@@ -138,6 +148,48 @@ internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) 
                 Text(stringResource(R.string.home_ai_body), style = MaterialTheme.typography.bodySmall)
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+        }
+    }
+}
+
+/** 2주 안의 예정 일정. 항목을 누르면 달력의 그날로, [달력에서 보기]를 누르면 오늘로 간다. */
+@Composable
+internal fun UpcomingScheduleCard(
+    events: List<UpcomingEvent>,
+    today: LocalDate,
+    onOpenCalendar: (LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.home_section_schedule),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { heading() },
+            )
+            TextButton(onClick = { onOpenCalendar(today) }) { Text(stringResource(R.string.home_schedule_calendar)) }
+        }
+        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+            Column {
+                events.forEachIndexed { index, event ->
+                    if (index > 0) GroupDivider()
+                    val (tone, label) = upcomingEventStatus(event)
+                    ListRow(
+                        icon = event.icon,
+                        title = upcomingEventTitle(event),
+                        body = if (event.date == today) {
+                            stringResource(R.string.home_schedule_today)
+                        } else {
+                            formatMonthDay(event.date)
+                        },
+                        tone = event.tone(),
+                        onClick = { onOpenCalendar(event.date) },
+                        trailing = { StatusBadge(tone, label) },
+                    )
+                }
+            }
         }
     }
 }
