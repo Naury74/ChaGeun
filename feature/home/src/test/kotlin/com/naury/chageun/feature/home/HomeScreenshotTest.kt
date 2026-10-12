@@ -11,7 +11,6 @@ import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.HealthReason
 import com.naury.chageun.core.model.Kilometers
-import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.MissingInput
@@ -24,6 +23,7 @@ import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSnapshot
+import com.naury.chageun.core.testing.TestKoreaRegions
 import com.naury.chageun.core.ui.PROFILE_AVATAR_PHOTO_TAG
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.SKY_COLOR_TOLERANCE
@@ -84,7 +84,7 @@ class HomeScreenshotTest {
         condition: WeatherCondition,
         temperatureC: Double,
         tip: WeatherTip,
-        location: WeatherLocation = WeatherLocation.Region(KoreaRegion.Seoul),
+        location: WeatherLocation = WeatherLocation.Region(TestKoreaRegions.seoul),
         greeting: Greeting = Greeting(GreetingSituation.CommuteMorning, seed = 0),
         areaName: String? = null,
     ) = baseState.copy(
@@ -108,8 +108,15 @@ class HomeScreenshotTest {
         // "현재 위치"로 찾은 동네 이름이 날씨 줄에 나온다.
         areaName = "서울 강남구",
     )
-    private val clearState =
-        weatherState(WeatherScene.ClearDay, WeatherCondition.Clear, 22.0, WeatherTip.NiceDay)
+
+    // 읍·면·동까지 고른 지역은 "강남구 역삼1동"처럼 짧은 이름으로 나온다.
+    private val clearState = weatherState(
+        WeatherScene.ClearDay,
+        WeatherCondition.Clear,
+        22.0,
+        WeatherTip.NiceDay,
+        location = WeatherLocation.Region(TestKoreaRegions.yeoksam1),
+    )
     private val nightState = weatherState(
         WeatherScene.ClearNight,
         WeatherCondition.Clear,
@@ -129,7 +136,7 @@ class HomeScreenshotTest {
         WeatherCondition.Snow,
         -3.0,
         WeatherTip.Snow,
-        location = WeatherLocation.Region(KoreaRegion.Gangwon),
+        location = WeatherLocation.Region(TestKoreaRegions.gangwon),
         greeting = Greeting(GreetingSituation.MaintenanceOverdue, seed = 0, number = 1),
     )
     private val fogState = weatherState(
@@ -137,7 +144,7 @@ class HomeScreenshotTest {
         WeatherCondition.Fog,
         9.0,
         WeatherTip.Fog,
-        location = WeatherLocation.Region(KoreaRegion.Incheon),
+        location = WeatherLocation.Region(TestKoreaRegions.incheon),
     )
 
     /** 해 지기 전 30분의 맑은 하늘. 설 연휴 다음 날 귀경길 인사와 함께 찍는다. */

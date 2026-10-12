@@ -20,7 +20,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.domain.weather.LastWeather
-import com.naury.chageun.core.model.KoreaRegion
+import com.naury.chageun.core.domain.weather.LastWeatherCache
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
 import com.naury.chageun.core.model.WeatherCondition
@@ -29,10 +29,12 @@ import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeBackupRepository
+import com.naury.chageun.core.testing.FakeKoreaRegionRepository
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeSettingsRepository
 import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.testing.TestKoreaRegions
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.assertAccessibleControls
@@ -156,7 +158,7 @@ class SettingsTest {
                 WeatherSnapshot(WeatherCondition.Clear, 20.0, 1.0, false, Instant.EPOCH),
                 fetchedAt = Instant.EPOCH,
                 areaName = "서울 강남구",
-                locationKey = WeatherLocation.Current.toString(),
+                locationKey = LastWeatherCache.keyFor(WeatherLocation.Current),
             ),
         )
         val viewModel = BackupViewModel(FakeBackupRepository(), weather, lastWeather)
@@ -167,6 +169,18 @@ class SettingsTest {
         assertThat(weather.currentAreaName.value).isNull()
         assertThat(weather.isCurrentLocationMissing.value).isFalse()
         assertThat(lastWeather.saved).isNull()
+    }
+
+    @Test
+    fun deleteAll_alsoForgetsRecentRegions() = runTest {
+        val weather = FakeWeatherSettingsRepository()
+        weather.setLocation(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+        val viewModel = BackupViewModel(FakeBackupRepository(), weather, FakeLastWeatherRepository())
+
+        viewModel.requestDeleteAll()
+        viewModel.confirmDeleteAll()
+
+        assertThat(weather.recentRegionCodes.value).isEmpty()
     }
 
     @Test
@@ -376,19 +390,19 @@ class SettingsTest {
     @Test
     fun weatherViewModel_turnsOffAndChangesRegion() = runTest {
         val repository = FakeWeatherSettingsRepository()
-        val viewModel = WeatherSettingsViewModel(repository)
+        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository())
 
-        viewModel.setLocation(WeatherLocation.Region(KoreaRegion.Daejeon))
+        viewModel.setLocation(WeatherLocation.Region(TestKoreaRegions.daejeon))
         viewModel.setEnabled(false)
 
         assertThat(repository.settings.first())
-            .isEqualTo(WeatherSettings(isEnabled = false, location = WeatherLocation.Region(KoreaRegion.Daejeon)))
+            .isEqualTo(WeatherSettings(isEnabled = false, location = WeatherLocation.Region(TestKoreaRegions.daejeon)))
     }
 
     @Test
     fun weatherViewModel_exposesAreaName_andClearsItWhenTurnedOff() = runTest {
         val repository = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current), "서울 강남구")
-        val viewModel = WeatherSettingsViewModel(repository)
+        val viewModel = WeatherSettingsViewModel(repository, FakeKoreaRegionRepository())
 
         assertThat(viewModel.areaName.first()).isEqualTo("서울 강남구")
 
@@ -400,8 +414,13 @@ class SettingsTest {
     fun weatherSection_currentLocation_showsAreaName() {
         composeRule.setContent {
             ChageunTheme {
-                WeatherSection(WeatherSettings(location = WeatherLocation.Current), {
-                }, {}, areaName = "Gangnam-gu, Seoul")
+                WeatherSection(
+                    WeatherSettings(location = WeatherLocation.Current),
+                    {},
+                    {},
+                    loadRegions = { TestKoreaRegions.catalog },
+                    areaName = "Gangnam-gu, Seoul",
+                )
             }
         }
 
@@ -417,6 +436,7 @@ class SettingsTest {
                     WeatherSettings(location = WeatherLocation.Current),
                     {},
                     {},
+                    loadRegions = { TestKoreaRegions.catalog },
                     areaName = "서울 강남구",
                     isLocationMissing = true,
                 )
@@ -429,18 +449,20 @@ class SettingsTest {
 
     @Test
     fun weatherSection_togglesAndShowsChosenRegion() {
-        var settings by mutableStateOf(WeatherSettings(location = WeatherLocation.Region(KoreaRegion.Jeju)))
+        var settings by mutableStateOf(WeatherSettings(location = WeatherLocation.Region(TestKoreaRegions.yeoksam1)))
         composeRule.setContent {
             ChageunTheme {
                 WeatherSection(
                     settings = settings,
                     onEnabledChange = { settings = settings.copy(isEnabled = it) },
                     onLocationPicked = { settings = settings.copy(location = it) },
+                    loadRegions = { TestKoreaRegions.catalog },
                 )
             }
         }
 
-        composeRule.onNodeWithText("Jeju").assertExists()
+        // 직접 고른 지역은 시·도부터 전체 이름으로 보여 준다.
+        composeRule.onNodeWithText("서울 강남구 역삼1동").assertExists()
         composeRule.onNode(isToggleable()).assertIsOn().performClick()
         composeRule.onNode(isToggleable()).assertIsOff()
         assertThat(settings.isEnabled).isFalse()
@@ -454,7 +476,13 @@ class SettingsTest {
         composeRule.setContent {
             AppFrame {
                 Column(Modifier.padding(16.dp)) {
-                    WeatherSection(WeatherSettings(location = WeatherLocation.Current), {}, {}, areaName = "서울 강남구")
+                    WeatherSection(
+                        WeatherSettings(location = WeatherLocation.Current),
+                        {},
+                        {},
+                        loadRegions = { TestKoreaRegions.catalog },
+                        areaName = "서울 강남구",
+                    )
                 }
             }
         }

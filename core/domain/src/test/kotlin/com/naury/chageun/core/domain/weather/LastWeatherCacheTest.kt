@@ -1,11 +1,12 @@
 package com.naury.chageun.core.domain.weather
 
 import com.google.common.truth.Truth.assertThat
-import com.naury.chageun.core.model.KoreaRegion
+import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
+import com.naury.chageun.core.testing.TestKoreaRegions
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -32,9 +33,9 @@ class LastWeatherCacheTest {
 
     @Test
     fun otherLocation_isNotShown_andIsCleared() = runTest {
-        cache.remember(WeatherLocation.Region(KoreaRegion.Seoul), snapshot, null, now)
+        cache.remember(WeatherLocation.Region(TestKoreaRegions.seoul), snapshot, null, now)
 
-        assertThat(cache.usable(WeatherLocation.Region(KoreaRegion.Busan), now)).isNull()
+        assertThat(cache.usable(WeatherLocation.Region(TestKoreaRegions.busan), now)).isNull()
         assertThat(repository.saved).isNull()
     }
 
@@ -53,5 +54,15 @@ class LastWeatherCacheTest {
 
         cache.clear()
         assertThat(repository.saved).isNull()
+    }
+
+    @Test
+    fun key_isTheRegionCode_notItsNamesOrPoint() {
+        val area = TestKoreaRegions.yeoksam1
+        val renamed = WeatherLocation.Region(area.copy(label = "역삼1동", point = GeoPoint(0.0, 0.0)))
+
+        assertThat(LastWeatherCache.keyFor(WeatherLocation.Region(area))).isEqualTo("region:1168064000")
+        assertThat(LastWeatherCache.keyFor(renamed)).isEqualTo("region:1168064000")
+        assertThat(LastWeatherCache.keyFor(WeatherLocation.Current)).isEqualTo("current")
     }
 }

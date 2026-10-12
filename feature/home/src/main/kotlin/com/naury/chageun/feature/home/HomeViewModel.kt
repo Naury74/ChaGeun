@@ -10,6 +10,7 @@ import com.naury.chageun.core.domain.history.TimelineQuery
 import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCase
 import com.naury.chageun.core.domain.vehicle.VehiclePhotoRepository
 import com.naury.chageun.core.domain.vehicle.VehicleRepository
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.WeatherLocation
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -110,6 +111,12 @@ class HomeViewModel @Inject constructor(
     }
 
     /** 같은 위치를 다시 골라도(예: 권한을 다시 허용) 새로 가져오도록 새로 고침도 함께 한다. */
+    /** 날씨 지역 고르기 창에 보여 줄 최근에 고른 지역. 창이 열려 있을 때만 구독한다. */
+    val recentRegionCodes: StateFlow<List<String>> = header.recentRegionCodes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+
+    suspend fun regionCatalog(): KoreaRegionCatalog = header.regionCatalog()
+
     fun setWeatherLocation(location: WeatherLocation) {
         viewModelScope.launch {
             header.setWeatherLocation(location)

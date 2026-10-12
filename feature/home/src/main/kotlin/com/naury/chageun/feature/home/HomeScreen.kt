@@ -98,13 +98,16 @@ fun HomeRoute(
         onStopOrDispose { }
     }
     if (picksWeatherLocation) {
+        val recentRegionCodes by viewModel.recentRegionCodes.collectAsStateWithLifecycle()
         WeatherLocationPicker(
             onPicked = { location ->
                 picksWeatherLocation = false
                 viewModel.setWeatherLocation(location)
             },
             onDismiss = { picksWeatherLocation = false },
-            // 위치를 못 찾았다는 안내에서 열면 "현재 위치"를 다시 묻지 않고 시·도 목록부터 보여 준다.
+            loadRegions = viewModel::regionCatalog,
+            recentRegionCodes = recentRegionCodes,
+            // 위치를 못 찾았다는 안내에서 열면 "현재 위치"를 다시 묻지 않고 지역 고르기부터 보여 준다.
             startWithRegions = (uiState as? HomeUiState.Content)?.weather == HomeWeather.LocationUnavailable,
         )
     }

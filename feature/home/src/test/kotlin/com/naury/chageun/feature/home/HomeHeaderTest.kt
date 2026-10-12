@@ -22,11 +22,11 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.greeting.Greeting
 import com.naury.chageun.core.domain.greeting.GreetingSituation
 import com.naury.chageun.core.domain.weather.WeatherTip
-import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSnapshot
+import com.naury.chageun.core.testing.TestKoreaRegions
 import com.naury.chageun.core.uitesting.assertAccessibleControls
 import com.naury.chageun.core.uitesting.assertNoClippedText
 import java.time.Instant
@@ -45,7 +45,7 @@ class HomeHeaderTest {
 
     private val rain = HomeWeather.Shown(
         WeatherSnapshot(WeatherCondition.Rain, 17.6, 3.4, false, Instant.EPOCH),
-        WeatherLocation.Region(KoreaRegion.Busan),
+        WeatherLocation.Region(TestKoreaRegions.busan),
         WeatherTip.Rain,
         WeatherScene.Rain,
     )
@@ -164,7 +164,7 @@ class HomeHeaderTest {
         show(weather = rain, onSetUpWeather = { opened++ })
 
         val line = composeRule.onNode(
-            hasContentDescription("Busan, 18 degrees, Rain. Wet roads, slow down 20% and keep your distance") and
+            hasContentDescription("부산, 18 degrees, Rain. Wet roads, slow down 20% and keep your distance") and
                 hasClickAction(),
         )
         line.assertIsDisplayed()

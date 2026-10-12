@@ -6,6 +6,8 @@ import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.auth.ProfilePhotoRepository
 import com.naury.chageun.core.domain.weather.Daylight
 import com.naury.chageun.core.domain.weather.DaylightRules
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
+import com.naury.chageun.core.domain.weather.KoreaRegionRepository
 import com.naury.chageun.core.domain.weather.LastWeatherCache
 import com.naury.chageun.core.domain.weather.LoadWeatherUseCase
 import com.naury.chageun.core.domain.weather.WeatherResult
@@ -34,7 +36,7 @@ class HomeHeaderSource @Inject constructor(
     authRepository: AuthRepository,
     profilePhotos: ProfilePhotoRepository,
     appUsageRepository: AppUsageRepository,
-    weatherSources: HomeWeatherSources,
+    private val weatherSources: HomeWeatherSources,
     private val clock: Clock,
 ) {
     private val settings = weatherSources.settings
@@ -61,6 +63,12 @@ class HomeHeaderSource @Inject constructor(
             .onEach { if (it is HomeWeather.Shown) hasShownWeather = true }
 
     suspend fun setWeatherLocation(location: WeatherLocation) = settings.setLocation(location)
+
+    /** 지역 고르기 창에 보여 줄 최근에 고른 지역. */
+    val recentRegionCodes: Flow<List<String>> = settings.recentRegionCodes
+
+    /** 지역 고르기 창을 열 때 읽는 전국 지역 목록. */
+    suspend fun regionCatalog(): KoreaRegionCatalog = weatherSources.regions.catalog()
 
     suspend fun dismissWeatherPrompt() = settings.dismissPrompt()
 
@@ -119,11 +127,12 @@ class HomeHeaderSource @Inject constructor(
     }
 }
 
-/** 홈 날씨 카드가 쓰는 것들. 날씨 설정, 새로 받기, 저장해 둔 마지막 날씨다. */
+/** 홈 날씨 카드가 쓰는 것들. 날씨 설정, 새로 받기, 저장해 둔 마지막 날씨, 지역 고르기 창의 전국 지역 목록이다. */
 class HomeWeatherSources @Inject constructor(
     val settings: WeatherSettingsRepository,
     val load: LoadWeatherUseCase,
     val saved: LastWeatherCache,
+    val regions: KoreaRegionRepository,
 )
 
 /** 홈 머리말의 계정 동그라미와 인사말에 쓰는 이름·사진. */

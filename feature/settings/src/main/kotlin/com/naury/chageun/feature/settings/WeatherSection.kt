@@ -14,6 +14,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
+import com.naury.chageun.core.domain.weather.KoreaRegionRepository
 import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
@@ -31,7 +33,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class WeatherSettingsViewModel @Inject constructor(private val repository: WeatherSettingsRepository) : ViewModel() {
+class WeatherSettingsViewModel @Inject constructor(
+    private val repository: WeatherSettingsRepository,
+    private val regions: KoreaRegionRepository,
+) : ViewModel() {
 
     val settings: StateFlow<WeatherSettings> = repository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), WeatherSettings())
@@ -43,6 +48,13 @@ class WeatherSettingsViewModel @Inject constructor(private val repository: Weath
     /** 지난번에 "현재 위치"를 구하지 못했다. */
     val isLocationMissing: StateFlow<Boolean> = repository.isCurrentLocationMissing
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), false)
+
+    /** 지역 고르기 창 맨 위에 보여 줄 최근에 고른 지역. */
+    val recentRegionCodes: StateFlow<List<String>> = repository.recentRegionCodes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), emptyList())
+
+    /** 지역 고르기 창을 열 때 읽는 전국 지역 목록. */
+    suspend fun regionCatalog(): KoreaRegionCatalog = regions.catalog()
 
     fun setEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setEnabled(enabled) }
@@ -62,28 +74,37 @@ internal fun WeatherSectionRoute(viewModel: WeatherSettingsViewModel = hiltViewM
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val areaName by viewModel.areaName.collectAsStateWithLifecycle()
     val isLocationMissing by viewModel.isLocationMissing.collectAsStateWithLifecycle()
+    val recentRegionCodes by viewModel.recentRegionCodes.collectAsStateWithLifecycle()
     WeatherSection(
         settings,
         onEnabledChange = viewModel::setEnabled,
         onLocationPicked = viewModel::setLocation,
+        loadRegions = viewModel::regionCatalog,
         areaName = areaName,
         isLocationMissing = isLocationMissing,
+        recentRegionCodes = recentRegionCodes,
     )
 }
 
 /**
  * 홈 날씨를 켜고 끄고, 날씨를 볼 위치를 바꾼다. 위치 권한은 "현재 위치"를 고를 때만 묻는다.
  *
+ * 직접 고른 지역은 "서울 강남구 역삼1동"처럼 시·도부터 전체 이름을 보여 준다.
+ *
+ * @param loadRegions 지역 고르기 창을 열 때 읽는 전국 지역 목록.
  * @param areaName "현재 위치"로 찾은 동네 이름. 있으면 "현재 위치 (서울 강남구)"처럼 함께 보여 준다.
  * @param isLocationMissing 지난번에 기기 위치를 구하지 못했다. "현재 위치 (찾지 못함)"으로 보여 준다.
+ * @param recentRegionCodes 최근에 고른 지역. 지역 고르기 창 맨 위에 보여 준다.
  */
 @Composable
 fun WeatherSection(
     settings: WeatherSettings,
     onEnabledChange: (Boolean) -> Unit,
     onLocationPicked: (WeatherLocation) -> Unit,
+    loadRegions: suspend () -> KoreaRegionCatalog,
     areaName: String? = null,
     isLocationMissing: Boolean = false,
+    recentRegionCodes: List<String> = emptyList(),
 ) {
     var picking by rememberSaveable { mutableStateOf(false) }
     CardGroup(stringResource(R.string.settings_section_weather)) {
@@ -112,6 +133,8 @@ fun WeatherSection(
                 onLocationPicked(location)
             },
             onDismiss = { picking = false },
+            loadRegions = loadRegions,
+            recentRegionCodes = recentRegionCodes,
         )
     }
 }

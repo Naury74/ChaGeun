@@ -69,21 +69,25 @@ internal class PreferencesLastWeatherRepository @Inject constructor(private val 
         dataStore.edit { it.removeLastWeather() }
     }
 
-    private fun MutablePreferences.removeLastWeather() {
-        listOf(CONDITION, TEMPERATURE, WIND, NIGHT, OBSERVED_AT, FETCHED_AT, AREA_NAME, LOCATION_KEY).forEach {
-            remove(it)
+    internal companion object {
+        /**
+         * 마지막 날씨를 모두 지운다. 날씨를 끄거나 위치를 바꿀 때 설정 저장소가 같은 편집 안에서 부른다.
+         * 다음 실행 때 꺼 둔 날씨나 예전 위치의 날씨가 잠깐이라도 보이지 않게 하려는 것이다.
+         */
+        fun MutablePreferences.removeLastWeather() {
+            listOf(CONDITION, TEMPERATURE, WIND, NIGHT, OBSERVED_AT, FETCHED_AT, AREA_NAME, LOCATION_KEY).forEach {
+                remove(it)
+            }
         }
-    }
 
-    private companion object {
-        val CONDITION = stringPreferencesKey("last_weather_condition")
-        val TEMPERATURE = doublePreferencesKey("last_weather_temperature_c")
-        val WIND = doublePreferencesKey("last_weather_wind_ms")
-        val NIGHT = booleanPreferencesKey("last_weather_is_night")
-        val OBSERVED_AT = longPreferencesKey("last_weather_observed_at")
-        val FETCHED_AT = longPreferencesKey("last_weather_fetched_at")
-        val AREA_NAME = stringPreferencesKey("last_weather_area_name")
-        val LOCATION_KEY = stringPreferencesKey("last_weather_location")
+        private val CONDITION = stringPreferencesKey("last_weather_condition")
+        private val TEMPERATURE = doublePreferencesKey("last_weather_temperature_c")
+        private val WIND = doublePreferencesKey("last_weather_wind_ms")
+        private val NIGHT = booleanPreferencesKey("last_weather_is_night")
+        private val OBSERVED_AT = longPreferencesKey("last_weather_observed_at")
+        private val FETCHED_AT = longPreferencesKey("last_weather_fetched_at")
+        private val AREA_NAME = stringPreferencesKey("last_weather_area_name")
+        private val LOCATION_KEY = stringPreferencesKey("last_weather_location")
     }
 }
 

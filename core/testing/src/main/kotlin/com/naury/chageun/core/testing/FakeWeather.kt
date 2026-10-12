@@ -19,6 +19,11 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
     override val settings = MutableStateFlow(initial)
     override val currentAreaName = MutableStateFlow(areaName)
     override val isCurrentLocationMissing = MutableStateFlow(false)
+    override val recentRegionCodes = MutableStateFlow<List<String>>(emptyList())
+
+    override suspend fun clearRecentRegions() {
+        recentRegionCodes.value = emptyList()
+    }
 
     override suspend fun setEnabled(enabled: Boolean) {
         settings.update { it.copy(isEnabled = enabled) }
@@ -30,6 +35,9 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
 
     override suspend fun setLocation(location: WeatherLocation) {
         settings.update { it.copy(isEnabled = true, location = location) }
+        if (location is WeatherLocation.Region) {
+            recentRegionCodes.update { (listOf(location.area.code) + it.minus(location.area.code)).take(MAX_RECENTS) }
+        }
         currentAreaName.value = null
         isCurrentLocationMissing.value = false
     }
@@ -46,6 +54,8 @@ class FakeWeatherSettingsRepository(initial: WeatherSettings = WeatherSettings()
         isCurrentLocationMissing.value = missing && isCurrent
     }
 }
+
+private const val MAX_RECENTS = 5
 
 /** 받은 지점을 [requested]에 모은다. 동네 이름도 반올림한 좌표로만 찾는지 테스트에서 확인한다. */
 class FakeAreaNameRepository(var areaName: String? = null) : AreaNameRepository {

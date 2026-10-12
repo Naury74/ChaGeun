@@ -17,6 +17,7 @@ dependencies {
     api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(projects.core.uiTesting)
+    testImplementation(projects.core.testing)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(libs.truth)

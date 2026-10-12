@@ -2,7 +2,6 @@ package com.naury.chageun.core.domain.weather
 
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.model.GeoPoint
-import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSettings
@@ -11,6 +10,7 @@ import com.naury.chageun.core.testing.FakeApproximateLocationProvider
 import com.naury.chageun.core.testing.FakeAreaNameRepository
 import com.naury.chageun.core.testing.FakeWeatherRepository
 import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
+import com.naury.chageun.core.testing.TestKoreaRegions
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -122,9 +122,21 @@ class WeatherTest {
                 settings,
             )
 
-        assertThat(load(WeatherLocation.Region(KoreaRegion.Jeju)))
-            .isEqualTo(WeatherResult.Shown(snapshot(), point = KoreaRegion.Jeju.point.roundedForWeather()))
+        assertThat(load(WeatherLocation.Region(TestKoreaRegions.jeju)))
+            .isEqualTo(WeatherResult.Shown(snapshot(), point = TestKoreaRegions.jeju.point.roundedForChosenArea()))
         assertThat(areaNames.requested).isEmpty()
+    }
+
+    @Test
+    fun chosenTown_sendsItsPointRoundedToAboutOneKilometre() = runTest {
+        val repository = FakeWeatherRepository(snapshot())
+        val load = LoadWeatherUseCase(FakeApproximateLocationProvider(), repository, areaNames, settings)
+
+        // 역삼1동 대표 지점 37.4926, 127.0351
+        load(WeatherLocation.Region(TestKoreaRegions.yeoksam1))
+
+        assertThat(repository.requested).containsExactly(GeoPoint(37.49, 127.04))
+        assertThat(GeoPoint(37.4926, 127.0351).roundedForWeather()).isEqualTo(GeoPoint(37.5, 127.0))
     }
 
     @Test
@@ -132,8 +144,9 @@ class WeatherTest {
         val repository = FakeWeatherRepository(null)
         val load = LoadWeatherUseCase(FakeApproximateLocationProvider(), repository, areaNames, settings)
 
-        assertThat(load(WeatherLocation.Region(KoreaRegion.Busan))).isEqualTo(WeatherResult.Unavailable)
-        assertThat(repository.requested).containsExactly(GeoPoint(35.2, 129.1))
+        assertThat(load(WeatherLocation.Region(TestKoreaRegions.busan))).isEqualTo(WeatherResult.Unavailable)
+        // 직접 고른 지역의 대표 지점은 소수 둘째 자리(약 1km)로 보낸다.
+        assertThat(repository.requested).containsExactly(GeoPoint(35.18, 129.08))
 
         val noFix = LoadWeatherUseCase(
             FakeApproximateLocationProvider(permitted = true, location = null),

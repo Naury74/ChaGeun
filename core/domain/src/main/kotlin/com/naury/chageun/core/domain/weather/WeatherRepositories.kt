@@ -6,9 +6,17 @@ import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.model.WeatherSnapshot
 import kotlinx.coroutines.flow.Flow
 
-/** 홈 날씨를 켤지, 어느 위치의 날씨를 볼지. 좌표는 저장하지 않고 "현재 위치"인지 고른 시·도만 둔다. */
+/**
+ * 홈 날씨를 켤지, 어느 위치의 날씨를 볼지. 좌표는 저장하지 않고 "현재 위치"인지, 고른 지역의 행정구역코드만 둔다.
+ */
 interface WeatherSettingsRepository {
     val settings: Flow<WeatherSettings>
+
+    /** 최근에 직접 고른 지역의 코드. 새로 고른 것이 앞이고 다섯 개까지 둔다. */
+    val recentRegionCodes: Flow<List<String>>
+
+    /** 설정 › 데이터 › 모두 삭제 때 최근에 고른 지역을 지운다. 지금 고른 위치는 그대로 둔다. */
+    suspend fun clearRecentRegions()
 
     suspend fun setEnabled(enabled: Boolean)
 

@@ -142,21 +142,18 @@
     <string name="weather_location_current_short">현재 위치</string>
     <string name="weather_location_current_with_area">현재 위치 (%1$s)</string>
     <string name="weather_location_current_missing">현재 위치 (찾지 못함)</string>
-    <string name="weather_region_seoul">서울</string>
-    <string name="weather_region_busan">부산</string>
-    <string name="weather_region_daegu">대구</string>
-    <string name="weather_region_incheon">인천</string>
-    <string name="weather_region_gwangju">광주</string>
-    <string name="weather_region_daejeon">대전</string>
-    <string name="weather_region_ulsan">울산</string>
-    <string name="weather_region_sejong">세종</string>
-    <string name="weather_region_gyeonggi">경기</string>
-    <string name="weather_region_gangwon">강원</string>
-    <string name="weather_region_chungbuk">충북</string>
-    <string name="weather_region_chungnam">충남</string>
-    <string name="weather_region_jeonbuk">전북</string>
-    <string name="weather_region_jeonnam">전남</string>
-    <string name="weather_region_gyeongbuk">경북</string>
-    <string name="weather_region_gyeongnam">경남</string>
-    <string name="weather_region_jeju">제주</string>
+    <string name="weather_region_search">시·군·구, 읍·면·동 이름으로 찾기</string>
+    <string name="weather_region_search_clear">검색어 지우기</string>
+    <string name="weather_region_recent">최근에 고른 지역</string>
+    <string name="weather_region_provinces">시·도</string>
+    <string name="weather_region_whole">%1$s 전체</string>
+    <string name="weather_region_back">뒤로</string>
+    <string name="weather_region_open">아래 지역 보기</string>
+    <string name="weather_region_choose">고르기</string>
+    <string name="weather_region_loading">지역 목록을 불러오고 있어요…</string>
+    <string name="weather_region_no_results">찾는 지역이 없어요. “역삼”처럼 이름 일부만 넣어 보세요.</string>
+    <plurals name="weather_region_result_count">
+        <item quantity="other">%1$d곳을 찾았어요</item>
+    </plurals>
+    <string name="weather_region_result_many">앞의 %1$d곳만 보여요. 이름을 더 넣으면 좁혀져요.</string>
 </resources>
