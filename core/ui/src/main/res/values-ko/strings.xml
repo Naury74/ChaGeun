@@ -41,6 +41,10 @@
 
     <string name="date_picker_confirm">확인</string>
     <string name="date_picker_cancel">취소</string>
+    <string name="dialog_close">닫기</string>
+    <string name="date_picker_title">날짜 선택</string>
+    <string name="date_range_picker_title">기간 선택</string>
+    <string name="field_error_default">입력한 내용을 확인해 주세요</string>
     <string name="timeline_type_maintenance">정비</string>
     <string name="timeline_type_fuel">주유</string>
     <string name="timeline_type_inspection">점검</string>

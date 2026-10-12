@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.NumberInputField
@@ -119,12 +119,11 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        OutlinedTextField(
+        ChageunTextField(
             value = uiState.trim,
             onValueChange = actions.onTrimChanged,
-            label = { Text(stringResource(R.string.vehicle_edit_trim)) },
+            label = stringResource(R.string.vehicle_edit_trim),
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -192,24 +191,15 @@ private fun PlateSection(uiState: VehicleEditUiState, actions: VehicleEditAction
         }
         return
     }
-    OutlinedTextField(
+    val plateError = uiState.errors[VehicleEditField.Plate]
+    ChageunTextField(
         value = uiState.newPlate,
         onValueChange = actions.onPlateChanged,
-        label = { Text(stringResource(R.string.vehicle_edit_plate_new)) },
-        placeholder = uiState.currentPlateMasked?.let { { Text(it) } },
-        supportingText = {
-            val error = uiState.errors[VehicleEditField.Plate]
-            Text(
-                if (error != null) {
-                    stringResource(error.messageRes)
-                } else {
-                    stringResource(R.string.vehicle_edit_plate_hint)
-                },
-            )
-        },
-        isError = uiState.errors[VehicleEditField.Plate] != null,
+        label = stringResource(R.string.vehicle_edit_plate_new),
+        placeholder = uiState.currentPlateMasked,
+        supportingText = stringResource(plateError?.messageRes ?: R.string.vehicle_edit_plate_hint),
+        isError = plateError != null,
         singleLine = true,
-        shape = MaterialTheme.shapes.medium,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         modifier = Modifier.fillMaxWidth(),
     )

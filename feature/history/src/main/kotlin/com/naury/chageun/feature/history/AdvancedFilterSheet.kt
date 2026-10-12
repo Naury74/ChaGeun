@@ -17,8 +17,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -37,6 +35,7 @@ import androidx.compose.ui.semantics.Role
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.ChageunDateRangePickerDialog
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.NumberInputField
@@ -197,18 +196,14 @@ private fun RangePickerDialog(
     )
     val from = state.selectedStartDateMillis?.toLocalDate()
     val to = state.selectedEndDateMillis?.toLocalDate()
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = { if (from != null) onPicked(from, to ?: from) },
-                enabled = from != null,
-            ) { Text(stringResource(R.string.history_filter_apply)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.history_cancel)) } },
-    ) {
-        DateRangePicker(state = state, modifier = Modifier.weight(1f))
-    }
+    ChageunDateRangePickerDialog(
+        state = state,
+        onConfirm = { if (from != null) onPicked(from, to ?: from) },
+        onDismiss = onDismiss,
+        confirmLabel = stringResource(R.string.history_filter_apply),
+        cancelLabel = stringResource(R.string.history_cancel),
+        confirmEnabled = from != null,
+    )
 }
 
 @get:StringRes

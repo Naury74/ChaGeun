@@ -24,7 +24,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,6 +44,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.NumberInputField
@@ -363,17 +363,17 @@ private fun MoreFields(uiState: RecordServiceUiState, actions: RecordServiceActi
         if (uiState.companionCandidates.isNotEmpty()) {
             AlsoReplacedPicker(uiState.companionCandidates, uiState.alsoReplaced, actions.onToggleAlsoReplaced)
         }
-        OutlinedTextField(
+        ChageunTextField(
             value = uiState.shopName,
             onValueChange = actions.onShopNameChanged,
-            label = { Text(stringResource(R.string.record_shop)) },
+            label = stringResource(R.string.record_shop),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedTextField(
+        ChageunTextField(
             value = uiState.memo,
             onValueChange = actions.onMemoChanged,
-            label = { Text(stringResource(R.string.record_memo)) },
+            label = stringResource(R.string.record_memo),
             minLines = 2,
             modifier = Modifier.fillMaxWidth(),
         )

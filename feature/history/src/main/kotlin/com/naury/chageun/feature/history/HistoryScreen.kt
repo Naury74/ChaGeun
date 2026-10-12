@@ -1,26 +1,20 @@
 package com.naury.chageun.feature.history
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -53,14 +46,18 @@ import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveListDetail
+import com.naury.chageun.core.ui.ChageunOptionDialog
+import com.naury.chageun.core.ui.DialogOption
 import com.naury.chageun.core.ui.LocalAnalyticsTracker
 import com.naury.chageun.core.ui.ThreePaneListDetail
 import com.naury.chageun.core.ui.currentLocale
+import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
+import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.calendar.CalendarActions
 import com.naury.chageun.feature.history.calendar.HistoryCalendar
 import com.naury.chageun.feature.history.calendar.HistoryCalendarSlot
@@ -456,54 +453,30 @@ fun HistoryScreen(
 
 @Composable
 private fun AddRecordChooser(onPick: (AddDialog) -> Unit, onDismiss: () -> Unit) {
-    OptionDialog(
+    val choices = listOf(
+        Triple(AddDialog.MaintenanceItem, R.string.history_add_maintenance, TimelineEventType.Maintenance),
+        Triple(AddDialog.Fuel, R.string.history_add_fuel, TimelineEventType.Fuel),
+        Triple(AddDialog.Check, R.string.history_add_check, TimelineEventType.Inspection),
+    )
+    ChageunOptionDialog(
         title = stringResource(R.string.history_add),
-        options = listOf(
-            AddDialog.MaintenanceItem to stringResource(R.string.history_add_maintenance),
-            AddDialog.Fuel to stringResource(R.string.history_add_fuel),
-            AddDialog.Check to stringResource(R.string.history_add_check),
-        ),
-        onPick = onPick,
+        options = choices.map { (dialog, labelRes, type) ->
+            DialogOption(stringResource(labelRes), { onPick(dialog) }, type.icon, type.tone())
+        },
+        cancelLabel = stringResource(R.string.history_cancel),
         onDismiss = onDismiss,
     )
 }
 
 @Composable
 private fun MaintenanceItemPicker(onPick: (MaintenanceItem) -> Unit, onDismiss: () -> Unit) {
-    OptionDialog(
+    ChageunOptionDialog(
         title = stringResource(R.string.history_pick_item),
-        options = MaintenanceItem.entries.map { it to stringResource(it.labelRes) },
-        onPick = onPick,
-        onDismiss = onDismiss,
-    )
-}
-
-@Composable
-private fun <T> OptionDialog(
-    title: String,
-    options: List<Pair<T, String>>,
-    onPick: (T) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                options.forEach { (value, label) ->
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.Button) { onPick(value) }
-                            .padding(vertical = ChageunTheme.spacing.sm),
-                    )
-                }
-            }
+        options = MaintenanceItem.entries.map { item ->
+            DialogOption(stringResource(item.labelRes), { onPick(item) }, item.icon, item.category.tone())
         },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.history_cancel)) } },
+        cancelLabel = stringResource(R.string.history_cancel),
+        onDismiss = onDismiss,
     )
 }
 

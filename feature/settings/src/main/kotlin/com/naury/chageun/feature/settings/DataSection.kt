@@ -2,23 +2,31 @@ package com.naury.chageun.feature.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToDrive
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunDialog
+import com.naury.chageun.core.ui.DialogAction
+import com.naury.chageun.core.ui.DialogActionStyle
+import com.naury.chageun.core.ui.DialogInfoCard
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 
@@ -87,43 +95,46 @@ internal fun DataSection(
 
 @Composable
 internal fun DeleteAllDialog(summary: LocalDataSummary, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_delete_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                SummaryLines(summary)
-                Text(stringResource(R.string.settings_delete_body))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.settings_delete_confirm), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
-    )
+    ChageunDialog(
+        title = stringResource(R.string.settings_delete_title),
+        message = stringResource(R.string.settings_delete_body),
+        icon = Icons.Filled.DeleteForever,
+        tone = ChageunTheme.colors.critical,
+        onDismiss = onDismiss,
+        actions = listOf(
+            DialogAction(
+                stringResource(R.string.settings_delete_confirm),
+                DialogActionStyle.Destructive,
+                onClick = onConfirm,
+            ),
+            DialogAction(stringResource(R.string.settings_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
+        ),
+    ) {
+        DialogInfoCard(Modifier.fillMaxWidth()) { SummaryLines(summary) }
+    }
 }
 
 @Composable
 internal fun ImportDialog(preview: ImportPreview.Ready, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_import_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                Text(stringResource(R.string.settings_import_incoming), style = MaterialTheme.typography.titleSmall)
+    ChageunDialog(
+        title = stringResource(R.string.settings_import_title),
+        message = stringResource(R.string.settings_import_body),
+        icon = Icons.Filled.Download,
+        onDismiss = onDismiss,
+        actions = listOf(
+            DialogAction(stringResource(R.string.settings_import_confirm), onClick = onConfirm),
+            DialogAction(stringResource(R.string.settings_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
+        ),
+    ) {
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+            DialogInfoCard(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.settings_import_incoming)) {
                 SummaryLines(preview.incoming)
-                Text(stringResource(R.string.settings_import_current), style = MaterialTheme.typography.titleSmall)
-                SummaryLines(preview.current)
-                Text(stringResource(R.string.settings_import_body))
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(R.string.settings_import_confirm)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.settings_cancel)) } },
-    )
+            DialogInfoCard(Modifier.weight(1f).fillMaxHeight(), stringResource(R.string.settings_import_current)) {
+                SummaryLines(preview.current)
+            }
+        }
+    }
 }
 
 @Composable

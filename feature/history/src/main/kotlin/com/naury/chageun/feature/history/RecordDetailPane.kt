@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -37,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +58,9 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordTimestamps
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunDialog
+import com.naury.chageun.core.ui.DialogAction
+import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.LabeledListRow
@@ -187,21 +188,21 @@ internal fun RecordDetailPane(
         }
     }
     if (isConfirmingDelete) {
-        AlertDialog(
-            onDismissRequest = { isConfirmingDelete = false },
-            title = { Text(stringResource(R.string.history_delete_title)) },
-            text = { Text(stringResource(R.string.history_delete_body)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        isConfirmingDelete = false
-                        onDelete(detail.ref)
-                    },
-                ) { Text(stringResource(R.string.history_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { isConfirmingDelete = false }) { Text(stringResource(R.string.history_cancel)) }
-            },
+        ChageunDialog(
+            title = stringResource(R.string.history_delete_title),
+            message = stringResource(R.string.history_delete_body),
+            icon = Icons.Filled.DeleteOutline,
+            tone = ChageunTheme.colors.critical,
+            onDismiss = { isConfirmingDelete = false },
+            actions = listOf(
+                DialogAction(stringResource(R.string.history_delete), DialogActionStyle.Destructive) {
+                    isConfirmingDelete = false
+                    onDelete(detail.ref)
+                },
+                DialogAction(stringResource(R.string.history_cancel), DialogActionStyle.Secondary) {
+                    isConfirmingDelete = false
+                },
+            ),
         )
     }
 }

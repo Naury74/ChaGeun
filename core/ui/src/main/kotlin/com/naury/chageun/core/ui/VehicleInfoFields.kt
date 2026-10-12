@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -276,12 +275,11 @@ private fun PlainField(
     @StringRes labelRes: Int,
     keyboardType: KeyboardType = KeyboardType.Text,
 ) {
-    OutlinedTextField(
+    ChageunTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(stringResource(labelRes)) },
+        label = stringResource(labelRes),
         singleLine = true,
-        shape = MaterialTheme.shapes.medium,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
         modifier = Modifier.fillMaxWidth(),
     )

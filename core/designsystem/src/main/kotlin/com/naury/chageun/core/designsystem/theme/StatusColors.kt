@@ -22,6 +22,8 @@ data class ChageunExtendedColors(
     /** Hero 아래 요약 카드. 밝은 하늘 위에서 숫자가 또렷하게 보이도록 진한 남색을 쓴다. */
     val heroCard: Color,
     val onHeroCard: Color,
+    /** 입력 칸과 대화상자 안 선택 목록의 바탕. 흰 시트와 회색 화면 배경 어디에 놓여도 칸이 보이도록 반투명 회색을 쓴다. */
+    val inputFill: Color,
 )
 
 internal val LightExtendedColors = ChageunExtendedColors(
@@ -36,6 +38,7 @@ internal val LightExtendedColors = ChageunExtendedColors(
     heroGlow = Color(0xB3FFFFFF),
     heroCard = Color(0xFF1E2A47),
     onHeroCard = Color(0xFFFFFFFF),
+    inputFill = LightTokens.InputFill,
 )
 
 internal val DarkExtendedColors = ChageunExtendedColors(
@@ -49,6 +52,7 @@ internal val DarkExtendedColors = ChageunExtendedColors(
     heroGlow = Color(0x1F9EC1FF),
     heroCard = Color(0xFF1C2740),
     onHeroCard = Color(0xFFFFFFFF),
+    inputFill = DarkTokens.InputFill,
 )
 
 internal val LocalExtendedColors = staticCompositionLocalOf { LightExtendedColors }

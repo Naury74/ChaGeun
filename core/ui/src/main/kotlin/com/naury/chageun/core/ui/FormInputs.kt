@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -131,13 +130,13 @@ fun NumberInputField(
     keyboardType: KeyboardType = KeyboardType.Number,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        OutlinedTextField(
+        ChageunTextField(
             value = value,
             onValueChange = onValueChange,
-            label = { Text(label) },
-            suffix = { Text(unit) },
+            label = label,
+            suffix = unit,
             isError = errorText != null,
-            supportingText = (errorText ?: supportingText)?.let { { Text(it) } },
+            supportingText = errorText ?: supportingText,
             singleLine = true,
             textStyle = MaterialTheme.typography.titleMedium,
             visualTransformation = if (keyboardType == KeyboardType.Number) {
@@ -146,7 +145,6 @@ fun NumberInputField(
                 VisualTransformation.None
             },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth(),
         )
         if (picks.isNotEmpty()) {

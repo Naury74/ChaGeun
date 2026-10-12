@@ -43,6 +43,10 @@
 
     <string name="date_picker_confirm">OK</string>
     <string name="date_picker_cancel">Cancel</string>
+    <string name="dialog_close">Close</string>
+    <string name="date_picker_title">Select date</string>
+    <string name="date_range_picker_title">Select dates</string>
+    <string name="field_error_default">Check this field</string>
     <string name="timeline_type_maintenance">Maintenance</string>
     <string name="timeline_type_fuel">Fuel</string>
     <string name="timeline_type_inspection">Inspection</string>

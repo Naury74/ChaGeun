@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +53,7 @@ import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineItem
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.EmptyState
 import com.naury.chageun.core.ui.TimelineItemIcon
 import com.naury.chageun.core.ui.formatDate
@@ -143,10 +143,10 @@ private fun LazyListScope.timelineFilters(
     onOpenAdvancedFilter: () -> Unit,
 ) {
     item(key = "search") {
-        OutlinedTextField(
+        ChageunTextField(
             value = uiState.keyword,
             onValueChange = onKeywordChanged,
-            placeholder = { Text(stringResource(R.string.history_search_hint)) },
+            placeholder = stringResource(R.string.history_search_hint),
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             singleLine = true,
             modifier = Modifier

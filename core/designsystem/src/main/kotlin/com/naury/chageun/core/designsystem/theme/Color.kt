@@ -14,6 +14,9 @@ internal object LightTokens {
     val Outline = Color(0xFFC6C6C8)
     val Separator = Color(0xFFE0E0E5)
 
+    // iOS tertiarySystemFill과 같은 반투명 회색. 흰 시트 위에서도, 회색 배경 위에서도 한 단계 어둡게 보인다.
+    val InputFill = Color(0x1F767680)
+
     // 대표 색은 Hero 요약 카드와 같은 계열의 남색이다.
     val Primary = Color(0xFF24345A)
     val OnPrimary = Color(0xFFFFFFFF)
@@ -44,6 +47,7 @@ internal object DarkTokens {
     val OnSurfaceVariant = Color(0xFFA1A1A6)
     val Outline = Color(0xFF48484A)
     val Separator = Color(0xFF38383A)
+    val InputFill = Color(0x3D767680)
 
     // 검은 바탕에서 읽히도록 남색을 밝힌 색을 쓴다.
     val Primary = Color(0xFFA8BBE8)
