@@ -25,6 +25,13 @@ class FakeAuthRepository : AuthRepository {
 
     override val currentUser: StateFlow<AuthUser?> = user
 
+    /** 테스트에서 원하는 계정으로 바로 로그인한 상태를 만든다. [FakeProfileNameRepository]도 이걸로 이름을 바꾼다. */
+    var signedInUser: AuthUser?
+        get() = user.value
+        set(value) {
+            user.value = value
+        }
+
     override suspend fun signUpWithEmail(email: String, password: String): AuthResult = respond {
         if (email in passwords) return AuthResult.Failure(AuthError.EmailInUse)
         passwords[email] = password

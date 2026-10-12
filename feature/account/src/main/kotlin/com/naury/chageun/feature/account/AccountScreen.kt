@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -36,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -47,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
+import com.naury.chageun.core.designsystem.component.PressStyle
+import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
@@ -83,7 +89,17 @@ fun AccountRoute(
         onNoticeShown = viewModel::dismissNotice,
         onDeleteAccount = onOpenDeleteAccount,
         onStartOver = viewModel::startOver,
+        onEditName = viewModel::editName,
     )
+    uiState.nameEditor?.let {
+        ProfileNameDialog(
+            state = it,
+            onDraftChange = viewModel::changeNameDraft,
+            onSave = { viewModel.saveName() },
+            onUseDefaultName = { viewModel.saveName(useDefaultName = true) },
+            onDismiss = viewModel::closeNameEditor,
+        )
+    }
     if (isSignOutConfirming) {
         ChageunDialog(
             title = stringResource(R.string.account_sign_out_title),
@@ -117,6 +133,7 @@ fun AccountScreen(
     onNoticeShown: () -> Unit = {},
     onDeleteAccount: () -> Unit = {},
     onStartOver: () -> Unit = {},
+    onEditName: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { noticeMessage(it) }
@@ -157,6 +174,7 @@ fun AccountScreen(
                         isBusy = uiState.isBusy,
                         onSignOut = onSignOut,
                         onDeleteAccount = onDeleteAccount,
+                        onEditName = onEditName,
                     )
                 }
             }
@@ -310,8 +328,9 @@ private fun AccountHome(
     isBusy: Boolean,
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
+    onEditName: () -> Unit,
 ) {
-    ProfileHeader(user, photoPath)
+    ProfileHeader(user, photoPath, onEditName)
     CardGroup(title = null) {
         ListRow(
             Icons.AutoMirrored.Filled.Logout,
@@ -332,9 +351,9 @@ private fun AccountHome(
     }
 }
 
-/** 계정 화면 맨 위. Google로 로그인했으면 Google 사진과 이름이 바로 보인다. */
+/** 계정 화면 맨 위. Google로 로그인했으면 Google 사진과 이름이 바로 보인다. 이름을 누르면 부를 이름을 바꾼다. */
 @Composable
-private fun ProfileHeader(user: AuthUser, photoPath: String?) {
+private fun ProfileHeader(user: AuthUser, photoPath: String?, onEditName: () -> Unit) {
     val name = user.profileName
     Column(
         Modifier.fillMaxWidth(),
@@ -349,13 +368,7 @@ private fun ProfileHeader(user: AuthUser, photoPath: String?) {
             modifier = Modifier.padding(bottom = ChageunTheme.spacing.xs),
         )
         val title = name ?: user.email.orEmpty()
-        Text(
-            title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.semantics { heading() },
-        )
+        EditableName(title, onEditName)
         user.email?.takeIf { it != title }?.let {
             Text(
                 it,
@@ -379,6 +392,42 @@ private fun ProfileHeader(user: AuthUser, photoPath: String?) {
     }
 }
 
+/** 이름 옆 연필로 바꿀 수 있다는 걸 보여 준다. TalkBack은 이름을 읽고 "부를 이름 바꾸기"를 동작으로 알려 준다. */
+@Composable
+private fun EditableName(name: String, onEditName: () -> Unit) {
+    Row(
+        Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .pressable(
+                onClick = onEditName,
+                style = PressStyle.Highlight,
+                onClickLabel = stringResource(R.string.account_name_edit),
+            )
+            .heightIn(min = 48.dp)
+            .padding(horizontal = ChageunTheme.spacing.sm),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+    ) {
+        // 연필과 같은 폭을 왼쪽에 비워 이름이 사진·이메일과 같은 가운데에 오게 한다.
+        Spacer(Modifier.size(EDIT_ICON))
+        Text(
+            name,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .semantics { heading() },
+        )
+        Icon(
+            Icons.Filled.Edit,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(EDIT_ICON),
+        )
+    }
+}
+
 @Composable
 private fun noticeMessage(notice: AccountNotice): String = when (notice) {
     is AccountNotice.Failed -> authErrorMessage(notice.error)
@@ -388,3 +437,4 @@ private fun noticeMessage(notice: AccountNotice): String = when (notice) {
 }
 
 private val HERO_ICON_BOX = 72.dp
+private val EDIT_ICON = 20.dp

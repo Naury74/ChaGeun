@@ -9,6 +9,7 @@ import com.naury.chageun.core.domain.auth.GoogleIdTokenResult
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.testing.FakeAnalyticsTracker
 import com.naury.chageun.core.testing.FakeAuthRepository
+import com.naury.chageun.core.testing.FakeProfileNameRepository
 import com.naury.chageun.core.testing.FakeProfilePhotoRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
 import kotlinx.coroutines.flow.first
@@ -33,7 +34,7 @@ class AccountViewModelTest {
 
     private val profilePhotos = FakeProfilePhotoRepository()
 
-    private fun viewModel() = AccountViewModel(auth, google, analytics, profilePhotos)
+    private fun viewModel() = AccountViewModel(auth, google, analytics, profilePhotos, FakeProfileNameRepository(auth))
 
     @Test
     fun googleSignIn_showsGoogleNameAndPhoto() = runTest {
@@ -129,7 +130,13 @@ class AccountStartOverTest {
         val auth = FakeAuthRepository()
         auth.signUpWithEmail("typo@example.com", "chageun1")
         val viewModel =
-            AccountViewModel(auth, FakeGoogleIdTokens(), FakeAnalyticsTracker(), FakeProfilePhotoRepository())
+            AccountViewModel(
+                auth,
+                FakeGoogleIdTokens(),
+                FakeAnalyticsTracker(),
+                FakeProfilePhotoRepository(),
+                FakeProfileNameRepository(auth),
+            )
         backgroundScope.launch { viewModel.uiState.collect {} }
 
         viewModel.startOver()
