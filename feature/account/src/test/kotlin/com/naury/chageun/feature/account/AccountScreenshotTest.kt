@@ -142,6 +142,50 @@ class AccountScreenshotTest {
     @Config(qualifiers = "ko-w360dp-h800dp-night-hdpi")
     fun home_googlePhoto_dark_ko() = googleWithPhoto("account_home_google_photo_dark_ko")
 
+    private fun nameDialog(name: String, error: AuthError? = null) {
+        composeRule.setContent {
+            AppFrame {
+                AccountScreen(
+                    uiState = AccountUiState(isLoading = false, user = googleUser.copy(displayName = "차근이")),
+                    onBack = {},
+                    onContinueWithGoogle = {},
+                    onContinueWithEmail = {},
+                    onOpenPrivacyPolicy = {},
+                    onCheckVerification = {},
+                    onResendVerification = {},
+                    onSignOut = {},
+                )
+                ProfileNameDialog(
+                    state = NameEditorState(
+                        draft = "차근이",
+                        initial = "차근이",
+                        hasCustomName = true,
+                        usesGoogleName = true,
+                        error = error,
+                    ),
+                    onDraftChange = {},
+                    onSave = {},
+                    onUseDefaultName = {},
+                    onDismiss = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText("어떻게 불러 드릴까요?").assertExists()
+        composeRule.onNodeWithText("Google 이름 쓰기").assertExists()
+        composeRule.assertNoClippedText()
+        composeRule.captureScreen(name)
+    }
+
+    /** 부를 이름 고치기 창. 직접 정한 이름이 있으면 Google 이름으로 돌아가는 버튼도 보인다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun nameDialog_ko() = nameDialog("account_name_dialog_ko")
+
+    /** 인터넷이 끊겨 저장하지 못하면 입력한 이름은 두고 칸 아래에 이유를 보여 준다. */
+    @Test
+    @Config(qualifiers = "ko-w360dp-h800dp-night-hdpi")
+    fun nameDialog_failed_dark_ko() = nameDialog("account_name_dialog_failed_dark_ko", AuthError.Network)
+
     private val backups = listOf(
         FakeCloudBackupRepository.backup("b1", Instant.parse("2026-10-06T05:30:00Z")),
         FakeCloudBackupRepository.backup("b0", Instant.parse("2026-09-29T11:00:00Z"), 10, 2),

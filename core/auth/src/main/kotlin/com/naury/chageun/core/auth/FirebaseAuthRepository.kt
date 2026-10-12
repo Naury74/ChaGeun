@@ -17,7 +17,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -30,17 +29,16 @@ internal class FirebaseAuthRepository(
     private val logger: AppLogger,
     private val profilePhotos: ProfilePhotoCache,
     private val ioDispatcher: CoroutineDispatcher,
+    // reload()로 인증 여부가 바뀌거나 이름을 바꿔도 AuthStateListener는 다시 불리지 않는다. 직접 다시 읽게 한다.
+    private val refresher: AuthUserRefresher,
 ) : AuthRepository {
-
-    // reload()로 인증 여부가 바뀌어도 AuthStateListener는 다시 불리지 않는다. 직접 다시 읽게 한다.
-    private val reloads = MutableStateFlow(0)
 
     init {
         // 인증·재설정 메일을 앱 언어로 보낸다.
         auth.useAppLanguage()
     }
 
-    override val currentUser: Flow<AuthUser?> = combine(authStateChanges(), reloads) { _, _ ->
+    override val currentUser: Flow<AuthUser?> = combine(authStateChanges(), refresher.changes) { _, _ ->
         auth.currentUser?.toModel()
     }.distinctUntilChanged()
 
@@ -74,7 +72,7 @@ internal class FirebaseAuthRepository(
 
     override suspend fun reload(): AuthResult = attempt("reload") {
         auth.currentUser?.reload()?.await()
-        reloads.value++
+        refresher.refresh()
         AuthResult.Success()
     }
 
@@ -130,8 +128,9 @@ internal class FirebaseAuthRepository(
 }
 
 /**
- * Firebase 사용자 정보의 이름·사진은 처음 가입할 때 한 번 채워진다. Google 제공자 정보는 Google로 로그인할 때마다
- * 새로 받아 오므로 Google 이름과 사진은 그쪽을 먼저 쓴다. 이메일로 가입한 뒤 Google을 연결한 계정도 이렇게 해야 보인다.
+ * Firebase 사용자 정보의 이름·사진은 처음 가입할 때 한 번 채워지고, 그 뒤로는 사용자가 부를 이름을 정할 때만 바뀐다.
+ * Google 제공자 정보는 Google로 로그인할 때마다 새로 받아 오므로 Google 이름과 사진은 그쪽을 먼저 쓴다.
+ * 이메일로 가입한 뒤 Google을 연결한 계정도 이렇게 해야 보인다. 앱은 Google 이름을 계정 이름에 옮겨 적지 않는다.
  */
 private fun FirebaseUser.toModel(): AuthUser {
     val google = providerData.firstOrNull { it.providerId == GoogleAuthProvider.PROVIDER_ID }
