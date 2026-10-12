@@ -34,7 +34,7 @@ class LastWeatherCache @Inject constructor(private val repository: LastWeatherRe
     /** [location]으로 받은, 아직 쓸 만한 날씨. 없으면 null이다. */
     suspend fun usable(location: WeatherLocation, now: Instant): LastWeather? {
         val saved = repository.load() ?: return null
-        val matches = saved.locationKey == location.cacheKey() && WeatherCachePolicy.isUsable(saved.fetchedAt, now)
+        val matches = saved.locationKey == keyFor(location) && WeatherCachePolicy.isUsable(saved.fetchedAt, now)
         if (!matches) repository.clear()
         return saved.takeIf { matches }
     }
@@ -44,7 +44,7 @@ class LastWeatherCache @Inject constructor(private val repository: LastWeatherRe
      * 받은 시각이 늘어나지 않도록 그대로 둔다.
      */
     suspend fun remember(location: WeatherLocation, snapshot: WeatherSnapshot, areaName: String?, now: Instant) {
-        val key = location.cacheKey()
+        val key = keyFor(location)
         val saved = repository.load()
         val unchanged = saved?.let { it.locationKey == key && it.snapshot == snapshot && it.areaName == areaName }
         if (unchanged != true) repository.save(LastWeather(snapshot, now, areaName, key))
@@ -52,6 +52,15 @@ class LastWeatherCache @Inject constructor(private val repository: LastWeatherRe
 
     suspend fun clear() = repository.clear()
 
-    // 위치 설정을 그대로 글로 바꾼 값이다. 위치 고르는 방식이 바뀌어 값이 달라지면 예전 날씨는 맞지 않는 것으로 보고 버린다.
-    private fun WeatherLocation.cacheKey(): String = toString()
+    companion object {
+        /**
+         * 어느 위치로 받은 날씨인지 나타내는 값. "현재 위치"는 `current`, 고른 지역은 행정구역코드다(`region:1168064000`).
+         * 지역 이름·좌표가 아니라 코드로 비교해 지역 목록을 새 판으로 바꿔도 같은 곳이면 그대로 쓴다.
+         * 예전 버전이 남긴 다른 모양의 값은 맞지 않는 것으로 보고 버린다.
+         */
+        fun keyFor(location: WeatherLocation): String = when (location) {
+            WeatherLocation.Current -> "current"
+            is WeatherLocation.Region -> "region:${location.area.code}"
+        }
+    }
 }

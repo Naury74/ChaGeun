@@ -17,21 +17,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-import com.naury.chageun.core.model.KoreaRegion
+import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.model.WeatherLocation
 
 /**
  * 홈 날씨를 볼 위치를 고른다. 먼저 "현재 위치"와 "지역 직접 고르기" 중 하나를 묻는다.
  *
- * "현재 위치"를 고르면 그때 처음으로 대략적인 위치 권한(ACCESS_COARSE_LOCATION)을 묻는다. 거절하면 시·도 목록으로
- * 넘어가 권한 없이도 날씨를 볼 수 있게 한다.
+ * "현재 위치"를 고르면 그때 처음으로 대략적인 위치 권한(ACCESS_COARSE_LOCATION)을 묻는다. 거절하면 지역 고르기로
+ * 넘어가 권한 없이도 날씨를 볼 수 있게 한다. 지역은 시·도부터 읍·면·동까지 고르거나 이름으로 찾는다.
  *
- * @param startWithRegions true면 첫 질문 없이 시·도 목록부터 연다.
+ * @param loadRegions 지역 목록. 지역 고르기 창을 열 때 처음 부른다.
+ * @param recentRegionCodes 최근에 고른 지역 코드. 지역 고르기 창 맨 위에 보여 준다.
+ * @param startWithRegions true면 첫 질문 없이 지역 고르기부터 연다.
  */
 @Composable
 fun WeatherLocationPicker(
     onPicked: (WeatherLocation) -> Unit,
     onDismiss: () -> Unit,
+    loadRegions: suspend () -> KoreaRegionCatalog,
+    recentRegionCodes: List<String> = emptyList(),
     startWithRegions: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -46,7 +50,9 @@ fun WeatherLocationPicker(
         }
     }
     if (showsRegions) {
-        RegionDialog(
+        RegionPickerDialog(
+            loadRegions = loadRegions,
+            recentCodes = recentRegionCodes,
             message = if (wasDenied) stringResource(R.string.weather_location_denied_message) else null,
             onPicked = { onPicked(WeatherLocation.Region(it)) },
             onDismiss = onDismiss,
@@ -82,33 +88,21 @@ fun WeatherLocationPicker(
     }
 }
 
-@Composable
-private fun RegionDialog(message: String?, onPicked: (KoreaRegion) -> Unit, onDismiss: () -> Unit) {
-    ChageunOptionDialog(
-        title = stringResource(R.string.weather_location_regions_title),
-        message = message,
-        options = KoreaRegion.entries.map { region ->
-            // 열일곱 줄에 같은 아이콘을 반복하면 어수선해서 이름만 둔다.
-            DialogOption(label = stringResource(region.labelRes), onClick = { onPicked(region) })
-        },
-        cancelLabel = stringResource(R.string.weather_location_cancel),
-        onDismiss = onDismiss,
-    )
-}
-
 /**
- * 고른 위치의 이름. "현재 위치"는 기기 위치로 찾은 동네 이름(예: "서울 강남구")을 쓰고,
- * 아직 못 찾았거나 지오코더가 없으면 "현재 위치"라고만 쓴다.
+ * 고른 위치의 짧은 이름. "현재 위치"는 기기 위치로 찾은 동네 이름(예: "서울 강남구")을 쓰고,
+ * 아직 못 찾았거나 지오코더가 없으면 "현재 위치"라고만 쓴다. 고른 지역은 헷갈리지 않는 가장 짧은 이름이다
+ * (강남구 역삼1동, 서울 강남구). 지명은 한국어 그대로 쓴다.
  */
 @Composable
 fun weatherLocationLabel(location: WeatherLocation, areaName: String? = null): String = when (location) {
     WeatherLocation.Current -> areaName ?: stringResource(R.string.weather_location_current_short)
-    is WeatherLocation.Region -> stringResource(location.region.labelRes)
+    is WeatherLocation.Region -> location.area.label
 }
 
 /**
  * 설정에 쓰는 위치 이름. 기기 위치로 찾은 동네임을 알 수 있게 "현재 위치 (서울 강남구)"처럼 쓰고,
  * 지난번에 위치를 못 구했으면 [isMissing]이라 "현재 위치 (찾지 못함)"으로 쓴다.
+ * 고른 지역은 시·도부터 전체 이름(서울 강남구 역삼1동)을 쓴다.
  */
 @Composable
 fun weatherLocationSettingLabel(
@@ -116,7 +110,7 @@ fun weatherLocationSettingLabel(
     areaName: String? = null,
     isMissing: Boolean = false,
 ): String = when {
-    location != WeatherLocation.Current -> weatherLocationLabel(location)
+    location is WeatherLocation.Region -> location.area.path
     isMissing -> stringResource(R.string.weather_location_current_missing)
     areaName != null -> stringResource(R.string.weather_location_current_with_area, areaName)
     else -> weatherLocationLabel(location)
@@ -125,24 +119,3 @@ fun weatherLocationSettingLabel(
 fun Context.hasCoarseLocationPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
         PackageManager.PERMISSION_GRANTED
-
-val KoreaRegion.labelRes: Int
-    get() = when (this) {
-        KoreaRegion.Seoul -> R.string.weather_region_seoul
-        KoreaRegion.Busan -> R.string.weather_region_busan
-        KoreaRegion.Daegu -> R.string.weather_region_daegu
-        KoreaRegion.Incheon -> R.string.weather_region_incheon
-        KoreaRegion.Gwangju -> R.string.weather_region_gwangju
-        KoreaRegion.Daejeon -> R.string.weather_region_daejeon
-        KoreaRegion.Ulsan -> R.string.weather_region_ulsan
-        KoreaRegion.Sejong -> R.string.weather_region_sejong
-        KoreaRegion.Gyeonggi -> R.string.weather_region_gyeonggi
-        KoreaRegion.Gangwon -> R.string.weather_region_gangwon
-        KoreaRegion.Chungbuk -> R.string.weather_region_chungbuk
-        KoreaRegion.Chungnam -> R.string.weather_region_chungnam
-        KoreaRegion.Jeonbuk -> R.string.weather_region_jeonbuk
-        KoreaRegion.Jeonnam -> R.string.weather_region_jeonnam
-        KoreaRegion.Gyeongbuk -> R.string.weather_region_gyeongbuk
-        KoreaRegion.Gyeongnam -> R.string.weather_region_gyeongnam
-        KoreaRegion.Jeju -> R.string.weather_region_jeju
-    }

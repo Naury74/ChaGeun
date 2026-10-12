@@ -36,61 +36,23 @@ data class GeoPoint(val latitude: Double, val longitude: Double) {
      * 소수 첫째 자리(약 10km)로 반올림한 지점. 날씨를 물을 때는 이 값만 보낸다.
      * 같은 동네라면 같은 값이 되어 캐시도 함께 쓴다.
      */
-    fun roundedForWeather(): GeoPoint = GeoPoint(latitude.roundTo1(), longitude.roundTo1())
+    fun roundedForWeather(): GeoPoint = GeoPoint(latitude.roundTo(1), longitude.roundTo(1))
 
-    private fun Double.roundTo1(): Double = BigDecimal.valueOf(this).setScale(1, RoundingMode.HALF_UP).toDouble()
+    /**
+     * 소수 둘째 자리(약 1km)로 반올림한 지점. 사용자가 직접 고른 읍·면·동의 대표 지점에만 쓴다.
+     * 기기 위치가 아니라 누구나 아는 행정구역의 지점이라 [roundedForWeather]보다 좁게 보내도 된다.
+     */
+    fun roundedForChosenArea(): GeoPoint = GeoPoint(latitude.roundTo(2), longitude.roundTo(2))
+
+    private fun Double.roundTo(scale: Int): Double =
+        BigDecimal.valueOf(this).setScale(scale, RoundingMode.HALF_UP).toDouble()
 }
 
-/** 위치 권한 없이 고를 수 있는 17개 시·도. */
-enum class KoreaRegion {
-    Seoul,
-    Busan,
-    Daegu,
-    Incheon,
-    Gwangju,
-    Daejeon,
-    Ulsan,
-    Sejong,
-    Gyeonggi,
-    Gangwon,
-    Chungbuk,
-    Chungnam,
-    Jeonbuk,
-    Jeonnam,
-    Gyeongbuk,
-    Gyeongnam,
-    Jeju,
-    ;
-
-    /** 시청·도청 소재지 근처의 대표 지점. 지역을 고르면 이 좌표의 날씨를 묻는다. */
-    val point: GeoPoint get() = REGION_POINTS.getValue(this)
-}
-
-private val REGION_POINTS: Map<KoreaRegion, GeoPoint> = mapOf(
-    KoreaRegion.Seoul to GeoPoint(37.57, 126.98),
-    KoreaRegion.Busan to GeoPoint(35.18, 129.08),
-    KoreaRegion.Daegu to GeoPoint(35.87, 128.60),
-    KoreaRegion.Incheon to GeoPoint(37.46, 126.71),
-    KoreaRegion.Gwangju to GeoPoint(35.16, 126.85),
-    KoreaRegion.Daejeon to GeoPoint(36.35, 127.38),
-    KoreaRegion.Ulsan to GeoPoint(35.54, 129.31),
-    KoreaRegion.Sejong to GeoPoint(36.48, 127.29),
-    KoreaRegion.Gyeonggi to GeoPoint(37.27, 127.01),
-    KoreaRegion.Gangwon to GeoPoint(37.88, 127.73),
-    KoreaRegion.Chungbuk to GeoPoint(36.64, 127.49),
-    KoreaRegion.Chungnam to GeoPoint(36.66, 126.67),
-    KoreaRegion.Jeonbuk to GeoPoint(35.82, 127.15),
-    KoreaRegion.Jeonnam to GeoPoint(34.82, 126.46),
-    KoreaRegion.Gyeongbuk to GeoPoint(36.58, 128.51),
-    KoreaRegion.Gyeongnam to GeoPoint(35.24, 128.69),
-    KoreaRegion.Jeju to GeoPoint(33.50, 126.53),
-)
-
-/** 날씨를 볼 위치. 대략적인 기기 위치이거나 직접 고른 시·도다. */
+/** 날씨를 볼 위치. 대략적인 기기 위치이거나 직접 고른 시·도, 시·군·구, 읍·면·동이다. */
 sealed interface WeatherLocation {
     data object Current : WeatherLocation
 
-    data class Region(val region: KoreaRegion) : WeatherLocation
+    data class Region(val area: KoreaArea) : WeatherLocation
 }
 
 /**

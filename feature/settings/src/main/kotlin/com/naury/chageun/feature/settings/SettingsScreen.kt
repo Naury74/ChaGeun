@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.EventAvailable
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Policy
@@ -320,6 +321,7 @@ private val SOURCES = listOf(
     Icons.AutoMirrored.Filled.MenuBook to R.string.settings_source_generic,
     Icons.Filled.Verified to R.string.settings_source_official,
     Icons.Filled.WbSunny to R.string.settings_source_weather,
+    Icons.Filled.Map to R.string.settings_source_regions,
 )
 
 private val ThemeMode.labelRes: Int

@@ -29,7 +29,7 @@ sealed interface WeatherResult {
 }
 
 /**
- * 고른 위치의 날씨를 가져온다. 기기 위치는 반올림한 값만 저장소에 넘긴다.
+ * 고른 위치의 날씨를 가져온다. 기기 위치는 약 10km, 직접 고른 지역의 대표 지점은 약 1km로 반올림한 값만 저장소에 넘긴다.
  * "현재 위치"면 같은 반올림 좌표로 동네 이름도 함께 찾아, 날씨와 동시에 기다린다.
  */
 class LoadWeatherUseCase @Inject constructor(
@@ -43,9 +43,9 @@ class LoadWeatherUseCase @Inject constructor(
             return WeatherResult.NeedsPermission
         }
         val isCurrent = location == WeatherLocation.Current
-        val point = pointFor(location)?.roundedForWeather()
+        val point = pointFor(location)
         if (isCurrent) settingsRepository.setCurrentLocationMissing(point == null)
-        // 시·도는 대표 좌표가 늘 있으니 null은 기기 위치를 못 구한 경우뿐이다.
+        // 고른 지역은 대표 좌표가 늘 있으니 null은 기기 위치를 못 구한 경우뿐이다.
         if (point == null) return WeatherResult.LocationUnavailable
         val (snapshot, areaName) = coroutineScope {
             val area = if (isCurrent) async { areaNameRepository.areaNameAt(point) } else null
@@ -56,7 +56,7 @@ class LoadWeatherUseCase @Inject constructor(
     }
 
     private suspend fun pointFor(location: WeatherLocation): GeoPoint? = when (location) {
-        WeatherLocation.Current -> locationProvider.currentLocation()
-        is WeatherLocation.Region -> location.region.point
+        WeatherLocation.Current -> locationProvider.currentLocation()?.roundedForWeather()
+        is WeatherLocation.Region -> location.area.point.roundedForChosenArea()
     }
 }

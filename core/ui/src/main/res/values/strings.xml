@@ -146,21 +146,19 @@
     <string name="weather_location_current_short">Current location</string>
     <string name="weather_location_current_with_area">Current location (%1$s)</string>
     <string name="weather_location_current_missing">Current location (not found)</string>
-    <string name="weather_region_seoul">Seoul</string>
-    <string name="weather_region_busan">Busan</string>
-    <string name="weather_region_daegu">Daegu</string>
-    <string name="weather_region_incheon">Incheon</string>
-    <string name="weather_region_gwangju">Gwangju</string>
-    <string name="weather_region_daejeon">Daejeon</string>
-    <string name="weather_region_ulsan">Ulsan</string>
-    <string name="weather_region_sejong">Sejong</string>
-    <string name="weather_region_gyeonggi">Gyeonggi</string>
-    <string name="weather_region_gangwon">Gangwon</string>
-    <string name="weather_region_chungbuk">North Chungcheong</string>
-    <string name="weather_region_chungnam">South Chungcheong</string>
-    <string name="weather_region_jeonbuk">North Jeolla</string>
-    <string name="weather_region_jeonnam">South Jeolla</string>
-    <string name="weather_region_gyeongbuk">North Gyeongsang</string>
-    <string name="weather_region_gyeongnam">South Gyeongsang</string>
-    <string name="weather_region_jeju">Jeju</string>
+    <string name="weather_region_search">Search by district or neighborhood (in Korean)</string>
+    <string name="weather_region_search_clear">Clear search</string>
+    <string name="weather_region_recent">Recently chosen</string>
+    <string name="weather_region_provinces">Provinces and cities</string>
+    <string name="weather_region_whole">All of %1$s</string>
+    <string name="weather_region_back">Back</string>
+    <string name="weather_region_open">Show areas inside</string>
+    <string name="weather_region_choose">Choose</string>
+    <string name="weather_region_loading">Loading regions…</string>
+    <string name="weather_region_no_results">No matching places. Place names are in Korean, so try part of one, like 역삼.</string>
+    <plurals name="weather_region_result_count">
+        <item quantity="one">%1$d place found</item>
+        <item quantity="other">%1$d places found</item>
+    </plurals>
+    <string name="weather_region_result_many">Showing the first %1$d places. Type more of the name to narrow it down.</string>
 </resources>

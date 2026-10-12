@@ -17,7 +17,6 @@ import com.naury.chageun.core.model.CutoutStatus
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.Kilometers
-import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
@@ -38,6 +37,7 @@ import com.naury.chageun.core.testing.FakeAreaNameRepository
 import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
+import com.naury.chageun.core.testing.FakeKoreaRegionRepository
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeProfilePhotoRepository
@@ -46,6 +46,7 @@ import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.FakeWeatherRepository
 import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.testing.TestKoreaRegions
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -96,6 +97,7 @@ class HomeViewModelTest {
                 weatherSettings,
                 LoadWeatherUseCase(location, weather, areaNames, weatherSettings),
                 LastWeatherCache(lastWeather),
+                FakeKoreaRegionRepository(),
             ),
             clock,
         ),
@@ -260,11 +262,11 @@ class HomeViewModelTest {
         // 위치를 고르기 전에는 날씨를 묻지 않는다.
         assertThat(weatherRepository.requested).isEmpty()
 
-        viewModel.setWeatherLocation(WeatherLocation.Region(KoreaRegion.Seoul))
+        viewModel.setWeatherLocation(WeatherLocation.Region(TestKoreaRegions.seoul))
         val shown = contentWith { it.weather is HomeWeather.Shown }.weather as HomeWeather.Shown
 
         assertThat(shown.tip).isEqualTo(WeatherTip.Rain)
-        assertThat(shown.location).isEqualTo(WeatherLocation.Region(KoreaRegion.Seoul))
+        assertThat(shown.location).isEqualTo(WeatherLocation.Region(TestKoreaRegions.seoul))
     }
 
     @Test
@@ -330,10 +332,11 @@ class HomeViewModelTest {
 
     @Test
     fun savedWeather_showsOnFirstFrame_thenFreshWeatherReplacesIt() = runTest {
-        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        val seoul = WeatherLocation.Region(TestKoreaRegions.seoul)
         weatherSettings.settings.value = WeatherSettings(location = seoul)
         val saved = WeatherSnapshot(WeatherCondition.Snow, -1.0, 2.0, false, Instant.EPOCH)
-        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(3_600), null, seoul.toString())
+        lastWeather.saved =
+            LastWeather(saved, clock.instant().minusSeconds(3_600), null, LastWeatherCache.keyFor(seoul))
         val fresh = CompletableDeferred<WeatherSnapshot?>()
         val viewModel = homeViewModel(GatedWeatherRepository(fresh))
         val seen = mutableListOf<HomeWeather>()
@@ -356,10 +359,11 @@ class HomeViewModelTest {
 
     @Test
     fun savedWeather_olderThanThreeHours_isNotShown() = runTest {
-        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        val seoul = WeatherLocation.Region(TestKoreaRegions.seoul)
         weatherSettings.settings.value = WeatherSettings(location = seoul)
         val saved = WeatherSnapshot(WeatherCondition.Snow, -1.0, 2.0, false, Instant.EPOCH)
-        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(3 * 3_600), null, seoul.toString())
+        lastWeather.saved =
+            LastWeather(saved, clock.instant().minusSeconds(3 * 3_600), null, LastWeatherCache.keyFor(seoul))
         val viewModel = homeViewModel(GatedWeatherRepository(CompletableDeferred()))
         backgroundScope.launch { viewModel.uiState.collect {} }
         vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
@@ -372,10 +376,10 @@ class HomeViewModelTest {
 
     @Test
     fun weatherFailsAfterRestart_keepsSavedWeather_andTurningOffClearsIt() = runTest {
-        val seoul = WeatherLocation.Region(KoreaRegion.Seoul)
+        val seoul = WeatherLocation.Region(TestKoreaRegions.seoul)
         weatherSettings.settings.value = WeatherSettings(location = seoul)
         val saved = WeatherSnapshot(WeatherCondition.Cloudy, 15.0, 2.0, false, Instant.EPOCH)
-        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(600), null, seoul.toString())
+        lastWeather.saved = LastWeather(saved, clock.instant().minusSeconds(600), null, LastWeatherCache.keyFor(seoul))
         weatherRepository.snapshot = null
         backgroundScope.launch { viewModel.uiState.collect {} }
         vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))

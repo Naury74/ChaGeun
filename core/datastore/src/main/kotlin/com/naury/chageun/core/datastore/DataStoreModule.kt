@@ -23,7 +23,9 @@ internal object DataStoreModule {
     @Provides
     @Singleton
     fun providePreferences(@ApplicationContext context: Context): DataStore<Preferences> =
-        PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("user_settings") }
+        PreferenceDataStoreFactory.create(migrations = listOf(WeatherRegionMigration)) {
+            context.preferencesDataStoreFile("user_settings")
+        }
 }
 
 @Module

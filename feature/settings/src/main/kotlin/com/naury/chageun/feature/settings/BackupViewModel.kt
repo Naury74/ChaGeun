@@ -120,9 +120,10 @@ class BackupViewModel @Inject constructor(
         _dataState.update { it.copy(pendingDeletion = null, isWorking = true) }
         viewModelScope.launch {
             backupRepository.deleteAll()
-            // 모두 지운다고 안내하므로 저장해 둔 "현재 위치"의 동네 이름과 마지막 날씨도 지운다.
+            // 모두 지운다고 안내하므로 저장해 둔 "현재 위치"의 동네 이름, 최근에 고른 지역, 마지막 날씨도 지운다.
             weatherSettings.setCurrentAreaName(null)
             weatherSettings.setCurrentLocationMissing(false)
+            weatherSettings.clearRecentRegions()
             lastWeather.clear()
             _dataState.update { it.copy(isWorking = false) }
         }
