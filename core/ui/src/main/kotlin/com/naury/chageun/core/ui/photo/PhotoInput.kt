@@ -54,6 +54,8 @@ fun rememberPhotoInputState(): PhotoInputState = rememberSaveable(saver = PhotoI
  * @param onPhotos 가져올 사진 URI 목록과 고화질 저장 여부.
  * @param includeVideos true면 동영상도 고를 수 있다. 동영상은 자르기 편집기를 거치지 않고 바로 넘긴다.
  * @param extraOptions 사진 찍기·고르기 아래에 더할 선택지.
+ * @param onPickFromGallery 고르기를 화면이 직접 맡을 때. 주면 이 창의 Photo Picker 대신 이것을 부른다.
+ *   앨범처럼 고른 뒤 편집할지 묻는 편집기로 바로 넘길 때 쓴다.
  */
 @Composable
 fun PhotoInput(
@@ -63,6 +65,7 @@ fun PhotoInput(
     showQualityOption: Boolean = false,
     includeVideos: Boolean = false,
     extraOptions: List<PhotoSourceOption> = emptyList(),
+    onPickFromGallery: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var pendingCapture by rememberSaveable { mutableStateOf<String?>(null) }
@@ -107,14 +110,18 @@ fun PhotoInput(
             },
             onGallery = {
                 state.isChoosing = false
-                PhotoFiles.cleanStale(context)
-                val type = if (includeVideos) {
-                    ActivityResultContracts.PickVisualMedia.ImageAndVideo
+                if (onPickFromGallery != null) {
+                    onPickFromGallery()
                 } else {
-                    ActivityResultContracts.PickVisualMedia.ImageOnly
+                    PhotoFiles.cleanStale(context)
+                    val type = if (includeVideos) {
+                        ActivityResultContracts.PickVisualMedia.ImageAndVideo
+                    } else {
+                        ActivityResultContracts.PickVisualMedia.ImageOnly
+                    }
+                    val request = PickVisualMediaRequest(type)
+                    context.launchExternal { if (maxItems > 1) pickMany.launch(request) else pickOne.launch(request) }
                 }
-                val request = PickVisualMediaRequest(type)
-                context.launchExternal { if (maxItems > 1) pickMany.launch(request) else pickOne.launch(request) }
             },
             onDismiss = { state.isChoosing = false },
         )

@@ -80,6 +80,7 @@
     <string name="photo_editor_high_quality_hint">영수증이나 작은 글씨가 잘 보이게 더 크게 저장해요. 용량을 더 써요.</string>
     <string name="photo_edit_locale_tag">ko</string>
     <string name="photo_edit_action">편집</string>
+    <string name="photo_share_title">공유</string>
     <string name="photo_edit_error_unavailable">사진을 열 수 없어요. 다시 골라 주세요.</string>
     <string name="photo_edit_error_unsupported">이 사진은 편집할 수 없어요. 다른 사진을 골라 주세요.</string>
     <string name="photo_edit_error_too_large">사진이 너무 커서 편집할 수 없어요.</string>

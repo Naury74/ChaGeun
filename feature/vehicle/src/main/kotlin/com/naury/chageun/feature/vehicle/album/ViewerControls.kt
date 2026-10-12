@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.FilledIconButton
@@ -163,8 +164,8 @@ internal fun PhotoDateChip(date: LocalDate, onOpenCalendar: ((LocalDate) -> Unit
 }
 
 /**
- * 정보 수정·편집·대표 사진·삭제. 둥근 아이콘 아래에 짧은 이름을 두고, TalkBack에는 하는 일을 길게 알려 준다.
- * 편집은 편집기를 붙인 뒤에만 보이고, 대표 사진은 동영상에서는 보이지 않는다.
+ * 정보 수정·편집·공유·대표 사진·삭제. 둥근 아이콘 아래에 짧은 이름을 두고, TalkBack에는 하는 일을 길게 알려 준다.
+ * 편집·공유는 편집기를 붙인 뒤에만 보이고, 대표 사진은 동영상에서는 보이지 않는다.
  */
 @Composable
 internal fun ViewerActionRow(photo: AlbumPhoto, actions: AlbumActions, modifier: Modifier = Modifier) {
@@ -183,6 +184,16 @@ internal fun ViewerActionRow(photo: AlbumPhoto, actions: AlbumActions, modifier:
                     if (photo.isVideo) R.string.album_edit_video else R.string.album_edit_image,
                 ),
                 onClick = { editImage(photo) },
+            )
+        }
+        actions.onShare?.let { share ->
+            ViewerAction(
+                icon = Icons.Filled.Share,
+                label = stringResource(R.string.album_action_share),
+                clickLabel = stringResource(
+                    if (photo.isVideo) R.string.album_share_video else R.string.album_share_photo,
+                ),
+                onClick = { share(photo) },
             )
         }
         // 대표 사진은 사진으로만 정한다. 동영상의 포스터는 작아서 대표 사진으로 쓰기에 흐리다.
