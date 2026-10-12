@@ -165,10 +165,37 @@
     <string name="calendar_previous_month">이전 달</string>
     <string name="calendar_next_month">다음 달</string>
     <string name="calendar_today">오늘</string>
-    <string name="calendar_layer_records">기록</string>
-    <string name="calendar_layer_photos">사진</string>
-    <string name="calendar_layer_upcoming">예정</string>
-    <string name="calendar_side_layers">달력에 표시</string>
+    <string name="calendar_previous_week">이전 주</string>
+    <string name="calendar_next_week">다음 주</string>
+    <string name="calendar_week_view">주 보기</string>
+    <string name="calendar_month_view">월 보기</string>
+    <string name="calendar_search">달력 검색</string>
+    <string name="calendar_search_close">검색 닫기</string>
+    <string name="calendar_previous_result">이전 결과</string>
+    <string name="calendar_next_result">다음 결과</string>
+    <plurals name="calendar_search_results">
+        <item quantity="other">검색 결과 %1$d건</item>
+    </plurals>
+    <string name="calendar_search_empty">찾는 기록이 없어요</string>
+    <string name="calendar_search_limit">최근 %1$d건까지 보여요</string>
+    <string name="calendar_kind_maintenance">정비</string>
+    <string name="calendar_kind_fuel">주유</string>
+    <string name="calendar_kind_check">점검·수리</string>
+    <string name="calendar_kind_mileage">주행거리</string>
+    <string name="calendar_kind_photos">사진</string>
+    <string name="calendar_kind_upcoming">예정</string>
+    <string name="calendar_pick_items">항목 선택</string>
+    <plurals name="calendar_items_count">
+        <item quantity="other">항목 %1$d개</item>
+    </plurals>
+    <string name="calendar_items_title">이 항목만 보기</string>
+    <plurals name="calendar_filter_count">
+        <item quantity="other">필터 %1$d개</item>
+    </plurals>
+    <string name="calendar_filter_keyword">‘%1$s’</string>
+    <string name="calendar_clear_all">모두 지우기</string>
+    <string name="calendar_side_filters">달력에 표시</string>
+    <string name="calendar_record_photo">%1$s 첨부 사진</string>
     <string name="calendar_side_spent">지출</string>
     <string name="calendar_side_summary">이번 달</string>
     <plurals name="calendar_summary_records">
@@ -199,4 +226,7 @@
     <plurals name="calendar_a11y_overdue">
         <item quantity="other">지남 %1$d개</item>
     </plurals>
+    <string name="calendar_a11y_names">%1$s(%2$s)</string>
+    <string name="calendar_a11y_replacement">%1$s 교체</string>
+    <string name="calendar_a11y_match">검색 결과</string>
 </resources>

@@ -30,19 +30,26 @@ sealed interface UpcomingEvent {
     data class MileageUpdate(override val date: LocalDate, override val isOverdue: Boolean = false) : UpcomingEvent
 }
 
-/** 달력 하루 칸. 기록·사진은 지난 일, [upcoming]은 앞으로 할 일이다. */
+/**
+ * 달력 하루 칸. 기록·사진은 지난 일, [upcoming]은 앞으로 할 일이다. 사진은 앨범 사진([photos])과
+ * 그날 기록에 붙인 사진([recordPhotos], 영수증 등)을 따로 들고, 개수는 합쳐 센다.
+ */
 data class CalendarDay(
     val date: LocalDate,
     val records: List<TimelineItem> = emptyList(),
     val photos: List<AlbumPhoto> = emptyList(),
     val upcoming: List<UpcomingEvent> = emptyList(),
+    val recordPhotos: List<RecordPhoto> = emptyList(),
 ) {
-    val isEmpty: Boolean get() = records.isEmpty() && photos.isEmpty() && upcoming.isEmpty()
+    val photoCount: Int get() = photos.size + recordPhotos.size
+
+    val isEmpty: Boolean get() = records.isEmpty() && photoCount == 0 && upcoming.isEmpty()
 }
 
 /**
  * 한 달 달력. [gridStart]~[gridEnd]는 그리드에 보이는 앞뒤 달 날짜까지 포함하며, [days]에는 그 범위에서
  * 내용이 있는 날만 들어 있다. 요약 값([monthTotalWon], [recordCount], [photoCount])은 [month] 안만 센다.
+ * [photoCount]는 앨범 사진과 기록에 붙인 사진을 합친 수다.
  */
 data class CalendarMonth(
     val month: YearMonth,

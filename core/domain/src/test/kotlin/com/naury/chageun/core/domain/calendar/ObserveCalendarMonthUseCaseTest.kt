@@ -7,6 +7,7 @@ import com.naury.chageun.core.domain.maintenance.ObserveMaintenanceOverviewUseCa
 import com.naury.chageun.core.domain.maintenance.RuleBasedMaintenanceEngine
 import com.naury.chageun.core.domain.vehicle.VehicleHealthAggregator
 import com.naury.chageun.core.model.AlbumPhoto
+import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.InspectionSchedule
 import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.Kilometers
@@ -21,6 +22,7 @@ import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.UpcomingEvent
 import com.naury.chageun.core.model.VehicleId
 import com.naury.chageun.core.testing.FakeAlbumRepository
+import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
@@ -43,6 +45,7 @@ class ObserveCalendarMonthUseCaseTest {
     private val october = YearMonth.of(2026, 10)
     private val history = FakeHistoryRepository()
     private val album = FakeAlbumRepository()
+    private val attachments = FakeAttachmentRepository()
     private val maintenance = FakeMaintenanceRepository()
     private val inspections = FakeInspectionRepository()
     private val upcoming = ObserveUpcomingEventsUseCase(
@@ -55,7 +58,7 @@ class ObserveCalendarMonthUseCaseTest {
         ),
         clock,
     )
-    private val useCase = ObserveCalendarMonthUseCase(history, album, upcoming, clock)
+    private val useCase = ObserveCalendarMonthUseCase(history, album, attachments, upcoming, clock)
 
     private fun record(id: String, type: TimelineEventType, date: LocalDate?, cost: Long? = null) =
         TimelineItem(RecordRef(type, id), date, null, null, Kilometers(40_000), cost, RecordSource.User, Instant.EPOCH)
@@ -140,6 +143,29 @@ class ObserveCalendarMonthUseCaseTest {
         assertThat(calendar.recordCount).isEqualTo(3)
         assertThat(calendar.photoCount).isEqualTo(1)
         assertThat(calendar.today).isEqualTo(today)
+    }
+
+    @Test
+    fun recordPhotos_landOnTheirRecordDate_andCountAsPhotos() = runTest {
+        val fuel = RecordRef(TimelineEventType.Fuel, "fuel")
+        val september = RecordRef(TimelineEventType.Note, "sep")
+        val undated = RecordRef(TimelineEventType.Maintenance, "undated")
+        attachments.attachments.value = listOf(
+            Attachment("receipt", fuel, "/receipt.jpg", "/receipt_thumb.jpg", Instant.EPOCH),
+            Attachment("sep-photo", september, "/sep.jpg", "/sep_thumb.jpg", Instant.EPOCH),
+            Attachment("undated-photo", undated, "/u.jpg", "/u_thumb.jpg", Instant.EPOCH),
+        )
+        attachments.recordDates.value = mapOf(fuel to LocalDate.of(2026, 10, 3), september to LocalDate.of(2026, 9, 28))
+        album.photos.value = listOf(photo("album", LocalDate.of(2026, 10, 3)))
+
+        val calendar = month()
+
+        val day = calendar.day(LocalDate.of(2026, 10, 3))
+        assertThat(day.recordPhotos.map { it.attachment.id }).containsExactly("receipt")
+        assertThat(day.photoCount).isEqualTo(2)
+        assertThat(calendar.day(LocalDate.of(2026, 9, 28)).recordPhotos).hasSize(1)
+        // 이번 달 사진 수에는 앞 달 칸의 첨부가 들어가지 않는다.
+        assertThat(calendar.photoCount).isEqualTo(2)
     }
 
     @Test

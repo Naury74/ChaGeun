@@ -11,11 +11,13 @@ import com.naury.chageun.core.domain.history.AttachResult
 import com.naury.chageun.core.domain.history.AttachmentRepository
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.model.RecordPhoto
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
 import java.io.File
 import java.time.Clock
+import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -35,6 +37,11 @@ internal class OfflineFirstAttachmentRepository @Inject constructor(
     override fun observe(vehicleId: VehicleId, owner: RecordRef): Flow<List<Attachment>> =
         attachmentDao.observe(vehicleId.value, owner.type.name, owner.id).map { rows ->
             rows.mapNotNull { it.asExternalModel() }
+        }
+
+    override fun observeBetween(vehicleId: VehicleId, from: LocalDate, to: LocalDate): Flow<List<RecordPhoto>> =
+        attachmentDao.observeBetween(vehicleId.value, from, to).map { rows ->
+            rows.mapNotNull { row -> row.attachment.asExternalModel()?.let { RecordPhoto(it, row.occurredOn) } }
         }
 
     override suspend fun attach(

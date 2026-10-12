@@ -152,6 +152,38 @@ class ChageunDatabaseTest {
     }
 
     @Test
+    fun attachmentObserveBetween_placesAttachmentsOnTheirRecordDate() = runTest {
+        database.vehicleDao().upsert(vehicle())
+        database.maintenanceDao().insertRecord(service("oil", "EngineOil", LocalDate.of(2026, 10, 8)))
+        database.maintenanceDao().insertRecord(service("undated", "Tire", on = null))
+        database.historyDao().insertFuel(fuel("fuel", LocalDate.of(2026, 10, 12)))
+        database.historyDao().insertFuel(fuel("old-fuel", LocalDate.of(2026, 8, 1)))
+        database.historyDao().insertCheck(check("repair", "Repair", LocalDate.of(2026, 9, 28), "Bumper"))
+        val dao = database.attachmentDao()
+        listOf(
+            attachment("receipt-late", "Fuel", "fuel", createdAt = FIXED_NOW.plusSeconds(60)),
+            attachment("receipt-early", "Fuel", "fuel"),
+            attachment("oil-photo", "Maintenance", "oil"),
+            attachment("repair-photo", "Repair", "repair"),
+            attachment("undated-photo", "Maintenance", "undated"),
+            attachment("old-receipt", "Fuel", "old-fuel"),
+            // 종류가 다르면 같은 ID라도 다른 기록이다.
+            attachment("wrong-type", "Note", "fuel"),
+        ).forEach { dao.insert(it) }
+
+        val rows = dao.observeBetween("vehicle-1", LocalDate.of(2026, 9, 28), LocalDate.of(2026, 10, 31)).first()
+
+        assertThat(rows.map { it.attachment.id })
+            .containsExactly("repair-photo", "oil-photo", "receipt-early", "receipt-late").inOrder()
+        assertThat(rows.map { it.occurredOn }).containsExactly(
+            LocalDate.of(2026, 9, 28),
+            LocalDate.of(2026, 10, 8),
+            LocalDate.of(2026, 10, 12),
+            LocalDate.of(2026, 10, 12),
+        ).inOrder()
+    }
+
+    @Test
     fun deletingVehicle_cascadesToRecords() = runTest {
         database.vehicleDao().upsert(vehicle())
         database.mileageRecordDao().insert(mileage("a", 41_000, LocalDate.of(2026, 9, 1)))

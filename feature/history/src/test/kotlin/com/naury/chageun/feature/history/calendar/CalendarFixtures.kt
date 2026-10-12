@@ -7,11 +7,13 @@ import android.graphics.Paint
 import androidx.core.graphics.applyCanvas
 import com.naury.chageun.core.domain.calendar.ObserveCalendarMonthUseCase
 import com.naury.chageun.core.model.AlbumPhoto
+import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.CalendarDay
 import com.naury.chageun.core.model.CalendarMonth
 import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.model.MaintenanceItem
+import com.naury.chageun.core.model.RecordPhoto
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.RecordSource
 import com.naury.chageun.core.model.TimelineEventType
@@ -23,7 +25,10 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 
-/** 2026년 10월. 오늘(12일)에 기록·사진·예정이 모두 있고, 8일은 기록이 넘쳐 +n이 붙는다. */
+/**
+ * 2026년 10월. 오늘(12일)에 기록·앨범 사진·영수증·예정이 모두 있고, 8일은 기록이 넘쳐 +n이 붙으며
+ * 엔진오일 교체 기록에 붙인 사진만 있다.
+ */
 internal object CalendarFixtures {
     val TODAY: LocalDate = LocalDate.of(2026, 10, 12)
     val OCTOBER: YearMonth = YearMonth.of(2026, 10)
@@ -37,6 +42,9 @@ internal object CalendarFixtures {
         cost: Long? = null,
         km: Long = 41_000,
     ) = TimelineItem(RecordRef(type, id), date, title, item, Kilometers(km), cost, RecordSource.User, Instant.EPOCH)
+
+    fun maintenance(id: String, date: LocalDate, item: MaintenanceItem) =
+        record(id, TimelineEventType.Maintenance, date, item = item)
 
     fun photo(id: String, date: LocalDate, path: String = "/missing/$id.jpg") =
         AlbumPhoto(id, path, path, date, null, Instant.EPOCH)
@@ -63,9 +71,14 @@ internal object CalendarFixtures {
     )
     val mileageUpdate = UpcomingEvent.MileageUpdate(LocalDate.of(2026, 11, 11))
 
+    fun recordPhoto(id: String, owner: RecordRef, date: LocalDate, path: String = "/missing/$id.jpg") =
+        RecordPhoto(Attachment(id, owner, path, path, Instant.EPOCH), date)
+
     fun month(photoPaths: Map<String, String> = emptyMap()): CalendarMonth {
         val (start, end) = ObserveCalendarMonthUseCase.gridRange(OCTOBER, DayOfWeek.SUNDAY)
         fun pic(id: String, date: LocalDate) = photo(id, date, photoPaths[id] ?: "/missing/$id.jpg")
+        fun receipt(id: String, owner: RecordRef, date: LocalDate) =
+            recordPhoto(id, owner, date, photoPaths[id] ?: "/missing/$id.jpg")
         val oct3 = LocalDate.of(2026, 10, 3)
         val oct8 = LocalDate.of(2026, 10, 8)
         val days = listOf(
@@ -92,8 +105,15 @@ internal object CalendarFixtures {
                     record("tire-check", TimelineEventType.Inspection, oct8, title = "Tire check"),
                     record("memo", TimelineEventType.Note, oct8, title = "Noise"),
                 ),
+                recordPhotos = listOf(receipt("oil-receipt", RecordRef(TimelineEventType.Maintenance, "oil"), oct8)),
             ),
-            CalendarDay(TODAY, todayRecords, listOf(pic("today", TODAY)), listOf(overdueWiper, cabinFilterDue)),
+            CalendarDay(
+                TODAY,
+                todayRecords,
+                listOf(pic("today", TODAY)),
+                listOf(overdueWiper, cabinFilterDue),
+                recordPhotos = listOf(receipt("fuel-receipt", todayRecords.first().ref, TODAY)),
+            ),
             CalendarDay(
                 LocalDate.of(2026, 10, 20),
                 records = listOf(
@@ -113,26 +133,43 @@ internal object CalendarFixtures {
             days = days,
             monthTotalWon = 311_000,
             recordCount = 10,
-            photoCount = 2,
+            photoCount = 4,
         )
     }
 
     fun state(
         selected: LocalDate = TODAY,
         photoPaths: Map<String, String> = emptyMap(),
-        layers: Set<CalendarLayer> = CalendarLayer.entries.toSet(),
+        mode: CalendarMode? = null,
+        filter: CalendarFilter = CalendarFilter(),
+        search: CalendarSearch = CalendarSearch(),
     ) = CalendarUiState(
         isLoading = false,
         calendar = month(photoPaths),
         selectedDate = selected,
-        layers = layers,
+        mode = mode,
+        filter = filter,
+        search = search,
         upcomingSoon = listOf(inspectionDue, oilEstimate, airFilterEstimate, mileageUpdate),
+    )
+
+    /** "oil"로 찾은 결과. 8일의 엔진오일·오일필터 교체와 지난 7월 엔진오일 교체가 걸린다. */
+    val oilSearch = CalendarSearch(
+        isOpen = true,
+        keyword = "oil",
+        results = listOf(
+            maintenance("oil", LocalDate.of(2026, 10, 8), MaintenanceItem.EngineOil),
+            maintenance("oil-filter", LocalDate.of(2026, 10, 8), MaintenanceItem.OilFilter),
+            maintenance("oil-july", LocalDate.of(2026, 7, 2), MaintenanceItem.EngineOil),
+        ),
     )
 
     /** 스크린샷용 사진. 실제 사진 대신 하늘·도로 두 색으로 나눈 이미지를 쓴다. */
     fun photoFiles(): Map<String, String> = mapOf(
         "road-trip" to writePhoto(Color.rgb(176, 205, 230), Color.DKGRAY),
         "today" to writePhoto(Color.rgb(198, 226, 190), Color.rgb(90, 110, 80)),
+        "oil-receipt" to writePhoto(Color.rgb(245, 243, 236), Color.rgb(200, 196, 186)),
+        "fuel-receipt" to writePhoto(Color.rgb(240, 240, 240), Color.rgb(190, 190, 190)),
     )
 
     private fun writePhoto(sky: Int, ground: Int): String {

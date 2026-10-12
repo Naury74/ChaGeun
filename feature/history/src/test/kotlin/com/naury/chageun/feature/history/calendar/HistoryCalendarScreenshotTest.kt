@@ -18,6 +18,7 @@ import com.naury.chageun.core.uitesting.captureScreen
 import com.naury.chageun.feature.history.HistoryScreen
 import com.naury.chageun.feature.history.HistoryUiState
 import com.naury.chageun.feature.history.HistoryViewToggle
+import java.time.LocalDate
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,8 +40,11 @@ class HistoryCalendarScreenshotTest {
         isTwoPane: Boolean = false,
         isThreePane: Boolean = false,
         spacing: ChageunSpacing = Gutters.Compact,
+        mode: CalendarMode? = null,
+        search: CalendarSearch = CalendarSearch(),
+        selected: LocalDate = CalendarFixtures.TODAY,
     ) {
-        val state = CalendarFixtures.state(photoPaths = CalendarFixtures.photoFiles())
+        val state = CalendarFixtures.state(selected, CalendarFixtures.photoFiles(), mode = mode, search = search)
         composeRule.setContent {
             AppFrame(spacing) {
                 Column {
@@ -107,6 +111,21 @@ class HistoryCalendarScreenshotTest {
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     fun phoneKorean() = capture("history_calendar_phone_ko")
 
+    /** 목록을 올려 주 보기로 접힌 모습. 고른 날이 있는 한 주만 크게 그린다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun phoneWeekKorean() = capture("history_calendar_phone_week_ko", mode = CalendarMode.Week)
+
+    /** "oil" 검색. 결과가 있는 날은 테두리, 나머지는 흐리게, 아래에 달별 결과 목록. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun phoneSearchKorean() = capture(
+        "history_calendar_phone_search_ko",
+        mode = CalendarMode.Week,
+        search = CalendarFixtures.oilSearch.copy(keyword = "오일"),
+        selected = LocalDate.of(2026, 10, 8),
+    )
+
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
     fun phoneDark() = capture("history_calendar_phone_dark")
@@ -122,7 +141,7 @@ class HistoryCalendarScreenshotTest {
     fun foldBookPostureKorean() =
         captureWithHinge("history_calendar_fold_ko", Hinge(start = FOLD_HINGE_X, end = FOLD_HINGE_X, isVertical = true))
 
-    /** 탁자 자세: 위 칸 달력, 아래 칸 목록. */
+    /** 탁자 자세: 위 칸 달력(기본 주 보기), 아래 칸 목록. */
     @Test
     @Config(qualifiers = ScreenshotDevices.FOLD_KO)
     fun foldTabletopKorean() = captureWithHinge(

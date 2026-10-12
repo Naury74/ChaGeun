@@ -124,10 +124,14 @@ fun HistoryRoute(
         editingId = null
     }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
+    // 목록 검색과 같이, 현지화된 항목 이름에 검색어가 들어 있으면 그 항목의 정비 기록도 찾는다.
+    val matchingItems = { keyword: String ->
+        if (keyword.isBlank()) emptySet() else itemLabels.filterValues { it.contains(keyword.trim(), true) }.keys
+    }
     val calendarActions = calendarActions(calendarViewModel, viewModel, calendarLinks, analytics) { date ->
         addDate = date
         dialog = AddDialog.Chooser
-    }
+    }.copy(onSearch = { keyword -> calendarViewModel.query.search(keyword, matchingItems(keyword)) })
 
     LargeTitleScaffold(
         title = stringResource(R.string.history_title).takeUnless {
@@ -158,16 +162,7 @@ fun HistoryRoute(
                 uiState = uiState,
                 isTwoPane = isTwoPane,
                 isThreePane = isThreePane,
-                onKeywordChanged = { keyword ->
-                    val matching = if (keyword.isBlank()) {
-                        emptySet()
-                    } else {
-                        itemLabels.filterValues {
-                            it.contains(keyword.trim(), ignoreCase = true)
-                        }.keys
-                    }
-                    viewModel.search(keyword, matching)
-                },
+                onKeywordChanged = { keyword -> viewModel.search(keyword, matchingItems(keyword)) },
                 onFilterSelected = viewModel::selectFilter,
                 onSelect = viewModel::select,
                 onDelete = viewModel::delete,
@@ -232,10 +227,19 @@ private fun calendarActions(
     analytics: AnalyticsTracker,
     onAddOnDate: (LocalDate) -> Unit,
 ) = CalendarActions(
-    onSelectDate = calendarViewModel::selectDate,
-    onShowMonth = calendarViewModel::showMonth,
-    onToday = calendarViewModel::showToday,
-    onToggleLayer = calendarViewModel::toggleLayer,
+    onSelectDate = calendarViewModel.navigation::selectDate,
+    onShowMonth = calendarViewModel.navigation::showMonth,
+    onToday = calendarViewModel.navigation::showToday,
+    onMoveWeek = calendarViewModel.navigation::moveWeek,
+    onSetMode = calendarViewModel.navigation::setMode,
+    onToggleKind = calendarViewModel.query::toggleKind,
+    onSetItems = calendarViewModel.query::setItems,
+    onOpenSearch = calendarViewModel.query::openSearch,
+    onCloseSearch = calendarViewModel.query::closeSearch,
+    onPreviousResult = calendarViewModel::showPreviousResult,
+    onNextResult = calendarViewModel::showNextResult,
+    onOpenResult = calendarViewModel::openResult,
+    onClearAll = calendarViewModel.query::clearAll,
     onOpenUpcoming = { event ->
         analytics.track(AnalyticsEvent.CalendarItemOpened(event.itemKind))
         links.open(event)

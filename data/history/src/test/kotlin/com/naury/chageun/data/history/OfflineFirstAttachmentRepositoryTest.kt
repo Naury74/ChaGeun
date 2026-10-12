@@ -6,6 +6,7 @@ import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.database.ChageunDatabase
+import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
 import com.naury.chageun.core.model.RecordRef
@@ -16,6 +17,7 @@ import java.io.File
 import java.nio.file.Files
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -118,6 +120,29 @@ class OfflineFirstAttachmentRepositoryTest {
 
         assertThat(repository.observe(vehicleId, owner).first()).isEmpty()
         assertThat(file.exists()).isFalse()
+    }
+
+    @Test
+    fun observeBetween_placesRecordPhotosOnTheRecordDate_andSkipsVehiclePhoto() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val fuelDate = LocalDate.of(2026, 10, 12)
+        database.historyDao().insertFuel(
+            FuelRecordEntity(
+                id = owner.id, vehicleId = "v1", fuelDate = fuelDate, mileageKm = 41_000, totalPriceWon = 68_000,
+                volumeMl = 40_000, unitPriceWon = 1_700, computedField = null, isFullTank = true,
+                stationName = null, memo = null, createdAt = now, updatedAt = now,
+            ),
+        )
+        repository.attach(vehicleId, owner, listOf("content://receipt"))
+        photoRepository(StandardTestDispatcher(testScheduler)).replace(vehicleId, "content://car")
+
+        val inRange = repository.observeBetween(vehicleId, fuelDate, fuelDate).first()
+        val outOfRange = repository.observeBetween(vehicleId, fuelDate.plusDays(1), fuelDate.plusDays(7)).first()
+
+        assertThat(inRange.map { it.date }).containsExactly(fuelDate)
+        assertThat(inRange.single().attachment.owner).isEqualTo(owner)
+        assertThat(File(inRange.single().attachment.thumbnailPath).exists()).isTrue()
+        assertThat(outOfRange).isEmpty()
     }
 
     private fun photoRepository(
