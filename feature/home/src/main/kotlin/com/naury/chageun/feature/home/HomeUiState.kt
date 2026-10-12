@@ -64,14 +64,21 @@ sealed interface HomeWeather {
     /** "현재 위치"를 골랐지만 위치 권한이 없다. */
     data object NeedsPermission : HomeWeather
 
+    /** "현재 위치"인데 기기가 위치를 주지 못했다. 지역을 고르라고 안내하고, 홈이 다시 보이면 또 찾아본다. */
+    data object LocationUnavailable : HomeWeather
+
     data object Loading : HomeWeather
 
-    /** [scene]은 Hero 바탕 하늘에 그릴 날씨 장면이다. */
+    /**
+     * [scene]은 Hero 바탕 하늘에 그릴 날씨 장면이다. [areaName]은 "현재 위치"로 찾은 동네 이름(예: "서울 강남구")이고,
+     * 찾지 못했으면 null이라 "현재 위치"라고 쓴다.
+     */
     data class Shown(
         val snapshot: WeatherSnapshot,
         val location: WeatherLocation,
         val tip: WeatherTip,
         val scene: WeatherScene = WeatherScene.ClearDay,
+        val areaName: String? = null,
     ) : HomeWeather
 
     /** 위치나 날씨를 구하지 못했다. 오류를 띄우지 않고 카드를 숨긴다. */

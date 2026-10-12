@@ -71,8 +71,10 @@ class HomeHeaderSource @Inject constructor(
                             location = location,
                             tip = WeatherTips.tipFor(result.snapshot),
                             scene = weatherSceneFor(result.snapshot, LocalTime.now(clock).hour),
+                            areaName = result.areaName,
                         )
                         WeatherResult.NeedsPermission -> HomeWeather.NeedsPermission
+                        WeatherResult.LocationUnavailable -> HomeWeather.LocationUnavailable
                         WeatherResult.Unavailable -> HomeWeather.Unavailable
                     },
                 )

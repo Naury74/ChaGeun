@@ -96,11 +96,30 @@ private fun RegionDialog(message: String?, onPicked: (KoreaRegion) -> Unit, onDi
     )
 }
 
-/** 고른 위치의 이름. 기기 위치는 주소로 바꾸지 않으므로 "현재 위치"라고만 쓴다. */
+/**
+ * 고른 위치의 이름. "현재 위치"는 기기 위치로 찾은 동네 이름(예: "서울 강남구")을 쓰고,
+ * 아직 못 찾았거나 지오코더가 없으면 "현재 위치"라고만 쓴다.
+ */
 @Composable
-fun weatherLocationLabel(location: WeatherLocation): String = when (location) {
-    WeatherLocation.Current -> stringResource(R.string.weather_location_current_short)
+fun weatherLocationLabel(location: WeatherLocation, areaName: String? = null): String = when (location) {
+    WeatherLocation.Current -> areaName ?: stringResource(R.string.weather_location_current_short)
     is WeatherLocation.Region -> stringResource(location.region.labelRes)
+}
+
+/**
+ * 설정에 쓰는 위치 이름. 기기 위치로 찾은 동네임을 알 수 있게 "현재 위치 (서울 강남구)"처럼 쓰고,
+ * 지난번에 위치를 못 구했으면 [isMissing]이라 "현재 위치 (찾지 못함)"으로 쓴다.
+ */
+@Composable
+fun weatherLocationSettingLabel(
+    location: WeatherLocation,
+    areaName: String? = null,
+    isMissing: Boolean = false,
+): String = when {
+    location != WeatherLocation.Current -> weatherLocationLabel(location)
+    isMissing -> stringResource(R.string.weather_location_current_missing)
+    areaName != null -> stringResource(R.string.weather_location_current_with_area, areaName)
+    else -> weatherLocationLabel(location)
 }
 
 fun Context.hasCoarseLocationPermission(): Boolean =

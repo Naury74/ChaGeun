@@ -142,6 +142,8 @@
     <string name="weather_location_denied_message">No location permission? Pick the region closest to you and you\'ll still get the weather.</string>
     <string name="weather_location_cancel">Cancel</string>
     <string name="weather_location_current_short">Current location</string>
+    <string name="weather_location_current_with_area">Current location (%1$s)</string>
+    <string name="weather_location_current_missing">Current location (not found)</string>
     <string name="weather_region_seoul">Seoul</string>
     <string name="weather_region_busan">Busan</string>
     <string name="weather_region_daegu">Daegu</string>

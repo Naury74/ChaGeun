@@ -86,6 +86,7 @@ class HomeScreenshotTest {
         tip: WeatherTip,
         location: WeatherLocation = WeatherLocation.Region(KoreaRegion.Seoul),
         greeting: Greeting = Greeting(GreetingSituation.CommuteMorning, seed = 0),
+        areaName: String? = null,
     ) = baseState.copy(
         greetingName = "나우리",
         greeting = greeting,
@@ -94,6 +95,7 @@ class HomeScreenshotTest {
             location,
             tip,
             scene,
+            areaName,
         ),
     )
 
@@ -103,6 +105,8 @@ class HomeScreenshotTest {
         17.9,
         WeatherTip.Rain,
         location = WeatherLocation.Current,
+        // "현재 위치"로 찾은 동네 이름이 날씨 줄에 나온다.
+        areaName = "서울 강남구",
     )
     private val clearState =
         weatherState(WeatherScene.ClearDay, WeatherCondition.Clear, 22.0, WeatherTip.NiceDay)
@@ -245,6 +249,23 @@ class HomeScreenshotTest {
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     fun weatherSetup_ko() = capture("home_weather_setup_ko", paneCount = 1)
+
+    /** "현재 위치"인데 기기가 위치를 주지 못했을 때. 날씨 줄 자리에 지역을 고르라는 알약이 나온다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun weatherLocationFailed_ko() = capture(
+        "home_weather_location_failed_ko",
+        paneCount = 1,
+        baseState.copy(weather = HomeWeather.LocationUnavailable),
+    )
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun weatherLocationFailed_dark_ko() = capture(
+        "home_weather_location_failed_dark_ko",
+        paneCount = 1,
+        baseState.copy(weather = HomeWeather.LocationUnavailable),
+    )
 
     /** 설정에서 날씨를 끄면 인사말과 날짜만 남는다. */
     @Test

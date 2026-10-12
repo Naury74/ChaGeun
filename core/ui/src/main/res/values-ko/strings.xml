@@ -138,6 +138,8 @@
     <string name="weather_location_denied_message">위치 권한이 없어도 가까운 지역을 고르면 날씨를 볼 수 있어요.</string>
     <string name="weather_location_cancel">취소</string>
     <string name="weather_location_current_short">현재 위치</string>
+    <string name="weather_location_current_with_area">현재 위치 (%1$s)</string>
+    <string name="weather_location_current_missing">현재 위치 (찾지 못함)</string>
     <string name="weather_region_seoul">서울</string>
     <string name="weather_region_busan">부산</string>
     <string name="weather_region_daegu">대구</string>

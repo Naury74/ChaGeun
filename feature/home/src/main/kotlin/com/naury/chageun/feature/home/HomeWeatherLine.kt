@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Dehaze
 import androidx.compose.material.icons.filled.FilterDrama
 import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationSearching
 import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Thunderstorm
@@ -93,6 +94,12 @@ internal fun HomeWeatherLine(
             onChooseLocation,
             modifier,
         )
+        HomeWeather.LocationUnavailable -> WeatherPill(
+            Icons.Filled.LocationSearching,
+            stringResource(R.string.home_weather_location_failed),
+            onChooseLocation,
+            modifier,
+        )
         HomeWeather.Loading -> Text(
             stringResource(R.string.home_weather_loading),
             style = MaterialTheme.typography.bodySmall,
@@ -104,7 +111,7 @@ internal fun HomeWeatherLine(
 }
 
 /**
- * "☁ 27° 흐림 · 서울   오늘도 안전 운전해요   날씨: MET Norway". 날씨·팁·출처를 덩어리로 두어,
+ * "☁ 27° 흐림 · 서울 강남구   오늘도 안전 운전해요   날씨: MET Norway". 날씨·팁·출처를 덩어리로 두어,
  * 폭이 좁으면 덩어리째 다음 줄로 넘어간다. 화면 읽기는 한 문장으로 읽고 누르면 위치를 바꾼다.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -115,7 +122,7 @@ private fun WeatherNow(weather: HomeWeather.Shown, seed: Long, onChooseLocation:
     val tip = tips[Math.floorMod(seed, tips.size)]
     val temperature = snapshot.temperatureC.roundToInt().toString()
     val condition = stringResource(snapshot.condition.labelRes)
-    val place = weatherLocationLabel(weather.location)
+    val place = weatherLocationLabel(weather.location, weather.areaName)
     val spoken = stringResource(R.string.home_weather_spoken, place, temperature, condition, tip)
     val variant = skyVariantText()
     val summary = buildAnnotatedString {
