@@ -10,6 +10,7 @@ import com.naury.chageun.core.domain.auth.AuthError
 import com.naury.chageun.core.domain.auth.AuthRepository
 import com.naury.chageun.core.domain.auth.AuthResult
 import com.naury.chageun.core.domain.auth.GoogleIdTokenResult
+import com.naury.chageun.core.domain.auth.ProfilePhotoRepository
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +37,8 @@ sealed interface AccountNotice {
 data class AccountUiState(
     val isLoading: Boolean = true,
     val user: AuthUser? = null,
+    /** 받아 둔 Google 프로필 사진 파일. 없으면 이름 첫 글자를 보인다. */
+    val photoPath: String? = null,
     val isGoogleConfigured: Boolean = false,
     val isBusy: Boolean = false,
     val notice: AccountNotice? = null,
@@ -47,16 +50,18 @@ class AccountViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val googleIdTokens: GoogleIdTokenSource,
     private val analytics: AnalyticsTracker,
+    profilePhotos: ProfilePhotoRepository,
 ) : ViewModel() {
 
     private val isBusy = MutableStateFlow(false)
     private val notice = MutableStateFlow<AccountNotice?>(null)
 
     val uiState: StateFlow<AccountUiState> =
-        combine(authRepository.currentUser, isBusy, notice) { user, busy, message ->
+        combine(authRepository.currentUser, profilePhotos.photoPath, isBusy, notice) { user, photo, busy, message ->
             AccountUiState(
                 isLoading = false,
                 user = user,
+                photoPath = photo,
                 isGoogleConfigured = googleIdTokens.isConfigured,
                 isBusy = busy,
                 notice = message,

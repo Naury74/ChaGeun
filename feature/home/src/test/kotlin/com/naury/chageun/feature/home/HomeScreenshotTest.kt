@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.home
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.Gutters
@@ -23,13 +24,17 @@ import com.naury.chageun.core.model.VehicleHealthLevel
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
 import com.naury.chageun.core.model.WeatherSnapshot
+import com.naury.chageun.core.ui.PROFILE_AVATAR_PHOTO_TAG
 import com.naury.chageun.core.uitesting.AppFrame
 import com.naury.chageun.core.uitesting.SKY_COLOR_TOLERANCE
 import com.naury.chageun.core.uitesting.ScreenshotDevices
 import com.naury.chageun.core.uitesting.captureScreen
+import com.naury.chageun.core.uitesting.writeSampleProfilePhoto
+import java.io.File
 import java.time.Instant
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -41,6 +46,9 @@ class HomeScreenshotTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    @get:Rule
+    val folder = TemporaryFolder()
 
     private val baseState = content(
         VehicleHealthLevel.NeedsAttention,
@@ -146,9 +154,19 @@ class HomeScreenshotTest {
                 }
             }
         }
+        // 프로필 사진은 메인 스레드 밖에서 읽으므로 보일 때까지 기다린다.
+        if (uiState.avatarPath != null) {
+            composeRule.waitUntil(timeoutMillis = 5_000) {
+                composeRule.onAllNodes(hasTestTag(PROFILE_AVATAR_PHOTO_TAG), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
+        }
         // 날씨 하늘의 흐림·빗줄기는 OS마다 1~2단계 다르게 그려진다.
         composeRule.captureScreen(name, colorTolerance = SKY_COLOR_TOLERANCE)
     }
+
+    private fun withPhoto(uiState: HomeUiState.Content) =
+        uiState.copy(avatarPath = writeSampleProfilePhoto(File(folder.root, "avatar.jpg")).path)
 
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE)
@@ -166,6 +184,16 @@ class HomeScreenshotTest {
         paneCount = 1,
         state.copy(greetingName = "나우리", greeting = Greeting(GreetingSituation.Evening, seed = 0)),
     )
+
+    /** Google로 로그인하면 계정 버튼에 첫 글자 대신 Google 프로필 사진이 들어간다. */
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    fun phoneSignedInPhoto_ko() = capture("home_phone_signed_in_photo_ko", paneCount = 1, withPhoto(clearState))
+
+    @Test
+    @Config(qualifiers = DARK_KO)
+    fun phoneSignedInPhoto_dark_ko() =
+        capture("home_phone_signed_in_photo_dark_ko", paneCount = 1, withPhoto(nightState))
 
     @Test
     @Config(qualifiers = ScreenshotDevices.TABLET)

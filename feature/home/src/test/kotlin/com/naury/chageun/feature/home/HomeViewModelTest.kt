@@ -35,6 +35,7 @@ import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
+import com.naury.chageun.core.testing.FakeProfilePhotoRepository
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.FakeWeatherRepository
@@ -60,6 +61,7 @@ class HomeViewModelTest {
     private val history = FakeHistoryRepository()
     private val photos = FakeVehiclePhotoRepository()
     private val auth = FakeAuthRepository()
+    private val profilePhotos = FakeProfilePhotoRepository()
     private val usage = FakeAppUsageRepository(AppUsage(firstLaunchAt = Instant.EPOCH, launchCount = 5))
     private val weatherSettings = FakeWeatherSettingsRepository()
     private val location = FakeApproximateLocationProvider()
@@ -75,7 +77,14 @@ class HomeViewModelTest {
         ),
         historyRepository = history,
         photoRepository = photos,
-        header = HomeHeaderSource(auth, usage, weatherSettings, LoadWeatherUseCase(location, weatherRepository), clock),
+        header = HomeHeaderSource(
+            auth,
+            profilePhotos,
+            usage,
+            weatherSettings,
+            LoadWeatherUseCase(location, weatherRepository),
+            clock,
+        ),
         clock = clock,
     )
 
@@ -167,6 +176,22 @@ class HomeViewModelTest {
         assertThat(content.greetingName).isEqualTo("naury")
         // 고정 시각 UTC 00:00은 새벽이다.
         assertThat(content.greeting.situation).isEqualTo(GreetingSituation.Dawn)
+    }
+
+    @Test
+    fun googleSignIn_showsGoogleNameAndPhoto_rightAway() = runTest {
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Kia", "Sportage", 2023, FuelType.Hybrid, Kilometers(40_000)))
+        viewModel.uiState.first { it is HomeUiState.Content }
+
+        auth.signInWithGoogle("token")
+        profilePhotos.photoPath.value = "/files/profile/avatar.jpg"
+        val content = viewModel.uiState.first {
+            (it as? HomeUiState.Content)?.avatarPath != null
+        } as HomeUiState.Content
+
+        assertThat(content.greetingName).isEqualTo("Driver")
+        assertThat(content.avatarPath).isEqualTo("/files/profile/avatar.jpg")
     }
 
     @Test

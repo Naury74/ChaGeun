@@ -3,6 +3,7 @@ package com.naury.chageun.feature.home
 import com.naury.chageun.core.domain.ads.AppUsage
 import com.naury.chageun.core.domain.ads.AppUsageRepository
 import com.naury.chageun.core.domain.auth.AuthRepository
+import com.naury.chageun.core.domain.auth.ProfilePhotoRepository
 import com.naury.chageun.core.domain.weather.LoadWeatherUseCase
 import com.naury.chageun.core.domain.weather.WeatherResult
 import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.onEach
  */
 class HomeHeaderSource @Inject constructor(
     authRepository: AuthRepository,
+    profilePhotos: ProfilePhotoRepository,
     appUsageRepository: AppUsageRepository,
     private val settings: WeatherSettingsRepository,
     private val loadWeather: LoadWeatherUseCase,
@@ -33,8 +35,12 @@ class HomeHeaderSource @Inject constructor(
 ) {
     private var hasShownWeather = false
 
-    /** 로그인한 사용자를 부를 이름. 로그인하지 않았으면 null이다. */
-    val greetingName: Flow<String?> = authRepository.currentUser.map { it?.greetingName() }
+    /** 로그인한 사용자를 부를 이름과 프로필 사진. 로그인하지 않았으면 둘 다 null이다. */
+    val profile: Flow<HomeProfile> = combine(
+        authRepository.currentUser.map { it?.greetingName() },
+        profilePhotos.photoPath,
+        ::HomeProfile,
+    )
 
     /** "처음 오셨네요", "오랜만이에요"를 고르는 데 쓰는 실행 기록. */
     val usage: Flow<AppUsage> = appUsageRepository.usage
@@ -74,3 +80,6 @@ class HomeHeaderSource @Inject constructor(
         }
     }
 }
+
+/** 홈 머리말의 계정 동그라미와 인사말에 쓰는 이름·사진. */
+data class HomeProfile(val name: String?, val avatarPath: String?)

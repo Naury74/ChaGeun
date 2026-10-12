@@ -441,6 +441,7 @@ private fun HomeHero(
         header = {
             HomeGreetingBar(
                 name = state.greetingName,
+                avatarPath = state.avatarPath,
                 greeting = state.greeting,
                 today = state.today,
                 weather = state.weather,

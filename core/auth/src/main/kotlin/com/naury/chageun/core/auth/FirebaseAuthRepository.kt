@@ -14,6 +14,7 @@ import com.naury.chageun.core.domain.auth.AuthResult
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +22,14 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 internal class FirebaseAuthRepository(
     private val auth: FirebaseAuth,
     private val context: Context,
     private val logger: AppLogger,
+    private val profilePhotos: ProfilePhotoCache,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : AuthRepository {
 
     // reload()로 인증 여부가 바뀌어도 AuthStateListener는 다시 불리지 않는다. 직접 다시 읽게 한다.
@@ -77,6 +81,7 @@ internal class FirebaseAuthRepository(
     override suspend fun signOut() {
         auth.signOut()
         clearRememberedCredential()
+        clearProfilePhoto()
     }
 
     override suspend fun reauthenticateWithPassword(password: String): AuthResult = attempt("reauth_password") {
@@ -93,6 +98,7 @@ internal class FirebaseAuthRepository(
     override suspend fun deleteAccount(): AuthResult = attempt("delete_account") {
         checkNotNull(auth.currentUser).delete().await()
         clearRememberedCredential()
+        clearProfilePhoto()
         AuthResult.Success()
     }
 
@@ -101,6 +107,9 @@ internal class FirebaseAuthRepository(
         runCatching { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
             .onFailure { if (it is CancellationException) throw it }
     }
+
+    /** 계정을 떠나면 받아 둔 프로필 사진도 기기에 남기지 않는다. */
+    private suspend fun clearProfilePhoto() = withContext(ioDispatcher) { profilePhotos.clear() }
 
     private fun authStateChanges(): Flow<Unit> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { trySend(Unit) }
@@ -120,16 +129,25 @@ internal class FirebaseAuthRepository(
     }
 }
 
-private fun FirebaseUser.toModel() = AuthUser(
-    uid = uid,
-    email = email,
-    displayName = displayName,
-    isEmailVerified = isEmailVerified,
-    methods = providerData.mapNotNullTo(mutableSetOf()) {
-        when (it.providerId) {
-            GoogleAuthProvider.PROVIDER_ID -> AuthMethod.Google
-            "password" -> AuthMethod.Email
-            else -> null
-        }
-    },
-)
+/**
+ * Firebase 사용자 정보의 이름·사진은 처음 가입할 때 한 번 채워진다. Google 제공자 정보는 Google로 로그인할 때마다
+ * 새로 받아 오므로 Google 이름과 사진은 그쪽을 먼저 쓴다. 이메일로 가입한 뒤 Google을 연결한 계정도 이렇게 해야 보인다.
+ */
+private fun FirebaseUser.toModel(): AuthUser {
+    val google = providerData.firstOrNull { it.providerId == GoogleAuthProvider.PROVIDER_ID }
+    return AuthUser(
+        uid = uid,
+        email = email,
+        displayName = displayName,
+        isEmailVerified = isEmailVerified,
+        methods = providerData.mapNotNullTo(mutableSetOf()) {
+            when (it.providerId) {
+                GoogleAuthProvider.PROVIDER_ID -> AuthMethod.Google
+                "password" -> AuthMethod.Email
+                else -> null
+            }
+        },
+        googleName = google?.displayName,
+        photoUrl = (google?.photoUrl ?: photoUrl)?.toString(),
+    )
+}

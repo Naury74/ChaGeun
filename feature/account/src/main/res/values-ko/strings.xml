@@ -41,7 +41,6 @@
     <string name="account_error_no_google">이 휴대폰에 Google 계정을 먼저 추가해 주세요.</string>
     <string name="account_error_unavailable">아직 로그인을 쓸 수 없어요. 잠시 뒤 다시 시도해 주세요.</string>
     <string name="account_error_unknown">문제가 생겼어요. 다시 시도해 주세요.</string>
-    <string name="account_section_account">계정</string>
     <string name="account_signed_in_google">Google로 로그인함</string>
     <string name="account_signed_in_email">이메일로 로그인함</string>
     <string name="account_verify_title">메일함에서 인증을 마쳐 주세요</string>

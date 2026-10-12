@@ -41,7 +41,6 @@
     <string name="account_error_no_google">Add a Google account to this phone first.</string>
     <string name="account_error_unavailable">Sign-in isn\'t available yet. Try again later.</string>
     <string name="account_error_unknown">Something went wrong. Try again.</string>
-    <string name="account_section_account">Account</string>
     <string name="account_signed_in_google">Signed in with Google</string>
     <string name="account_signed_in_email">Signed in with email</string>
     <string name="account_verify_title">Check your inbox to finish signing up</string>

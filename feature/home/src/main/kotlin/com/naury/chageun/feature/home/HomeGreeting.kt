@@ -2,17 +2,11 @@ package com.naury.chageun.feature.home
 
 import android.text.format.DateFormat
 import androidx.annotation.ArrayRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -44,6 +37,7 @@ import com.naury.chageun.core.model.MaintenanceOverview
 import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.Vehicle
+import com.naury.chageun.core.ui.ProfileAvatar
 import java.text.NumberFormat
 import java.time.Duration
 import java.time.LocalDate
@@ -52,14 +46,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
- * 인사말에 부를 이름. Google 계정은 표시 이름, 이메일 계정은 @ 앞부분을 쓴다.
+ * 인사말에 부를 이름. 고르는 순서는 [AuthUser.profileName]을 따른다.
  * 인증을 마치지 않은 계정은 아직 가입 전이라 이름을 부르지 않는다.
  */
-fun AuthUser.greetingName(): String? {
-    if (needsEmailVerification) return null
-    return displayName?.trim()?.takeIf { it.isNotEmpty() }
-        ?: email?.substringBefore('@')?.takeIf { it.isNotEmpty() }
-}
+fun AuthUser.greetingName(): String? = if (needsEmailVerification) null else profileName
 
 /**
  * 홈 화면 상태에서 인사말 규칙에 넘길 사실을 모은다.
@@ -98,6 +88,7 @@ private val THIS_LAUNCH_WINDOW: Duration = Duration.ofMinutes(10)
 @Composable
 internal fun HomeGreetingBar(
     name: String?,
+    avatarPath: String?,
     greeting: Greeting,
     today: LocalDate,
     weather: HomeWeather,
@@ -117,7 +108,7 @@ internal fun HomeGreetingBar(
         ) {
             // 버튼 자리를 먼저 잡고 남은 폭을 로고에 준다. 큰 글꼴에서도 버튼이 밀려나지 않는다.
             ChageunBrandTitle(stringResource(R.string.home_brand), Modifier.weight(1f))
-            AccountButton(name, onOpenAccount)
+            AccountButton(name, avatarPath, onOpenAccount)
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_open_settings))
             }
@@ -141,41 +132,17 @@ internal fun HomeGreetingBar(
     }
 }
 
+/** 로그인했으면 프로필 사진(없으면 이름 첫 글자)을, 아니면 사람 아이콘을 보인다. */
 @Composable
-private fun AccountButton(name: String?, onOpenAccount: () -> Unit) {
-    IconButton(onClick = onOpenAccount) {
-        if (name != null) {
-            Initial(name)
-        } else {
-            Icon(
-                Icons.Filled.AccountCircle,
-                contentDescription = stringResource(R.string.home_open_account),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(AVATAR_SIZE),
-            )
-        }
+private fun AccountButton(name: String?, avatarPath: String?, onOpenAccount: () -> Unit) {
+    val description = if (name != null) {
+        stringResource(R.string.home_open_account_named, name)
+    } else {
+        stringResource(R.string.home_open_account)
     }
-}
-
-/** 로그인한 사용자의 이름 첫 글자. */
-@Composable
-private fun Initial(name: String) {
-    val description = stringResource(R.string.home_open_account_named, name)
-    Box(
-        Modifier
-            .size(AVATAR_SIZE)
-            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        // 동그라미 크기가 고정이라 첫 글자도 글꼴 크기 설정을 따르지 않게 한다. 읽을 이름은 설명으로 따로 준다.
-        val glyphSize = with(LocalDensity.current) { INITIAL_SIZE.toSp() }
-        Text(
-            name.take(1).uppercase(),
-            style = MaterialTheme.typography.titleSmall.copy(fontSize = glyphSize, lineHeight = glyphSize),
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.wrapContentSize(unbounded = true),
-        )
+    IconButton(onClick = onOpenAccount, modifier = Modifier.semantics { contentDescription = description }) {
+        // 로그인하지 않았으면 이름과 사진이 함께 없다. 사진만 남는 경우는 없으므로 이름으로 가른다.
+        ProfileAvatar(name = name, photoPath = avatarPath.takeIf { name != null }, size = AVATAR_SIZE)
     }
 }
 
@@ -210,7 +177,6 @@ private fun todayLabel(today: LocalDate): String {
 }
 
 private val AVATAR_SIZE = 32.dp
-private val INITIAL_SIZE = 14.dp
 
 @get:ArrayRes
 private val GreetingSituation.arrayRes: Int

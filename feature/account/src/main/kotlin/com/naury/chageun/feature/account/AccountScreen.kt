@@ -57,6 +57,7 @@ import com.naury.chageun.core.ui.DialogAction
 import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
+import com.naury.chageun.core.ui.ProfileAvatar
 import com.naury.chageun.core.ui.openUriSafely
 
 @Composable
@@ -152,6 +153,7 @@ fun AccountScreen(
                     )
                     else -> AccountHome(
                         user = user,
+                        photoPath = uiState.photoPath,
                         isBusy = uiState.isBusy,
                         onSignOut = onSignOut,
                         onDeleteAccount = onDeleteAccount,
@@ -302,21 +304,14 @@ private fun ColumnScope.VerifyEmail(
 
 /** AC05 계정 화면. */
 @Composable
-private fun AccountHome(user: AuthUser, isBusy: Boolean, onSignOut: () -> Unit, onDeleteAccount: () -> Unit) {
-    CardGroup(stringResource(R.string.account_section_account)) {
-        ListRow(
-            icon = Icons.Filled.AccountCircle,
-            title = user.email ?: user.displayName.orEmpty(),
-            body = stringResource(
-                if (AuthMethod.Google in user.methods) {
-                    R.string.account_signed_in_google
-                } else {
-                    R.string.account_signed_in_email
-                },
-            ),
-            tone = ChageunTheme.colors.good,
-        )
-    }
+private fun AccountHome(
+    user: AuthUser,
+    photoPath: String?,
+    isBusy: Boolean,
+    onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
+) {
+    ProfileHeader(user, photoPath)
     CardGroup(title = null) {
         ListRow(
             Icons.AutoMirrored.Filled.Logout,
@@ -333,6 +328,53 @@ private fun AccountHome(user: AuthUser, isBusy: Boolean, onSignOut: () -> Unit, 
             titleColor = MaterialTheme.colorScheme.error,
             onClick = onDeleteAccount,
             enabled = !isBusy,
+        )
+    }
+}
+
+/** 계정 화면 맨 위. Google로 로그인했으면 Google 사진과 이름이 바로 보인다. */
+@Composable
+private fun ProfileHeader(user: AuthUser, photoPath: String?) {
+    val name = user.profileName
+    Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
+    ) {
+        // 이름은 아래 글자로 읽으므로 동그라미는 장식으로 둔다.
+        ProfileAvatar(
+            name = name,
+            photoPath = photoPath,
+            size = HERO_ICON_BOX,
+            modifier = Modifier.padding(bottom = ChageunTheme.spacing.xs),
+        )
+        val title = name ?: user.email.orEmpty()
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.semantics { heading() },
+        )
+        user.email?.takeIf { it != title }?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Text(
+            stringResource(
+                if (AuthMethod.Google in user.methods) {
+                    R.string.account_signed_in_google
+                } else {
+                    R.string.account_signed_in_email
+                },
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            color = ChageunTheme.colors.good.content,
+            textAlign = TextAlign.Center,
         )
     }
 }

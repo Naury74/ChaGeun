@@ -14,5 +14,6 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.play.services.auth)
 
+    testImplementation(projects.core.testing)
     testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -8,6 +8,7 @@ import com.naury.chageun.core.common.dispatcher.Dispatcher
 import com.naury.chageun.core.common.logging.AppLogger
 import com.naury.chageun.core.common.logging.LogField
 import com.naury.chageun.core.common.storage.AttachmentDirectory
+import com.naury.chageun.core.common.storage.PROFILE_PHOTO_DIRECTORY
 import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
 import com.naury.chageun.core.domain.backup.BackupRepository
@@ -66,8 +67,10 @@ internal class RoomBackupRepository @Inject constructor(
     }
 
     // 모두 지운다고 안내하므로 사진 편집기(FrameKit)의 세션·결과 파일과 가져오기 전 임시 사진도 함께 지운다.
+    // 받아 둔 계정 프로필 사진도 지운다. 로그인이 남아 있으면 홈을 다시 열 때 새로 받는다.
     private fun leftoverPhotoDirectories() = listOf(
         File(context.filesDir, FRAMEKIT_DIRECTORY),
+        File(context.filesDir, PROFILE_PHOTO_DIRECTORY),
         File(context.cacheDir, FRAMEKIT_DIRECTORY),
         File(context.cacheDir, PHOTO_INPUT_DIRECTORY),
     )

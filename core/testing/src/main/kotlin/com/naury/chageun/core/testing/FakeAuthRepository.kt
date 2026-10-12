@@ -39,9 +39,20 @@ class FakeAuthRepository : AuthRepository {
         AuthResult.Success()
     }
 
+    /** 다음 Google 로그인에서 Google 계정이 알려 줄 프로필 사진 주소. */
+    var googlePhotoUrl: String? = null
+
     /** "new"로 시작하는 토큰은 처음 쓰는 Google 계정이다. */
     override suspend fun signInWithGoogle(idToken: String): AuthResult = respond {
-        user.value = AuthUser("google-uid", "driver@gmail.com", "Driver", true, setOf(AuthMethod.Google))
+        user.value = AuthUser(
+            uid = "google-uid",
+            email = "driver@gmail.com",
+            displayName = "Driver",
+            isEmailVerified = true,
+            methods = setOf(AuthMethod.Google),
+            googleName = "Driver",
+            photoUrl = googlePhotoUrl,
+        )
         AuthResult.Success(isNewUser = idToken.startsWith("new"))
     }
 
