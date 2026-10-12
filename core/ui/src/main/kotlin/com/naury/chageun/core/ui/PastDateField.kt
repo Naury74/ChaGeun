@@ -2,13 +2,10 @@ package com.naury.chageun.core.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +13,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -47,7 +43,7 @@ fun PastDateField(
     }
 }
 
-/** 오늘 이전 날짜만 고를 수 있는 달력 Dialog. 고르면 [onDateSelected] 다음에 [onDismiss]를 부른다. */
+/** 오늘 이전 날짜만 고를 수 있는 달력 창. 고르면 [onDateSelected] 다음에 [onDismiss]를 부른다. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PastDatePickerDialog(date: LocalDate?, onDateSelected: (LocalDate) -> Unit, onDismiss: () -> Unit) {
@@ -55,24 +51,17 @@ fun PastDatePickerDialog(date: LocalDate?, onDateSelected: (LocalDate) -> Unit, 
         initialSelectedDateMillis = date?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
         selectableDates = PastDates,
     )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    pickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
-                    }
-                    onDismiss()
-                },
-            ) { Text(stringResource(R.string.date_picker_confirm)) }
+    ChageunDatePickerDialog(
+        state = pickerState,
+        onConfirm = {
+            pickerState.selectedDateMillis?.let { millis ->
+                onDateSelected(Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate())
+            }
+            onDismiss()
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.date_picker_cancel)) }
-        },
-    ) {
-        DatePicker(state = pickerState)
-    }
+        onDismiss = onDismiss,
+        confirmEnabled = true,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

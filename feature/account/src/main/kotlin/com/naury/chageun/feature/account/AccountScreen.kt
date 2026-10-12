@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +51,10 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AuthMethod
 import com.naury.chageun.core.model.AuthUser
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunDialog
 import com.naury.chageun.core.ui.ChageunLinks
+import com.naury.chageun.core.ui.DialogAction
+import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.openUriSafely
@@ -82,19 +84,20 @@ fun AccountRoute(
         onStartOver = viewModel::startOver,
     )
     if (isSignOutConfirming) {
-        AlertDialog(
-            onDismissRequest = { isSignOutConfirming = false },
-            title = { Text(stringResource(R.string.account_sign_out_title)) },
-            text = { Text(stringResource(R.string.account_sign_out_body)) },
-            confirmButton = {
-                TextButton(onClick = {
+        ChageunDialog(
+            title = stringResource(R.string.account_sign_out_title),
+            message = stringResource(R.string.account_sign_out_body),
+            icon = Icons.AutoMirrored.Filled.Logout,
+            onDismiss = { isSignOutConfirming = false },
+            actions = listOf(
+                DialogAction(stringResource(R.string.account_sign_out)) {
                     isSignOutConfirming = false
                     viewModel.signOut()
-                }) { Text(stringResource(R.string.account_sign_out)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { isSignOutConfirming = false }) { Text(stringResource(R.string.account_cancel)) }
-            },
+                },
+                DialogAction(stringResource(R.string.account_cancel), DialogActionStyle.Secondary) {
+                    isSignOutConfirming = false
+                },
+            ),
         )
     }
 }

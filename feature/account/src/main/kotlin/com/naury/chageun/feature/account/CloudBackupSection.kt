@@ -1,23 +1,19 @@
 package com.naury.chageun.feature.account
 
 import android.text.format.Formatter
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -33,6 +28,10 @@ import com.naury.chageun.core.domain.cloudbackup.CloudBackup
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupError
 import com.naury.chageun.core.domain.cloudbackup.CloudBackupRepository
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunDialog
+import com.naury.chageun.core.ui.DialogAction
+import com.naury.chageun.core.ui.DialogActionStyle
+import com.naury.chageun.core.ui.DialogInfoCard
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
@@ -144,38 +143,41 @@ internal fun RestorePicker(state: CloudBackupUiState, actions: CloudBackupAction
 @Composable
 internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupActions) {
     state.selected?.let { backup ->
-        AlertDialog(
-            onDismissRequest = { actions.onSelect(null) },
-            title = { Text(formatDateTime(backup.createdAt)) },
-            text = { Text(backupDetails(backup)) },
-            confirmButton = {
-                TextButton(onClick = { actions.onRestore(backup) }) {
-                    Text(stringResource(R.string.account_backup_restore))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { actions.onRequestDelete(backup) }) {
-                    Text(stringResource(R.string.account_backup_delete), color = MaterialTheme.colorScheme.error)
-                }
-            },
+        ChageunDialog(
+            title = formatDateTime(backup.createdAt),
+            message = backupDetails(backup),
+            icon = Icons.Filled.History,
+            onDismiss = { actions.onSelect(null) },
+            actions = listOf(
+                DialogAction(stringResource(R.string.account_backup_restore)) { actions.onRestore(backup) },
+                DialogAction(stringResource(R.string.account_backup_delete), DialogActionStyle.Destructive) {
+                    actions.onRequestDelete(backup)
+                },
+                DialogAction(stringResource(R.string.account_cancel), DialogActionStyle.Secondary) {
+                    actions.onSelect(null)
+                },
+            ),
         )
     }
     state.pendingDelete?.let {
-        AlertDialog(
-            onDismissRequest = actions.onCloseDialog,
-            title = { Text(stringResource(R.string.account_backup_delete_title)) },
-            text = { Text(stringResource(R.string.account_backup_delete_body)) },
-            confirmButton = {
-                TextButton(onClick = actions.onConfirmDelete) {
-                    Text(
-                        stringResource(R.string.account_backup_delete_confirm),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = actions.onCloseDialog) { Text(stringResource(R.string.account_cancel)) }
-            },
+        ChageunDialog(
+            title = stringResource(R.string.account_backup_delete_title),
+            message = stringResource(R.string.account_backup_delete_body),
+            icon = Icons.Filled.DeleteOutline,
+            tone = ChageunTheme.colors.critical,
+            onDismiss = actions.onCloseDialog,
+            actions = listOf(
+                DialogAction(
+                    stringResource(R.string.account_backup_delete_confirm),
+                    DialogActionStyle.Destructive,
+                    onClick = actions.onConfirmDelete,
+                ),
+                DialogAction(
+                    stringResource(R.string.account_cancel),
+                    DialogActionStyle.Secondary,
+                    onClick = actions.onCloseDialog,
+                ),
+            ),
         )
     }
     when (val step = state.restore) {
@@ -193,44 +195,35 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
 /** 백업과 지금 휴대폰의 데이터를 나란히 보여 주고 전체 교체를 확인받는다. 드라이브와 파일 복원이 함께 쓴다. */
 @Composable
 internal fun RestoreConfirmDialog(preview: ImportPreview.Ready, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.account_restore_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                Text(stringResource(R.string.account_restore_incoming), style = MaterialTheme.typography.titleSmall)
-                Text(summaryLine(preview.incoming))
-                Text(stringResource(R.string.account_restore_current), style = MaterialTheme.typography.titleSmall)
-                Text(summaryLine(preview.current))
-                Text(stringResource(R.string.account_restore_body))
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(R.string.account_restore_confirm)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.account_cancel)) }
-        },
-    )
+    ChageunDialog(
+        title = stringResource(R.string.account_restore_title),
+        message = stringResource(R.string.account_restore_body),
+        icon = Icons.Filled.SettingsBackupRestore,
+        onDismiss = onDismiss,
+        actions = listOf(
+            DialogAction(stringResource(R.string.account_restore_confirm), onClick = onConfirm),
+            DialogAction(stringResource(R.string.account_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
+        ),
+    ) {
+        DialogInfoCard(Modifier.fillMaxWidth(), stringResource(R.string.account_restore_incoming)) {
+            Text(summaryLine(preview.incoming))
+        }
+        DialogInfoCard(Modifier.fillMaxWidth(), stringResource(R.string.account_restore_current)) {
+            Text(summaryLine(preview.current))
+        }
+    }
 }
 
 /** 내려받기·교체 중에는 닫을 수 없다. 교체가 반쯤 된 상태로 화면을 떠나지 않게 한다. */
 @Composable
 internal fun ProgressDialog(message: String) {
-    AlertDialog(
-        onDismissRequest = {},
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-        confirmButton = {},
-        text = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-            ) {
-                CircularProgressIndicator(Modifier.size(PROGRESS_SIZE * 2))
-                Text(message)
-            }
-        },
-    )
+    ChageunDialog(title = message, onDismiss = {}, actions = emptyList(), dismissible = false) {
+        CircularProgressIndicator(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(PROGRESS_SIZE * 2),
+        )
+    }
 }
 
 @Composable

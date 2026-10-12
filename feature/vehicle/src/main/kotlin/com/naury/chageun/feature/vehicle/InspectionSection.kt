@@ -13,8 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -42,6 +40,7 @@ import com.naury.chageun.core.model.InspectionSource
 import com.naury.chageun.core.model.InspectionState
 import com.naury.chageun.core.model.InspectionStatus
 import com.naury.chageun.core.model.Kilometers
+import com.naury.chageun.core.ui.ChageunDatePickerDialog
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.formatDate
 import java.time.Instant
@@ -152,24 +151,17 @@ internal fun InspectionDatePicker(initial: LocalDate?, onConfirm: (LocalDate) ->
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial?.atStartOfDay(ZoneOffset.UTC)?.toInstant()?.toEpochMilli(),
     )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    state.selectedDateMillis?.let {
-                        onConfirm(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
-                    }
-                },
-                enabled = state.selectedDateMillis != null,
-            ) { Text(stringResource(R.string.vehicle_inspection_confirm)) }
+    ChageunDatePickerDialog(
+        state = state,
+        onConfirm = {
+            state.selectedDateMillis?.let {
+                onConfirm(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
+            }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.vehicle_inspection_cancel)) }
-        },
-    ) {
-        DatePicker(state = state)
-    }
+        onDismiss = onDismiss,
+        confirmLabel = stringResource(R.string.vehicle_inspection_confirm),
+        cancelLabel = stringResource(R.string.vehicle_inspection_cancel),
+    )
 }
 
 @Composable

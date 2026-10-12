@@ -22,7 +22,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,6 +43,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.formatYearMonth
 import com.naury.chageun.feature.history.R
@@ -120,13 +120,13 @@ private fun SearchField(keyword: String, actions: CalendarActions) {
     val focusRequester = remember { FocusRequester() }
     // 검색 버튼으로 열었을 때 바로 입력할 수 있게 한다. 회전 뒤 다시 그릴 때는 이미 입력한 글자가 있어 건너뛴다.
     LaunchedEffect(Unit) { if (text.isEmpty()) focusRequester.requestFocus() }
-    OutlinedTextField(
+    ChageunTextField(
         value = text,
         onValueChange = {
             text = it
             actions.onSearch(it)
         },
-        placeholder = { Text(stringResource(R.string.history_search_hint)) },
+        placeholder = stringResource(R.string.history_search_hint),
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = actions.onCloseSearch) {

@@ -1,6 +1,5 @@
 package com.naury.chageun.feature.account
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -8,15 +7,15 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LockReset
+import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,7 +47,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.ui.ChageunDialog
 import com.naury.chageun.core.ui.ChageunLinks
+import com.naury.chageun.core.ui.ChageunTextField
+import com.naury.chageun.core.ui.DialogAction
+import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.openUriSafely
 
 @Composable
@@ -113,17 +116,14 @@ fun EmailAuthScreen(uiState: EmailAuthUiState, actions: EmailAuthActions, modifi
                 selectedIndex = EmailAuthMode.entries.indexOf(uiState.mode),
                 onSelect = { actions.onModeSelected(EmailAuthMode.entries[it]) },
             )
-            OutlinedTextField(
+            ChageunTextField(
                 value = uiState.email,
                 onValueChange = actions.onEmailChange,
-                label = { Text(stringResource(R.string.account_email_label)) },
+                label = stringResource(R.string.account_email_label),
                 singleLine = true,
                 isError = uiState.showFieldErrors && uiState.isEmailInvalid,
-                supportingText = if (uiState.showFieldErrors && uiState.isEmailInvalid) {
-                    { Text(stringResource(R.string.account_error_email_invalid)) }
-                } else {
-                    null
-                },
+                supportingText = stringResource(R.string.account_error_email_invalid)
+                    .takeIf { uiState.showFieldErrors && uiState.isEmailInvalid },
                 keyboardOptions = EmailKeyboard.copy(imeAction = ImeAction.Next),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -207,13 +207,13 @@ internal fun PasswordField(
     onDone: () -> Unit,
 ) {
     var isVisible by rememberSaveable { mutableStateOf(false) }
-    OutlinedTextField(
+    ChageunTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = label,
         singleLine = true,
         isError = isError,
-        supportingText = supporting?.let { { Text(it) } },
+        supportingText = supporting,
         visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
         keyboardActions = KeyboardActions(onDone = { onDone() }),
@@ -261,47 +261,44 @@ private fun PasswordResetDialog(
     onSend: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.account_reset_title)) },
-        text = {
-            if (state.isSent) {
-                Text(stringResource(R.string.account_reset_sent, state.email.trim()))
-            } else {
-                Column {
-                    Text(stringResource(R.string.account_reset_body))
-                    OutlinedTextField(
-                        value = state.email,
-                        onValueChange = onEmailChange,
-                        label = { Text(stringResource(R.string.account_email_label)) },
-                        singleLine = true,
-                        isError = state.error != null,
-                        supportingText = state.error?.let { { Text(authErrorMessage(it)) } },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Email,
-                            imeAction = ImeAction.Send,
-                        ),
-                        keyboardActions = KeyboardActions(onSend = { onSend() }),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = ChageunTheme.spacing.sm),
-                    )
-                }
-            }
+    val actions = if (state.isSent) {
+        listOf(DialogAction(stringResource(R.string.account_close), onClick = onDismiss))
+    } else {
+        listOf(
+            DialogAction(
+                stringResource(R.string.account_reset_send),
+                enabled = !state.isBusy && !state.isEmailInvalid,
+                onClick = onSend,
+            ),
+            DialogAction(stringResource(R.string.account_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
+        )
+    }
+    ChageunDialog(
+        title = stringResource(R.string.account_reset_title),
+        message = if (state.isSent) {
+            stringResource(R.string.account_reset_sent, state.email.trim())
+        } else {
+            stringResource(R.string.account_reset_body)
         },
-        confirmButton = {
-            if (state.isSent) {
-                TextButton(onClick = onDismiss) { Text(stringResource(R.string.account_close)) }
-            } else {
-                TextButton(onClick = onSend, enabled = !state.isBusy && !state.isEmailInvalid) {
-                    Text(stringResource(R.string.account_reset_send))
-                }
-            }
-        },
-        dismissButton = if (state.isSent) {
+        icon = if (state.isSent) Icons.Filled.MarkEmailRead else Icons.Filled.LockReset,
+        onDismiss = onDismiss,
+        actions = actions,
+        content = if (state.isSent) {
             null
         } else {
-            { TextButton(onClick = onDismiss) { Text(stringResource(R.string.account_cancel)) } }
+            {
+                ChageunTextField(
+                    value = state.email,
+                    onValueChange = onEmailChange,
+                    label = stringResource(R.string.account_email_label),
+                    singleLine = true,
+                    isError = state.error != null,
+                    supportingText = state.error?.let { authErrorMessage(it) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { onSend() }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         },
     )
 }

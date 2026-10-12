@@ -32,7 +32,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -61,6 +60,7 @@ import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.CardSubheader
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
@@ -291,16 +291,13 @@ private fun QuestionSection(uiState: AiHubUiState, actions: AiHubActions) {
             )
         }
     }
-    OutlinedTextField(
+    ChageunTextField(
         value = uiState.question,
         onValueChange = actions.onQuestionChanged,
-        label = { Text(stringResource(R.string.ai_question_label)) },
+        label = stringResource(R.string.ai_question_label),
         isError = uiState.isQuestionMissing,
-        supportingText = stringResource(R.string.ai_question_required)
-            .takeIf { uiState.isQuestionMissing }
-            ?.let { { Text(it) } },
+        supportingText = stringResource(R.string.ai_question_required).takeIf { uiState.isQuestionMissing },
         minLines = 2,
-        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
     )
 }

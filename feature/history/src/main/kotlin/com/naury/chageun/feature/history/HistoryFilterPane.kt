@@ -12,8 +12,6 @@ import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.SelectableListRow
@@ -51,10 +50,10 @@ internal fun HistoryFilterPane(
             ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {
-        OutlinedTextField(
+        ChageunTextField(
             value = uiState.keyword,
             onValueChange = onKeywordChanged,
-            placeholder = { Text(stringResource(R.string.history_search_hint)) },
+            placeholder = stringResource(R.string.history_search_hint),
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),

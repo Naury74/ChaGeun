@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,6 +44,7 @@ import com.naury.chageun.core.model.PeriodicInspectionResult
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.NumberInputField
@@ -354,12 +354,12 @@ private fun TextInput(
     singleLine: Boolean = true,
     isError: Boolean = false,
 ) {
-    OutlinedTextField(
+    ChageunTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(stringResource(labelRes)) },
+        label = stringResource(labelRes),
         isError = isError,
-        supportingText = if (isError) ({ Text(stringResource(R.string.form_error_required)) }) else null,
+        supportingText = if (isError) stringResource(R.string.form_error_required) else null,
         singleLine = singleLine,
         minLines = if (singleLine) 1 else 2,
         modifier = Modifier.fillMaxWidth(),
