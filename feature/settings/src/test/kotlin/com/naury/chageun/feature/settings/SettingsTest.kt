@@ -131,7 +131,7 @@ class SettingsTest {
     @Test
     fun deleteAll_showsSummaryFirst_thenDeletesOnConfirm() = runTest {
         val backup = FakeBackupRepository().apply { summary = LocalDataSummary(1, 12, 3) }
-        val viewModel = BackupViewModel(backup)
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
 
         viewModel.requestDeleteAll()
         assertThat(viewModel.dataState.value.pendingDeletion?.records).isEqualTo(12)
@@ -144,9 +144,21 @@ class SettingsTest {
     }
 
     @Test
+    fun deleteAll_alsoRemovesSavedAreaName() = runTest {
+        val weather = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current), "서울 강남구")
+        val viewModel = BackupViewModel(FakeBackupRepository(), weather)
+
+        viewModel.requestDeleteAll()
+        viewModel.confirmDeleteAll()
+
+        assertThat(weather.currentAreaName.value).isNull()
+        assertThat(weather.isCurrentLocationMissing.value).isFalse()
+    }
+
+    @Test
     fun export_reportsFailure() = runTest {
         val backup = FakeBackupRepository().apply { exportSucceeds = false }
-        val viewModel = BackupViewModel(backup)
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
 
         viewModel.export("content://downloads/backup.zip")
 
@@ -170,7 +182,7 @@ class SettingsTest {
     fun import_previewsFirst_thenReplacesOnConfirm() = runTest {
         val preview = ImportPreview.Ready(incoming = LocalDataSummary(1, 20, 4), current = LocalDataSummary(1, 12, 3))
         val backup = FakeBackupRepository().apply { importPreview = preview }
-        val viewModel = BackupViewModel(backup)
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
 
         viewModel.previewImport("content://downloads/backup.zip")
         assertThat(viewModel.dataState.value.pendingImport?.preview).isEqualTo(preview)
@@ -186,7 +198,7 @@ class SettingsTest {
     @Test
     fun import_unsupportedVersion_neverReplaces() = runTest {
         val backup = FakeBackupRepository().apply { importPreview = ImportPreview.UnsupportedVersion(2) }
-        val viewModel = BackupViewModel(backup)
+        val viewModel = BackupViewModel(backup, FakeWeatherSettingsRepository())
 
         viewModel.previewImport("content://downloads/backup.zip")
         viewModel.confirmImport()
@@ -360,6 +372,48 @@ class SettingsTest {
     }
 
     @Test
+    fun weatherViewModel_exposesAreaName_andClearsItWhenTurnedOff() = runTest {
+        val repository = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current), "서울 강남구")
+        val viewModel = WeatherSettingsViewModel(repository)
+
+        assertThat(viewModel.areaName.first()).isEqualTo("서울 강남구")
+
+        viewModel.setEnabled(false)
+        assertThat(repository.currentAreaName.value).isNull()
+    }
+
+    @Test
+    fun weatherSection_currentLocation_showsAreaName() {
+        composeRule.setContent {
+            ChageunTheme {
+                WeatherSection(WeatherSettings(location = WeatherLocation.Current), {
+                }, {}, areaName = "Gangnam-gu, Seoul")
+            }
+        }
+
+        composeRule.onNodeWithText("Current location (Gangnam-gu, Seoul)").assertExists()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp", fontScale = 2f)
+    fun weatherSection_ko_locationMissing_saysNotFound() {
+        composeRule.setContent {
+            ChageunTheme {
+                WeatherSection(
+                    WeatherSettings(location = WeatherLocation.Current),
+                    {},
+                    {},
+                    areaName = "서울 강남구",
+                    isLocationMissing = true,
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("현재 위치 (찾지 못함)").assertExists()
+        composeRule.assertNoClippedText()
+    }
+
+    @Test
     fun weatherSection_togglesAndShowsChosenRegion() {
         var settings by mutableStateOf(WeatherSettings(location = WeatherLocation.Region(KoreaRegion.Jeju)))
         composeRule.setContent {
@@ -386,11 +440,12 @@ class SettingsTest {
         composeRule.setContent {
             AppFrame {
                 Column(Modifier.padding(16.dp)) {
-                    WeatherSection(WeatherSettings(location = WeatherLocation.Current), {}, {})
+                    WeatherSection(WeatherSettings(location = WeatherLocation.Current), {}, {}, areaName = "서울 강남구")
                 }
             }
         }
-        composeRule.onNodeWithText("현재 위치").assertExists()
+        composeRule.onNodeWithText("현재 위치 (서울 강남구)").assertExists()
+        composeRule.assertNoClippedText()
         composeRule.captureScreen("settings_weather_ko")
     }
 }

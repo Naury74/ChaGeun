@@ -16,6 +16,24 @@ interface WeatherSettingsRepository {
 
     /** 홈의 날씨 켜기 안내를 닫는다. */
     suspend fun dismissPrompt()
+
+    /**
+     * "현재 위치"로 마지막에 찾은 동네 이름(예: "서울 강남구"). 시·군·구까지만 담아 좌표보다 넓고,
+     * 다음 실행 때 설정 › 날씨에 바로 보이도록 둔다. 날씨를 끄거나 위치를 바꾸면 지워진다.
+     */
+    val currentAreaName: Flow<String?>
+
+    /** 날씨가 켜져 있고 위치가 "현재 위치"일 때만 저장한다. null이면 지운다. */
+    suspend fun setCurrentAreaName(name: String?)
+
+    /**
+     * "현재 위치"를 골랐지만 지난번에 기기가 위치를 주지 못했다(위치 꺼짐·시간 초과). 설정에 "찾지 못함"으로 보인다.
+     * 날씨를 끄거나 위치를 바꾸거나 다음에 위치를 찾으면 지워진다.
+     */
+    val isCurrentLocationMissing: Flow<Boolean>
+
+    /** 날씨가 켜져 있고 위치가 "현재 위치"일 때만 true를 저장한다. */
+    suspend fun setCurrentLocationMissing(missing: Boolean)
 }
 
 /** 대략적인 기기 위치(ACCESS_COARSE_LOCATION). 권한이 없거나 위치를 못 구하면 null이다. */
@@ -23,6 +41,14 @@ interface ApproximateLocationProvider {
     fun hasPermission(): Boolean
 
     suspend fun currentLocation(): GeoPoint?
+}
+
+/**
+ * 반올림한 [point]가 속한 동네 이름(시·도와 시·군·구까지, 예: "서울 강남구"). 기기의 지오코더로 찾고,
+ * 찾지 못하면 null이라 화면은 "현재 위치"라고만 쓴다. 구현은 같은 지점을 다시 묻지 않도록 캐시한다.
+ */
+interface AreaNameRepository {
+    suspend fun areaNameAt(point: GeoPoint): String?
 }
 
 /**

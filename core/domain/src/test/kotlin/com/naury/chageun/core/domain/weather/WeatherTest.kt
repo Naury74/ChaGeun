@@ -5,15 +5,21 @@ import com.naury.chageun.core.model.GeoPoint
 import com.naury.chageun.core.model.KoreaRegion
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.model.WeatherLocation
+import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeApproximateLocationProvider
+import com.naury.chageun.core.testing.FakeAreaNameRepository
 import com.naury.chageun.core.testing.FakeWeatherRepository
+import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class WeatherTest {
+
+    private val areaNames = FakeAreaNameRepository("서울 중구")
+    private val settings = FakeWeatherSettingsRepository(WeatherSettings(location = WeatherLocation.Current))
 
     private fun snapshot(
         condition: WeatherCondition = WeatherCondition.Cloudy,
@@ -68,25 +74,70 @@ class WeatherTest {
     fun currentLocation_needsPermission_andSendsOnlyRoundedPoint() = runTest {
         val location = FakeApproximateLocationProvider(permitted = false, location = GeoPoint(37.56654, 126.97796))
         val repository = FakeWeatherRepository(snapshot())
-        val load = LoadWeatherUseCase(location, repository)
+        val load = LoadWeatherUseCase(location, repository, areaNames, settings)
 
         assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.NeedsPermission)
         assertThat(repository.requested).isEmpty()
 
         location.permitted = true
-        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Shown(snapshot()))
+        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Shown(snapshot(), "서울 중구"))
         assertThat(repository.requested).containsExactly(GeoPoint(37.6, 127.0))
+        // 동네 이름도 날씨와 같은 반올림 좌표로만 찾고, 찾은 이름은 다음 실행을 위해 저장한다.
+        assertThat(areaNames.requested).containsExactly(GeoPoint(37.6, 127.0))
+        assertThat(settings.currentAreaName.value).isEqualTo("서울 중구")
+    }
+
+    @Test
+    fun currentLocation_withoutAreaName_stillShowsWeather_andKeepsSavedName() = runTest {
+        val location = FakeApproximateLocationProvider(permitted = true, location = GeoPoint(37.5, 127.0))
+        settings.setCurrentAreaName("서울 강남구")
+        areaNames.areaName = null
+        val load = LoadWeatherUseCase(location, FakeWeatherRepository(snapshot()), areaNames, settings)
+
+        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Shown(snapshot(), areaName = null))
+        assertThat(settings.currentAreaName.value).isEqualTo("서울 강남구")
+    }
+
+    @Test
+    fun currentLocation_foundButWeatherFails_isUnavailable_andClearsMissing() = runTest {
+        settings.setCurrentLocationMissing(true)
+        val location = FakeApproximateLocationProvider(permitted = true, location = GeoPoint(37.5, 127.0))
+        val load = LoadWeatherUseCase(location, FakeWeatherRepository(null), areaNames, settings)
+
+        assertThat(load(WeatherLocation.Current)).isEqualTo(WeatherResult.Unavailable)
+        assertThat(settings.isCurrentLocationMissing.value).isFalse()
+    }
+
+    @Test
+    fun region_neverLooksUpAreaName() = runTest {
+        val load =
+            LoadWeatherUseCase(
+                FakeApproximateLocationProvider(),
+                FakeWeatherRepository(snapshot()),
+                areaNames,
+                settings,
+            )
+
+        assertThat(load(WeatherLocation.Region(KoreaRegion.Jeju))).isEqualTo(WeatherResult.Shown(snapshot()))
+        assertThat(areaNames.requested).isEmpty()
     }
 
     @Test
     fun region_needsNoPermission_andFailureIsUnavailable() = runTest {
         val repository = FakeWeatherRepository(null)
-        val load = LoadWeatherUseCase(FakeApproximateLocationProvider(), repository)
+        val load = LoadWeatherUseCase(FakeApproximateLocationProvider(), repository, areaNames, settings)
 
         assertThat(load(WeatherLocation.Region(KoreaRegion.Busan))).isEqualTo(WeatherResult.Unavailable)
         assertThat(repository.requested).containsExactly(GeoPoint(35.2, 129.1))
 
-        val noFix = LoadWeatherUseCase(FakeApproximateLocationProvider(permitted = true, location = null), repository)
-        assertThat(noFix(WeatherLocation.Current)).isEqualTo(WeatherResult.Unavailable)
+        val noFix = LoadWeatherUseCase(
+            FakeApproximateLocationProvider(permitted = true, location = null),
+            repository,
+            areaNames,
+            settings,
+        )
+        // 기기가 위치를 못 준 것은 날씨 실패와 구분해 알려 준다.
+        assertThat(noFix(WeatherLocation.Current)).isEqualTo(WeatherResult.LocationUnavailable)
+        assertThat(settings.isCurrentLocationMissing.value).isTrue()
     }
 }

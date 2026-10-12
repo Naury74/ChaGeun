@@ -129,6 +129,29 @@ class HomeHeaderTest {
     }
 
     @Test
+    fun weatherLocationUnavailable_offersRegion_andIsReadAsButton() {
+        var opened = 0
+        show(weather = HomeWeather.LocationUnavailable, onSetUpWeather = { opened++ })
+
+        composeRule.onNode(hasText("Couldn't find your location · Choose a region") and hasClickAction())
+            .assertIsDisplayed()
+            .performClick()
+
+        assertThat(opened).isEqualTo(1)
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp", fontScale = 2f)
+    fun largeFont_ko_locationFailedPillFits() {
+        show(weather = HomeWeather.LocationUnavailable)
+
+        composeRule.onNode(hasText("위치를 찾지 못했어요 · 지역 고르기") and hasClickAction()).assertIsDisplayed()
+        composeRule.assertNoClippedText()
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
     fun weatherLoading_showsProgressText() {
         show(weather = HomeWeather.Loading)
 
@@ -162,6 +185,32 @@ class HomeHeaderTest {
     }
 
     @Test
+    fun weatherShown_currentLocation_usesAreaName() {
+        show(weather = rain.copy(location = WeatherLocation.Current, areaName = "Gangnam-gu, Seoul"))
+
+        // 보이는 글자에도 동네 이름이 나온다(화면 읽기는 줄 전체를 한 문장으로 읽는다).
+        composeRule.onNodeWithText("Gangnam-gu, Seoul", substring = true, useUnmergedTree = true).assertExists()
+        composeRule.onNode(hasContentDescription("Gangnam-gu, Seoul, 18 degrees, Rain.", substring = true))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp")
+    fun weatherShown_ko_currentLocation_readsAreaName_orFallsBack() {
+        show(weather = rain.copy(location = WeatherLocation.Current, areaName = "서울 강남구"))
+
+        composeRule.onNode(hasContentDescription("서울 강남구 18도 비. ", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp")
+    fun weatherShown_ko_currentLocationWithoutArea_saysCurrentLocation() {
+        show(weather = rain.copy(location = WeatherLocation.Current, areaName = null))
+
+        composeRule.onNode(hasContentDescription("현재 위치 18도 비. ", substring = true)).assertIsDisplayed()
+    }
+
+    @Test
     fun weatherOffOrUnavailable_showsNothing() {
         show(weather = HomeWeather.Unavailable)
 
@@ -175,7 +224,8 @@ class HomeHeaderTest {
     @Config(qualifiers = "ko-w360dp-h2000dp", fontScale = 2f)
     fun largeFont_ko_headerAndWeatherFit() {
         show(
-            weather = rain.copy(tip = WeatherTip.Heat),
+            // 긴 동네 이름도 잘리지 않고 다음 줄로 넘어가야 한다.
+            weather = rain.copy(tip = WeatherTip.Heat, location = WeatherLocation.Current, areaName = "경남 창원시 의창구"),
             greeting = Greeting(GreetingSituation.CarAnniversary, seed = 0, number = 3),
             name = "나우리",
         )

@@ -47,6 +47,53 @@ class PreferencesWeatherSettingsRepositoryTest {
     }
 
     @Test
+    fun areaName_isKeptForCurrentLocation_andClearedWhenOffOrLocationChanges() = scope.runTest {
+        repository.setLocation(WeatherLocation.Current)
+        repository.setCurrentAreaName("서울 강남구")
+        assertThat(repository.currentAreaName.first()).isEqualTo("서울 강남구")
+
+        repository.setEnabled(false)
+        assertThat(repository.currentAreaName.first()).isNull()
+
+        repository.setLocation(WeatherLocation.Current)
+        repository.setCurrentAreaName("경기 성남시")
+        repository.setLocation(WeatherLocation.Region(KoreaRegion.Busan))
+        assertThat(repository.currentAreaName.first()).isNull()
+
+        // 지역을 직접 고른 뒤 늦게 도착한 이름은 저장하지 않는다.
+        repository.setCurrentAreaName("서울 강남구")
+        assertThat(repository.currentAreaName.first()).isNull()
+
+        repository.setLocation(WeatherLocation.Current)
+        repository.setCurrentAreaName("서울 강남구")
+        repository.setCurrentAreaName(null)
+        assertThat(repository.currentAreaName.first()).isNull()
+    }
+
+    @Test
+    fun locationMissing_isKeptForCurrentOnly_andClearedWhenFoundOffOrChanged() = scope.runTest {
+        repository.setLocation(WeatherLocation.Region(KoreaRegion.Seoul))
+        repository.setCurrentLocationMissing(true)
+        assertThat(repository.isCurrentLocationMissing.first()).isFalse()
+
+        repository.setLocation(WeatherLocation.Current)
+        repository.setCurrentLocationMissing(true)
+        assertThat(repository.isCurrentLocationMissing.first()).isTrue()
+
+        repository.setCurrentLocationMissing(false)
+        assertThat(repository.isCurrentLocationMissing.first()).isFalse()
+
+        repository.setCurrentLocationMissing(true)
+        repository.setEnabled(false)
+        assertThat(repository.isCurrentLocationMissing.first()).isFalse()
+
+        repository.setLocation(WeatherLocation.Current)
+        repository.setCurrentLocationMissing(true)
+        repository.setLocation(WeatherLocation.Region(KoreaRegion.Jeju))
+        assertThat(repository.isCurrentLocationMissing.first()).isFalse()
+    }
+
+    @Test
     fun dismissingPrompt_isRemembered() = scope.runTest {
         repository.dismissPrompt()
 

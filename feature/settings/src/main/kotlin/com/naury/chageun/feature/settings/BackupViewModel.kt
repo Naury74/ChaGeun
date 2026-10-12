@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.naury.chageun.core.domain.backup.BackupRepository
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
+import com.naury.chageun.core.domain.weather.WeatherSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +30,10 @@ data class DataUiState(
 
 /** 설정 > 데이터의 내보내기·가져오기·전체 삭제. 환경설정과 나눠 각 ViewModel의 책임을 좁힌다. */
 @HiltViewModel
-class BackupViewModel @Inject constructor(private val backupRepository: BackupRepository) : ViewModel() {
+class BackupViewModel @Inject constructor(
+    private val backupRepository: BackupRepository,
+    private val weatherSettings: WeatherSettingsRepository,
+) : ViewModel() {
 
     private val _dataState = MutableStateFlow(DataUiState())
     val dataState: StateFlow<DataUiState> = _dataState.asStateFlow()
@@ -114,6 +118,9 @@ class BackupViewModel @Inject constructor(private val backupRepository: BackupRe
         _dataState.update { it.copy(pendingDeletion = null, isWorking = true) }
         viewModelScope.launch {
             backupRepository.deleteAll()
+            // 모두 지운다고 안내하므로 저장해 둔 "현재 위치"의 동네 이름도 지운다.
+            weatherSettings.setCurrentAreaName(null)
+            weatherSettings.setCurrentLocationMissing(false)
             _dataState.update { it.copy(isWorking = false) }
         }
     }

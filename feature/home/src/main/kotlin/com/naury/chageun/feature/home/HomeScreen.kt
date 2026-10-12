@@ -104,6 +104,8 @@ fun HomeRoute(
                 viewModel.setWeatherLocation(location)
             },
             onDismiss = { picksWeatherLocation = false },
+            // 위치를 못 찾았다는 안내에서 열면 "현재 위치"를 다시 묻지 않고 시·도 목록부터 보여 준다.
+            startWithRegions = (uiState as? HomeUiState.Content)?.weather == HomeWeather.LocationUnavailable,
         )
     }
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> pendingPhoto = uris.firstOrNull() })

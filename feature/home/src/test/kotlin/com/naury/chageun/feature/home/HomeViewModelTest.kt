@@ -31,6 +31,7 @@ import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.model.WeatherSnapshot
 import com.naury.chageun.core.testing.FakeAppUsageRepository
 import com.naury.chageun.core.testing.FakeApproximateLocationProvider
+import com.naury.chageun.core.testing.FakeAreaNameRepository
 import com.naury.chageun.core.testing.FakeAuthRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeInspectionRepository
@@ -66,6 +67,7 @@ class HomeViewModelTest {
     private val weatherSettings = FakeWeatherSettingsRepository()
     private val location = FakeApproximateLocationProvider()
     private val weatherRepository = FakeWeatherRepository()
+    private val areaNames = FakeAreaNameRepository()
     private val viewModel = HomeViewModel(
         vehicleRepository = vehicles,
         observeMaintenanceOverview = ObserveMaintenanceOverviewUseCase(
@@ -82,7 +84,7 @@ class HomeViewModelTest {
             profilePhotos,
             usage,
             weatherSettings,
-            LoadWeatherUseCase(location, weatherRepository),
+            LoadWeatherUseCase(location, weatherRepository, areaNames, weatherSettings),
             clock,
         ),
         clock = clock,
@@ -272,6 +274,46 @@ class HomeViewModelTest {
 
         weatherSettings.setEnabled(false)
         assertThat(contentWith { it.weather == HomeWeather.Off }.weather).isEqualTo(HomeWeather.Off)
+    }
+
+    @Test
+    fun weather_currentLocation_showsAreaName_foundWithRoundedPoint() = runTest {
+        weatherRepository.snapshot = WeatherSnapshot(WeatherCondition.Cloudy, 27.0, 1.0, false, Instant.EPOCH)
+        areaNames.areaName = "서울 강남구"
+        location.permitted = true
+        location.location = GeoPoint(37.49794, 127.02762)
+        weatherSettings.settings.value = WeatherSettings(location = WeatherLocation.Current)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        val shown = contentWith { it.weather is HomeWeather.Shown }.weather as HomeWeather.Shown
+
+        assertThat(shown.areaName).isEqualTo("서울 강남구")
+        assertThat(areaNames.requested.single()).isEqualTo(GeoPoint(37.5, 127.0))
+        assertThat(weatherSettings.currentAreaName.value).isEqualTo("서울 강남구")
+    }
+
+    @Test
+    fun weather_locationFailure_isToldApart_fromWeatherFailure_andRetriesWhenShownAgain() = runTest {
+        weatherRepository.snapshot = WeatherSnapshot(WeatherCondition.Cloudy, 27.0, 1.0, false, Instant.EPOCH)
+        location.permitted = true
+        location.location = null
+        weatherSettings.settings.value = WeatherSettings(location = WeatherLocation.Current)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        vehicles.register(VehicleRegistration("Maker", "Model", 2023, FuelType.Gasoline, Kilometers(45_000)))
+
+        // 기기가 위치를 주지 못하면 날씨는 묻지도 않고 지역을 고르라고 안내한다.
+        assertThat(contentWith { it.weather == HomeWeather.LocationUnavailable }.weather)
+            .isEqualTo(HomeWeather.LocationUnavailable)
+        assertThat(weatherRepository.requested).isEmpty()
+        assertThat(weatherSettings.isCurrentLocationMissing.value).isTrue()
+
+        // 홈이 다시 보일 때 다시 찾는다. 이번엔 위치는 찾았지만 제공처가 실패하면 조용히 숨긴다.
+        location.location = GeoPoint(37.56, 126.97)
+        weatherRepository.snapshot = null
+        viewModel.refreshWeather()
+        assertThat(contentWith { it.weather == HomeWeather.Unavailable }.weather).isEqualTo(HomeWeather.Unavailable)
+        assertThat(weatherSettings.isCurrentLocationMissing.value).isFalse()
     }
 
     private suspend fun contentWith(predicate: (HomeUiState.Content) -> Boolean): HomeUiState.Content =
