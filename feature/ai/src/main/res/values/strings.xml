@@ -20,7 +20,7 @@
     <string name="ai_include_costs">Costs</string>
     <string name="ai_excluded_plate">Plate number</string>
     <string name="ai_excluded_owner">Owner name</string>
-    <string name="ai_excluded_location">Location, notes and photos</string>
+    <string name="ai_excluded_location">Location, notes, photos and sounds</string>
     <string name="ai_show_text">Show full text</string>
     <string name="ai_hide_text">Hide full text</string>
 

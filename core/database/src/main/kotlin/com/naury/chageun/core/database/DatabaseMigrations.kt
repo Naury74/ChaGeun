@@ -1,6 +1,7 @@
 package com.naury.chageun.core.database
 
 import androidx.room.migration.Migration
+import com.naury.chageun.core.database.migration.Migration10To11
 import com.naury.chageun.core.database.migration.Migration1To2
 import com.naury.chageun.core.database.migration.Migration2To3
 import com.naury.chageun.core.database.migration.Migration3To4
@@ -26,5 +27,6 @@ object DatabaseMigrations {
         Migration7To8,
         Migration8To9,
         Migration9To10,
+        Migration10To11,
     )
 }

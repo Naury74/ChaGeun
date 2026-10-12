@@ -20,7 +20,7 @@ interface HistoryDao {
     /**
      * Timeline은 공용 이력 테이블 없이 도메인별 테이블을 모아 보여주는 projection이다.
      * [eventTypes]로 유형을 거르고, [keyword]가 비어 있지 않으면 자유 텍스트나 [matchingItemTypes] 중 하나와 일치하는 항목을 찾는다.
-     * 기간·비용 조건이 있으면 날짜나 비용이 없는 기록은 빠진다. 첨부 수는 attachment 테이블에서 센다.
+     * 기간·비용 조건이 있으면 날짜나 비용이 없는 기록은 빠진다. 사진 첨부 수는 attachment 테이블에서 센다(소리는 세지 않는다).
      * 기록이 많아도 첫 화면이 빨리 뜨도록 최신순으로 [limit]개만 읽는다. -1이면 모두 읽는다.
      *
      * 아래 [observeMonthlyCosts]와 조건이 같아야 월별 합계가 목록과 맞는다. 한쪽을 고치면 다른 쪽도 고친다.
@@ -28,7 +28,8 @@ interface HistoryDao {
     @Query(
         """
         SELECT event_type, id, occurred_on, title, item_type, mileage_km, cost_won, created_at, source_type,
-            (SELECT COUNT(*) FROM attachment a WHERE a.owner_type = t.event_type AND a.owner_id = t.id) AS attachment_count
+            (SELECT COUNT(*) FROM attachment a WHERE a.owner_type = t.event_type AND a.owner_id = t.id
+                AND a.media_type = 'PHOTO') AS attachment_count
         FROM (
             SELECT 'Maintenance' AS event_type, id, service_date AS occurred_on, NULL AS title, item_type,
                 mileage_km, cost_won, created_at, source_type,
@@ -79,7 +80,8 @@ interface HistoryDao {
         """
         SELECT strftime('%Y-%m', occurred_on * 86400, 'unixepoch') AS month, SUM(cost_won) AS total_won
         FROM (
-            SELECT *, (SELECT COUNT(*) FROM attachment a WHERE a.owner_type = u.event_type AND a.owner_id = u.id)
+            SELECT *, (SELECT COUNT(*) FROM attachment a WHERE a.owner_type = u.event_type AND a.owner_id = u.id
+                AND a.media_type = 'PHOTO')
                 AS attachment_count
             FROM (
             SELECT 'Maintenance' AS event_type, id, service_date AS occurred_on, NULL AS title, item_type,

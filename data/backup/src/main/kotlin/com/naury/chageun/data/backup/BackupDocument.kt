@@ -1,6 +1,7 @@
 package com.naury.chageun.data.backup
 
 import com.naury.chageun.core.database.entity.AlbumPhotoEntity
+import com.naury.chageun.core.database.entity.AttachmentEntity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -24,10 +25,12 @@ internal data class BackupDocument(
     /** 버전을 올리지 않고 추가한 필드다. 앨범이 없던 때의 파일도 빈 앨범으로 가져온다. */
     @SerialName("album_photos") val albumPhotos: List<AlbumPhotoDto> = emptyList(),
 ) {
-    /** ZIP에 함께 담을 이미지 파일 이름. */
+    /** ZIP에 함께 담을 사진·동영상·소리 파일 이름. 소리는 썸네일이 없어 빈 이름은 뺀다. */
     val imageFiles: List<String>
-        get() = attachments.flatMap { listOf(it.file, it.thumbnail) } +
-            albumPhotos.flatMap { listOf(it.file, it.thumbnail) }
+        get() = (
+            attachments.flatMap { listOf(it.file, it.thumbnail) } +
+                albumPhotos.flatMap { listOf(it.file, it.thumbnail) }
+            ).filter { it.isNotBlank() }
 
     companion object {
         const val SCHEMA_VERSION = 1
@@ -133,6 +136,10 @@ internal data class AttachmentDto(
     val thumbnail: String,
     @SerialName("size_bytes") val sizeBytes: Long,
     @SerialName("created_at") val createdAt: String,
+    /** 버전을 올리지 않고 추가한 필드다. 소리가 없던 때의 파일은 모두 사진으로 가져온다. */
+    @SerialName("media_type") val mediaType: String = AttachmentEntity.MEDIA_PHOTO,
+    @SerialName("duration_ms") val durationMs: Long? = null,
+    val label: String? = null,
 )
 
 @Serializable

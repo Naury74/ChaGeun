@@ -3,6 +3,8 @@ package com.naury.chageun.feature.history
 import androidx.lifecycle.SavedStateHandle
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.history.DeleteHistoryRecordUseCase
+import com.naury.chageun.core.domain.history.MAX_SOUNDS_PER_RECORD
+import com.naury.chageun.core.domain.history.SoundAttachResult
 import com.naury.chageun.core.model.CheckEntry
 import com.naury.chageun.core.model.CheckKind
 import com.naury.chageun.core.model.FuelType
@@ -18,6 +20,7 @@ import com.naury.chageun.core.testing.FakeAttachmentRepository
 import com.naury.chageun.core.testing.FakeHistoryRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.MainDispatcherRule
+import com.naury.chageun.core.ui.sound.RecordedSound
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -121,6 +124,64 @@ class HistoryViewModelTest {
         assertThat(attachments.attachments.value).isEmpty()
         assertThat(vm.uiState.first { it.detail == null }.sections.flatMap { it.items }.map { it.ref.id })
             .doesNotContain("repair")
+    }
+
+    @Test
+    fun sounds_areSplitFromPhotos_andCanBeAddedNamedReplacedAndDeleted() = runTest {
+        val ref = RecordRef(TimelineEventType.Repair, "repair")
+        history.details.value =
+            mapOf(ref to RecordDetail.Check(ref, CheckEntry(CheckKind.Repair, LocalDate.of(2026, 9, 1), "Brakes")))
+        val vm = viewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+        vm.select(ref)
+        vm.attach(ref, listOf("content://photo/1"))
+
+        HistorySoundTag.apply(RecordedSound("file:///cache/rec.m4a", HistorySoundTag.add(ref)), vm.sounds)
+        val state = vm.uiState.first { it.sounds.isNotEmpty() }
+
+        assertThat(state.photos.map { it.filePath }).containsExactly("content://photo/1")
+        val sound = state.sounds.single()
+        assertThat(sound.filePath).isEqualTo("file:///cache/rec.m4a")
+        vm.sounds.rename(sound.id, " Brake squeal ")
+        assertThat(
+            vm.uiState.first {
+                it.sounds.single().label != null
+            }.sounds.single().label,
+        ).isEqualTo("Brake squeal")
+
+        HistorySoundTag.apply(RecordedSound("file:///cache/trimmed.m4a", HistorySoundTag.replace(sound.id)), vm.sounds)
+        val replaced = vm.uiState.first { it.sounds.single().filePath.endsWith("trimmed.m4a") }.sounds.single()
+        assertThat(replaced.id).isEqualTo(sound.id)
+
+        vm.sounds.delete(sound.id)
+        assertThat(vm.uiState.first { it.sounds.isEmpty() }.photos).hasSize(1)
+        assertThat(vm.sounds.notice.value).isNull()
+    }
+
+    @Test
+    fun soundNotice_explainsFailures_andClearsOnDismissOrSuccess() = runTest {
+        val ref = RecordRef(TimelineEventType.Repair, "repair")
+        val vm = viewModel()
+
+        attachments.nextSoundResult = SoundAttachResult.TooLong
+        vm.sounds.attach(ref, "file:///long.m4a")
+        advanceUntilIdle()
+        assertThat(vm.sounds.notice.value).isEqualTo(SoundNotice.TooLong)
+        vm.sounds.dismissNotice()
+        assertThat(vm.sounds.notice.value).isNull()
+
+        attachments.nextSoundResult = SoundAttachResult.Failed
+        vm.sounds.replace("missing", "file:///x.m4a")
+        advanceUntilIdle()
+        assertThat(vm.sounds.notice.value).isEqualTo(SoundNotice.Failed)
+
+        attachments.nextSoundResult = SoundAttachResult.Added
+        repeat(MAX_SOUNDS_PER_RECORD + 1) { vm.sounds.attach(ref, "file:///rec-$it.m4a") }
+        advanceUntilIdle()
+        assertThat(vm.sounds.notice.value).isEqualTo(SoundNotice.LimitReached)
+        vm.sounds.attach(RecordRef(TimelineEventType.Repair, "other"), "file:///ok.m4a")
+        advanceUntilIdle()
+        assertThat(vm.sounds.notice.value).isNull()
     }
 
     @Test

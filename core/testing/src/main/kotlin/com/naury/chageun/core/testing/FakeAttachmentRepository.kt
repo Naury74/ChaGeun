@@ -2,7 +2,10 @@ package com.naury.chageun.core.testing
 
 import com.naury.chageun.core.domain.history.AttachResult
 import com.naury.chageun.core.domain.history.AttachmentRepository
+import com.naury.chageun.core.domain.history.MAX_SOUNDS_PER_RECORD
+import com.naury.chageun.core.domain.history.SoundAttachResult
 import com.naury.chageun.core.model.Attachment
+import com.naury.chageun.core.model.AttachmentKind
 import com.naury.chageun.core.model.RecordPhoto
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.VehicleId
@@ -55,6 +58,59 @@ class FakeAttachmentRepository : AttachmentRepository {
             list.map { if (it.id == attachmentId) it.copy(filePath = sourceUri, thumbnailPath = sourceUri) else it }
         }
         return true
+    }
+
+    /** 다음 소리 붙이기·바꾸기가 돌려줄 결과. Added면 실제로 목록에 더한다. */
+    var nextSoundResult = SoundAttachResult.Added
+
+    /** 붙인 소리의 길이. */
+    var soundDurationMs = 12_000L
+
+    override suspend fun attachSound(vehicleId: VehicleId, owner: RecordRef, sourceUri: String): SoundAttachResult {
+        val count = attachments.value.count { it.owner == owner && it.isSound }
+        if (count >= MAX_SOUNDS_PER_RECORD) return SoundAttachResult.LimitReached
+        if (nextSoundResult == SoundAttachResult.Added) {
+            attachments.update { current ->
+                current + Attachment(
+                    id = "${owner.id}-sound-${current.size}",
+                    owner = owner,
+                    filePath = sourceUri,
+                    thumbnailPath = "",
+                    createdAt = Instant.EPOCH,
+                    kind = AttachmentKind.Sound,
+                    durationMs = soundDurationMs,
+                )
+            }
+        }
+        return nextSoundResult
+    }
+
+    override suspend fun replaceSound(
+        vehicleId: VehicleId,
+        attachmentId: String,
+        sourceUri: String,
+    ): SoundAttachResult {
+        if (attachments.value.none { it.id == attachmentId && it.isSound }) return SoundAttachResult.Failed
+        if (nextSoundResult == SoundAttachResult.Added) {
+            attachments.update { list ->
+                list.map {
+                    if (it.id ==
+                        attachmentId
+                    ) {
+                        it.copy(filePath = sourceUri, durationMs = soundDurationMs)
+                    } else {
+                        it
+                    }
+                }
+            }
+        }
+        return nextSoundResult
+    }
+
+    override suspend fun setLabel(vehicleId: VehicleId, attachmentId: String, label: String?) {
+        attachments.update { list ->
+            list.map { if (it.id == attachmentId) it.copy(label = label?.trim()?.ifEmpty { null }) else it }
+        }
     }
 
     override suspend fun delete(vehicleId: VehicleId, attachmentId: String) {

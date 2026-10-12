@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 기록에 차 소리를 녹음해 붙인다. FrameKit 녹음 화면은 이 선언이 있을 때만 녹음 버튼을 보이고, 처음 누를 때 권한을 묻는다. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:name=".ChageunApplication"
         android:dataExtractionRules="@xml/data_extraction_rules"

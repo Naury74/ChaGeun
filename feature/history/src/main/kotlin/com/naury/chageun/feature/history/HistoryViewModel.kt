@@ -45,6 +45,9 @@ class HistoryViewModel @Inject constructor(
 
     private val attachFailedCount = MutableStateFlow(0)
 
+    /** 기록에 붙인 소리를 다루는 동작. 사진과 상한·안내가 따로다. */
+    val sounds = SoundAttachmentActions(viewModelScope, attachmentRepository) { vehicleId() }
+
     // 기록이 많아도 첫 화면이 빨리 뜨도록 한 번에 PAGE_SIZE개씩 늘려 읽는다. 조건이 바뀌면 첫 페이지로 돌아간다.
     private val pageLimit = MutableStateFlow(PAGE_SIZE)
 

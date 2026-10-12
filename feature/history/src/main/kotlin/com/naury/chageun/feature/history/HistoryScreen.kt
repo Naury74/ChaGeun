@@ -40,6 +40,7 @@ import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.analytics.CalendarItemKind
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
+import com.naury.chageun.core.domain.history.MAX_SOUND_DURATION_MS
 import com.naury.chageun.core.model.HistoryView
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
@@ -59,6 +60,8 @@ import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.ReceiptEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.photo.rememberReceiptEditorLauncher
+import com.naury.chageun.core.ui.sound.SoundRecorderLauncher
+import com.naury.chageun.core.ui.sound.rememberSoundRecorderLauncher
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.calendar.CalendarActions
 import com.naury.chageun.feature.history.calendar.HistoryCalendar
@@ -110,7 +113,7 @@ fun HistoryRoute(
     var photoTarget by rememberSaveable { mutableStateOf<String?>(null) }
     PhotoInput(
         state = photoInput,
-        maxItems = (MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size).coerceAtLeast(1),
+        maxItems = (MAX_ATTACHMENTS_PER_RECORD - uiState.photos.size).coerceAtLeast(1),
         // 영수증의 작은 글씨를 남길 수 있게 첨부에서는 고화질 저장을 고르게 한다.
         showQualityOption = true,
         onPhotos = { uris, highQuality ->
@@ -120,7 +123,11 @@ fun HistoryRoute(
     // 사진 편집기도 같은 이유로 여기서 연다. 어느 기록·첨부의 편집인지는 태그로 남긴다.
     // 첨부는 대개 영수증이라 문서 보정을 맨 앞에 둔 편집기를 쓴다. 일반 사진에서는 그 도구가 보이지 않는다.
     val receiptEditor = rememberReceiptEditorLauncher { HistoryPhotoEditTag.apply(it, viewModel) }
-    val photoEdits = receiptPhotoEdits(receiptEditor, remaining = MAX_ATTACHMENTS_PER_RECORD - uiState.attachments.size)
+    val photoEdits = receiptPhotoEdits(receiptEditor, remaining = MAX_ATTACHMENTS_PER_RECORD - uiState.photos.size)
+    // 소리 녹음도 같은 이유로 여기서 연다. 녹음 화면은 3분에 닿으면 저절로 멈춘다.
+    val soundRecorder =
+        rememberSoundRecorderLauncher(MAX_SOUND_DURATION_MS) { HistorySoundTag.apply(it, viewModel.sounds) }
+    val soundNotice by viewModel.sounds.notice.collectAsStateWithLifecycle()
     // RecordRef는 저장할 수 없으므로 종류와 ID를 나눠 보관한다.
     var editingType by rememberSaveable { mutableStateOf<TimelineEventType?>(null) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -197,6 +204,8 @@ fun HistoryRoute(
                 calendar = HistoryCalendarSlot(calendarState, calendarActions),
                 modifier = Modifier.weight(1f),
                 photoEdits = photoEdits,
+                soundEdits = soundEdits(soundRecorder, viewModel.sounds),
+                soundNotice = soundNotice,
             )
         }
     }
@@ -233,6 +242,15 @@ private fun receiptPhotoEdits(editor: ReceiptEditorLauncher, remaining: Int) = A
     onSharePdf = { detail, attachments ->
         editor.sharePdf(attachments.map { File(it.filePath) }, detail.date ?: LocalDate.now())
     },
+)
+
+private fun soundEdits(recorder: SoundRecorderLauncher, actions: SoundAttachmentActions) = SoundAttachmentEdits(
+    onRecord = { ref -> recorder.record(tag = HistorySoundTag.add(ref)) },
+    onPickFile = { ref -> recorder.pickFile(tag = HistorySoundTag.add(ref)) },
+    onEdit = { sound -> recorder.edit(File(sound.filePath), tag = HistorySoundTag.replace(sound.id)) },
+    onRename = actions::rename,
+    onDelete = actions::delete,
+    onDismissNotice = actions::dismissNotice,
 )
 
 /** 영수증 PDF 파일 이름에 넣을 기록 날짜. 날짜를 모르는 공공데이터 정비 기록이면 null이다. */
@@ -354,10 +372,13 @@ fun HistoryScreen(
     view: HistoryView = HistoryView.List,
     calendar: HistoryCalendarSlot? = null,
     photoEdits: AttachmentPhotoEdits = AttachmentPhotoEdits(),
+    soundEdits: SoundAttachmentEdits = SoundAttachmentEdits(),
+    soundNotice: SoundNotice? = null,
 ) {
+    val sounds = SoundsState(uiState.sounds, soundNotice, soundEdits)
     val attachments =
         AttachmentsState(
-            uiState.attachments,
+            uiState.photos,
             uiState.attachFailedCount,
             onAddPhotos,
             onDeleteAttachment,
@@ -375,6 +396,7 @@ fun HistoryScreen(
     // 접거나 펼쳐 한 칸·두 칸이 바뀌면 상세가 컴포지션의 다른 자리로 간다. 상태째 옮겨야 삭제 확인 같은
     // 상세 안의 상태가 사라지지 않는다. 다른 기록을 열면 key로 상태를 새로 시작한다.
     val currentAttachments by rememberUpdatedState(attachments)
+    val currentSounds by rememberUpdatedState(sounds)
     val currentOnSelect by rememberUpdatedState(onSelect)
     val currentOnDelete by rememberUpdatedState(onDelete)
     val currentOnEdit by rememberUpdatedState(onEdit)
@@ -390,6 +412,7 @@ fun HistoryScreen(
                     modifier = paneModifier,
                     onEdit = currentOnEdit,
                     onAskAi = currentOnAskAi,
+                    sounds = currentSounds,
                 )
             }
         }

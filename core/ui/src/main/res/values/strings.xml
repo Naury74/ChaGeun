@@ -95,6 +95,8 @@
     <string name="video_edit_error_unavailable">Couldn\'t open the video. Please choose it again.</string>
     <string name="video_edit_error_unsupported">This video can\'t be edited. Try another one.</string>
     <string name="video_edit_error_too_large">This video is too large to edit.</string>
+    <string name="sound_edit_error_unavailable">Couldn\'t record or open the sound. Please try again.</string>
+    <string name="sound_edit_error_unsupported">This sound file can\'t be edited. Try another one.</string>
     <string name="photo_source_title">Add photo</string>
     <string name="photo_source_camera">Take a photo</string>
     <string name="photo_source_gallery">Choose from photos</string>

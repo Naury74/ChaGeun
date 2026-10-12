@@ -9,6 +9,10 @@ import com.naury.chageun.core.database.ChageunDatabase
 import com.naury.chageun.core.database.entity.FuelRecordEntity
 import com.naury.chageun.core.database.entity.VehicleEntity
 import com.naury.chageun.core.domain.history.MAX_ATTACHMENTS_PER_RECORD
+import com.naury.chageun.core.domain.history.MAX_SOUNDS_PER_RECORD
+import com.naury.chageun.core.domain.history.MAX_SOUND_LABEL_LENGTH
+import com.naury.chageun.core.domain.history.SoundAttachResult
+import com.naury.chageun.core.model.AttachmentKind
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.VehicleId
@@ -58,6 +62,19 @@ class OfflineFirstAttachmentRepositoryTest {
         }
     }
 
+    /** 실제 소리 대신 임시 파일을 쓴다. "long"은 너무 긴 녹음, "broken"은 읽을 수 없는 파일처럼 실패한다. */
+    private val fakeSoundImporter = SoundImporter { uri, target, _ ->
+        when {
+            "broken" in uri -> SoundImport.Failed
+            "long" in uri -> SoundImport.TooLong
+            else -> {
+                target.parentFile?.mkdirs()
+                target.writeText(uri)
+                SoundImport.Imported(ImportedSound(target, target.length(), durationMs = 12_000))
+            }
+        }
+    }
+
     @Before
     fun setUp() = runTest {
         database =
@@ -81,7 +98,7 @@ class OfflineFirstAttachmentRepositoryTest {
 
     private fun repository(dispatcher: TestDispatcher) = OfflineFirstAttachmentRepository(
         database.attachmentDao(),
-        fakeImporter,
+        AttachmentImporters(fakeImporter, fakeSoundImporter),
         directory,
         Clock.fixed(now, ZoneOffset.UTC),
         silentLogger,
@@ -178,6 +195,126 @@ class OfflineFirstAttachmentRepositoryTest {
         assertThat(inRange.single().attachment.owner).isEqualTo(owner)
         assertThat(File(inRange.single().attachment.thumbnailPath).exists()).isTrue()
         assertThat(outOfRange).isEmpty()
+    }
+
+    @Test
+    fun attachSound_storesM4a_withDurationAndNoThumbnail() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val repair = RecordRef(TimelineEventType.Repair, "repair-1")
+
+        val result = repository.attachSound(vehicleId, repair, "file:///cache/photo_input/rec.m4a")
+
+        val sound = repository.observe(vehicleId, repair).first().single()
+        assertThat(result).isEqualTo(SoundAttachResult.Added)
+        assertThat(sound.kind).isEqualTo(AttachmentKind.Sound)
+        assertThat(sound.durationMs).isEqualTo(12_000)
+        assertThat(sound.thumbnailPath).isEmpty()
+        assertThat(File(sound.filePath).extension).isEqualTo("m4a")
+        assertThat(File(sound.filePath).parentFile).isEqualTo(directory)
+        assertThat(database.attachmentDao().find("v1", sound.id)?.mimeType).isEqualTo("audio/mp4")
+    }
+
+    @Test
+    fun attachSound_hasItsOwnLimit_andDoesNotTakePhotoRoom() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repeat(MAX_SOUNDS_PER_RECORD) { repository.attachSound(vehicleId, owner, "file:///rec-$it.m4a") }
+
+        val extra = repository.attachSound(vehicleId, owner, "file:///rec-extra.m4a")
+        repository.attach(vehicleId, owner, List(MAX_ATTACHMENTS_PER_RECORD) { "content://$it" })
+
+        val all = repository.observe(vehicleId, owner).first()
+        assertThat(extra).isEqualTo(SoundAttachResult.LimitReached)
+        assertThat(all.count { it.isSound }).isEqualTo(MAX_SOUNDS_PER_RECORD)
+        assertThat(all.count { !it.isSound }).isEqualTo(MAX_ATTACHMENTS_PER_RECORD)
+    }
+
+    @Test
+    fun attachSound_reportsTooLongAndFailed_withoutLeavingRows() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+
+        assertThat(repository.attachSound(vehicleId, owner, "file:///long.m4a")).isEqualTo(SoundAttachResult.TooLong)
+        assertThat(repository.attachSound(vehicleId, owner, "file:///broken.m4a")).isEqualTo(SoundAttachResult.Failed)
+
+        assertThat(repository.observe(vehicleId, owner).first()).isEmpty()
+        assertThat(directory.listFiles().orEmpty()).isEmpty()
+    }
+
+    @Test
+    fun replaceSound_swapsFile_keepsIdAndLabel_andRemovesOldFile() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attachSound(vehicleId, owner, "file:///first.m4a")
+        val before = repository.observe(vehicleId, owner).first().single()
+        repository.setLabel(vehicleId, before.id, "Engine knock")
+
+        val result = repository.replaceSound(vehicleId, before.id, "file:///trimmed.m4a")
+
+        val after = repository.observe(vehicleId, owner).first().single()
+        assertThat(result).isEqualTo(SoundAttachResult.Added)
+        assertThat(after.id).isEqualTo(before.id)
+        assertThat(after.label).isEqualTo("Engine knock")
+        assertThat(after.filePath).isNotEqualTo(before.filePath)
+        assertThat(File(after.filePath).readText()).isEqualTo("file:///trimmed.m4a")
+        assertThat(File(before.filePath).exists()).isFalse()
+    }
+
+    @Test
+    fun replaceSound_keepsOldSound_whenNewOneFails_andRefusesPhotos() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attachSound(vehicleId, owner, "file:///first.m4a")
+        repository.attach(vehicleId, owner, listOf("content://photo"))
+        val (sound, photo) = repository.observe(vehicleId, owner).first().partition { it.isSound }
+
+        assertThat(repository.replaceSound(vehicleId, sound.single().id, "file:///long.m4a"))
+            .isEqualTo(SoundAttachResult.TooLong)
+        assertThat(repository.replaceSound(vehicleId, photo.single().id, "file:///new.m4a"))
+            .isEqualTo(SoundAttachResult.Failed)
+        assertThat(File(sound.single().filePath).exists()).isTrue()
+    }
+
+    @Test
+    fun setLabel_trimsAndClearsBlank() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attachSound(vehicleId, owner, "file:///rec.m4a")
+        val id = repository.observe(vehicleId, owner).first().single().id
+
+        repository.setLabel(vehicleId, id, "  Brake\nsqueal  " + "x".repeat(MAX_SOUND_LABEL_LENGTH))
+        val long = repository.observe(vehicleId, owner).first().single().label
+        repository.setLabel(vehicleId, id, "   ")
+
+        assertThat(long).startsWith("Brake squeal")
+        assertThat(long).hasLength(MAX_SOUND_LABEL_LENGTH)
+        assertThat(repository.observe(vehicleId, owner).first().single().label).isNull()
+    }
+
+    @Test
+    fun deleteSound_removesRowAndFile_withoutTouchingTheFolder() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        repository.attachSound(vehicleId, owner, "file:///rec.m4a")
+        repository.attach(vehicleId, owner, listOf("content://photo"))
+        val sound = repository.observe(vehicleId, owner).first().single { it.isSound }
+
+        repository.delete(vehicleId, sound.id)
+
+        assertThat(repository.observe(vehicleId, owner).first().none { it.isSound }).isTrue()
+        assertThat(File(sound.filePath).exists()).isFalse()
+        assertThat(directory.exists()).isTrue()
+        assertThat(directory.listFiles().orEmpty()).isNotEmpty()
+    }
+
+    @Test
+    fun observeBetween_leavesSoundsOut() = runTest {
+        val repository = repository(StandardTestDispatcher(testScheduler))
+        val fuelDate = LocalDate.of(2026, 10, 12)
+        database.historyDao().insertFuel(
+            FuelRecordEntity(
+                id = owner.id, vehicleId = "v1", fuelDate = fuelDate, mileageKm = 41_000, totalPriceWon = 68_000,
+                volumeMl = 40_000, unitPriceWon = 1_700, computedField = null, isFullTank = true,
+                stationName = null, memo = null, createdAt = now, updatedAt = now,
+            ),
+        )
+        repository.attachSound(vehicleId, owner, "file:///rec.m4a")
+
+        assertThat(repository.observeBetween(vehicleId, fuelDate, fuelDate).first()).isEmpty()
     }
 
     private fun photoRepository(
