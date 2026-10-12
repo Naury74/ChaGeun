@@ -1,0 +1,542 @@
+package com.naury.chageun.feature.vehicle.album
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
+import android.view.accessibility.AccessibilityManager
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.pinch
+import androidx.compose.ui.test.swipeDown
+import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.applyCanvas
+import androidx.test.core.app.ApplicationProvider
+import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.chageun.core.model.AlbumPhoto
+import com.naury.chageun.core.ui.rememberFileImage
+import com.naury.chageun.core.uitesting.AppFrame
+import com.naury.chageun.core.uitesting.ScreenshotDevices
+import com.naury.chageun.core.uitesting.assertAccessibleControls
+import com.naury.chageun.core.uitesting.assertNoClippedText
+import com.naury.chageun.core.uitesting.captureScreen
+import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+
+@RunWith(RobolectricTestRunner::class)
+@Config(qualifiers = "w360dp-h800dp")
+// 사진 파일을 실제로 디코딩해야 하므로 모든 테스트를 native 그래픽으로 돌린다.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class AlbumScreenTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private val photos by lazy {
+        listOf(
+            photo("p1", Scene.Dusk, LocalDate.of(2026, 10, 3), "Car wash before the trip"),
+            photo("p2", Scene.Day, LocalDate.of(2026, 10, 3), "New tires"),
+            photo("p3", Scene.Night, LocalDate.of(2026, 9, 21), null),
+            photo("p4", Scene.Day, LocalDate.of(2026, 9, 21), null),
+            photo("p5", Scene.Dusk, LocalDate.of(2026, 9, 2), "Coastal road"),
+        )
+    }
+
+    private fun state(selected: String? = "p2", isCoverUpdated: Boolean = false, picked: Set<String> = emptySet()) =
+        AlbumUiState(
+            isLoading = false,
+            days = photos.groupBy { it.takenOn }.map { (date, items) -> AlbumDay(date, items) },
+            selected = photos.firstOrNull { it.id == selected },
+            isCoverUpdated = isCoverUpdated,
+            picked = picked,
+        )
+
+    @Test
+    fun viewer_showsCounterAndCurrentPhotoDetails() {
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(), isTwoPane = false, actions = AlbumActions()) }
+        }
+
+        composeRule.onNodeWithText("2 / 5").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Photo 2 of 5").assertIsDisplayed()
+        composeRule.onNodeWithText("New tires").assertIsDisplayed()
+    }
+
+    @Test
+    fun viewer_actionsReportTheCurrentPhoto() {
+        val events = mutableListOf<String>()
+        val actions = AlbumActions(
+            onEdit = { events += "edit:$it" },
+            onSetCover = { events += "cover:${it.id}" },
+            onDelete = { events += "delete:$it" },
+        )
+        setContentWithPhotos { ChageunTheme { AlbumScreen(state(), isTwoPane = false, actions = actions) } }
+
+        composeRule.onNodeWithText("Details").performClick()
+        composeRule.onNodeWithText("Car photo").performClick()
+        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.onNodeWithText("New tires").performClick()
+
+        assertThat(events).containsExactly("edit:p2", "cover:p2", "delete:p2", "edit:p2").inOrder()
+    }
+
+    @Test
+    fun viewer_withoutNote_offersToWriteOne() {
+        var editing: String? = null
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(
+                    state(selected = "p3"),
+                    isTwoPane = false,
+                    actions = AlbumActions(onEdit = {
+                        editing = it
+                    }),
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Write a note").performClick()
+
+        assertThat(editing).isEqualTo("p3")
+    }
+
+    @Test
+    fun viewer_showsImageEditOnlyWhenAnEditorIsAttached() {
+        var editor by mutableStateOf<((AlbumPhoto) -> Unit)?>(null)
+        var edited: String? = null
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onEditImage = editor))
+            }
+        }
+        composeRule.onNodeWithText("Edit").assertDoesNotExist()
+
+        editor = { edited = it.id }
+        composeRule.onNodeWithText("Edit").performClick()
+
+        assertThat(edited).isEqualTo("p2")
+    }
+
+    @Test
+    fun viewer_dragDownCloses() {
+        val selections = mutableListOf<String?>()
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onSelect = { selections += it }))
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("New tires").performTouchInput {
+            swipeDown(startY = centerY, endY = centerY + 400f, durationMillis = 300)
+        }
+
+        assertThat(selections.last()).isNull()
+    }
+
+    @Test
+    fun viewer_backButtonClosesThePhoto() {
+        val selections = mutableListOf<String?>()
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onSelect = { selections += it }))
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        assertThat(selections.last()).isNull()
+    }
+
+    @Test
+    fun thumbnailStrip_jumpsToTheTappedPhoto() {
+        val selections = mutableListOf<String?>()
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onSelect = { selections += it }))
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Photo 2 of 5, New tires").assertIsSelected()
+        composeRule.onNodeWithContentDescription("Photo 1 of 5, Car wash before the trip").performClick()
+
+        composeRule.onNodeWithText("1 / 5").assertIsDisplayed()
+        assertThat(selections.last()).isEqualTo("p1")
+    }
+
+    @Test
+    fun date_opensTheCalendarOnThatDay() {
+        var opened: LocalDate? = null
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onOpenCalendar = { opened = it }))
+            }
+        }
+
+        composeRule.onNode(hasClickLabel("View this day in the calendar")).performClick()
+
+        assertThat(opened).isEqualTo(LocalDate.of(2026, 10, 3))
+    }
+
+    @Test
+    fun tappingThePhoto_hidesAndRestoresControls() {
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(), isTwoPane = false, actions = AlbumActions()) }
+        }
+
+        tapPhoto("New tires")
+        composeRule.onNodeWithText("Details").assertDoesNotExist()
+        composeRule.onNodeWithText("2 / 5").assertDoesNotExist()
+
+        tapPhoto("New tires")
+        composeRule.onNodeWithText("Details").assertIsDisplayed()
+    }
+
+    @Test
+    fun withTouchExploration_controlsStayReachable() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        shadowOf(context.getSystemService(AccessibilityManager::class.java)).setTouchExplorationEnabled(true)
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(), isTwoPane = false, actions = AlbumActions()) }
+        }
+
+        tapPhoto("New tires")
+
+        composeRule.onNodeWithText("Details").assertIsDisplayed()
+        composeRule.onNodeWithText("2 / 5").assertIsDisplayed()
+    }
+
+    @Test
+    fun viewer_controls_haveLabelsAndLargeTouchTargets() {
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onOpenCalendar = {}))
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun twoPane_gridAndViewer_haveLabelsAndLargeTouchTargets() {
+        setContentWithPhotos {
+            ChageunTheme(spacing = Gutters.Expanded) {
+                AlbumScreen(state(), isTwoPane = true, actions = AlbumActions(onOpenCalendar = {}))
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
+        composeRule.onNodeWithText("2 / 5").assertIsDisplayed()
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    fun grid_longPressStartsPicking_andTapOpensOtherwise() {
+        val events = mutableListOf<String>()
+        val actions = AlbumActions(onSelect = { events += "open:$it" }, onTogglePick = { events += "pick:$it" })
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(selected = null), isTwoPane = false, actions = actions) }
+        }
+
+        composeRule.onNodeWithContentDescription("New tires").performClick()
+        composeRule.onNodeWithContentDescription("New tires").performTouchInput { longClick() }
+
+        assertThat(events).containsExactly("open:p2", "pick:p2").inOrder()
+    }
+
+    @Test
+    fun grid_whilePicking_tapTogglesAndHeaderPicksTheDay() {
+        val events = mutableListOf<String>()
+        val actions = AlbumActions(
+            onSelect = { events += "open:$it" },
+            onTogglePick = { events += "pick:$it" },
+            onPickDay = { events += "day:$it" },
+        )
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(selected = null, picked = setOf("p1", "p2")), isTwoPane = false, actions = actions)
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("New tires").assertIsSelected().performClick()
+        composeRule.onNodeWithText("Deselect").performClick()
+        composeRule.onAllNodesWithText("Select all")[0].performClick()
+
+        assertThat(events).containsExactly("pick:p2", "day:2026-10-03", "day:2026-09-21").inOrder()
+    }
+
+    @Test
+    fun grid_pinchChangesThumbnailSize() {
+        val steps = mutableListOf<Int>()
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(
+                    state(selected = null),
+                    isTwoPane = false,
+                    actions = AlbumActions(onZoomGrid = {
+                        steps += it
+                    }),
+                )
+            }
+        }
+
+        composeRule.onRoot().performTouchInput {
+            pinch(
+                center - Offset(20f, 0f),
+                center - Offset(150f, 0f),
+                center + Offset(20f, 0f),
+                center + Offset(150f, 0f),
+            )
+        }
+        composeRule.onRoot().performTouchInput {
+            pinch(
+                center - Offset(150f, 0f),
+                center - Offset(20f, 0f),
+                center + Offset(150f, 0f),
+                center + Offset(20f, 0f),
+            )
+        }
+
+        assertThat(steps).containsExactly(1, -1).inOrder()
+    }
+
+    @Test
+    fun grid_controls_haveLabelsAndLargeTouchTargets() {
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(state(selected = null, picked = setOf("p1")), isTwoPane = false, actions = AlbumActions())
+            }
+        }
+
+        composeRule.assertAccessibleControls()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun viewer_largeFont_keepsEveryTextVisible() {
+        setContentWithPhotos {
+            ChageunTheme {
+                AlbumScreen(
+                    state(isCoverUpdated = true),
+                    isTwoPane = false,
+                    actions = AlbumActions(onOpenCalendar = {
+                    }),
+                )
+            }
+        }
+
+        composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(fontScale = 2f)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun grid_largeFont_keepsEveryTextVisible() {
+        setContentWithPhotos {
+            ChageunTheme { AlbumScreen(state(selected = null), isTwoPane = false, actions = AlbumActions()) }
+        }
+
+        composeRule.assertNoClippedText()
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_viewerPhoneKorean() {
+        setContentWithPhotos {
+            AppFrame { AlbumScreen(state(), isTwoPane = false, actions = AlbumActions(onOpenCalendar = {})) }
+        }
+        composeRule.captureScreen("album_viewer_phone_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_viewerDark_withoutNote_afterSettingCover() {
+        setContentWithPhotos {
+            AppFrame {
+                AlbumScreen(state(selected = "p3", isCoverUpdated = true), isTwoPane = false, actions = AlbumActions())
+            }
+        }
+        composeRule.captureScreen("album_viewer_dark")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.EXPANDED_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_twoPaneKorean() {
+        setContentWithPhotos {
+            AppFrame(spacing = Gutters.Expanded) {
+                AlbumScreen(state(), isTwoPane = true, actions = AlbumActions(onOpenCalendar = {}))
+            }
+        }
+        composeRule.captureScreen("album_two_pane_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.FOLD_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_foldKorean() {
+        setContentWithPhotos {
+            AppFrame(spacing = Gutters.Medium) {
+                AlbumScreen(state(selected = "p5"), isTwoPane = true, actions = AlbumActions(onOpenCalendar = {}))
+            }
+        }
+        composeRule.captureScreen("album_fold_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_viewerFullScreenKorean() {
+        setContentWithPhotos {
+            AppFrame { AlbumScreen(state(selected = "p1"), isTwoPane = false, actions = AlbumActions()) }
+        }
+        tapPhoto("Car wash before the trip")
+        composeRule.captureScreen("album_viewer_full_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_gridPickingKorean() {
+        setContentWithPhotos {
+            AppFrame {
+                AlbumScreen(
+                    state(selected = null, picked = setOf("p1", "p4")),
+                    isTwoPane = false,
+                    actions = AlbumActions(),
+                )
+            }
+        }
+        composeRule.captureScreen("album_grid_picking_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_gridKorean() {
+        setContentWithPhotos {
+            AppFrame { AlbumScreen(state(selected = null), isTwoPane = false, actions = AlbumActions()) }
+        }
+        composeRule.captureScreen("album_grid_ko")
+    }
+
+    /**
+     * 사진을 한 장씩 차례로 읽어 캐시에 넣은 뒤 화면을 그린다. 여러 IO 스레드가 동시에 사진을 읽은 채로 테스트가 끝나면
+     * Robolectric native 그래픽이 프로세스를 멈추고, 캡처할 때 아직 안 읽힌 사진이 빈칸으로 찍히기 때문이다.
+     */
+    private fun setContentWithPhotos(content: @Composable () -> Unit) {
+        var preloaded by mutableIntStateOf(0)
+        composeRule.setContent {
+            if (preloaded == photos.size) content() else PreloadPhoto(photos[preloaded])
+        }
+        repeat(photos.size) {
+            composeRule.waitUntil(PHOTO_LOAD_TIMEOUT_MS) {
+                composeRule.onAllNodesWithTag(PRELOADED_TAG).fetchSemanticsNodes().isNotEmpty()
+            }
+            preloaded++
+            composeRule.waitForIdle()
+        }
+        // 사진 보기의 조작 막대는 연 뒤 조금 늦게 나타난다.
+        composeRule.mainClock.advanceTimeBy(CHROME_WAIT_MS)
+        composeRule.waitForIdle()
+    }
+
+    @Composable
+    private fun PreloadPhoto(photo: AlbumPhoto) {
+        val image by rememberFileImage(photo.filePath)
+        if (image != null) Box(Modifier.testTag(PRELOADED_TAG))
+    }
+
+    // 두 번 누르기를 기다리는 시간이 지나야 한 번 누르기로 처리된다.
+    private fun tapPhoto(description: String) {
+        composeRule.onNodeWithContentDescription(description).performTouchInput { click() }
+        composeRule.mainClock.advanceTimeBy(DOUBLE_TAP_WAIT_MS)
+        composeRule.waitForIdle()
+    }
+
+    private fun hasClickLabel(label: String) = SemanticsMatcher("click label = $label") {
+        it.config.getOrNull(SemanticsActions.OnClick)?.label == label
+    }
+
+    private enum class Scene { Day, Dusk, Night }
+
+    private fun photo(id: String, scene: Scene, date: LocalDate, comment: String?): AlbumPhoto {
+        val file = File.createTempFile("album-$id", ".jpg").apply { deleteOnExit() }
+        val bitmap = drawScene(scene)
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) }
+        bitmap.recycle()
+        return AlbumPhoto(id, file.absolutePath, file.absolutePath, date, comment, Instant.EPOCH)
+    }
+
+    // 실제 사진 대신 하늘·도로 위에 단순한 차 모양을 그린 가로 사진을 쓴다.
+    private fun drawScene(scene: Scene): Bitmap {
+        val (skyTop, skyBottom, body) = when (scene) {
+            Scene.Day -> Triple(Color.rgb(120, 170, 225), Color.rgb(200, 225, 245), Color.rgb(36, 52, 90))
+            Scene.Dusk -> Triple(Color.rgb(250, 150, 110), Color.rgb(255, 214, 160), Color.rgb(200, 40, 50))
+            Scene.Night -> Triple(Color.rgb(15, 20, 45), Color.rgb(50, 60, 100), Color.rgb(230, 230, 235))
+        }
+        val w = PHOTO_WIDTH.toFloat()
+        val h = PHOTO_HEIGHT.toFloat()
+        return Bitmap.createBitmap(PHOTO_WIDTH, PHOTO_HEIGHT, Bitmap.Config.ARGB_8888).applyCanvas {
+            // Robolectric native 그래픽에서 Shader를 쓰면 프로세스가 멈추므로 한 줄씩 색을 바꿔 하늘을 그린다.
+            val horizon = h * 0.65f
+            repeat(horizon.toInt()) { row ->
+                val color = ColorUtils.blendARGB(skyTop, skyBottom, row / horizon)
+                drawRect(0f, row.toFloat(), w, row + 1f, Paint().apply { this.color = color })
+            }
+            drawRect(0f, h * 0.65f, w, h, Paint().apply { color = Color.rgb(70, 72, 78) })
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = body }
+            drawRoundRect(RectF(w * 0.22f, h * 0.5f, w * 0.78f, h * 0.72f), 30f, 30f, paint)
+            drawRoundRect(RectF(w * 0.33f, h * 0.38f, w * 0.64f, h * 0.55f), 40f, 40f, paint)
+            val wheel = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(25, 25, 28) }
+            drawCircle(w * 0.33f, h * 0.72f, h * 0.07f, wheel)
+            drawCircle(w * 0.67f, h * 0.72f, h * 0.07f, wheel)
+        }
+    }
+
+    private companion object {
+        const val PHOTO_WIDTH = 800
+        const val PHOTO_HEIGHT = 600
+        const val JPEG_QUALITY = 90
+        const val PHOTO_LOAD_TIMEOUT_MS = 5_000L
+        const val PRELOADED_TAG = "preloaded"
+        const val DOUBLE_TAP_WAIT_MS = 1_000L
+        const val CHROME_WAIT_MS = 1_000L
+    }
+}

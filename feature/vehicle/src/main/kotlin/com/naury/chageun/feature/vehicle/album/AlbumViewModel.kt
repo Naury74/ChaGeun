@@ -35,9 +35,17 @@ data class AlbumUiState(
     val editing: AlbumPhoto? = null,
     val failedCount: Int = 0,
     val isCoverUpdated: Boolean = false,
+    /** 길게 눌러 여러 장을 고르는 중인 사진들. 비어 있으면 고르는 중이 아니다. */
+    val picked: Set<String> = emptySet(),
+    /** 그리드를 두 손가락으로 오므리고 벌려 고른 칸 크기 단계. 클수록 칸이 크고 한 줄에 적게 들어간다. */
+    val gridStep: Int = DEFAULT_GRID_STEP,
 ) {
     val photos: List<AlbumPhoto> get() = days.flatMap { it.photos }
+    val isPicking: Boolean get() = picked.isNotEmpty()
 }
+
+const val GRID_STEP_COUNT = 5
+const val DEFAULT_GRID_STEP = 3
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -51,24 +59,29 @@ class AlbumViewModel @Inject constructor(
 
     private val selectedId = savedStateHandle.getStateFlow<String?>(KEY_SELECTED, null)
     private val editingId = savedStateHandle.getStateFlow<String?>(KEY_EDITING, null)
+
+    /** 여러 장 고르기. 화면을 다시 만들어도 남도록 SavedStateHandle에 둔다. */
+    val picks = PickedPhotos(savedStateHandle)
+    private val gridStep = savedStateHandle.getStateFlow(KEY_GRID_STEP, DEFAULT_GRID_STEP)
     private val messages = MutableStateFlow(Messages())
+    private val view = combine(selectedId, editingId, picks.ids, gridStep) { selected, editing, picked, step ->
+        ViewState(selected, editing, picked.toSet(), step)
+    }
 
     val uiState: StateFlow<AlbumUiState> = vehicleRepository.observePrimaryVehicle()
         .filterNotNull()
         .flatMapLatest { vehicle ->
-            combine(albumRepository.observe(vehicle.id), selectedId, editingId, messages) {
-                    photos,
-                    selected,
-                    editing,
-                    message,
-                ->
+            combine(albumRepository.observe(vehicle.id), view, messages) { photos, view, message ->
+                val ids = photos.mapTo(HashSet()) { it.id }
                 AlbumUiState(
                     isLoading = false,
                     days = photos.groupBy { it.takenOn }.map { (date, items) -> AlbumDay(date, items) },
-                    selected = photos.firstOrNull { it.id == selected },
-                    editing = photos.firstOrNull { it.id == editing },
+                    selected = photos.firstOrNull { it.id == view.selected },
+                    editing = photos.firstOrNull { it.id == view.editing },
                     failedCount = message.failed,
                     isCoverUpdated = message.coverUpdated,
+                    picked = view.picked.filterTo(LinkedHashSet()) { it in ids },
+                    gridStep = view.gridStep,
                 )
             }
         }
@@ -103,11 +116,26 @@ class AlbumViewModel @Inject constructor(
         }
     }
 
-    fun delete(id: String) {
+    /** 여러 장을 한 번에 지운다. 고르던 사진과 열어 둔 사진도 함께 정리한다. */
+    fun delete(ids: List<String>) {
+        if (ids.isEmpty()) return
         viewModelScope.launch {
-            albumRepository.delete(vehicleId(), id)
-            if (selectedId.value == id) select(null)
+            val vehicleId = vehicleId()
+            ids.forEach { albumRepository.delete(vehicleId, it) }
+            if (selectedId.value in ids) select(null)
+            picks.remove(ids)
         }
+    }
+
+    /** 그날 사진을 모두 고른다. 이미 모두 골라져 있으면 그날 사진을 모두 뺀다. */
+    fun pickDay(date: LocalDate) {
+        val day = uiState.value.days.firstOrNull { it.date == date }?.photos?.map { it.id } ?: return
+        picks.toggleAll(day)
+    }
+
+    /** [delta]가 양수면 칸을 키우고 음수면 줄인다. 범위를 넘으면 그대로 둔다. */
+    fun zoomGrid(delta: Int) {
+        savedStateHandle[KEY_GRID_STEP] = (gridStep.value + delta).coerceIn(0, GRID_STEP_COUNT - 1)
     }
 
     /** 앨범 사진을 내 차 대표 사진으로 쓴다. 대표 사진은 배경 제거를 거쳐 따로 저장된다. */
@@ -126,9 +154,45 @@ class AlbumViewModel @Inject constructor(
 
     private data class Messages(val failed: Int = 0, val coverUpdated: Boolean = false)
 
+    private data class ViewState(
+        val selected: String?,
+        val editing: String?,
+        val picked: Set<String>,
+        val gridStep: Int,
+    )
+
     private companion object {
         const val KEY_SELECTED = "album_selected"
         const val KEY_EDITING = "album_editing"
+        const val KEY_GRID_STEP = "album_grid_step"
         const val STOP_TIMEOUT_MILLIS = 5_000L
+    }
+}
+
+/** 앨범에서 길게 눌러 고른 사진 id. 고른 순서를 지킨다. */
+class PickedPhotos(private val savedStateHandle: SavedStateHandle) {
+    val ids: StateFlow<ArrayList<String>> = savedStateHandle.getStateFlow(KEY_PICKED, arrayListOf())
+
+    fun toggle(id: String) {
+        val current = ids.value
+        set(if (id in current) current - id else current + id)
+    }
+
+    /** 모두 골라져 있으면 모두 빼고, 아니면 빠진 것을 더한다. */
+    fun toggleAll(group: List<String>) {
+        val current = ids.value
+        set(if (current.containsAll(group)) current - group.toSet() else (current + group).distinct())
+    }
+
+    fun remove(group: List<String>) = set(ids.value - group.toSet())
+
+    fun clear() = set(emptyList())
+
+    private fun set(value: List<String>) {
+        savedStateHandle[KEY_PICKED] = ArrayList(value)
+    }
+
+    private companion object {
+        const val KEY_PICKED = "album_picked"
     }
 }

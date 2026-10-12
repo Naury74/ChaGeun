@@ -82,7 +82,50 @@ class AlbumViewModelTest {
         backgroundScope.launch { recreated.uiState.collect {} }
         assertThat(recreated.uiState.first { it.selected != null }.selected?.id).isEqualTo(id)
 
-        recreated.delete(id)
+        recreated.delete(listOf(id))
         assertThat(recreated.uiState.first { it.photos.size == 1 }.selected).isNull()
+    }
+
+    @Test
+    fun picking_togglesWholeDays_andDeletesTogether() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.add(listOf("content://a", "content://b", "content://c"), highQuality = false)
+        val ids = viewModel.uiState.first { it.photos.size == 3 }.photos.map { it.id }
+
+        viewModel.picks.toggle(ids[0])
+        assertThat(viewModel.uiState.first { it.isPicking }.picked).containsExactly(ids[0])
+
+        viewModel.pickDay(today)
+        assertThat(viewModel.uiState.first { it.picked.size == 3 }.picked).containsExactlyElementsIn(ids)
+        viewModel.pickDay(today)
+        assertThat(viewModel.uiState.first { !it.isPicking }.picked).isEmpty()
+
+        viewModel.picks.toggle(ids[1])
+        viewModel.picks.toggle(ids[2])
+        viewModel.select(ids[2])
+        viewModel.delete(viewModel.uiState.first { it.picked.size == 2 }.picked.toList())
+
+        val state = viewModel.uiState.first { it.photos.size == 1 }
+        assertThat(state.photos.single().id).isEqualTo(ids[0])
+        assertThat(state.picked).isEmpty()
+        assertThat(state.selected).isNull()
+    }
+
+    @Test
+    fun gridZoom_staysWithinSteps_andSurvivesRecreation() = runTest {
+        val handle = SavedStateHandle()
+        val viewModel = viewModel(handle)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        repeat(GRID_STEP_COUNT + 2) { viewModel.zoomGrid(1) }
+        assertThat(viewModel.uiState.first { it.gridStep == GRID_STEP_COUNT - 1 }.gridStep).isEqualTo(
+            GRID_STEP_COUNT - 1,
+        )
+        repeat(GRID_STEP_COUNT + 2) { viewModel.zoomGrid(-1) }
+
+        val recreated = viewModel(handle)
+        backgroundScope.launch { recreated.uiState.collect {} }
+        assertThat(recreated.uiState.first { !it.isLoading }.gridStep).isEqualTo(0)
     }
 }
