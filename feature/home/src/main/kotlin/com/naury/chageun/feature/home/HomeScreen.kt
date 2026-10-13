@@ -227,14 +227,15 @@ private fun HomeContent(
     val showAd = LocalAdsEnabled.current
     val showsAi = LocalFeatureFlags.current.aiShareEnabled
     val panes: List<LazyListScope.() -> Unit> = when {
-        isTabletop -> listOf({ summaryPane(state, actions, showsActions = false) }, {
-            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
+        isTabletop -> listOf({ summaryPane(state, actions, showsAi = false, showsActions = false) }, {
+            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼과 AI 질문을 여기 맨 위에 둔다.
             item(key = "hero-actions") {
                 HomeHeroActions(state, actions, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
             }
+            askAi(actions, showsAi)
             attentionPane(state, actions)
+            recentPane(state, actions, showAd)
             missingPane(state, actions)
-            recentPane(state, actions, showAd, showsAi)
         })
         else -> homePanes(state, paneCount, actions, showAd, showsAi)
     }
@@ -267,31 +268,35 @@ private fun homePanes(
     showAd: Boolean,
     showsAi: Boolean,
 ): List<LazyListScope.() -> Unit> = when (paneCount) {
+    // 할 일(주의·예정·일정)과 기록을 먼저 보이고, 항목이 많은 "정보가 필요해요"는 맨 아래에 둔다.
+    // 무엇이 부족한지는 상태 요약 카드가 이미 첫 화면에서 알려 준다.
     SINGLE_PANE -> listOf({
-        summaryPane(state, actions)
+        summaryPane(state, actions, showsAi)
         attentionPane(state, actions)
+        recentPane(state, actions, showAd)
         missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
     })
-    TWO_PANES -> listOf({ summaryPane(state, actions, isSideBySide = true) }, {
+    TWO_PANES -> listOf({ summaryPane(state, actions, showsAi, isSideBySide = true) }, {
         attentionPane(state, actions)
+        recentPane(state, actions, showAd)
         missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
     })
-    else -> listOf({ summaryPane(state, actions, isSideBySide = true) }, { attentionPane(state, actions) }, {
+    else -> listOf({ summaryPane(state, actions, showsAi, isSideBySide = true) }, { attentionPane(state, actions) }, {
+        recentPane(state, actions, showAd)
         missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
     })
 }
 
 private fun LazyListScope.summaryPane(
     state: HomeUiState.Content,
     actions: HomeActions,
+    showsAi: Boolean,
     isSideBySide: Boolean = false,
     showsActions: Boolean = true,
 ) {
     // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다.
     item(key = "hero") { HomeHero(state, actions, isSideBySide, showsActions) }
+    askAi(actions, showsAi)
     item(key = "health") {
         VehicleStatusSummary(
             health = state.overview.health,
@@ -377,12 +382,12 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeA
     }
 }
 
-private fun LazyListScope.recentPane(
-    state: HomeUiState.Content,
-    actions: HomeActions,
-    showAd: Boolean,
-    showsAi: Boolean,
-) {
+private fun LazyListScope.askAi(actions: HomeActions, showsAi: Boolean) {
+    if (!showsAi) return
+    item(key = "ai") { AskAiBar(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+}
+
+private fun LazyListScope.recentPane(state: HomeUiState.Content, actions: HomeActions, showAd: Boolean) {
     if (state.upcomingEvents.isNotEmpty()) {
         item(key = "schedule") {
             UpcomingScheduleCard(
@@ -401,9 +406,6 @@ private fun LazyListScope.recentPane(
             onOpenHistory = actions.onOpenHistory,
             modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
         )
-    }
-    if (showsAi) {
-        item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
     }
 }
 

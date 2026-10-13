@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.pressable
@@ -119,35 +120,50 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
     }
 }
 
+/**
+ * Hero 바로 아래 두는 AI 질문 입력줄. Gemini 입력창처럼 생겨서 누르면 바로 묻는 화면으로 간다.
+ * 홈 맨 아래에 있으면 거의 보이지 않아 첫 화면에서 보이는 자리로 올렸다.
+ */
 @Composable
-internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
+internal fun AskAiBar(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
     val ai = ChageunTheme.colors.ai
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .pressable(onClick = onAskAi),
-        shape = MaterialTheme.shapes.large,
-        color = ai.container,
-        contentColor = ai.content,
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Row(
-            Modifier.padding(ChageunTheme.spacing.md),
+            Modifier.padding(start = ChageunTheme.spacing.md, end = ChageunTheme.spacing.xs)
+                .padding(vertical = ChageunTheme.spacing.xs),
             horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            Icon(
+                Icons.Filled.AutoAwesome,
+                contentDescription = null,
+                tint = ai.content,
+                modifier = Modifier.size(24.dp),
+            )
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_ai_title), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.home_ai_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             Box(
                 Modifier
-                    .size(44.dp)
+                    .size(40.dp)
                     .background(ai.content, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = ai.container)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = ai.container)
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
-                Text(stringResource(R.string.home_ai_title), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.home_ai_body), style = MaterialTheme.typography.bodySmall)
-            }
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         }
     }
 }
