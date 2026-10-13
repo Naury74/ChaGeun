@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -56,6 +59,7 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
     val context = LocalContext.current
     val prompt = uiState.facts?.let { aiPromptText(it, uiState.question) }
     val instruction = stringResource(R.string.ai_on_device_instruction)
+    val reminder = stringResource(R.string.ai_on_device_reminder)
     val historyLabel = stringResource(R.string.ai_history_label)
     val destinationName = destinationTitle(uiState.destination)
     val texts = ExternalTexts(
@@ -75,7 +79,9 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
             onSend = {
                 when {
                     prompt == null -> Unit
-                    uiState.destination == AiDestination.OnDevice -> viewModel.ask(prompt, instruction, historyLabel)
+                    // 작은 모델은 시스템 지시보다 질문 바로 뒤의 당부를 더 잘 따른다.
+                    uiState.destination == AiDestination.OnDevice ->
+                        viewModel.ask("$prompt\n\n$reminder", instruction, historyLabel)
                     viewModel.validateBeforeShare() -> context.launchExternal {
                         openExternally(context, uiState.destination, prompt, texts)
                         viewModel.onShared(uiState.destination)
@@ -137,7 +143,8 @@ fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubAction
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .imePadding(),
+                // 탭 바 없이 화면을 덮으므로 시스템 내비게이션 영역과 키보드를 직접 피한다.
+                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val contentModifier = Modifier

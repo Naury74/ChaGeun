@@ -24,7 +24,7 @@ class FakeOnDeviceAssistant(var status: OnDeviceAiStatus = OnDeviceAiStatus.Avai
 
     override fun download(): Flow<OnDeviceDownload> = flow {
         downloads++
-        emit(OnDeviceDownload.InProgress(0.5f))
+        emit(OnDeviceDownload.InProgress(HALF))
         if (downloadSucceeds) {
             status = OnDeviceAiStatus.Available
             emit(OnDeviceDownload.Completed)
@@ -41,3 +41,5 @@ class FakeOnDeviceAssistant(var status: OnDeviceAiStatus = OnDeviceAiStatus.Avai
         words.indices.forEach { emit(words.take(it + 1).joinToString(" ")) }
     }
 }
+
+private const val HALF = 0.5f

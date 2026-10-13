@@ -14,6 +14,7 @@ import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
+import com.naury.chageun.feature.ai.ondevice.dropUnfinishedSentence
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -174,7 +175,7 @@ class AiHubViewModel @AssistedInject constructor(
             }
             try {
                 onDeviceAssistant.answer(instruction, prompt).collect { text -> replaceLast { it.copy(text = text) } }
-                replaceLast { it.copy(isStreaming = false) }
+                replaceLast { it.copy(text = dropUnfinishedSentence(it.text), isStreaming = false) }
             } catch (_: OnDeviceAiException) {
                 replaceLast { it.copy(isStreaming = false, isFailed = it.text.isBlank()) }
             }

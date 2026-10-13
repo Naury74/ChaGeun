@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -82,7 +83,7 @@ internal fun AiComposer(uiState: AiHubUiState, actions: AiHubActions, modifier: 
                                 Modifier.size(AssistChipDefaults.IconSize),
                             )
                         },
-                        shape = RoundedCornerShape(50),
+                        shape = CircleShape,
                     )
                     Box(Modifier.weight(1f))
                     SendButton(
@@ -103,7 +104,11 @@ internal fun AiComposer(uiState: AiHubUiState, actions: AiHubActions, modifier: 
             Text(
                 hint,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (uiState.isQuestionMissing) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (uiState.isQuestionMissing) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
                 modifier = Modifier.padding(horizontal = ChageunTheme.spacing.md),
             )
         }

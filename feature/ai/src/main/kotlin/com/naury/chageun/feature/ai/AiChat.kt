@@ -153,7 +153,7 @@ internal fun ChatBubble(message: ChatMessage, modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.error,
                     )
                     message.text.isEmpty() -> ThinkingText()
-                    else -> Text(message.text, style = MaterialTheme.typography.bodyLarge)
+                    else -> Text(answerText(message.text), style = MaterialTheme.typography.bodyLarge)
                 }
                 if (!message.isStreaming && !message.isFailed) {
                     Text(

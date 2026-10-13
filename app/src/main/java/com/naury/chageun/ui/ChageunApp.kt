@@ -209,8 +209,9 @@ fun ChageunApp(
     val itemColors = iosStyleItemColors()
     // 앨범 사진 보기처럼 화면 전체를 쓰는 동안에는 하단 탭 바를 숨긴다.
     var isImmersive by remember { mutableStateOf(false) }
+    val isNavigationHidden = hidesNavigation(isImmersive, backStack.lastOrNull())
     NavigationSuiteScaffold(
-        layoutType = navigationSuiteTypeFor(windowSizeClass, isImmersive),
+        layoutType = navigationSuiteTypeFor(windowSizeClass, isNavigationHidden),
         navigationSuiteColors = NavigationSuiteDefaults.colors(
             navigationBarContainerColor = MaterialTheme.colorScheme.surface,
             navigationRailContainerColor = MaterialTheme.colorScheme.background,
@@ -447,3 +448,6 @@ private fun WithoutAds(hidden: Boolean, content: @Composable () -> Unit) {
 private fun MutableList<NavKey>.popToTopLevel() {
     while (size > 1) removeAt(lastIndex)
 }
+
+/** 사진 보기처럼 화면 전체를 쓰는 중이거나, 입력창과 답에 집중해야 하는 AI 대화면 탭 바 없이 화면을 덮는다. */
+private fun hidesNavigation(isImmersive: Boolean, top: NavKey?): Boolean = isImmersive || top is AiRoute

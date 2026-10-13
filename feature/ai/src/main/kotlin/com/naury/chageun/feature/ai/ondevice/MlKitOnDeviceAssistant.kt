@@ -18,7 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transformWhile
 
 /**
  * ML Kit GenAI Prompt API로 기기 안 Gemini Nano를 쓴다. 모델은 앱이 아니라 시스템(AICore)이 관리해서
@@ -77,13 +77,17 @@ internal class MlKitOnDeviceAssistant @Inject constructor(private val logger: Ap
     override fun answer(instruction: String, prompt: String): Flow<String> {
         val request = generateContentRequest(SystemInstruction(instruction), TextPart(prompt)) {
             temperature = TEMPERATURE
+            topK = TOP_K
             maxOutputTokens = MAX_OUTPUT_TOKENS
         }
         val builder = StringBuilder()
         return model.generateContentStream(request)
-            .map { response ->
+            .transformWhile { response ->
                 builder.append(response.candidates.firstOrNull()?.text.orEmpty())
-                builder.toString()
+                val cut = cutRepetition(builder.toString())
+                if (cut != null) logger.debug("on_device_ai_repetition_cut")
+                emit(cut ?: builder.toString())
+                cut == null
             }
             .catch { e ->
                 if (e is CancellationException) throw e
@@ -94,7 +98,10 @@ internal class MlKitOnDeviceAssistant @Inject constructor(private val logger: Ap
 
     private companion object {
         // 차 정보에 근거한 답을 원하므로 낮게 둔다.
-        const val TEMPERATURE = 0.3f
-        const val MAX_OUTPUT_TOKENS = 512
+        const val TEMPERATURE = 0.2f
+        const val TOP_K = 10
+
+        // 3~6문장 답에 넉넉한 길이. 길게 두면 반복에 빠졌을 때 오래 기다리게 된다.
+        const val MAX_OUTPUT_TOKENS = 320
     }
 }

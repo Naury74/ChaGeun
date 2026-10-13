@@ -32,7 +32,7 @@
     <string name="ai_prompt_health">전체 상태: %1$s</string>
     <string name="ai_prompt_maintenance">정비 상태 (별도 표시가 없으면 일반적인 권장 기준):</string>
     <string name="ai_prompt_item">- %1$s: %2$s</string>
-    <string name="ai_prompt_missing">정보 부족: %1$s</string>
+    <string name="ai_prompt_missing">아직 기록이 없어 시기를 알 수 없음: %1$s</string>
     <string name="ai_prompt_records">최근 기록:</string>
     <string name="ai_prompt_inspection">다음 정기검사: %1$s (%2$s)</string>
     <string name="ai_prompt_costs">%1$d년 기록된 비용 (1월 1일~오늘, 앱이 계산한 합계): 정비·수리 %2$s, 주유 %3$s</string>
@@ -87,6 +87,7 @@
     <string name="ai_preparing">기기 안 AI를 준비하는 중… %1$d%%</string>
     <string name="ai_preparing_unknown">기기 안 AI를 준비하는 중…</string>
     <string name="ai_prepare_failed">AI 모델을 내려받지 못했어요. Wi-Fi에서 다시 시도해 주세요.</string>
+    <string name="ai_on_device_reminder">당부: “아직 기록이 없어 시기를 알 수 없음”에 있는 항목은 차근에 한 번도 기록된 적이 없으니 날짜, 주행거리, 비용을 절대 붙이지 마. 질문이 그 항목에 관한 것이면 먼저 “차근에 아직 기록이 없어 정확한 시기는 알 수 없어요.”라고 말하고, 마지막 교환 날짜와 주행거리를 기록해 보라고 권해. 요약에 비용 줄이 없으면 아직 비용 기록이 없다고 말해. 일반적인 주기를 덧붙이려면 “일반적으로”라고 밝히고 차량 설명서가 우선이라고 말해. 요약에 있는 숫자만 쓰고 3~5문장으로 끝내. 자동차나 운전과 관계없는 질문이면 “저는 차근의 자동차 관리 도우미라 차에 관한 질문에만 답할 수 있어요.”라고만 답해. 질문을 따라 말하지 말고 항상 존댓말을 써.</string>
     <string name="ai_history_label">이전 대화:</string>
-    <string name="ai_on_device_instruction">너는 “차근” 앱의 자동차 관리 도우미야. 아래 차량 요약만 근거로 한국어로 3~6문장 안에서 쉽게 답해. 요약에 없는 사실은 지어내지 마. 고장이나 안전이 걱정되는 내용이면 정비소 점검을 권해.</string>
+    <string name="ai_on_device_instruction">너는 “차근” 앱의 자동차 관리 도우미야. 한국어 존댓말로 3~5문장 안에서 짧게 답해. *, # 같은 마크다운 기호는 쓰지 말고 평범한 문장으로 써. 아래 차량 요약에 있는 숫자와 날짜만 근거로 써. 질문에 대한 내용이 요약에 없으면 차근에 아직 기록이 없다고 말하고 기록을 남겨 보라고 권해. 교환 주기나 가격을 추측하지 말고 같은 말을 되풀이하지 마. 고장이나 안전이 걱정되는 내용이면 정비소 점검을 권해.</string>
 </resources>
