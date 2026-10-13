@@ -178,14 +178,13 @@ private fun ActiveFilterSummary(state: CalendarUiState, actions: CalendarActions
     }
 }
 
-/** 이번 달 지출·기록 수·사진 수. 필터가 있으면 보이는 것만 센다. */
+/** 이번 달 지출·기록 수·사진 수·동영상 수. 필터가 있으면 보이는 것만 센다. 0인 사진·동영상은 빼고 말한다. */
 @Composable
 internal fun MonthSummary(summary: MonthSummaryValues, modifier: Modifier = Modifier) {
     val parts = listOfNotNull(
         stringResource(R.string.history_month_total, formatNumber(summary.totalWon)).takeIf { summary.totalWon > 0 },
         pluralStringResource(R.plurals.calendar_summary_records, summary.recordCount, summary.recordCount),
-        pluralStringResource(R.plurals.calendar_summary_photos, summary.photoCount, summary.photoCount),
-    )
+    ) + mediaCountParts(summary)
     Text(
         parts.joinToString(" · "),
         style = MaterialTheme.typography.bodyMedium,
@@ -253,3 +252,10 @@ internal val CalendarKind.labelRes: Int
     }
 
 private val CHIP_ICON_SIZE = 18.dp
+
+/** "사진 3장", "동영상 1개"처럼 0이 아닌 것만 나눠 센다. */
+@Composable
+internal fun mediaCountParts(summary: MonthSummaryValues): List<String> = listOfNotNull(
+    summary.photoCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.calendar_summary_photos, it, it) },
+    summary.videoCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.calendar_summary_videos, it, it) },
+)
