@@ -59,6 +59,32 @@ class SunTimesTest {
     }
 
     @Test
+    fun providerNightIcon_isDroppedOnceTheSunRisesAfterIt() {
+        val day = LocalDate.of(2026, 10, 12)
+        fun instant(hour: Int, minute: Int) = ZonedDateTime.of(day, LocalTime.of(hour, minute), seoul).toInstant()
+        fun at(hour: Int, minute: Int) =
+            DaylightRules.at(SEOUL, instant(hour, minute), seoul, providerSaysNight = true, observedAt = instant(5, 0))
+
+        // 새벽 5시에 받은 밤 날씨는 해가 뜨기 전까지 밤이다.
+        assertThat(at(6, 30)).isEqualTo(Daylight.Night)
+        // 홈을 켜 둔 채 해가 뜨면 다시 받지 않아도 낮이다.
+        assertThat(at(6, 45)).isEqualTo(Daylight.Day)
+        assertThat(at(17, 40)).isEqualTo(Daylight.Dusk)
+    }
+
+    @Test
+    fun nextChange_isTheNextSunriseDuskOrSunset() {
+        val day = LocalDate.of(2026, 10, 12)
+        val sun = checkNotNull(SolarCalculator.sunTimes(SEOUL, day))
+        fun next(hour: Int) =
+            DaylightRules.nextChange(SEOUL, ZonedDateTime.of(day, LocalTime.of(hour, 0), seoul).toInstant(), seoul)
+
+        assertThat(next(3)).isEqualTo(sun.sunrise)
+        assertThat(next(12)).isEqualTo(sun.sunset.minus(DaylightRules.DUSK))
+        assertThat(next(21)).isEqualTo(checkNotNull(SolarCalculator.sunTimes(SEOUL, day.plusDays(1))).sunrise)
+    }
+
+    @Test
     fun summerEvening_isStillDayAfterSix() {
         val sevenPm = ZonedDateTime.of(LocalDate.of(2026, 6, 21), LocalTime.of(19, 0), seoul).toInstant()
 

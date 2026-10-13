@@ -45,8 +45,9 @@ class HomeViewModel @Inject constructor(
     /**
      * 처음 값은 설정과 저장해 둔 날씨만 읽고 바로 나온다(네트워크는 기다리지 않는다). 그 전에는 null이라
      * 홈을 그리지 않아, 기본 하늘이 잠깐 보였다가 저장해 둔 날씨 하늘로 바뀌는 깜빡임이 없다.
+     * 해 뜸·해 짐·인사말 시간대·자정마다 새 값이 나와 인사말도 함께 다시 고른다. 홈이 안 보이면 멈춘다.
      */
-    private val weather: StateFlow<HomeWeather?> = header.weather(weatherRefreshes)
+    private val sky: StateFlow<HomeSky?> = header.weather(weatherRefreshes)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), null)
 
     val uiState: StateFlow<HomeUiState> = vehicleRepository.observePrimaryVehicle()
@@ -62,8 +63,9 @@ class HomeViewModel @Inject constructor(
                     ::HomePhoto,
                 ),
                 header.profile,
-                combine(header.usage, weather.filterNotNull(), header.isRegionChangeNoticeVisible, ::Triple),
-            ) { overview, recent, photo, profile, (usage, weather, isRegionChanged) ->
+                combine(header.usage, sky.filterNotNull(), header.isRegionChangeNoticeVisible, ::Triple),
+            ) { overview, recent, photo, profile, (usage, sky, isRegionChanged) ->
+                val weather = sky.weather
                 val now = LocalDateTime.now(clock)
                 val today = now.toLocalDate()
                 HomeUiState.Content(

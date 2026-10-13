@@ -24,6 +24,24 @@ object GreetingRules {
     private const val MILESTONE_WINDOW_KM = 1_000L
     private const val MILESTONE_RECENT_DAYS = 7L
     private const val RECENT_RECORD_DAYS = 1L
+    private const val HOURS_PER_DAY = 24
+
+    // 시각으로 고르는 규칙의 시간 범위. 아래 규칙과 [changeHours]가 같은 값을 쓴다.
+    private val MONDAY_MORNING_HOURS = 5 until 12
+    private const val FRIDAY_EVENING_FROM_HOUR = 15
+    private val COMMUTE_MORNING_HOURS = 7 until 9
+    private val COMMUTE_EVENING_HOURS = 17 until 20
+    private val WEEKEND_DAY_HOURS = 8 until 20
+    private val MILEAGE_CHECK_HOURS = 18 until 22
+    private val AFTERNOON_HOURS = 13 until 18
+    private val TIME_OF_DAY_HOURS = listOf(
+        GreetingSituation.Dawn to (0 until 5),
+        GreetingSituation.Morning to (5 until 11),
+        GreetingSituation.Lunch to (11 until 13),
+        GreetingSituation.Afternoon to AFTERNOON_HOURS,
+        GreetingSituation.Evening to (18 until 22),
+        GreetingSituation.Night to (22 until 24),
+    )
 
     private val safety = listOf(
         GreetingRule(GreetingSituation.Recall, { it.hasActiveRecall }),
@@ -58,12 +76,18 @@ object GreetingRules {
     )
 
     private val weekRhythm = listOf(
-        GreetingRule(GreetingSituation.MondayMorning, { it.isWorkday() && it.isMonday() && it.hour in 5 until 12 }),
-        GreetingRule(GreetingSituation.FridayEvening, { it.isWorkday() && it.isFriday() && it.hour >= 15 }),
-        GreetingRule(GreetingSituation.CommuteMorning, { it.isWorkday() && it.hour in 7 until 9 }),
-        GreetingRule(GreetingSituation.CommuteEvening, { it.isWorkday() && it.hour in 17 until 20 }),
-        GreetingRule(GreetingSituation.Weekend, { !it.isWeekday() && it.hour in 8 until 20 }),
-        GreetingRule(GreetingSituation.MileageStale, { it.hour in 18 until 22 && it.isMileageStale() }),
+        GreetingRule(
+            GreetingSituation.MondayMorning,
+            { it.isWorkday() && it.isMonday() && it.hour in MONDAY_MORNING_HOURS },
+        ),
+        GreetingRule(
+            GreetingSituation.FridayEvening,
+            { it.isWorkday() && it.isFriday() && it.hour >= FRIDAY_EVENING_FROM_HOUR },
+        ),
+        GreetingRule(GreetingSituation.CommuteMorning, { it.isWorkday() && it.hour in COMMUTE_MORNING_HOURS }),
+        GreetingRule(GreetingSituation.CommuteEvening, { it.isWorkday() && it.hour in COMMUTE_EVENING_HOURS }),
+        GreetingRule(GreetingSituation.Weekend, { !it.isWeekday() && it.hour in WEEKEND_DAY_HOURS }),
+        GreetingRule(GreetingSituation.MileageStale, { it.hour in MILEAGE_CHECK_HOURS && it.isMileageStale() }),
     )
 
     private val seasons = listOf(
@@ -71,22 +95,36 @@ object GreetingRules {
         GreetingSituation.SummerAfternoon to 6..8,
         GreetingSituation.AutumnAfternoon to 9..11,
     ).map { (situation, months) ->
-        GreetingRule(situation, { it.hour in 13 until 18 && it.now.monthValue in months })
-    } + GreetingRule(GreetingSituation.WinterAfternoon, { it.hour in 13 until 18 })
+        GreetingRule(situation, { it.hour in AFTERNOON_HOURS && it.now.monthValue in months })
+    } + GreetingRule(GreetingSituation.WinterAfternoon, { it.hour in AFTERNOON_HOURS })
 
     /** 시간대 규칙 어디에도 안 맞을 때 쓰는 마지막 규칙. 시간대 규칙이 하루를 다 덮으므로 실제로는 쓰이지 않는다. */
     val timeOfDayFallback = GreetingRule(GreetingSituation.Afternoon, { true })
 
-    private val timesOfDay = listOf(
-        GreetingSituation.Dawn to (0 until 5),
-        GreetingSituation.Morning to (5 until 11),
-        GreetingSituation.Lunch to (11 until 13),
-        GreetingSituation.Afternoon to (13 until 18),
-        GreetingSituation.Evening to (18 until 22),
-        GreetingSituation.Night to (22 until 24),
-    ).map { (situation, hours) -> GreetingRule(situation, { it.hour in hours }) }
+    private val timesOfDay = TIME_OF_DAY_HOURS.map { (situation, hours) ->
+        GreetingRule(situation, { it.hour in hours })
+    }
 
     val all: List<GreetingRule> = safety + welcome + holidays + carMoments + weekRhythm + seasons + timesOfDay
+
+    /**
+     * 시각으로 고르는 규칙이 바뀌는 정각(0~23시). 시간대, 출퇴근 시간, 월요일 아침, 금요일 저녁 같은 범위의 시작과 끝이다.
+     * 홈을 켜 둔 채 이 정각을 지나면 인사말을 다시 고른다. 공휴일·하루 문구 바꾸기는 날짜가 바뀌는 0시에 맞춰진다.
+     */
+    val changeHours: Set<Int> = (
+        TIME_OF_DAY_HOURS.map { it.second } + listOf(
+            MONDAY_MORNING_HOURS,
+            COMMUTE_MORNING_HOURS,
+            COMMUTE_EVENING_HOURS,
+            WEEKEND_DAY_HOURS,
+            MILEAGE_CHECK_HOURS,
+            AFTERNOON_HOURS,
+        )
+        )
+        .flatMap { listOf(it.first, it.last + 1) }
+        .plus(FRIDAY_EVENING_FROM_HOUR)
+        .map { it % HOURS_PER_DAY }
+        .toSortedSet()
 
     private val KoreanHoliday.situation: GreetingSituation
         get() = when (this) {
