@@ -33,6 +33,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,6 +68,27 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
         clipLabel = stringResource(R.string.ai_clip_label),
         copied = stringResource(R.string.ai_copied, destinationName),
     )
+    val send = {
+        when {
+            prompt == null -> Unit
+            // 작은 모델은 시스템 지시보다 질문 바로 뒤의 당부를 더 잘 따른다.
+            uiState.destination == AiDestination.OnDevice ->
+                viewModel.ask("$prompt\n\n$reminder", instruction, historyLabel)
+            viewModel.validateBeforeShare() -> context.launchExternal {
+                openExternally(context, uiState.destination, prompt, texts)
+                viewModel.onShared(uiState.destination)
+            }
+        }
+    }
+    // 추천 질문은 누르면 바로 묻는다. 질문이 상태에 반영돼 보낼 글이 다시 만들어진 다음에 보낸다.
+    var pendingSuggestion by rememberSaveable { mutableStateOf<String?>(null) }
+    val currentSend by rememberUpdatedState(send)
+    LaunchedEffect(pendingSuggestion, uiState.question) {
+        if (pendingSuggestion != null && uiState.question == pendingSuggestion) {
+            pendingSuggestion = null
+            currentSend()
+        }
+    }
     AiHubScreen(
         uiState = uiState,
         promptText = prompt,
@@ -76,17 +98,10 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
             onIncludeRecordsChanged = viewModel::onIncludeRecordsChanged,
             onIncludeCostsChanged = viewModel::onIncludeCostsChanged,
             onSelectDestination = viewModel::selectDestination,
-            onSend = {
-                when {
-                    prompt == null -> Unit
-                    // 작은 모델은 시스템 지시보다 질문 바로 뒤의 당부를 더 잘 따른다.
-                    uiState.destination == AiDestination.OnDevice ->
-                        viewModel.ask("$prompt\n\n$reminder", instruction, historyLabel)
-                    viewModel.validateBeforeShare() -> context.launchExternal {
-                        openExternally(context, uiState.destination, prompt, texts)
-                        viewModel.onShared(uiState.destination)
-                    }
-                }
+            onSend = send,
+            onAskSuggestion = { text ->
+                viewModel.onQuestionChanged(text)
+                pendingSuggestion = text
             },
             onStop = viewModel::stopAnswering,
             onNewChat = viewModel::clearConversation,
@@ -106,6 +121,8 @@ data class AiHubActions(
     val onNewChat: () -> Unit = {},
     val onOpenContext: () -> Unit = {},
     val onDownloadModel: () -> Unit = {},
+    /** 추천 질문을 눌렀을 때. 입력창에 넣고 바로 보낸다. */
+    val onAskSuggestion: (String) -> Unit = {},
 )
 
 /**
@@ -169,7 +186,7 @@ fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubAction
                             } else {
                                 suggestions(uiState.options.focusItem, uiState.facts?.focusRecord)
                             },
-                            onSuggestion = actions.onQuestionChanged,
+                            onSuggestion = actions.onAskSuggestion,
                         )
                         if (uiState.needsOnDeviceSetup) {
                             OnDeviceSetupCard(

@@ -241,14 +241,14 @@ class AiHubTest {
     }
 
     @Test
-    fun suggestionCard_fillsQuestion() {
+    fun suggestionCard_asksRightAway() {
         var question = ""
         composeRule.setContent {
             ChageunTheme {
                 AiHubScreen(
                     uiState = AiHubUiState(facts = facts),
                     promptText = aiPromptText(facts, ""),
-                    actions = AiHubActions(onQuestionChanged = { question = it }),
+                    actions = AiHubActions(onAskSuggestion = { question = it }),
                 )
             }
         }
