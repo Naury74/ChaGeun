@@ -84,10 +84,21 @@
     <string name="ai_thinking">Thinking…</string>
     <string name="ai_answer_caption">On-device AI · Answers can be wrong</string>
     <string name="ai_answer_failed">Couldn\'t answer. Please ask again.</string>
-    <string name="ai_preparing">Getting the on-device AI ready… %1$d%%</string>
-    <string name="ai_preparing_unknown">Getting the on-device AI ready…</string>
+    <string name="ai_preparing">Downloading AI model… %1$d%%</string>
+    <string name="ai_preparing_unknown">Downloading AI model…</string>
     <string name="ai_prepare_failed">Couldn\'t download the AI model. Try again on Wi-Fi.</string>
     <string name="ai_on_device_reminder">Reminder: the items listed under “no records yet” have never been logged in Chageun, so never give them a date, mileage or cost. If the question is about one of them, start with “Chageun has no record of this yet, so I can’t tell the exact timing.” and suggest logging the last service date and mileage. If the summary has no cost line, say there are no cost records yet. Add a general rule of thumb only if you call it general and say the owner’s manual comes first. Use only the numbers in the summary and keep it to 3 to 5 sentences. If the question is not about the car or driving, reply only “I’m Chageun’s car care assistant, so I can only help with questions about your car.”</string>
     <string name="ai_history_label">Earlier in this conversation:</string>
     <string name="ai_on_device_instruction">You are the car care assistant in the Chageun app. Answer in English in 3 to 5 short sentences of plain text, without Markdown symbols such as * or #. Use only the numbers and dates in the car summary below. If the summary has nothing on the question, say that Chageun has no record of it yet and suggest adding one. Do not guess intervals or prices, and do not repeat yourself. If something sounds like a fault or a safety issue, recommend a check at a repair shop.</string>
+    <string name="ai_setup_title">Set up Chageun AI</string>
+    <string name="ai_setup_subtitle">A one-time download is needed before the first answer.</string>
+    <string name="ai_setup_private">Your questions and car details stay on this phone</string>
+    <string name="ai_setup_offline">Once ready, it answers even without the internet</string>
+    <string name="ai_setup_system">Android manages the model, so the app doesn’t get bigger</string>
+    <string name="ai_setup_wifi">The model is large, so Wi-Fi is recommended.</string>
+    <string name="ai_setup_download">Download AI model</string>
+    <string name="ai_setup_retry">Try again</string>
+    <string name="ai_setup_use_web">Ask ChatGPT instead</string>
+    <string name="ai_setup_keep_open">Keep this screen open until it finishes. You can ask right away when it’s done.</string>
+    <string name="ai_setup_composer_hint">Download the AI model above to start asking.</string>
 </resources>

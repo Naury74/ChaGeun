@@ -24,7 +24,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,7 +53,6 @@ import com.naury.chageun.core.domain.ai.OnDeviceAiStatus
 internal fun AiComposer(uiState: AiHubUiState, actions: AiHubActions, modifier: Modifier = Modifier) {
     val destinationName = destinationTitle(uiState.destination)
     Column(modifier, verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        PreparingBanner(uiState.onDevice)
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -88,7 +86,7 @@ internal fun AiComposer(uiState: AiHubUiState, actions: AiHubActions, modifier: 
                     Box(Modifier.weight(1f))
                     SendButton(
                         isAnswering = uiState.isAnswering,
-                        enabled = uiState.question.isNotBlank() || uiState.isAnswering,
+                        enabled = (uiState.question.isNotBlank() && !uiState.needsOnDeviceSetup) || uiState.isAnswering,
                         onSend = actions.onSend,
                         onStop = actions.onStop,
                     )
@@ -97,6 +95,7 @@ internal fun AiComposer(uiState: AiHubUiState, actions: AiHubActions, modifier: 
         }
         val hint = when {
             uiState.isQuestionMissing -> stringResource(R.string.ai_question_required)
+            uiState.needsOnDeviceSetup -> stringResource(R.string.ai_setup_composer_hint)
             uiState.destination.opensInBrowser -> stringResource(R.string.ai_external_hint, destinationName)
             else -> null
         }
@@ -156,36 +155,6 @@ private fun SendButton(isAnswering: Boolean, enabled: Boolean, onSend: () -> Uni
             if (isAnswering) Icons.Filled.Stop else Icons.AutoMirrored.Filled.Send,
             contentDescription = stringResource(if (isAnswering) R.string.ai_stop else R.string.ai_send),
             tint = if (enabled) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** 기기 안 AI 모델을 내려받는 동안의 진행 표시와 실패 안내. */
-@Composable
-private fun PreparingBanner(state: OnDeviceState) {
-    when {
-        state.isDownloading -> Column(
-            Modifier.padding(horizontal = ChageunTheme.spacing.md),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        ) {
-            val progress = state.downloadProgress
-            Text(
-                progress?.let { stringResource(R.string.ai_preparing, (it * PERCENT).toInt()) }
-                    ?: stringResource(R.string.ai_preparing_unknown),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (progress != null) {
-                LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
-            } else {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-        }
-        state.hasDownloadFailed -> Text(
-            stringResource(R.string.ai_prepare_failed),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(horizontal = ChageunTheme.spacing.md),
         )
     }
 }
@@ -270,4 +239,3 @@ internal val AiDestination.opensInBrowser: Boolean
     get() = this == AiDestination.ChatGpt || this == AiDestination.Claude || this == AiDestination.Gemini
 
 private const val MAX_INPUT_LINES = 5
-private const val PERCENT = 100

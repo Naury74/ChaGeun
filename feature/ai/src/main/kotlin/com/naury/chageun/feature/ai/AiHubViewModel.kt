@@ -56,7 +56,11 @@ data class AiHubUiState(
     /** 기기 안 AI와 나눈 대화. 화면을 닫으면 사라지고 어디에도 저장하지 않는다. */
     val messages: List<ChatMessage> = emptyList(),
 ) {
-    val isAnswering: Boolean get() = onDevice.isDownloading || messages.lastOrNull()?.isStreaming == true
+    val isAnswering: Boolean get() = messages.lastOrNull()?.isStreaming == true
+
+    /** 차근 AI를 골랐지만 모델이 아직 준비되지 않아 안내 카드를 보여야 한다. */
+    val needsOnDeviceSetup: Boolean
+        get() = destination == AiDestination.OnDevice && onDevice.status != OnDeviceAiStatus.Available
 }
 
 /**
@@ -118,7 +122,22 @@ class AiHubViewModel @AssistedInject constructor(
         )
 
     init {
-        viewModelScope.launch { onDevice.update { it.copy(status = onDeviceAssistant.status()) } }
+        viewModelScope.launch {
+            val status = onDeviceAssistant.status()
+            onDevice.update { it.copy(status = status) }
+            // 시스템이 이미 내려받는 중이면 진행률을 이어서 보여 준다.
+            if (status == OnDeviceAiStatus.Downloading) downloadModel()
+        }
+    }
+
+    /** 안내 카드에서 사용자가 누를 때만 모델을 내려받는다. 용량이 커서 몰래 받지 않는다. */
+    fun downloadModel() {
+        val state = onDevice.value
+        val canDownload = state.status == OnDeviceAiStatus.Downloadable || state.status == OnDeviceAiStatus.Downloading
+        if (state.isDownloading || !canDownload) return
+        // 두 번 눌러도 한 번만 받도록 코루틴을 띄우기 전에 표시한다.
+        onDevice.update { it.copy(isDownloading = true, downloadProgress = null, hasDownloadFailed = false) }
+        viewModelScope.launch { watchDownload() }
     }
 
     fun onQuestionChanged(value: String) {
@@ -159,7 +178,8 @@ class AiHubViewModel @AssistedInject constructor(
      * 앞선 대화가 있으면 짧게 붙여 이어지는 질문을 이해하게 한다. 모델이 없으면 먼저 내려받는다.
      */
     fun ask(contextPrompt: String, instruction: String, historyLabel: String) {
-        if (uiState.value.isAnswering || !validateBeforeShare()) return
+        if (uiState.value.isAnswering || onDevice.value.status != OnDeviceAiStatus.Available) return
+        if (!validateBeforeShare()) return
         val asked = question.value.trim()
         val prompt = historyPrefix(historyLabel) + contextPrompt
         savedStateHandle[KEY_QUESTION] = ""
@@ -169,10 +189,6 @@ class AiHubViewModel @AssistedInject constructor(
         }
         onShared(AiDestination.OnDevice)
         answerJob = viewModelScope.launch {
-            if (!prepareModel()) {
-                replaceLast { it.copy(isStreaming = false, isFailed = true) }
-                return@launch
-            }
             try {
                 onDeviceAssistant.answer(instruction, prompt).collect { text -> replaceLast { it.copy(text = text) } }
                 replaceLast { it.copy(text = dropUnfinishedSentence(it.text), isStreaming = false) }
@@ -185,7 +201,6 @@ class AiHubViewModel @AssistedInject constructor(
     /** 답을 만드는 중에 멈춘다. 지금까지 나온 답은 남긴다. */
     fun stopAnswering() {
         answerJob?.cancel()
-        onDevice.update { it.copy(isDownloading = false) }
         replaceLast { if (it.isStreaming) it.copy(isStreaming = false, isFailed = it.text.isBlank()) else it }
     }
 
@@ -194,11 +209,7 @@ class AiHubViewModel @AssistedInject constructor(
         messages.value = emptyList()
     }
 
-    private suspend fun prepareModel(): Boolean {
-        val status = onDevice.value.status ?: onDeviceAssistant.status()
-        if (status == OnDeviceAiStatus.Available) return true
-        if (status == OnDeviceAiStatus.Unavailable) return false
-        onDevice.update { it.copy(isDownloading = true, downloadProgress = null, hasDownloadFailed = false) }
+    private suspend fun watchDownload() {
         var completed = false
         onDeviceAssistant.download().collect { download ->
             when (download) {
@@ -214,7 +225,6 @@ class AiHubViewModel @AssistedInject constructor(
                 hasDownloadFailed = !completed,
             )
         }
-        return completed
     }
 
     /** 이어지는 질문을 위해 최근 대화 두 번을 짧게 붙인다. 기기 안 모델은 입력 길이가 짧다. */

@@ -90,6 +90,7 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
             },
             onStop = viewModel::stopAnswering,
             onNewChat = viewModel::clearConversation,
+            onDownloadModel = viewModel::downloadModel,
         ),
     )
 }
@@ -104,6 +105,7 @@ data class AiHubActions(
     val onStop: () -> Unit = {},
     val onNewChat: () -> Unit = {},
     val onOpenContext: () -> Unit = {},
+    val onDownloadModel: () -> Unit = {},
 )
 
 /**
@@ -153,12 +155,29 @@ fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubAction
                 .padding(horizontal = ChageunTheme.spacing.gutter)
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                 if (uiState.messages.isEmpty()) {
-                    Column(contentModifier.verticalScroll(rememberScrollState())) {
+                    Column(
+                        contentModifier
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = ChageunTheme.spacing.md),
+                        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
+                    ) {
                         AiWelcome(
                             vehicleName = uiState.facts?.let { "${it.maker} ${it.model}".trim() },
-                            suggestions = suggestions(uiState.options.focusItem, uiState.facts?.focusRecord),
+                            // 모델이 준비되기 전에는 눌러도 보낼 수 없으니 추천 대신 준비 카드를 보여 준다.
+                            suggestions = if (uiState.needsOnDeviceSetup) {
+                                emptyList()
+                            } else {
+                                suggestions(uiState.options.focusItem, uiState.facts?.focusRecord)
+                            },
                             onSuggestion = actions.onQuestionChanged,
                         )
+                        if (uiState.needsOnDeviceSetup) {
+                            OnDeviceSetupCard(
+                                state = uiState.onDevice,
+                                onDownload = actions.onDownloadModel,
+                                onUseWeb = { actions.onSelectDestination(AiDestination.ChatGpt) },
+                            )
+                        }
                     }
                 } else {
                     Conversation(uiState.messages, contentModifier)

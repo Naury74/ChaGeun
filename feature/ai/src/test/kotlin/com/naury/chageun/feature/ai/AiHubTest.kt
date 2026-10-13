@@ -161,18 +161,26 @@ class AiHubTest {
     }
 
     @Test
-    fun downloadsModelFirst_andReportsFailures() = runTest {
+    fun setupCard_downloadsOnlyWhenTapped_thenAnswers() = runTest {
         val assistant = FakeOnDeviceAssistant(OnDeviceAiStatus.Downloadable)
         val vm = viewModel(assistant)
         backgroundScope.launch { vm.uiState.collect {} }
-        vm.uiState.first { it.onDevice.status != null }
+        assertThat(vm.uiState.first { it.onDevice.status != null }.needsOnDeviceSetup).isTrue()
 
+        // 준비 전에는 보내도 아무 일도 없고 몰래 내려받지도 않는다.
         vm.onQuestionChanged("How is my car?")
         vm.ask("CONTEXT", "INSTRUCTION", "History:")
-        val ready = vm.uiState.first { it.messages.size == 2 && !it.isAnswering }
+        assertThat(vm.uiState.value.messages).isEmpty()
+        assertThat(assistant.downloads).isEqualTo(0)
+
+        vm.downloadModel()
+        vm.downloadModel()
+        val ready = vm.uiState.first { it.onDevice.status == OnDeviceAiStatus.Available }
         assertThat(assistant.downloads).isEqualTo(1)
-        assertThat(ready.onDevice.status).isEqualTo(OnDeviceAiStatus.Available)
-        assertThat(ready.messages.last().isFailed).isFalse()
+        assertThat(ready.needsOnDeviceSetup).isFalse()
+
+        vm.ask("CONTEXT", "INSTRUCTION", "History:")
+        assertThat(vm.uiState.first { it.messages.size == 2 && !it.isAnswering }.messages.last().isFailed).isFalse()
 
         assistant.failAnswer = true
         vm.onQuestionChanged("Again?")
@@ -181,18 +189,32 @@ class AiHubTest {
     }
 
     @Test
-    fun failedDownload_marksAnswerFailed() = runTest {
+    fun failedDownload_canBeRetried() = runTest {
         val assistant = FakeOnDeviceAssistant(OnDeviceAiStatus.Downloadable).apply { downloadSucceeds = false }
         val vm = viewModel(assistant)
         backgroundScope.launch { vm.uiState.collect {} }
         vm.uiState.first { it.onDevice.status != null }
 
-        vm.onQuestionChanged("How is my car?")
-        vm.ask("CONTEXT", "INSTRUCTION", "History:")
+        vm.downloadModel()
+        val failed = vm.uiState.first { it.onDevice.hasDownloadFailed }
+        assertThat(failed.onDevice.isDownloading).isFalse()
+        assertThat(failed.needsOnDeviceSetup).isTrue()
 
-        val state = vm.uiState.first { it.messages.size == 2 && !it.isAnswering }
-        assertThat(state.onDevice.hasDownloadFailed).isTrue()
-        assertThat(state.messages.last().isFailed).isTrue()
+        assistant.downloadSucceeds = true
+        vm.downloadModel()
+        assertThat(vm.uiState.first { it.onDevice.status == OnDeviceAiStatus.Available }.onDevice.hasDownloadFailed)
+            .isFalse()
+        assertThat(assistant.downloads).isEqualTo(2)
+    }
+
+    @Test
+    fun systemAlreadyDownloading_showsProgressRightAway() = runTest {
+        val assistant = FakeOnDeviceAssistant(OnDeviceAiStatus.Downloading)
+        val vm = viewModel(assistant)
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        assertThat(vm.uiState.first { it.onDevice.status == OnDeviceAiStatus.Available }).isNotNull()
+        assertThat(assistant.downloads).isEqualTo(1)
     }
 
     @Test
@@ -316,6 +338,46 @@ class AiHubTest {
             }
         }
         composeRule.captureScreen("ai_phone")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_setup_ko() {
+        composeRule.setContent {
+            AppFrame {
+                val state = AiHubUiState(
+                    facts = facts,
+                    destination = AiDestination.OnDevice,
+                    onDevice = OnDeviceState(OnDeviceAiStatus.Downloadable),
+                )
+                AiHubScreen(uiState = state, promptText = aiPromptText(facts, ""), actions = AiHubActions())
+            }
+        }
+        composeRule.onNodeWithText("AI 모델 내려받기").assertExists()
+        composeRule.captureScreen("ai_setup_phone_ko")
+    }
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_KO)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_setupDownloading_ko() {
+        composeRule.setContent {
+            AppFrame {
+                val state = AiHubUiState(
+                    facts = facts,
+                    destination = AiDestination.OnDevice,
+                    onDevice = OnDeviceState(
+                        OnDeviceAiStatus.Downloadable,
+                        isDownloading = true,
+                        downloadProgress = 0.42f,
+                    ),
+                )
+                AiHubScreen(uiState = state, promptText = aiPromptText(facts, ""), actions = AiHubActions())
+            }
+        }
+        composeRule.onNodeWithText("AI 모델 내려받는 중… 42%").assertIsDisplayed()
+        composeRule.captureScreen("ai_setup_downloading_phone_ko")
     }
 
     @Test
