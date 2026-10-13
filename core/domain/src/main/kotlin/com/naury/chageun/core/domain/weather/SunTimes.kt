@@ -68,10 +68,18 @@ object DaylightRules {
 
     /**
      * [now]가 [point]에서 낮·노을·밤 중 어디인지. 날씨 제공처가 밤 아이콘을 줬으면([providerSaysNight]) 그대로 밤이다.
+     * 다만 그 날씨의 시각([observedAt]) 뒤로 해가 뜨거나 지는 때를 지났으면 아이콘이 낡은 것이라 해 위치로만 정한다.
      * 해가 뜨거나 지지 않는 날은 기기 시각으로 6시~18시를 낮으로 본다.
      */
-    fun at(point: GeoPoint, now: Instant, zone: ZoneId, providerSaysNight: Boolean = false): Daylight {
-        if (providerSaysNight) return Daylight.Night
+    fun at(
+        point: GeoPoint,
+        now: Instant,
+        zone: ZoneId,
+        providerSaysNight: Boolean = false,
+        observedAt: Instant? = null,
+    ): Daylight {
+        val isProviderNightCurrent = observedAt == null || now.isBefore(nextChange(point, observedAt, zone))
+        if (providerSaysNight && isProviderNightCurrent) return Daylight.Night
         val sun = SolarCalculator.sunTimes(point, now.atZone(zone).toLocalDate())
             ?: return if (now.atZone(zone).hour in FALLBACK_DAY_HOURS) Daylight.Day else Daylight.Night
         return when {
@@ -81,7 +89,26 @@ object DaylightRules {
         }
     }
 
+    /**
+     * [now] 다음으로 낮·노을·밤이 바뀔 수 있는 시각. 해 뜸, 노을 시작, 해 짐 중 가장 이른 때다.
+     * 해가 뜨거나 지지 않는 날은 기기 시각 6시와 18시다. 앞뒤 날짜까지 같이 봐서 시간대가 경도와 어긋나도 빠뜨리지 않는다.
+     */
+    fun nextChange(point: GeoPoint, now: Instant, zone: ZoneId): Instant {
+        val today = now.atZone(zone).toLocalDate()
+        return (-1L..2L).asSequence()
+            .flatMap { changesOn(point, today.plusDays(it), zone) }
+            .filter { it.isAfter(now) }
+            .min()
+    }
+
+    private fun changesOn(point: GeoPoint, date: LocalDate, zone: ZoneId): Sequence<Instant> {
+        val sun = SolarCalculator.sunTimes(point, date)
+            ?: return FALLBACK_CHANGE_HOURS.asSequence().map { date.atTime(it, 0).atZone(zone).toInstant() }
+        return sequenceOf(sun.sunrise, sun.sunset.minus(DUSK), sun.sunset)
+    }
+
     private val FALLBACK_DAY_HOURS = 6 until 18
+    private val FALLBACK_CHANGE_HOURS = listOf(FALLBACK_DAY_HOURS.first, FALLBACK_DAY_HOURS.last + 1)
 }
 
 /** 한 순간의 해 위치 중 해 뜨고 지는 시각에 필요한 값. 각도는 도 단위다. */

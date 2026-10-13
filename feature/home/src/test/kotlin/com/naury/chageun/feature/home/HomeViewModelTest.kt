@@ -42,6 +42,7 @@ import com.naury.chageun.core.testing.FakeKoreaRegionUpdates
 import com.naury.chageun.core.testing.FakeLastWeatherRepository
 import com.naury.chageun.core.testing.FakeMaintenanceRepository
 import com.naury.chageun.core.testing.FakeProfilePhotoRepository
+import com.naury.chageun.core.testing.FakeTimeChangeSource
 import com.naury.chageun.core.testing.FakeVehiclePhotoRepository
 import com.naury.chageun.core.testing.FakeVehicleRepository
 import com.naury.chageun.core.testing.FakeWeatherRepository
@@ -102,6 +103,7 @@ class HomeViewModelTest {
                 FakeKoreaRegionRepository(),
                 regionUpdates,
             ),
+            HomeClockTicks(clock, FakeTimeChangeSource()),
             clock,
         ),
         clock = clock,
