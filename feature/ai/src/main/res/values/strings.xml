@@ -1,8 +1,6 @@
 <resources>
-    <string name="ai_title">Ask about your car</string>
-    <string name="ai_subtitle">Your car\'s records go to the AI you already use, so it can answer with context.</string>
+    <string name="ai_title">Chageun AI</string>
     <string name="ai_back">Back</string>
-    <string name="ai_question_label">Your question</string>
     <string name="ai_question_required">Enter a question</string>
     <string name="ai_suggestion_status">How is my car doing?</string>
     <string name="ai_suggestion_oil">When should I change the engine oil?</string>
@@ -24,8 +22,6 @@
     <string name="ai_show_text">Show full text</string>
     <string name="ai_hide_text">Hide full text</string>
 
-    <string name="ai_send_with">Send to</string>
-    <string name="ai_other_app">Other app</string>
     <string name="ai_chooser_title">Share with</string>
     <string name="ai_disclaimer">The AI answers from what\'s shared. Values are calculated by Chageun and aren\'t a mechanical diagnosis.</string>
 
@@ -36,7 +32,7 @@
     <string name="ai_prompt_health">Overall status: %1$s</string>
     <string name="ai_prompt_maintenance">Maintenance (general guidelines unless noted):</string>
     <string name="ai_prompt_item">- %1$s: %2$s</string>
-    <string name="ai_prompt_missing">Not enough data: %1$s</string>
+    <string name="ai_prompt_missing">No records yet, so timing is unknown: %1$s</string>
     <string name="ai_prompt_records">Recent records:</string>
     <string name="ai_prompt_inspection">Next periodic inspection: %1$s (%2$s)</string>
     <string name="ai_prompt_costs">Costs recorded in %1$d (Jan 1 to today, totals calculated by the app): maintenance and repairs %2$s, fuel %3$s</string>
@@ -50,7 +46,6 @@
     <string name="ai_prompt_user_rule">your own interval</string>
     <string name="ai_km">%1$s km</string>
     <string name="ai_won">₩%1$s</string>
-    <string name="ai_pick_question">Pick a question</string>
     <string name="ai_prompt_focus_record">The question is about this record:</string>
     <string name="ai_litres">%1$s L</string>
     <string name="ai_won_per_litre">₩%1$s/L</string>
@@ -62,7 +57,48 @@
     <string name="ai_suggestion_record_check">What should I keep an eye on after this?</string>
     <string name="ai_included_focus_record">This record</string>
     <string name="ai_included_focus_record_body">Date, type, mileage and amounts. Cost only if you include it below.</string>
-    <string name="ai_provider_installed">Opens the app directly</string>
-    <string name="ai_provider_missing">Not installed. Pick an app from the share sheet.</string>
-    <string name="ai_provider_other">Pick any app from the share sheet</string>
+    <string name="ai_greeting">Ask me anything about your car</string>
+    <string name="ai_greeting_body">Answers based on your %1$s records</string>
+    <string name="ai_greeting_body_generic">Answers based on your car records</string>
+    <string name="ai_composer_hint">Ask %1$s</string>
+    <string name="ai_send">Send</string>
+    <string name="ai_stop">Stop</string>
+    <string name="ai_context_chip">Shared info</string>
+    <string name="ai_new_chat">New chat</string>
+    <string name="ai_destination_picker">Choose which AI answers</string>
+    <string name="ai_destination_on_device">Chageun AI</string>
+    <string name="ai_destination_on_device_body">Answers on this phone · Free · Works offline</string>
+    <string name="ai_destination_on_device_download">Downloads the AI model the first time</string>
+    <string name="ai_destination_on_device_unavailable">Not available on this phone</string>
+    <string name="ai_destination_on_device_checking">Checking whether this phone supports it…</string>
+    <string name="ai_destination_chatgpt">ChatGPT</string>
+    <string name="ai_destination_claude">Claude</string>
+    <string name="ai_destination_gemini">Gemini</string>
+    <string name="ai_destination_web_body">Opens in an in-app browser with your question filled in</string>
+    <string name="ai_destination_gemini_body">Copies your question and opens Gemini. Just paste it.</string>
+    <string name="ai_destination_other">Send to another app</string>
+    <string name="ai_destination_other_body">Pick an installed AI app</string>
+    <string name="ai_external_hint">%1$s opens in an in-app browser. If you\'re signed in, you can continue right away.</string>
+    <string name="ai_copied">Question copied. Paste it into %1$s and send.</string>
+    <string name="ai_clip_label">Chageun question</string>
+    <string name="ai_thinking">Thinking…</string>
+    <string name="ai_answer_caption">On-device AI · Answers can be wrong</string>
+    <string name="ai_answer_failed">Couldn\'t answer. Please ask again.</string>
+    <string name="ai_preparing">Downloading AI model… %1$d%%</string>
+    <string name="ai_preparing_unknown">Downloading AI model…</string>
+    <string name="ai_prepare_failed">Couldn\'t download the AI model. Try again on Wi-Fi.</string>
+    <string name="ai_on_device_reminder">Reminder: the items listed under “no records yet” have never been logged in Chageun, so never give them a date, mileage or cost. If the question is about one of them, start with “Chageun has no record of this yet, so I can’t tell the exact timing.” and suggest logging the last service date and mileage. If the summary has no cost line, say there are no cost records yet. Add a general rule of thumb only if you call it general and say the owner’s manual comes first. Use only the numbers in the summary and keep it to 3 to 5 sentences.</string>
+    <string name="ai_history_label">Earlier in this conversation:</string>
+    <string name="ai_on_device_instruction">You are the car care assistant in the Chageun app. Answer in English in 3 to 5 short sentences of plain text, without Markdown symbols such as * or #. Use only the numbers and dates in the car summary below. If the summary has nothing on the question, say that Chageun has no record of it yet and suggest adding one. Do not guess intervals or prices, and do not repeat yourself. If something sounds like a fault or a safety issue, recommend a check at a repair shop. Questions about maintenance, parts, inspections, costs or driving are all car questions, so answer them normally. Only when a question has nothing to do with cars, such as food or other topics, politely say you can only help with the car.</string>
+    <string name="ai_setup_title">Set up Chageun AI</string>
+    <string name="ai_setup_subtitle">A one-time download is needed before the first answer.</string>
+    <string name="ai_setup_private">Your questions and car details stay on this phone</string>
+    <string name="ai_setup_offline">Once ready, it answers even without the internet</string>
+    <string name="ai_setup_system">Android manages the model, so the app doesn’t get bigger</string>
+    <string name="ai_setup_wifi">The model is large, so Wi-Fi is recommended.</string>
+    <string name="ai_setup_download">Download AI model</string>
+    <string name="ai_setup_retry">Try again</string>
+    <string name="ai_setup_use_web">Ask ChatGPT instead</string>
+    <string name="ai_setup_keep_open">Keep this screen open until it finishes. You can ask right away when it’s done.</string>
+    <string name="ai_setup_composer_hint">Download the AI model above to start asking.</string>
 </resources>

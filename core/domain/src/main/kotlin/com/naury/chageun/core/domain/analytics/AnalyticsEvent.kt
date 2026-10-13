@@ -139,7 +139,13 @@ enum class CalendarItemKind(val key: String) {
     Photo("photo"),
 }
 
-enum class AiTarget(val key: String) { ChatGpt("chatgpt"), Claude("claude"), Gemini("gemini"), Other("other") }
+enum class AiTarget(val key: String) {
+    OnDevice("on_device"),
+    ChatGpt("chatgpt"),
+    Claude("claude"),
+    Gemini("gemini"),
+    Other("other"),
+}
 
 interface AnalyticsTracker {
     fun track(event: AnalyticsEvent)

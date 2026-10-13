@@ -1,0 +1,207 @@
+package com.naury.chageun.feature.ai
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.PhoneAndroid
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.theme.ChageunTheme
+
+/**
+ * 차근 AI를 처음 쓸 때 보여 주는 준비 카드. 무엇을 받는지와 좋은 점을 먼저 알리고, 사용자가 눌러야 내려받는다.
+ * 받는 동안에는 진행률을, 실패하면 다시 시도를 보여 주고, 준비가 끝나면 이 카드 대신 추천 질문이 나온다.
+ */
+@Composable
+internal fun OnDeviceSetupCard(state: OnDeviceState, onDownload: () -> Unit, onUseWeb: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            Modifier.padding(ChageunTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
+            ) {
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .background(AiGradient, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Download, contentDescription = null, tint = Color.White)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs)) {
+                    Text(
+                        stringResource(R.string.ai_setup_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.semantics { heading() },
+                    )
+                    Text(
+                        stringResource(R.string.ai_setup_subtitle),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            AnimatedContent(targetState = setupStep(state), label = "ai-setup-step") { step ->
+                when (step) {
+                    SetupStep.Checking -> Checking()
+                    SetupStep.Downloading -> Downloading(state.downloadProgress)
+                    SetupStep.Ready, SetupStep.Failed -> Actions(
+                        hasFailed = step == SetupStep.Failed,
+                        onDownload = onDownload,
+                        onUseWeb = onUseWeb,
+                    )
+                }
+            }
+            Column(
+                Modifier.padding(top = ChageunTheme.spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+            ) {
+                Benefit(Icons.Filled.Lock, stringResource(R.string.ai_setup_private))
+                Benefit(Icons.Filled.WifiOff, stringResource(R.string.ai_setup_offline))
+                Benefit(Icons.Filled.PhoneAndroid, stringResource(R.string.ai_setup_system))
+            }
+        }
+    }
+}
+
+private enum class SetupStep { Checking, Ready, Downloading, Failed }
+
+private fun setupStep(state: OnDeviceState): SetupStep = when {
+    state.status == null -> SetupStep.Checking
+    state.isDownloading -> SetupStep.Downloading
+    state.hasDownloadFailed -> SetupStep.Failed
+    else -> SetupStep.Ready
+}
+
+@Composable
+private fun Benefit(icon: ImageVector, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp).gradientTint())
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun Checking() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+        modifier = Modifier.padding(top = ChageunTheme.spacing.xs),
+    ) {
+        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        Text(
+            stringResource(R.string.ai_destination_on_device_checking),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun Downloading(progress: Float?) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        modifier = Modifier
+            .padding(top = ChageunTheme.spacing.xs)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Text(
+            progress?.let { stringResource(R.string.ai_preparing, (it * PERCENT).toInt()) }
+                ?: stringResource(R.string.ai_preparing_unknown),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+        )
+        val shown by animateFloatAsState(progress ?: 0f, label = "ai-setup-progress")
+        val barModifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 6.dp)
+        if (progress != null) {
+            LinearProgressIndicator(progress = { shown }, modifier = barModifier, strokeCap = StrokeCap.Round)
+        } else {
+            LinearProgressIndicator(modifier = barModifier, strokeCap = StrokeCap.Round)
+        }
+        Text(
+            stringResource(R.string.ai_setup_keep_open),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun Actions(hasFailed: Boolean, onDownload: () -> Unit, onUseWeb: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        Text(
+            stringResource(if (hasFailed) R.string.ai_prepare_failed else R.string.ai_setup_wifi),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (hasFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Button(
+            onClick = onDownload,
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.White),
+            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .background(AiGradient, CircleShape),
+        ) {
+            Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Text(
+                stringResource(if (hasFailed) R.string.ai_setup_retry else R.string.ai_setup_download),
+                modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        TextButton(onClick = onUseWeb, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.ai_setup_use_web))
+        }
+    }
+}
+
+private const val PERCENT = 100

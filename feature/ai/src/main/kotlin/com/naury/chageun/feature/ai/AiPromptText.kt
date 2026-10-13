@@ -13,9 +13,12 @@ import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.remainingText
 
-/** 공유할 정보를 사용자 언어로 렌더링한다. [AiContextFacts]에 있는 필드만 나타날 수 있다. */
+/**
+ * 공유할 정보를 사용자 언어로 렌더링한다. [AiContextFacts]에 있는 필드만 나타날 수 있다.
+ * 기기 안 AI는 끝의 안내 문구를 답에 그대로 옮겨 적으므로 [includeFooter]를 끈다.
+ */
 @Composable
-internal fun aiPromptText(facts: AiContextFacts, question: String): String = buildList {
+internal fun aiPromptText(facts: AiContextFacts, question: String, includeFooter: Boolean = true): String = buildList {
     add(stringResource(R.string.ai_prompt_header, formatDate(facts.asOf)))
     val vehicle = listOfNotNull(
         "${facts.maker} ${facts.model}",
@@ -60,24 +63,22 @@ internal fun aiPromptText(facts: AiContextFacts, question: String): String = bui
             add(stringResource(R.string.ai_prompt_item, stringResource(status.item.labelRes), detail))
         }
     }
-    if (facts.missingInfo.isNotEmpty()) {
-        add(
-            stringResource(
-                R.string.ai_prompt_missing,
-                facts.missingInfo.map {
-                    stringResource(it.labelRes)
-                }.joinToString(", "),
-            ),
-        )
-    }
+    missingLine(facts)?.let(::add)
     if (facts.recentRecords.isNotEmpty()) {
         add(stringResource(R.string.ai_prompt_records))
         facts.recentRecords.forEach { add(stringResource(R.string.ai_prompt_item, recordTitle(it), recordDetail(it))) }
     }
-    add(stringResource(R.string.ai_prompt_footer))
+    if (includeFooter) add(stringResource(R.string.ai_prompt_footer))
     add("")
     add(stringResource(R.string.ai_prompt_question, question.trim()))
 }.joinToString("\n")
+
+@Composable
+private fun missingLine(facts: AiContextFacts): String? {
+    if (facts.missingInfo.isEmpty()) return null
+    val items = facts.missingInfo.map { stringResource(it.labelRes) }.joinToString(", ")
+    return stringResource(R.string.ai_prompt_missing, items)
+}
 
 @Composable
 private fun recordTitle(record: SharedRecord): String {
