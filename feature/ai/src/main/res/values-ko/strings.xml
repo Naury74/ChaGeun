@@ -1,8 +1,6 @@
 <resources>
-    <string name="ai_title">내 차에게 물어보기</string>
-    <string name="ai_subtitle">내 차 기록을 이미 쓰고 있는 AI에 전달해 상황에 맞는 답을 받을 수 있어요.</string>
+    <string name="ai_title">차근 AI</string>
     <string name="ai_back">뒤로</string>
-    <string name="ai_question_label">질문</string>
     <string name="ai_question_required">질문을 입력해 주세요</string>
     <string name="ai_suggestion_status">지금 내 차 상태 어때?</string>
     <string name="ai_suggestion_oil">엔진오일 언제 갈아야 해?</string>
@@ -24,8 +22,6 @@
     <string name="ai_show_text">보낼 내용 전체 보기</string>
     <string name="ai_hide_text">접기</string>
 
-    <string name="ai_send_with">보낼 AI</string>
-    <string name="ai_other_app">다른 앱</string>
     <string name="ai_chooser_title">공유할 앱</string>
     <string name="ai_disclaimer">AI는 전달한 정보로 답해요. 수치는 차근이 계산한 값이며 고장 진단이 아니에요.</string>
 
@@ -50,7 +46,6 @@
     <string name="ai_prompt_user_rule">사용자 설정 주기</string>
     <string name="ai_km">%1$skm</string>
     <string name="ai_won">%1$s원</string>
-    <string name="ai_pick_question">질문 고르기</string>
     <string name="ai_prompt_focus_record">질문 대상 기록:</string>
     <string name="ai_litres">%1$sL</string>
     <string name="ai_won_per_litre">리터당 %1$s원</string>
@@ -62,7 +57,36 @@
     <string name="ai_suggestion_record_check">이 기록 이후로 무엇을 신경 쓰면 좋을까?</string>
     <string name="ai_included_focus_record">이 기록</string>
     <string name="ai_included_focus_record_body">날짜·종류·주행거리·주유량. 비용은 아래에서 포함할 때만 보내요.</string>
-    <string name="ai_provider_installed">앱이 바로 열려요</string>
-    <string name="ai_provider_missing">설치되어 있지 않아요. 공유 시트에서 앱을 고를 수 있어요.</string>
-    <string name="ai_provider_other">공유 시트에서 원하는 앱을 골라요</string>
+    <string name="ai_greeting">내 차에 대해 무엇이든 물어보세요</string>
+    <string name="ai_greeting_body">%1$s 기록을 바탕으로 답해요</string>
+    <string name="ai_greeting_body_generic">내 차 기록을 바탕으로 답해요</string>
+    <string name="ai_composer_hint">%1$s에게 물어보기</string>
+    <string name="ai_send">보내기</string>
+    <string name="ai_stop">멈추기</string>
+    <string name="ai_context_chip">보낼 정보</string>
+    <string name="ai_new_chat">새 대화</string>
+    <string name="ai_destination_picker">답할 AI 고르기</string>
+    <string name="ai_destination_on_device">차근 AI</string>
+    <string name="ai_destination_on_device_body">이 휴대폰 안에서 답해요 · 무료 · 오프라인</string>
+    <string name="ai_destination_on_device_download">처음 쓸 때 AI 모델을 내려받아요</string>
+    <string name="ai_destination_on_device_unavailable">이 휴대폰에서는 쓸 수 없어요</string>
+    <string name="ai_destination_on_device_checking">이 휴대폰에서 쓸 수 있는지 확인하는 중…</string>
+    <string name="ai_destination_chatgpt">ChatGPT</string>
+    <string name="ai_destination_claude">Claude</string>
+    <string name="ai_destination_gemini">Gemini</string>
+    <string name="ai_destination_web_body">질문이 채워진 채로 앱 안 브라우저에서 열려요</string>
+    <string name="ai_destination_gemini_body">질문을 복사해 열어요. 붙여 넣기만 하면 돼요</string>
+    <string name="ai_destination_other">다른 앱으로 보내기</string>
+    <string name="ai_destination_other_body">설치된 AI 앱을 골라 보내요</string>
+    <string name="ai_external_hint">%1$s이(가) 앱 안 브라우저로 열려요. 로그인돼 있으면 바로 이어서 쓸 수 있어요.</string>
+    <string name="ai_copied">질문을 복사했어요. %1$s 입력창에 붙여 넣어 보내 주세요.</string>
+    <string name="ai_clip_label">차근 질문</string>
+    <string name="ai_thinking">생각하는 중…</string>
+    <string name="ai_answer_caption">기기 안 AI 답변 · 틀릴 수 있어요</string>
+    <string name="ai_answer_failed">답을 만들지 못했어요. 다시 물어봐 주세요.</string>
+    <string name="ai_preparing">기기 안 AI를 준비하는 중… %1$d%%</string>
+    <string name="ai_preparing_unknown">기기 안 AI를 준비하는 중…</string>
+    <string name="ai_prepare_failed">AI 모델을 내려받지 못했어요. Wi-Fi에서 다시 시도해 주세요.</string>
+    <string name="ai_history_label">이전 대화:</string>
+    <string name="ai_on_device_instruction">너는 “차근” 앱의 자동차 관리 도우미야. 아래 차량 요약만 근거로 한국어로 3~6문장 안에서 쉽게 답해. 요약에 없는 사실은 지어내지 마. 고장이나 안전이 걱정되는 내용이면 정비소 점검을 권해.</string>
 </resources>
