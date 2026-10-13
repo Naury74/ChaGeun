@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -107,6 +109,28 @@ class CalendarMediaTest {
         show(mediaState())
 
         composeRule.onNode(hasContentDescription("사진 1장, 동영상 1개, 소리 2개", substring = true)).assertExists()
+    }
+
+    @Test
+    fun monthSummary_countsPhotosAndVideosApart() {
+        show(mediaState())
+
+        composeRule.onNodeWithText("₩341,000 spent · 11 records · 4 photos · 1 video").assertIsDisplayed()
+    }
+
+    @Test
+    fun monthSummary_photosChip_keepsBothPhotosAndVideos() {
+        show(mediaState().copy(filter = CalendarFilter(kinds = setOf(CalendarKind.Photos))))
+
+        composeRule.onNodeWithText("4 photos · 1 video", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = "ko-w360dp-h2000dp")
+    fun monthSummary_readsInKorean() {
+        show(mediaState())
+
+        composeRule.onNodeWithText("사진 4장 · 동영상 1개", substring = true).assertIsDisplayed()
     }
 
     @Test

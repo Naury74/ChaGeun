@@ -33,6 +33,9 @@ internal interface WeatherDataModule {
 
     @Binds
     fun bindAreaGeocoder(geocoder: PlatformAreaGeocoder): AreaGeocoder
+
+    @Binds
+    fun bindKoreaRegionUpdateScheduler(scheduler: PeriodicKoreaRegionUpdateScheduler): KoreaRegionUpdateScheduler
 }
 
 /**

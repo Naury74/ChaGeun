@@ -263,7 +263,7 @@ class HistoryCalendarScreenTest {
         dayCell("Monday, October 12, today, 1 record (Fuel)").assertIsSelected()
         dayCell("Thursday, October 8").assertExists()
         composeRule.onAllNodes(day("5 records")).assertCountEquals(0)
-        composeRule.onNodeWithText("₩138,000 spent · 2 records · 0 photos").assertIsDisplayed()
+        composeRule.onNodeWithText("₩138,000 spent · 2 records").assertIsDisplayed()
         composeRule.onNodeWithText("1 filter").assertIsDisplayed()
 
         composeRule.onNode(hasText("Clear all") and hasClickAction()).performClick()

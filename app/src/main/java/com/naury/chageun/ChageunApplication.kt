@@ -7,7 +7,7 @@ import androidx.work.Configuration
 import com.naury.chageun.core.domain.album.AlbumRepository
 import com.naury.chageun.core.notification.ReminderScheduler
 import com.naury.chageun.data.cloudbackup.AutoBackupSync
-import com.naury.chageun.data.weather.KoreaRegionUpdateScheduler
+import com.naury.chageun.data.weather.KoreaRegionUpdateSync
 import com.naury.chageun.logging.UsageStatsSync
 import dagger.hilt.android.HiltAndroidApp
 import java.io.File
@@ -30,7 +30,7 @@ class ChageunApplication :
 
     @Inject lateinit var autoBackupSync: AutoBackupSync
 
-    @Inject lateinit var regionUpdateScheduler: KoreaRegionUpdateScheduler
+    @Inject lateinit var regionUpdateSync: KoreaRegionUpdateSync
 
     @Inject lateinit var albumRepository: AlbumRepository
 
@@ -47,7 +47,7 @@ class ChageunApplication :
         reminderScheduler.schedule()
         usageStatsSync.start(appScope)
         autoBackupSync.start(appScope)
-        regionUpdateScheduler.schedule()
+        regionUpdateSync.start(appScope)
         // 앨범에서 지우고 되돌리기를 기다리던 중에 앱이 끝났으면 그 사진은 여기서 마저 지운다.
         appScope.launch { runCatching { albumRepository.purgeStaleDeleted() } }
     }

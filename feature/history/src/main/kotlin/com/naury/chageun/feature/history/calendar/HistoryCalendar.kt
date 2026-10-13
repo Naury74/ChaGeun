@@ -226,7 +226,9 @@ private fun CalendarSidePane(parts: CalendarParts, modifier: Modifier = Modifier
             InfoListRow(
                 Icons.Filled.PhotoLibrary,
                 stringResource(R.string.calendar_kind_photos),
-                pluralStringResource(R.plurals.calendar_summary_photos, summary.photoCount, summary.photoCount),
+                // 사진도 동영상도 없으면 "사진 0장"으로 둔다.
+                mediaCountParts(summary).joinToString(" · ")
+                    .ifEmpty { pluralStringResource(R.plurals.calendar_summary_photos, 0, 0) },
             )
             GroupDivider()
             InfoListRow(

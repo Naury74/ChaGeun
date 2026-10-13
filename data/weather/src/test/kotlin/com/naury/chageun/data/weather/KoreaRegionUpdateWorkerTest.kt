@@ -8,7 +8,10 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.google.common.truth.Truth.assertThat
 import com.naury.chageun.core.domain.weather.KoreaRegionCheck
+import com.naury.chageun.core.model.WeatherSettings
 import com.naury.chageun.core.testing.FakeKoreaRegionUpdates
+import com.naury.chageun.core.testing.FakeWeatherSettingsRepository
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,6 +21,28 @@ import org.robolectric.RobolectricTestRunner
 class KoreaRegionUpdateWorkerTest {
 
     private val updates = FakeKoreaRegionUpdates()
+    private val weatherSettings = FakeWeatherSettingsRepository()
+
+    @Test
+    fun skipsWithoutNetwork_whenWeatherIsOff() = runTest {
+        weatherSettings.setEnabled(false)
+
+        assertThat(run()).isEqualTo(ListenableWorker.Result.success())
+        assertThat(updates.checks).isEqualTo(0)
+    }
+
+    @Test
+    fun sync_schedulesOnlyWhileWeatherIsOn() = runTest(UnconfinedTestDispatcher()) {
+        val settings = FakeWeatherSettingsRepository(WeatherSettings(isEnabled = false))
+        val scheduler = RecordingScheduler()
+        KoreaRegionUpdateSync(settings, scheduler).start(backgroundScope)
+        assertThat(scheduler.calls).containsExactly("cancel")
+
+        settings.setEnabled(true)
+        settings.dismissPrompt()
+        settings.setEnabled(false)
+        assertThat(scheduler.calls).containsExactly("cancel", "schedule", "cancel").inOrder()
+    }
 
     @Test
     fun succeeds_whenUpToDateOrUpdated() = runTest {
@@ -48,10 +73,22 @@ class KoreaRegionUpdateWorkerTest {
                         appContext: Context,
                         workerClassName: String,
                         workerParameters: WorkerParameters,
-                    ) = KoreaRegionUpdateWorker(appContext, workerParameters, updates)
+                    ) = KoreaRegionUpdateWorker(appContext, workerParameters, updates, weatherSettings)
                 },
             )
             .build()
             .doWork()
+    }
+
+    private class RecordingScheduler : KoreaRegionUpdateScheduler {
+        val calls = mutableListOf<String>()
+
+        override fun schedule() {
+            calls += "schedule"
+        }
+
+        override fun cancel() {
+            calls += "cancel"
+        }
     }
 }

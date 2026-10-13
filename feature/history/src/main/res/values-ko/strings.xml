@@ -240,6 +240,9 @@
     <plurals name="calendar_summary_photos">
         <item quantity="other">사진 %1$d장</item>
     </plurals>
+    <plurals name="calendar_summary_videos">
+        <item quantity="other">동영상 %1$d개</item>
+    </plurals>
     <string name="calendar_section_upcoming">예정</string>
     <string name="calendar_section_records">기록</string>
     <string name="calendar_section_photos">사진</string>

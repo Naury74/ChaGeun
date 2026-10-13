@@ -50,15 +50,20 @@ data class CalendarUiState(
         return List(DAYS_PER_WEEK) { start.plusDays(it.toLong()) }
     }
 
-    /** 이번 달 지출·기록 수·사진 수. 필터가 없으면 저장소가 센 값을, 있으면 보이는 것만 다시 센다. */
+    /** 이번 달 지출·기록 수·사진 수·동영상 수. 필터가 없으면 저장소가 센 값을, 있으면 보이는 것만 다시 센다. */
     fun monthSummary(source: CalendarMonth): MonthSummaryValues {
-        if (!filter.isActive) return MonthSummaryValues(source.monthTotalWon, source.recordCount, source.photoCount)
-        val days = source.days.values.filter { YearMonth.from(it.date) == source.month }.map(filter::apply)
+        val monthDays = source.days.values.filter { YearMonth.from(it.date) == source.month }
+        if (!filter.isActive) {
+            val videos = monthDays.sumOf { it.videoCount }
+            return MonthSummaryValues(source.monthTotalWon, source.recordCount, source.photoCount - videos, videos)
+        }
+        val days = monthDays.map(filter::apply)
         val records = days.flatMap { it.records }
         return MonthSummaryValues(
             totalWon = records.sumOf { it.costWon ?: 0L },
             recordCount = records.size,
-            photoCount = days.sumOf { it.photoCount },
+            photoCount = days.sumOf { it.photoCount - it.videoCount },
+            videoCount = days.sumOf { it.videoCount },
         )
     }
 

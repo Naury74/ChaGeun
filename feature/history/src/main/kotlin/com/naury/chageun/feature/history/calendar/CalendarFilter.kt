@@ -81,5 +81,5 @@ internal fun List<LocalDate>.previousBefore(from: LocalDate): LocalDate? = lastO
 
 internal fun List<LocalDate>.nextAfter(from: LocalDate): LocalDate? = firstOrNull { it.isAfter(from) }
 
-/** 필터를 반영한 이번 달 요약. */
-data class MonthSummaryValues(val totalWon: Long, val recordCount: Int, val photoCount: Int)
+/** 필터를 반영한 이번 달 요약. [photoCount]는 동영상을 뺀 사진 수이고 동영상은 [videoCount]로 따로 센다. */
+data class MonthSummaryValues(val totalWon: Long, val recordCount: Int, val photoCount: Int, val videoCount: Int = 0)
