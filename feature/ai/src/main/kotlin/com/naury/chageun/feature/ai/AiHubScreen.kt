@@ -59,6 +59,7 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val prompt = uiState.facts?.let { aiPromptText(it, uiState.question) }
+    val onDevicePrompt = uiState.facts?.let { aiPromptText(it, uiState.question, includeFooter = false) }
     val instruction = stringResource(R.string.ai_on_device_instruction)
     val reminder = stringResource(R.string.ai_on_device_reminder)
     val historyLabel = stringResource(R.string.ai_history_label)
@@ -70,10 +71,10 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
     )
     val send = {
         when {
-            prompt == null -> Unit
+            prompt == null || onDevicePrompt == null -> Unit
             // 작은 모델은 시스템 지시보다 질문 바로 뒤의 당부를 더 잘 따른다.
             uiState.destination == AiDestination.OnDevice ->
-                viewModel.ask("$prompt\n\n$reminder", instruction, historyLabel)
+                viewModel.ask("$onDevicePrompt\n\n$reminder", instruction, historyLabel)
             viewModel.validateBeforeShare() -> context.launchExternal {
                 openExternally(context, uiState.destination, prompt, texts)
                 viewModel.onShared(uiState.destination)
