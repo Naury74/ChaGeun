@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +45,7 @@ import com.naury.chageun.core.ui.ThreePaneListDetail
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KLoadingIndicator
 
 /** 달력 칸들이 함께 쓰는 값. [mode]는 화면 배치에 맞춘 기본값까지 정해진 보기다. */
 private class CalendarParts(
@@ -78,7 +78,7 @@ internal fun HistoryCalendar(
 ) {
     val calendar = state.calendar
     if (state.isLoading || calendar == null) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { KLoadingIndicator() }
         return
     }
     BackHandler(enabled = detail != null) { onCloseDetail() }

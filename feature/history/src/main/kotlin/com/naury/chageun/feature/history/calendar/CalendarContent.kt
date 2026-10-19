@@ -6,24 +6,16 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,18 +27,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.formatYearMonth
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KFilterChip
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KSearchBar
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 import java.time.YearMonth
 
 /**
@@ -62,14 +58,10 @@ internal fun CalendarHeader(
 ) {
     val isWeek = mode == CalendarMode.Week
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { if (isWeek) actions.onMoveWeek(-1) else actions.onShowMonth(month.minusMonths(1)) }) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = stringResource(
-                    if (isWeek) R.string.calendar_previous_week else R.string.calendar_previous_month,
-                ),
-            )
-        }
+        HeaderIconButton(
+            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+            stringResource(if (isWeek) R.string.calendar_previous_week else R.string.calendar_previous_month),
+        ) { if (isWeek) actions.onMoveWeek(-1) else actions.onShowMonth(month.minusMonths(1)) }
         Text(
             formatYearMonth(month),
             style = MaterialTheme.typography.titleLarge,
@@ -78,23 +70,32 @@ internal fun CalendarHeader(
                 .weight(1f)
                 .semantics { heading() },
         )
-        IconButton(onClick = { if (isWeek) actions.onMoveWeek(1) else actions.onShowMonth(month.plusMonths(1)) }) {
-            Icon(
-                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = stringResource(
-                    if (isWeek) R.string.calendar_next_week else R.string.calendar_next_month,
-                ),
+        HeaderIconButton(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            stringResource(if (isWeek) R.string.calendar_next_week else R.string.calendar_next_month),
+        ) { if (isWeek) actions.onMoveWeek(1) else actions.onShowMonth(month.plusMonths(1)) }
+        if (!isSearchOpen) {
+            HeaderIconButton(
+                Icons.Filled.Search,
+                stringResource(R.string.calendar_search),
+                onClick = actions.onOpenSearch,
             )
         }
-        if (!isSearchOpen) {
-            IconButton(onClick = actions.onOpenSearch) {
-                Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.calendar_search))
-            }
-        }
-        TextButton(onClick = actions.onToday, modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget)) {
-            Text(stringResource(R.string.calendar_today))
-        }
+        KButton(stringResource(R.string.calendar_today), onClick = actions.onToday, variant = KVariant.Text)
     }
+}
+
+/** 머리글의 화살표·검색처럼 바탕 없이 아이콘만 보이는 버튼. */
+@Composable
+private fun HeaderIconButton(icon: ImageVector, description: String, enabled: Boolean = true, onClick: () -> Unit) {
+    KIconButton(
+        icon,
+        contentDescription = description,
+        onClick = onClick,
+        variant = KVariant.Text,
+        tone = KTone.Neutral,
+        enabled = enabled,
+    )
 }
 
 /**
@@ -120,25 +121,27 @@ private fun SearchField(keyword: String, actions: CalendarActions) {
     val focusRequester = remember { FocusRequester() }
     // 검색 버튼으로 열었을 때 바로 입력할 수 있게 한다. 회전 뒤 다시 그릴 때는 이미 입력한 글자가 있어 건너뛴다.
     LaunchedEffect(Unit) { if (text.isEmpty()) focusRequester.requestFocus() }
-    ChageunTextField(
-        value = text,
-        onValueChange = {
-            text = it
-            actions.onSearch(it)
-        },
-        placeholder = stringResource(R.string.history_search_hint),
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = {
-            IconButton(onClick = actions.onCloseSearch) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.calendar_search_close))
-            }
-        },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-    )
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        // 닫기 버튼이 따로 있어 검색창의 '취소'는 두지 않는다. 지우기 버튼은 글자가 있을 때 나온다.
+        KSearchBar(
+            query = text,
+            onQueryChange = {
+                text = it
+                actions.onSearch(it)
+            },
+            onSearch = actions.onSearch,
+            placeholder = stringResource(R.string.history_search_hint),
+            showCancel = false,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester),
+        )
+        HeaderIconButton(
+            Icons.Filled.Close,
+            stringResource(R.string.calendar_search_close),
+            onClick = actions.onCloseSearch,
+        )
+    }
 }
 
 @Composable
@@ -159,22 +162,20 @@ private fun ActiveFilterSummary(state: CalendarUiState, actions: CalendarActions
             modifier = Modifier.weight(1f),
         )
         if (search.isActive) {
-            IconButton(onClick = actions.onPreviousResult, enabled = state.previousResultDate != null) {
-                Icon(
-                    Icons.Filled.KeyboardArrowUp,
-                    contentDescription = stringResource(R.string.calendar_previous_result),
-                )
-            }
-            IconButton(onClick = actions.onNextResult, enabled = state.nextResultDate != null) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.calendar_next_result))
-            }
+            HeaderIconButton(
+                Icons.Filled.KeyboardArrowUp,
+                stringResource(R.string.calendar_previous_result),
+                enabled = state.previousResultDate != null,
+                onClick = actions.onPreviousResult,
+            )
+            HeaderIconButton(
+                Icons.Filled.KeyboardArrowDown,
+                stringResource(R.string.calendar_next_result),
+                enabled = state.nextResultDate != null,
+                onClick = actions.onNextResult,
+            )
         }
-        TextButton(
-            onClick = actions.onClearAll,
-            modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
-        ) {
-            Text(stringResource(R.string.calendar_clear_all))
-        }
+        KButton(stringResource(R.string.calendar_clear_all), onClick = actions.onClearAll, variant = KVariant.Text)
     }
 }
 
@@ -208,15 +209,11 @@ internal fun CalendarFilterChips(
     FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
         CalendarKind.entries.forEach { kind ->
             val selected = kind in filter.kinds
-            FilterChip(
+            KFilterChip(
+                label = stringResource(kind.labelRes),
                 selected = selected,
-                onClick = { onToggle(kind) },
-                label = { Text(stringResource(kind.labelRes)) },
-                leadingIcon = if (selected) {
-                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(CHIP_ICON_SIZE)) }
-                } else {
-                    null
-                },
+                onSelectedChange = { onToggle(kind) },
+                minTouchTarget = true,
             )
         }
         ItemsChip(filter.items.size, onPickItems)
@@ -225,19 +222,17 @@ internal fun CalendarFilterChips(
 
 @Composable
 private fun ItemsChip(itemCount: Int, onPickItems: () -> Unit) {
-    FilterChip(
-        selected = itemCount > 0,
-        onClick = onPickItems,
-        label = {
-            Text(
-                if (itemCount > 0) {
-                    pluralStringResource(R.plurals.calendar_items_count, itemCount, itemCount)
-                } else {
-                    stringResource(R.string.calendar_pick_items)
-                },
-            )
+    // 켜고 끄지 않고 항목 고르기 시트를 연다. 켜짐은 고른 항목이 있다는 표시다.
+    KFilterChip(
+        label = if (itemCount > 0) {
+            pluralStringResource(R.plurals.calendar_items_count, itemCount, itemCount)
+        } else {
+            stringResource(R.string.calendar_pick_items)
         },
-        leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(CHIP_ICON_SIZE)) },
+        selected = itemCount > 0,
+        onSelectedChange = { onPickItems() },
+        leadingIcon = Icons.Filled.Tune,
+        minTouchTarget = true,
     )
 }
 
@@ -250,8 +245,6 @@ internal val CalendarKind.labelRes: Int
         CalendarKind.Photos -> R.string.calendar_kind_photos
         CalendarKind.Upcoming -> R.string.calendar_kind_upcoming
     }
-
-private val CHIP_ICON_SIZE = 18.dp
 
 /** "사진 3장", "동영상 1개"처럼 0이 아닌 것만 나눠 센다. */
 @Composable
