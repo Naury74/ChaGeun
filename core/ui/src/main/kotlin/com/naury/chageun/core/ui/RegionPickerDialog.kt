@@ -20,13 +20,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,6 +55,11 @@ import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.model.KoreaArea
+import com.naury.kinetica.ui.KDivider
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 
 /**
  * 시·도 → 시·군·구 → 읍·면·동으로 내려가거나 이름으로 찾아 날씨 볼 지역을 고르는 창.
@@ -141,12 +142,15 @@ private fun RegionPickerHeader(title: String, onBack: (() -> Unit)?) {
                 },
         )
         if (onBack != null) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.weather_region_back),
-                )
-            }
+            KIconButton(
+                icon = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.weather_region_back),
+                onClick = onBack,
+                modifier = Modifier.align(Alignment.CenterStart),
+                variant = KVariant.Text,
+                tone = KTone.Neutral,
+                size = ChageunTheme.spacing.minTouchTarget,
+            )
         }
     }
 }
@@ -171,16 +175,8 @@ private fun RegionSearchField(query: String, onQueryChange: (String) -> Unit) {
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth(),
         label = stringResource(R.string.weather_region_search),
+        // 지우기 버튼은 입력란이 글자가 있을 때 띄운다.
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = if (query.isEmpty()) {
-            null
-        } else {
-            {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.weather_region_search_clear))
-                }
-            }
-        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
@@ -215,7 +211,7 @@ private fun RegionLoading(modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm, Alignment.CenterVertically),
     ) {
-        CircularProgressIndicator()
+        KLoadingIndicator(label = stringResource(R.string.weather_region_loading))
         Text(
             stringResource(R.string.weather_region_loading),
             style = MaterialTheme.typography.bodyMedium,
@@ -263,10 +259,7 @@ private fun RegionList(
     ) {
         itemsIndexed(rows, key = { _, row -> row.key }) { index, row ->
             if (index > 0 && row !is RegionRow.Header && rows[index - 1] !is RegionRow.Header) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = ChageunTheme.spacing.md),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
+                KDivider(startInset = ChageunTheme.spacing.md)
             }
             when (row) {
                 is RegionRow.Header -> RegionHeaderRow(stringResource(row.textRes))

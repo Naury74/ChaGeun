@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material.icons.filled.Umbrella
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -59,6 +58,8 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.weather.WeatherTip
 import com.naury.chageun.core.model.WeatherCondition
 import com.naury.chageun.core.ui.weatherLocationLabel
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KVariant
 import kotlin.math.roundToInt
 
 /**
@@ -80,14 +81,16 @@ internal fun HomeWeatherLine(
         HomeWeather.Off, HomeWeather.Unavailable -> Unit
         HomeWeather.Setup -> Row(modifier, verticalAlignment = Alignment.CenterVertically) {
             WeatherPill(Icons.Filled.WbSunny, stringResource(R.string.home_weather_enable), onChooseLocation)
-            IconButton(onClick = onDismissPrompt) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.home_weather_dismiss),
-                    tint = skyVariantText(),
-                    modifier = Modifier.size(DISMISS_ICON_SIZE),
-                )
-            }
+            // 아이콘은 버튼 지름의 절반으로 그려진다. 작은 버튼을 두되 누르는 영역은 48dp를 지킨다.
+            KIconButton(
+                Icons.Filled.Close,
+                contentDescription = stringResource(R.string.home_weather_dismiss),
+                onClick = onDismissPrompt,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+                variant = KVariant.Text,
+                size = DISMISS_BUTTON_SIZE,
+                contentColor = skyVariantText(),
+            )
         }
         HomeWeather.NeedsPermission -> WeatherPill(
             Icons.Filled.LocationOff,
@@ -184,14 +187,16 @@ internal fun RegionChangedNotice(onChooseAgain: () -> Unit, onDismiss: () -> Uni
             onChooseAgain,
             Modifier.weight(1f, fill = false),
         )
-        IconButton(onClick = onDismiss) {
-            Icon(
-                Icons.Filled.Close,
-                contentDescription = stringResource(R.string.home_weather_region_changed_dismiss),
-                tint = skyVariantText(),
-                modifier = Modifier.size(DISMISS_ICON_SIZE),
-            )
-        }
+        // 아이콘은 버튼 지름의 절반으로 그려진다. 작은 버튼을 두되 누르는 영역은 48dp를 지킨다.
+        KIconButton(
+            Icons.Filled.Close,
+            contentDescription = stringResource(R.string.home_weather_region_changed_dismiss),
+            onClick = onDismiss,
+            modifier = Modifier.minimumInteractiveComponentSize(),
+            variant = KVariant.Text,
+            size = DISMISS_BUTTON_SIZE,
+            contentColor = skyVariantText(),
+        )
     }
 }
 
@@ -234,7 +239,7 @@ private const val HALF = 0.5f
 private const val ICON_ID = "weather-icon"
 private const val ICON_EM = 1.3f
 private const val PILL_ALPHA = 0.75f
-private val DISMISS_ICON_SIZE = 18.dp
+private val DISMISS_BUTTON_SIZE = 36.dp
 private val MIN_TOUCH = 48.dp
 
 private val HomeWeather.Shown.icon: ImageVector

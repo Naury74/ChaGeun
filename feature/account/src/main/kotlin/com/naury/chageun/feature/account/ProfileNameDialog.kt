@@ -5,22 +5,17 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.naury.chageun.core.model.ProfileNameCheck
 import com.naury.chageun.core.model.ProfileNameRule
 import com.naury.chageun.core.ui.ChageunDialog
-import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.DialogAction
 import com.naury.chageun.core.ui.DialogActionStyle
+import com.naury.kinetica.ui.KTextField
 
 /**
  * 부를 이름 고치기 창. 비우고 저장하거나 기본 이름 버튼을 누르면 정한 이름을 지워 Google 이름이나 이메일 앞부분으로 돌아간다.
@@ -64,14 +59,15 @@ internal fun ProfileNameDialog(
             DialogAction(stringResource(R.string.account_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
         ),
     ) {
-        ChageunTextField(
+        val isInvalid = check == ProfileNameCheck.TooLong || check == ProfileNameCheck.HasLineBreak
+        val support = supportingText(state)
+        KTextField(
             value = state.draft,
             onValueChange = onDraftChange,
             label = stringResource(R.string.account_name_label),
-            supportingText = supportingText(state),
-            isError = check == ProfileNameCheck.TooLong || check == ProfileNameCheck.HasLineBreak,
+            supportingText = support.takeUnless { isInvalid },
+            error = support.takeIf { isInvalid },
             enabled = !state.isSaving,
-            singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Done,
@@ -79,16 +75,7 @@ internal fun ProfileNameDialog(
             keyboardActions = KeyboardActions(onDone = { if (canSave) onSave() }),
             modifier = Modifier.fillMaxWidth(),
         )
-        state.error?.let {
-            Text(
-                authErrorMessage(it),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { liveRegion = LiveRegionMode.Polite },
-            )
-        }
+        state.error?.let { AccountErrorAlert(authErrorMessage(it)) }
     }
 }
 

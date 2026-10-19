@@ -86,6 +86,8 @@
     <string name="account_restore_confirm">복원</string>
     <string name="account_restore_downloading">백업을 내려받는 중이에요…</string>
     <string name="account_restore_restoring">복원하는 중이에요…</string>
+    <string name="account_restore_step_download">내려받기</string>
+    <string name="account_restore_step_replace">데이터 바꾸기</string>
     <string name="account_notice_backed_up">클라우드에 백업했어요.</string>
     <string name="account_notice_restored">백업으로 복원했어요.</string>
     <string name="account_notice_backup_deleted">백업을 삭제했어요.</string>

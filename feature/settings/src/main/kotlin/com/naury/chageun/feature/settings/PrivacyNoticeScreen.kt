@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 
 /** 앱이 실제로 저장하고 전송하는 내용과 항상 일치해야 한다. 권한이나 SDK를 새로 추가하면 함께 수정한다. */
 @Composable
@@ -39,10 +40,11 @@ private fun NoticeScreen(
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
+                // 위 막대 높이를 스크롤 안쪽에 둬야 내용이 막대 뒤로 지나간다.
+                .padding(top = padding.calculateTopPadding())
                 .padding(horizontal = ChageunTheme.spacing.gutter)
-                .padding(bottom = ChageunTheme.spacing.lg)
+                .padding(bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current)
                 .widthIn(max = CONTENT_MAX_WIDTH),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
         ) {

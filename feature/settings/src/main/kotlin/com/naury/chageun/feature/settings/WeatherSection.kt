@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,6 +32,8 @@ import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.WeatherLocationPicker
 import com.naury.chageun.core.ui.weatherLocationSettingLabel
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KLoadingStyle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.DateTimeException
 import java.time.YearMonth
@@ -184,6 +187,11 @@ fun WeatherSection(
                 body = regionListCheckBody(it),
                 onClick = it.onCheck,
                 enabled = it.check != RegionListCheckState.Checking,
+                trailing = if (it.check == RegionListCheckState.Checking) {
+                    { KLoadingIndicator(size = CHECKING_INDICATOR_SIZE, style = KLoadingStyle.Dots) }
+                } else {
+                    null
+                },
             )
         }
     }
@@ -228,3 +236,5 @@ internal fun regionListMonth(version: String): String {
         }
     }
 }
+
+private val CHECKING_INDICATOR_SIZE = 28.dp

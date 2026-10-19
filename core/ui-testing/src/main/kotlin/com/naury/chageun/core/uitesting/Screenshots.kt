@@ -42,10 +42,10 @@ object ScreenshotDevices {
  * 일반 Unit Test 실행에서는 아무것도 하지 않는다.
  *
  * [colorTolerance]는 픽셀마다 허용하는 색 차이(RGBA 0..1 거리)다. 흐림 효과나 가는 사선은 macOS와 CI(Linux)에서
- * 1~2단계 다르게 그려지므로 그런 화면에만 [SKY_COLOR_TOLERANCE]를 넘긴다.
+ * 1~2단계 다르게 그려진다. Kinetica 카드·칩·버튼의 부드러운 그림자도 흐림이라 기본으로 [SHADOW_COLOR_TOLERANCE]를 둔다.
  */
 @OptIn(ExperimentalRoborazziApi::class)
-fun ComposeTestRule.captureScreen(name: String, colorTolerance: Float? = null) {
+fun ComposeTestRule.captureScreen(name: String, colorTolerance: Float? = SHADOW_COLOR_TOLERANCE) {
     // 정적인 화면은 한 번만 그려지는데, 같은 Sandbox의 두 번째 테스트부터는 그 그리기가 창에 반영되지 않는다.
     // 캡처 직전에 프레임을 한 번 더 요청한다.
     runOnUiThread { frameView?.rootView?.invalidate() }
@@ -61,6 +61,9 @@ fun ComposeTestRule.captureScreen(name: String, colorTolerance: Float? = null) {
 
 /** 채널마다 2단계(2/255)씩 다른 정도. 눈으로는 구분되지 않는다. */
 const val SKY_COLOR_TOLERANCE = 0.015f
+
+/** 그림자 가장자리의 흐림 차이. 하늘 흐림과 같은 크기다. */
+const val SHADOW_COLOR_TOLERANCE = SKY_COLOR_TOLERANCE
 
 /**
  * ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다.

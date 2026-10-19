@@ -1,7 +1,6 @@
 package com.naury.chageun.core.ui.sound
 
 import android.content.Context
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -15,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.ui.R
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.chageun.core.ui.photo.PhotoFiles
@@ -90,7 +90,7 @@ fun rememberSoundRecorderLauncher(maxRecordingMs: Long, onRecorded: (RecordedSou
     }
 }
 
-private fun Context.showNotice(message: Int) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+private fun Context.showNotice(message: Int) = ChageunToasts.error(getString(message))
 
 private fun soundResultHandler(context: Context, since: Long?) = SoundEditResultHandler(
     stage = { uri -> PhotoFiles.copyIn(context, uri, SOUND_EXTENSION) },

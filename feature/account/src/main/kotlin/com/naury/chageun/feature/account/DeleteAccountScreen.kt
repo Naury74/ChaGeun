@@ -1,43 +1,38 @@
 package com.naury.chageun.feature.account
 
-import android.widget.Toast
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AddToDrive
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
+import com.naury.kinetica.ui.KTone
 
 @Composable
 fun DeleteAccountRoute(onBack: () -> Unit, onDeleted: () -> Unit, viewModel: DeleteAccountViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val doneText = stringResource(R.string.account_delete_done)
     LaunchedEffect(uiState.isDeleted) {
         if (uiState.isDeleted) {
             // 삭제 뒤 돌아가는 계정 화면은 로그인 전 모습이라 따로 알린다.
-            Toast.makeText(context, R.string.account_delete_done, Toast.LENGTH_SHORT).show()
+            ChageunToasts.success(doneText)
             onDeleted()
         }
     }
@@ -64,7 +59,7 @@ fun DeleteAccountScreen(
         modifier = modifier,
         navigationIcon = { BackButton(onBack) },
     ) { padding ->
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             CardGroup(stringResource(R.string.account_delete_removed)) {
                 ListRow(
                     icon = Icons.Filled.AccountCircle,
@@ -93,8 +88,8 @@ fun DeleteAccountScreen(
                     value = uiState.password,
                     onValueChange = onPasswordChange,
                     label = stringResource(R.string.account_delete_password),
-                    contentType = ContentType.Password,
-                    isError = uiState.error != null,
+                    isNewPassword = false,
+                    error = uiState.error?.let { authErrorMessage(it) },
                     supporting = null,
                     imeAction = ImeAction.Done,
                     onDone = { focusManager.clearFocus() },
@@ -106,25 +101,17 @@ fun DeleteAccountScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            uiState.error?.let { error ->
-                Text(
-                    authErrorMessage(error),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
+            // 비밀번호 칸이 있으면 오류는 칸 아래에 보인다. Google 계정은 칸이 없어 상자로 알린다.
+            if (!uiState.confirmsWithPassword) {
+                uiState.error?.let { AccountErrorAlert(authErrorMessage(it)) }
             }
-            Button(
+            AccountPrimaryButton(
+                text = stringResource(R.string.account_delete_confirm),
                 onClick = onDelete,
                 enabled = uiState.canDelete || uiState.isBusy,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ),
-                modifier = ButtonHeight,
-            ) {
-                ButtonContent(stringResource(R.string.account_delete_confirm), isBusy = uiState.isBusy)
-            }
+                loading = uiState.isBusy,
+                tone = KTone.Destructive,
+            )
         }
     }
 }

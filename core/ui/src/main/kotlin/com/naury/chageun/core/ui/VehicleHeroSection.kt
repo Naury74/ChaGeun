@@ -17,16 +17,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,22 +48,29 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
+import com.naury.kinetica.ui.KSurface
+import com.naury.kinetica.ui.RollingText
 
 /**
  * Hero 바탕 하늘의 색을 바꿀 때 쓴다. [top]은 맨 위 하늘색, [glow]는 오른쪽 위의 햇빛 번짐이다.
@@ -106,20 +113,27 @@ fun VehicleHeroSection(
     sky: HeroSky? = null,
     skyOverlay: (@Composable () -> Unit)? = null,
 ) {
-    Box(modifier.fillMaxWidth().skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
-        if (skyOverlay != null) Box(Modifier.matchParentSize()) { skyOverlay() }
-        HeroContent(
-            title = title,
-            subtitle = subtitle,
-            subtitleColor = sky?.secondaryText?.takeIf { it.isSpecified } ?: MaterialTheme.colorScheme.onSurfaceVariant,
-            stats = stats,
-            footnote = footnote,
-            photoPath = photoPath,
-            bodyType = bodyType,
-            header = header,
-            photoStatus = photoStatus,
-            action = action,
-        )
+    val skyTop = sky?.top ?: ChageunTheme.colors.heroSky
+    val glass = remember(skyTop) { HeroGlass(heroGlassSurface(skyTop)) }
+    Box(modifier.fillMaxWidth()) {
+        Box(Modifier.matchParentSize().skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
+            skyOverlay?.invoke()
+        }
+        CompositionLocalProvider(LocalHeroGlass provides glass) {
+            HeroContent(
+                title = title,
+                subtitle = subtitle,
+                subtitleColor =
+                sky?.secondaryText?.takeIf { it.isSpecified } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                stats = stats,
+                footnote = footnote,
+                photoPath = photoPath,
+                bodyType = bodyType,
+                header = header,
+                photoStatus = photoStatus,
+                action = action,
+            )
+        }
     }
 }
 
@@ -199,40 +213,46 @@ private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean, custom: 
     }
 }
 
+/** 하늘을 블러로 비추는 요약 카드. 블러가 없는 Android 11 이하에서는 글래스의 fallback 색으로 칠해진다. */
 @Composable
 private fun HeroStatsCard(stats: List<HeroStat>, footnote: String?) {
-    val colors = ChageunTheme.colors
-    Surface(
-        shape = MaterialTheme.shapes.large,
-        color = colors.heroCard,
-        contentColor = colors.onHeroCard,
+    val glass = checkNotNull(LocalHeroGlass.current)
+    val ink = glass.surface.contentColor
+    KSurface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = ChageunTheme.spacing.xs),
+        shape = MaterialTheme.shapes.large,
+        surface = glass.surface,
     ) {
-        Column(
-            Modifier.padding(vertical = ChageunTheme.spacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                stats.forEachIndexed { index, stat ->
-                    if (index > 0) {
-                        VerticalDivider(
-                            color = colors.onHeroCard.copy(alpha = DIVIDER_ALPHA),
-                            modifier = Modifier.padding(vertical = ChageunTheme.spacing.xxs),
-                        )
-                    }
-                    HeroStatCell(stat, Modifier.weight(1f))
+        CompositionLocalProvider(LocalContentColor provides ink) { HeroStatsContent(stats, footnote, ink) }
+    }
+}
+
+@Composable
+private fun HeroStatsContent(stats: List<HeroStat>, footnote: String?, ink: Color) {
+    Column(
+        Modifier.padding(vertical = ChageunTheme.spacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            stats.forEachIndexed { index, stat ->
+                if (index > 0) {
+                    VerticalDivider(
+                        color = ink.copy(alpha = DIVIDER_ALPHA),
+                        modifier = Modifier.padding(vertical = ChageunTheme.spacing.xxs),
+                    )
                 }
+                HeroStatCell(stat, Modifier.weight(1f))
             }
-            footnote?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.onHeroCard.copy(alpha = SECONDARY_ALPHA),
-                    modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
-                )
-            }
+        }
+        footnote?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.labelSmall,
+                color = ink.copy(alpha = SECONDARY_ALPHA),
+                modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
+            )
         }
     }
 }
@@ -253,20 +273,57 @@ private fun HeroStatCell(stat: HeroStat, modifier: Modifier) {
             color = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA),
             textAlign = TextAlign.Center,
         )
-        Text(
-            buildAnnotatedString {
-                append(stat.value)
-                stat.unit?.let {
-                    withStyle(SpanStyle(fontSize = MaterialTheme.typography.labelMedium.fontSize)) { append(" $it") }
-                }
-            },
-            style = NumericTextStyles.Hero.copy(fontSize = STAT_VALUE_SIZE),
-            textAlign = TextAlign.Center,
-            // 칸이 좁으면 단위만 다음 줄로 떨어져 어색하므로, 한 줄에 두고 글자를 줄여 맞춘다.
-            maxLines = 1,
-            autoSize = TextAutoSize.StepBased(minFontSize = STAT_VALUE_MIN_SIZE, maxFontSize = STAT_VALUE_SIZE),
-        )
+        HeroStatValue(stat)
     }
+}
+
+/**
+ * 값은 바뀐 자릿수만 굴러가며 바뀐다(Kinetica RollingText). 칸이 좁으면 단위만 다음 줄로 떨어져 어색하므로,
+ * 한 줄에 들어가도록 글자를 한 단계씩 줄여 맞춘다. TalkBack과 테스트에는 "42,180 km"처럼 한 덩어리로 읽힌다.
+ */
+@Composable
+private fun HeroStatValue(stat: HeroStat) {
+    val unitStyle = MaterialTheme.typography.labelMedium
+    val color = LocalContentColor.current
+    val unitText = stat.unit?.let { " $it" }
+    val measurer = rememberTextMeasurer()
+    // 요약 카드가 칸 높이를 맞추려고 고유 크기를 묻기 때문에 BoxWithConstraints 대신 잰 폭으로 크기를 고른다.
+    var maxWidth by remember { mutableIntStateOf(0) }
+    val fontSize = remember(stat.value, unitText, maxWidth, measurer) {
+        if (maxWidth == 0) STAT_VALUE_SIZE else fittedValueSize(measurer, stat.value, unitText, unitStyle, maxWidth)
+    }
+    Box(Modifier.fillMaxWidth().onSizeChanged { maxWidth = it.width }, contentAlignment = Alignment.Center) {
+        Row(
+            Modifier.clearAndSetSemantics { text = AnnotatedString(stat.value + unitText.orEmpty()) },
+        ) {
+            RollingText(
+                stat.value,
+                Modifier.alignByBaseline(),
+                style = NumericTextStyles.Hero.copy(fontSize = fontSize, color = color),
+            )
+            unitText?.let {
+                Text(it, style = unitStyle, color = color, maxLines = 1, modifier = Modifier.alignByBaseline())
+            }
+        }
+    }
+}
+
+/** 값과 단위가 [maxWidth] 안에 들어가는 가장 큰 값 글자 크기. 가장 작게 줄여도 넘치면 가장 작은 크기를 쓴다. */
+private fun fittedValueSize(
+    measurer: TextMeasurer,
+    value: String,
+    unit: String?,
+    unitStyle: TextStyle,
+    maxWidth: Int,
+): TextUnit {
+    val unitWidth = unit?.let { measurer.measure(it, unitStyle, maxLines = 1).size.width } ?: 0
+    var size = STAT_VALUE_SIZE.value
+    while (size > STAT_VALUE_MIN_SIZE.value) {
+        val width = measurer.measure(value, NumericTextStyles.Hero.copy(fontSize = size.sp), maxLines = 1).size.width
+        if (width + unitWidth <= maxWidth) break
+        size -= STAT_VALUE_STEP
+    }
+    return size.coerceAtLeast(STAT_VALUE_MIN_SIZE.value).sp
 }
 
 /** Hero 사진 자리에 그릴 것. 사진이 바뀔 때 무엇에서 무엇으로 바뀌는지 알아야 자연스럽게 넘길 수 있다. */
@@ -455,6 +512,7 @@ private const val DIVIDER_ALPHA = 0.18f
 private const val SECONDARY_ALPHA = 0.7f
 private val STAT_VALUE_SIZE = 20.sp
 private val STAT_VALUE_MIN_SIZE = 12.sp
+private const val STAT_VALUE_STEP = 1f
 
 private val PREVIEW_STATS = listOf(
     HeroStat("Mileage", "42,180", "km"),

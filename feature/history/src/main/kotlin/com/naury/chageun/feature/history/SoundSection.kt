@@ -3,11 +3,9 @@ package com.naury.chageun.feature.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.MoreVert
@@ -18,15 +16,9 @@ import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,6 +52,11 @@ import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.DialogOption
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.formatDate
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KProgressBar
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 import java.time.ZoneId
 import java.util.Locale
 import kotlinx.coroutines.delay
@@ -123,26 +120,23 @@ internal fun SoundSection(state: SoundsState, owner: RecordRef, player: SoundPla
         }
         state.notice?.let { SoundNoticeRow(it, state.edits.onDismissNotice) }
         state.edits.onRecord?.let { record ->
-            OutlinedButton(
+            KButton(
+                stringResource(R.string.sound_record),
                 onClick = { record(owner) },
+                variant = KVariant.Outlined,
+                icon = Icons.Outlined.Mic,
                 enabled = remaining > 0,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Outlined.Mic, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.sound_record))
-            }
+                fullWidth = true,
+            )
         }
         state.edits.onPickFile?.let { pick ->
-            TextButton(onClick = { pick(owner) }, enabled = remaining > 0, modifier = Modifier.fillMaxWidth()) {
-                Icon(
-                    Icons.Outlined.AudioFile,
-                    contentDescription = null,
-                    modifier = Modifier.size(ButtonDefaults.IconSize),
-                )
-                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                Text(stringResource(R.string.sound_add_file))
-            }
+            WrappingTextButton(
+                stringResource(R.string.sound_add_file),
+                Icons.Outlined.AudioFile,
+                onClick = { pick(owner) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = remaining > 0,
+            )
         }
         Text(
             stringResource(R.string.sound_notice, MAX_SOUNDS_PER_RECORD, MAX_SOUND_DURATION_MS / MILLIS_PER_MINUTE),
@@ -186,14 +180,13 @@ private fun SoundRow(sound: Attachment, name: String, player: SoundPlayerState, 
             bottom = ChageunTheme.spacing.xs,
         ),
     ) {
-        FilledTonalIconButton(
+        KIconButton(
+            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+            contentDescription = description,
             onClick = { player.toggle(sound) },
-            modifier = Modifier
-                .size(PLAY_BUTTON_SIZE)
-                .semantics { contentDescription = description },
-        ) {
-            Icon(if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, contentDescription = null)
-        }
+            variant = KVariant.Tonal,
+            size = PLAY_BUTTON_SIZE,
+        )
         Column(
             Modifier
                 .weight(1f)
@@ -202,17 +195,20 @@ private fun SoundRow(sound: Attachment, name: String, player: SoundPlayerState, 
             Text(name, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
             SoundMeta(sound, durationMs, if (isCurrent) positionMs else null)
             if (isCurrent && durationMs > 0) {
-                LinearProgressIndicator(
-                    progress = { (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = ChageunTheme.spacing.xxs),
+                KProgressBar(
+                    progress = (positionMs.toFloat() / durationMs).coerceIn(0f, 1f),
+                    thickness = PROGRESS_THICKNESS,
+                    modifier = Modifier.padding(top = ChageunTheme.spacing.xxs),
                 )
             }
         }
-        IconButton(onClick = onMore) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.sound_more, name))
-        }
+        KIconButton(
+            Icons.Filled.MoreVert,
+            contentDescription = stringResource(R.string.sound_more, name),
+            onClick = onMore,
+            variant = KVariant.Text,
+            tone = KTone.Neutral,
+        )
     }
 }
 
@@ -252,7 +248,7 @@ private fun SoundNoticeRow(notice: SoundNotice, onDismiss: () -> Unit) {
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = onDismiss) { Text(stringResource(R.string.attachment_close)) }
+        KButton(stringResource(R.string.attachment_close), onClick = onDismiss, variant = KVariant.Text)
     }
 }
 
@@ -389,6 +385,7 @@ internal fun formatSoundClock(durationMs: Long): String {
 }
 
 private val PLAY_BUTTON_SIZE = 48.dp
+private val PROGRESS_THICKNESS = 4.dp
 private val META_ICON_SIZE = 14.dp
 private const val PROGRESS_TICK_MS = 200L
 private const val MILLIS_PER_SECOND = 1_000L

@@ -10,11 +10,10 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,16 +21,22 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_BYTES
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.feature.vehicle.R
+import com.naury.chageun.feature.vehicle.TextAction
+import com.naury.kinetica.ui.KStaggerState
+import com.naury.kinetica.ui.staggerIn
 
 /**
  * 찍은 날짜별 사진 그리드. 두 손가락으로 벌리면 칸이 커지고 오므리면 작아진다. 칸 크기는 단계로만 바뀌어
  * 넓은 창에서는 같은 단계에서도 한 줄에 더 많이 들어간다.
+ * [stagger]를 주면 처음 열 때 사진이 위에서부터 차례로 떠오른다. 사진 보기를 열었다 닫아도 다시 떠오르지 않게 바깥에서 기억한다.
  */
 @Composable
 internal fun AlbumGrid(
@@ -39,13 +44,21 @@ internal fun AlbumGrid(
     actions: AlbumActions,
     modifier: Modifier = Modifier,
     state: LazyGridState = rememberLazyGridState(),
+    stagger: KStaggerState? = null,
+    /** 위 막대 높이. 사진이 막대 뒤로 지나가도록 안쪽 여백으로 준다. */
+    contentTop: Dp = 0.dp,
 ) {
     val gutter = ChageunTheme.spacing.gutter
     LazyVerticalGrid(
         columns = GridCells.Adaptive(THUMBNAIL_MIN_SIZES[uiState.gridStep.coerceIn(THUMBNAIL_MIN_SIZES.indices)]),
         state = state,
         modifier = modifier.pinchSteps(actions.onZoomGrid),
-        contentPadding = PaddingValues(start = gutter, end = gutter, bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(
+            start = gutter,
+            top = contentTop,
+            end = gutter,
+            bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
+        ),
         horizontalArrangement = Arrangement.spacedBy(GRID_GAP),
         verticalArrangement = Arrangement.spacedBy(GRID_GAP),
     ) {
@@ -54,11 +67,22 @@ internal fun AlbumGrid(
                 FailedRow(uiState.failedCount, uiState.tooLargeCount, actions)
             }
         }
+        // 머리글과 사진에 위에서부터 순번을 매긴다. 날짜가 바뀌어도 한 줄로 이어 센다.
+        var order = 0
         uiState.days.forEach { day ->
+            val headerOrder = order++
             item(key = "day-${day.date}", span = { GridItemSpan(maxLineSpan) }) {
-                DayHeader(day, uiState.isPicking, isDayPicked = day.photos.all { it.id in uiState.picked }, actions)
+                DayHeader(
+                    day,
+                    uiState.isPicking,
+                    isDayPicked = day.photos.all { it.id in uiState.picked },
+                    actions,
+                    Modifier.appear(headerOrder, stagger),
+                )
             }
-            items(day.photos, key = { it.id }) { photo ->
+            val firstOrder = order
+            order += day.photos.size
+            itemsIndexed(day.photos, key = { _, photo -> photo.id }) { index, photo ->
                 AlbumThumbnail(
                     photo = photo,
                     isOpen = photo.id == uiState.selected?.id,
@@ -68,7 +92,9 @@ internal fun AlbumGrid(
                         else -> PickState.Unpicked
                     },
                     actions = actions,
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier
+                        .animateItem()
+                        .appear(firstOrder + index, stagger),
                 )
             }
         }
@@ -95,15 +121,21 @@ private fun FailedRow(failed: Int, tooLarge: Int, actions: AlbumActions) {
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.weight(1f),
         )
-        TextButton(onClick = actions.onDismissMessage) { Text(stringResource(R.string.album_close)) }
+        TextAction(stringResource(R.string.album_close), actions.onDismissMessage)
     }
 }
 
 /** 기록 탭의 월 머리글처럼 날짜는 왼쪽에, 장 수는 오른쪽에 회색으로 둔다. 고르는 중에는 그날 전체 선택 버튼이 된다. */
 @Composable
-private fun DayHeader(day: AlbumDay, isPicking: Boolean, isDayPicked: Boolean, actions: AlbumActions) {
+private fun DayHeader(
+    day: AlbumDay,
+    isPicking: Boolean,
+    isDayPicked: Boolean,
+    actions: AlbumActions,
+    modifier: Modifier = Modifier,
+) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
             .heightIn(min = ChageunTheme.spacing.minTouchTarget)
             .padding(top = ChageunTheme.spacing.xs),
@@ -118,9 +150,10 @@ private fun DayHeader(day: AlbumDay, isPicking: Boolean, isDayPicked: Boolean, a
                 .semantics { heading() },
         )
         if (isPicking) {
-            TextButton(onClick = { actions.onPickDay(day.date) }) {
-                Text(stringResource(if (isDayPicked) R.string.album_unpick_day else R.string.album_pick_day))
-            }
+            TextAction(
+                stringResource(if (isDayPicked) R.string.album_unpick_day else R.string.album_pick_day),
+                { actions.onPickDay(day.date) },
+            )
         } else {
             // 동영상이 섞인 날은 "장" 대신 "개"로 센다.
             val count = if (day.photos.any {
@@ -139,6 +172,10 @@ private fun DayHeader(day: AlbumDay, isPicking: Boolean, isDayPicked: Boolean, a
         }
     }
 }
+
+@Composable
+private fun Modifier.appear(order: Int, stagger: KStaggerState?): Modifier =
+    if (stagger == null) this else staggerIn(order, stagger)
 
 // 휴대폰 폭에서 한 줄에 6·5·4·3·2장이 들어가는 크기. 넓은 창에서는 같은 단계에서 더 많이 들어간다.
 private val THUMBNAIL_MIN_SIZES = listOf(50.dp, 62.dp, 78.dp, 104.dp, 160.dp)

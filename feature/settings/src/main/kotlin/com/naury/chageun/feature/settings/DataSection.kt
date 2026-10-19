@@ -19,6 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -29,6 +33,9 @@ import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.DialogInfoCard
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
+import com.naury.kinetica.ui.KAlert
+import com.naury.kinetica.ui.KProgressBar
+import com.naury.kinetica.ui.KStatus
 
 @Composable
 internal fun DataSection(
@@ -83,11 +90,13 @@ internal fun DataSection(
                 enabled = !state.isWorking,
             )
         }
+        // 내보내기·가져오기는 길이를 알 수 없어 흐르는 막대로 진행 중임만 알린다.
+        if (state.isWorking) KProgressBar(progress = null, thickness = WORKING_BAR_HEIGHT)
         state.message?.let { message ->
-            Text(
-                stringResource(message.textRes),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (message.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            KAlert(
+                message = stringResource(message.textRes),
+                status = if (message.isError) KStatus.Error else KStatus.Success,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
     }
@@ -156,3 +165,5 @@ private val DataMessage.textRes: Int
 
 private val DataMessage.isError: Boolean
     get() = this != DataMessage.ExportDone && this != DataMessage.ImportDone
+
+private val WORKING_BAR_HEIGHT = 4.dp

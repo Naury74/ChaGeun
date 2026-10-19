@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -60,6 +59,7 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.feature.vehicle.R
+import com.naury.kinetica.ui.kSurface
 import java.io.File
 
 /**
@@ -218,7 +218,7 @@ private fun PlaybackTime(player: Player, fallbackDurationMs: Long) {
         style = MaterialTheme.typography.labelSmall,
         color = Color.White,
         modifier = Modifier
-            .background(GLASS, CircleShape)
+            .kSurface(VIEWER_PILL, CircleShape)
             .padding(horizontal = 8.dp, vertical = 3.dp),
     )
 }
@@ -233,7 +233,7 @@ private fun VideoPoster(photo: AlbumPhoto) {
 
 /**
  * 카드 오른쪽 아래의 둥근 버튼. 가로 동영상은 카드가 낮아 가운데에 두면 날짜·메모와 겹치므로 늘 이 자리에 둔다.
- * 흐린 검정 바탕에 흰 아이콘이라 밝은 장면 위에서도 보인다.
+ * 영상은 매 프레임 바뀌므로 블러 없는 어두운 유리에 흰 아이콘을 둔다. 밝은 장면 위에서도 보인다.
  */
 @Composable
 private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -241,9 +241,8 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit, modifier: M
     Box(
         modifier
             .size(PLAY_BUTTON)
+            .kSurface(VIEWER_PILL, CircleShape)
             .clip(CircleShape)
-            .background(GLASS, CircleShape)
-            .border(1.dp, Color.White.copy(alpha = EDGE_ALPHA), CircleShape)
             .pressable(onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
@@ -274,7 +273,6 @@ private fun albumPlayer(context: Context, path: String, startAtMs: Long): ExoPla
 private val PLAY_ICON = 32.dp
 private val CONTROL_INSET = 12.dp
 private val BADGE_INSET = 12.dp
-private const val EDGE_ALPHA = 0.2f
 private const val PROGRESS_TICK_MS = 500L
 
 /** 재생 버튼 지름. 날짜·메모 줄이 이만큼 비켜 준다. */

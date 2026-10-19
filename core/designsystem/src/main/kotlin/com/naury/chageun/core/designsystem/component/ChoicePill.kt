@@ -1,18 +1,14 @@
 package com.naury.chageun.core.designsystem.component
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,31 +21,57 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.motionSpec
-import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.kinetica.ui.KChipGroup
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.jellyPress
+import com.naury.kinetica.ui.kSelectable
 
-/** 선택형 입력의 기본 단위. 선택되면 Primary로 채워져 타이핑 없이 고른 값이 한눈에 보인다. */
+/**
+ * 선택형 입력의 기본 단위. 선택되면 대표 색으로 채워지고 체크가 그려지며 폭이 부드럽게 늘어나(Kinetica 칩)
+ * 타이핑 없이 고른 값이 한눈에 보인다. TalkBack은 라디오 버튼으로 읽는다.
+ * 여러 칩을 함께 놓을 때는 [ChoicePillGroup]이 한 묶음으로 읽혀 더 낫다.
+ */
 @Composable
 fun ChoicePill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val haptics = LocalHapticFeedback.current
-    val container by animateColorAsState(if (selected) colors.primary else colors.surface, motionSpec(), "pill-bg")
-    val content by animateColorAsState(if (selected) colors.onPrimary else colors.onSurface, motionSpec(), "pill-fg")
-    Surface(
-        modifier = modifier
-            .heightIn(min = ChageunTheme.spacing.minTouchTarget)
-            .selectable(selected = selected, role = Role.RadioButton, onClick = {
-                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-                onClick()
-            }),
-        shape = CircleShape,
-        color = container,
-        contentColor = content,
-        border = if (selected) null else BorderStroke(1.dp, colors.outlineVariant),
-    ) {
-        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = 10.dp))
-        }
-    }
+    // 칩 하나짜리 묶음으로 그려야 라디오 버튼 의미와 칩 모양을 함께 얻는다.
+    KChipGroup(
+        chips = listOf(label),
+        selected = if (selected) setOf(0) else emptySet(),
+        onSelectedChange = { onClick() },
+        modifier = modifier,
+        variant = KVariant.Outlined,
+        minTouchTarget = true,
+        shadowRoom = false,
+    )
+}
+
+/**
+ * 하나만 고르는 칩 묶음. [selectedIndex]가 null이면 아무것도 고르지 않은 상태다. 이미 고른 칩을 다시 눌러도
+ * [onSelect]를 부른다(달력을 다시 여는 "다른 날"처럼).
+ *
+ * @param wrap false면 한 줄에 두고 가로로 넘기며, 끝을 흐려 더 있다는 것을 알린다. [contentPadding]은 이때만 쓴다.
+ */
+@Composable
+fun ChoicePillGroup(
+    labels: List<String>,
+    selectedIndex: Int?,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    wrap: Boolean = true,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+) {
+    KChipGroup(
+        chips = labels,
+        selected = selectedIndex?.let(::setOf).orEmpty(),
+        onSelectedChange = { next -> next.firstOrNull()?.let(onSelect) },
+        modifier = modifier,
+        variant = KVariant.Outlined,
+        wrap = wrap,
+        contentPadding = contentPadding,
+        fadeEdges = !wrap,
+        minTouchTarget = true,
+        shadowRoom = false,
+    )
 }
 
 /** 아이콘과 이름이 있는 큰 선택 카드. 연료처럼 항목 수가 적고 그림으로 구분되는 선택지에 쓴다. */
@@ -68,14 +90,18 @@ fun ChoiceCard(
         motionSpec(),
         "card-bg",
     )
-    Surface(
-        modifier = modifier.selectable(selected = selected, role = Role.RadioButton, onClick = {
-            if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-            onClick()
-        }),
-        shape = MaterialTheme.shapes.medium,
+    val shape = MaterialTheme.shapes.medium
+    ChageunCard(
+        modifier = modifier
+            .jellyPress()
+            .kSelectable(selected = selected, shape = shape, role = Role.RadioButton) {
+                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onClick()
+            }
+            // 판보다 바깥에 두어야 테두리가 판 색 위에 그려진다.
+            .border(if (selected) 2.dp else 1.dp, if (selected) colors.primary else colors.outlineVariant, shape),
+        shape = shape,
         color = container,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) colors.primary else colors.outlineVariant),
     ) {
         Column(
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 8.dp),
