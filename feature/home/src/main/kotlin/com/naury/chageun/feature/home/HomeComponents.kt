@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -31,6 +30,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
@@ -67,7 +67,7 @@ internal fun VehicleStatusSummary(
     modifier: Modifier = Modifier,
 ) {
     val tone = health.level.tone
-    Surface(
+    ChageunCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = tone.colors.container,
@@ -108,10 +108,9 @@ internal fun MaintenanceStatusCard(
     modifier: Modifier = Modifier,
 ) {
     val tone = status.state.tone.colors
-    Surface(
+    ChageunCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.md),
@@ -195,12 +194,11 @@ internal fun MissingInfoCard(
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     val shown = if (isExpanded) statuses else statuses.take(MISSING_PREVIEW)
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(motionSpec(ChageunMotion.MEDIUM_MS)),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
             shown.forEach { status ->
@@ -284,12 +282,11 @@ internal fun InspectionStatusCard(status: InspectionStatus, onOpen: () -> Unit, 
     val days = status.daysLeft ?: return
     val count = days.absoluteValue.toInt()
     val tone = if (status.state == InspectionState.Overdue) StatusTone.Critical else StatusTone.Upcoming
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             .pressableCard(MaterialTheme.shapes.large, onOpen),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.md),

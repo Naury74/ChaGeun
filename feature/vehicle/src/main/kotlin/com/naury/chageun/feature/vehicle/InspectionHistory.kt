@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.tone
+import com.naury.kinetica.ui.KDivider
 
 /** 가장 최근 정기검사를 보여 주고, 그 전 검사는 펼쳐서 본다. [history]는 최근 것부터 온다. */
 @Composable
@@ -35,7 +35,7 @@ internal fun InspectionHistory(history: List<InspectionRecord>) {
     val past = history.drop(1)
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        KDivider()
         Text(
             stringResource(R.string.vehicle_inspection_latest),
             style = MaterialTheme.typography.labelLarge,

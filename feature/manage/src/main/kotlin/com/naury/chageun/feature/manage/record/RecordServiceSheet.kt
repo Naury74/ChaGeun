@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -297,7 +297,12 @@ private fun costPicks(item: MaintenanceItem): List<QuickPick> {
 @Composable
 private fun LowerMileageWarning(itemName: String, previousKm: String, actions: RecordServiceActions) {
     val tone = StatusTone.Upcoming.colors
-    Surface(color = tone.container, contentColor = tone.content, shape = MaterialTheme.shapes.medium) {
+    ChageunCard(
+        color = tone.container,
+        contentColor = tone.content,
+        shape = MaterialTheme.shapes.medium,
+        inset = true,
+    ) {
         Column(
             Modifier.padding(ChageunTheme.spacing.md),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
@@ -327,10 +332,11 @@ private fun LowerMileageWarning(itemName: String, previousKm: String, actions: R
 @Composable
 private fun OdometerPrompt(currentKm: String, enteredKm: String, onDecide: (Boolean) -> Unit) {
     val entered = enteredKm.toLongOrNull()?.let { formatNumber(it) } ?: enteredKm
-    Surface(
+    ChageunCard(
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         shape = MaterialTheme.shapes.medium,
+        inset = true,
     ) {
         Column(
             Modifier.padding(ChageunTheme.spacing.md),

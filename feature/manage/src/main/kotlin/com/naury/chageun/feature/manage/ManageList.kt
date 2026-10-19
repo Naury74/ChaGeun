@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
@@ -183,7 +183,7 @@ private fun MaintenanceItemCard(
     modifier: Modifier = Modifier,
 ) {
     val shape = MaterialTheme.shapes.large
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             // 누른 쪽으로 살짝 기울며 눌린다. 등장은 목록의 차례 등장이 맡으므로 프리셋의 등장 효과는 뺀다.

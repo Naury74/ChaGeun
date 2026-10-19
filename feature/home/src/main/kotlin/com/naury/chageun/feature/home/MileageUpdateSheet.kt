@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
@@ -124,7 +124,12 @@ internal fun MileageUpdateContent(
         val lowerThan = uiState.lowerThan
         if (lowerThan != null) {
             val tone = StatusTone.Upcoming.colors
-            Surface(color = tone.container, contentColor = tone.content, shape = MaterialTheme.shapes.medium) {
+            ChageunCard(
+                color = tone.container,
+                contentColor = tone.content,
+                shape = MaterialTheme.shapes.medium,
+                inset = true,
+            ) {
                 Column(
                     Modifier.padding(ChageunTheme.spacing.md),
                     verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),

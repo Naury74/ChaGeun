@@ -2,8 +2,8 @@ package com.naury.chageun.feature.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
@@ -58,7 +58,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 internal fun MileagePromptCard(onUpdate: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             .pressableCard(MaterialTheme.shapes.large, onUpdate),
@@ -142,12 +142,13 @@ internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) 
         glowing = false
     }
     val glow by animateFloatAsState(if (glowing) AI_GLOW_INTENSITY else 0f, tween(AI_GLOW_FADE_MS), label = "ai-glow")
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             .pressableCard(shape, onAskAi)
-            .glowBorder(shape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = glow),
-        border = BorderStroke(AI_BORDER_WIDTH, Brush.linearGradient(AiBorderColors)),
+            .glowBorder(shape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = glow)
+            // 판보다 바깥에 두어야 무지개 테두리가 판 색 위에 그려진다.
+            .border(AI_BORDER_WIDTH, Brush.linearGradient(AiBorderColors), shape),
         shape = shape,
         color = ai.container,
         contentColor = ai.content,
@@ -193,7 +194,7 @@ internal fun UpcomingScheduleCard(
             )
             TextAction(stringResource(R.string.home_schedule_calendar)) { onOpenCalendar(today) }
         }
-        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+        ChageunCard(shape = MaterialTheme.shapes.large) {
             Column {
                 events.forEachIndexed { index, event ->
                     if (index > 0) GroupDivider()

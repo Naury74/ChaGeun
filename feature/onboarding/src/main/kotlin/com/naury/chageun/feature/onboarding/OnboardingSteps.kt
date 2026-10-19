@@ -1,7 +1,7 @@
 package com.naury.chageun.feature.onboarding
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +18,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +44,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
@@ -60,6 +59,7 @@ import com.naury.kinetica.core.scene.AppearEffect
 import com.naury.kinetica.core.scene.AppearKind
 import com.naury.kinetica.core.scene.NodeEffects
 import com.naury.kinetica.render.kineticaEffects
+import com.naury.kinetica.ui.KDivider
 import com.naury.kinetica.ui.jellyPress
 import com.naury.kinetica.ui.kClickable
 import com.naury.kinetica.ui.staggerIn
@@ -118,16 +118,24 @@ internal fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
     StepHeader(R.string.onboarding_plate_title, R.string.onboarding_plate_body)
     val error = uiState.errors[OnboardingField.Plate]
     // 실제 번호판처럼 보이는 입력칸. 무엇을 어떤 형식으로 넣어야 하는지 설명 없이 알 수 있다.
-    Surface(
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            2.dp,
-            if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-        ),
+    val shape = MaterialTheme.shapes.small
+    ChageunCard(
+        shape = shape,
         modifier = Modifier
             .shakeOnError(error)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            // 판보다 바깥에 두어야 번호판 테두리가 판 색 위에 그려진다.
+            .border(
+                2.dp,
+                if (error !=
+                    null
+                ) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                shape,
+            ),
     ) {
         Box(Modifier.padding(vertical = 20.dp, horizontal = 16.dp), contentAlignment = Alignment.Center) {
             val plateLabel = stringResource(R.string.onboarding_plate_field)
@@ -234,10 +242,10 @@ internal fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction
                 .focusRequester(focusRequester)
                 .semantics { contentDescription = mileageLabel },
         )
-        HorizontalDivider(
+        KDivider(
+            modifier = Modifier.fillMaxWidth(UNDERLINE_WIDTH),
             thickness = 2.dp,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.fillMaxWidth(UNDERLINE_WIDTH),
         )
         val year = uiState.modelYear.toIntOrNull()
         val estimate = uiState.mileageEstimate

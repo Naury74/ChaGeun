@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,11 +28,13 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.ChageunSwitch
 import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
+import com.naury.kinetica.ui.KDivider
 
 /** 제목 아래 한 장의 카드로 묶는 목록. 행 사이 구분선은 [GroupDivider]로 넣는다. */
 @Composable
@@ -49,11 +49,7 @@ fun CardGroup(title: String?, modifier: Modifier = Modifier, content: @Composabl
                     .semantics { heading() },
             )
         }
-        Surface(
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        ChageunCard(Modifier.fillMaxWidth()) {
             Column(content = content)
         }
     }
@@ -77,10 +73,7 @@ fun CardSubheader(text: String, modifier: Modifier = Modifier) {
 /** 아이콘 너비만큼 들여 써서 아이콘 열이 끊기지 않게 보이는 구분선. */
 @Composable
 fun GroupDivider() {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = ROW_TEXT_START),
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = DIVIDER_ALPHA),
-    )
+    KDivider(startInset = ROW_TEXT_START)
 }
 
 /**
@@ -257,5 +250,4 @@ private val ROW_MIN_HEIGHT = 56.dp
 
 // 행 좌우 여백(16) + 아이콘(36) + 간격(12)
 private val ROW_TEXT_START = 64.dp
-private const val DIVIDER_ALPHA = 0.6f
 private const val DISABLED_ALPHA = 0.38f
