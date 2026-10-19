@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,22 +48,29 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
+import com.naury.kinetica.ui.RollingText
+import com.naury.kinetica.ui.motionTilt
 
 /**
  * Hero 바탕 하늘의 색을 바꿀 때 쓴다. [top]은 맨 위 하늘색, [glow]는 오른쪽 위의 햇빛 번짐이다.
@@ -253,20 +260,57 @@ private fun HeroStatCell(stat: HeroStat, modifier: Modifier) {
             color = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA),
             textAlign = TextAlign.Center,
         )
-        Text(
-            buildAnnotatedString {
-                append(stat.value)
-                stat.unit?.let {
-                    withStyle(SpanStyle(fontSize = MaterialTheme.typography.labelMedium.fontSize)) { append(" $it") }
-                }
-            },
-            style = NumericTextStyles.Hero.copy(fontSize = STAT_VALUE_SIZE),
-            textAlign = TextAlign.Center,
-            // 칸이 좁으면 단위만 다음 줄로 떨어져 어색하므로, 한 줄에 두고 글자를 줄여 맞춘다.
-            maxLines = 1,
-            autoSize = TextAutoSize.StepBased(minFontSize = STAT_VALUE_MIN_SIZE, maxFontSize = STAT_VALUE_SIZE),
-        )
+        HeroStatValue(stat)
     }
+}
+
+/**
+ * 값은 바뀐 자릿수만 굴러가며 바뀐다(Kinetica RollingText). 칸이 좁으면 단위만 다음 줄로 떨어져 어색하므로,
+ * 한 줄에 들어가도록 글자를 한 단계씩 줄여 맞춘다. TalkBack과 테스트에는 "42,180 km"처럼 한 덩어리로 읽힌다.
+ */
+@Composable
+private fun HeroStatValue(stat: HeroStat) {
+    val unitStyle = MaterialTheme.typography.labelMedium
+    val color = LocalContentColor.current
+    val unitText = stat.unit?.let { " $it" }
+    val measurer = rememberTextMeasurer()
+    // 요약 카드가 칸 높이를 맞추려고 고유 크기를 묻기 때문에 BoxWithConstraints 대신 잰 폭으로 크기를 고른다.
+    var maxWidth by remember { mutableIntStateOf(0) }
+    val fontSize = remember(stat.value, unitText, maxWidth, measurer) {
+        if (maxWidth == 0) STAT_VALUE_SIZE else fittedValueSize(measurer, stat.value, unitText, unitStyle, maxWidth)
+    }
+    Box(Modifier.fillMaxWidth().onSizeChanged { maxWidth = it.width }, contentAlignment = Alignment.Center) {
+        Row(
+            Modifier.clearAndSetSemantics { text = AnnotatedString(stat.value + unitText.orEmpty()) },
+        ) {
+            RollingText(
+                stat.value,
+                Modifier.alignByBaseline(),
+                style = NumericTextStyles.Hero.copy(fontSize = fontSize, color = color),
+            )
+            unitText?.let {
+                Text(it, style = unitStyle, color = color, maxLines = 1, modifier = Modifier.alignByBaseline())
+            }
+        }
+    }
+}
+
+/** 값과 단위가 [maxWidth] 안에 들어가는 가장 큰 값 글자 크기. 가장 작게 줄여도 넘치면 가장 작은 크기를 쓴다. */
+private fun fittedValueSize(
+    measurer: TextMeasurer,
+    value: String,
+    unit: String?,
+    unitStyle: TextStyle,
+    maxWidth: Int,
+): TextUnit {
+    val unitWidth = unit?.let { measurer.measure(it, unitStyle, maxLines = 1).size.width } ?: 0
+    var size = STAT_VALUE_SIZE.value
+    while (size > STAT_VALUE_MIN_SIZE.value) {
+        val width = measurer.measure(value, NumericTextStyles.Hero.copy(fontSize = size.sp), maxLines = 1).size.width
+        if (width + unitWidth <= maxWidth) break
+        size -= STAT_VALUE_STEP
+    }
+    return size.coerceAtLeast(STAT_VALUE_MIN_SIZE.value).sp
 }
 
 /** Hero 사진 자리에 그릴 것. 사진이 바뀔 때 무엇에서 무엇으로 바뀌는지 알아야 자연스럽게 넘길 수 있다. */
@@ -297,6 +341,8 @@ private fun HeroImage(photoPath: String?, bodyType: VehicleBodyType) {
     }
     AnimatedContent(
         targetState = visual,
+        // 기기를 기울이면 차가 살짝 따라 기운다. 투명한 바탕에 빛 번짐이 보이지 않게 반사는 끈다.
+        modifier = Modifier.motionTilt(HERO_TILT_DEGREES, shine = 0f),
         transitionSpec = { fadeIn(fade) togetherWith fadeOut(fade) using SizeTransform(clip = false) },
         contentAlignment = Alignment.Center,
         label = "hero-image",
@@ -455,6 +501,8 @@ private const val DIVIDER_ALPHA = 0.18f
 private const val SECONDARY_ALPHA = 0.7f
 private val STAT_VALUE_SIZE = 20.sp
 private val STAT_VALUE_MIN_SIZE = 12.sp
+private const val STAT_VALUE_STEP = 1f
+private const val HERO_TILT_DEGREES = 4f
 
 private val PREVIEW_STATS = listOf(
     HeroStat("Mileage", "42,180", "km"),

@@ -18,17 +18,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.RotateRight
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -64,9 +58,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.naury.chageun.core.designsystem.component.ChageunSwitch
-import com.naury.chageun.core.designsystem.component.ChoicePill
+import com.naury.chageun.core.designsystem.component.ChoicePillGroup
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KVariant
 import kotlin.math.abs
 import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
@@ -116,17 +114,23 @@ fun PhotoEditor(
                 Modifier.fillMaxWidth().padding(horizontal = ChageunTheme.spacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.photo_editor_cancel), color = Color.White)
-                }
+                KButton(
+                    text = stringResource(R.string.photo_editor_cancel),
+                    onClick = onCancel,
+                    variant = KVariant.Text,
+                    contentColor = Color.White,
+                )
                 Text(
                     stringResource(R.string.photo_editor_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(
+                KButton(
+                    text = stringResource(R.string.photo_editor_done),
                     enabled = preview != null && !isSaving,
+                    variant = KVariant.Text,
+                    contentColor = Color.White,
                     onClick = {
                         isSaving = true
                         scope.launch {
@@ -137,11 +141,11 @@ fun PhotoEditor(
                             if (uri != null) onDone(EditedPhoto(uri, highQuality)) else onCancel()
                         }
                     },
-                ) { Text(stringResource(R.string.photo_editor_done), color = Color.White) }
+                )
             }
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 if (preview == null || isSaving) {
-                    CircularProgressIndicator(color = Color.White)
+                    KLoadingIndicator(color = Color.White)
                 } else {
                     CropArea(
                         image = preview,
@@ -280,17 +284,20 @@ private fun EditorControls(
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            LazyRow(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                items(CropAspect.entries) { option ->
-                    ChoicePill(stringResource(option.labelRes), aspect == option, { onAspectSelected(option) })
-                }
-            }
-            FilledTonalIconButton(onClick = onRotate) {
-                Icon(
-                    Icons.AutoMirrored.Filled.RotateRight,
-                    contentDescription = stringResource(R.string.photo_editor_rotate),
-                )
-            }
+            ChoicePillGroup(
+                labels = CropAspect.entries.map { stringResource(it.labelRes) },
+                selectedIndex = CropAspect.entries.indexOf(aspect),
+                onSelect = { onAspectSelected(CropAspect.entries[it]) },
+                modifier = Modifier.weight(1f),
+                wrap = false,
+            )
+            KIconButton(
+                icon = Icons.AutoMirrored.Filled.RotateRight,
+                contentDescription = stringResource(R.string.photo_editor_rotate),
+                onClick = onRotate,
+                variant = KVariant.Tonal,
+                size = ChageunTheme.spacing.minTouchTarget,
+            )
         }
         if (showQualityOption) {
             Row(

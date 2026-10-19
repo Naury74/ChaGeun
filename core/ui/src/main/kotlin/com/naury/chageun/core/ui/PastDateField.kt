@@ -1,11 +1,8 @@
 package com.naury.chageun.core.ui
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +11,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KVariant
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -29,14 +28,13 @@ fun PastDateField(
 ) {
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
 
-    OutlinedButton(
+    KButton(
+        text = date?.let { formatDate(it) } ?: placeholder,
         onClick = { isPickerOpen = true },
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-    ) {
-        Text(date?.let { formatDate(it) } ?: placeholder)
-    }
+        modifier = modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+        variant = KVariant.Outlined,
+        fullWidth = true,
+    )
 
     if (isPickerOpen) {
         PastDatePickerDialog(date = date, onDateSelected = onDateSelected, onDismiss = { isPickerOpen = false })

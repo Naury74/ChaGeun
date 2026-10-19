@@ -10,26 +10,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -40,6 +36,10 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.CutoutFailure
 import com.naury.chageun.core.model.CutoutStatus
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KProgressBar
+import com.naury.kinetica.ui.KProgressRing
+import com.naury.kinetica.ui.KVariant
 import kotlin.math.roundToInt
 
 /**
@@ -67,18 +67,20 @@ fun CutoutStatusPanel(
             null -> Spacer(Modifier)
             // Hero의 다른 내용과 같이 왼쪽에 맞춘다.
             CutoutStatus.Idle -> Row(Modifier.fillMaxWidth()) {
-                TextButton(onClick = onRemoveBackground) {
-                    Icon(Icons.Outlined.AutoFixHigh, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(stringResource(R.string.cutout_remove_background))
-                }
+                KButton(
+                    text = stringResource(R.string.cutout_remove_background),
+                    onClick = onRemoveBackground,
+                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                    variant = KVariant.Text,
+                    icon = Icons.Outlined.AutoFixHigh,
+                )
             }
             is CutoutStatus.DownloadingModel -> ModelDownloadCard(
                 stringResource(R.string.cutout_downloading),
                 shown.progress,
             )
             CutoutStatus.Processing -> StatusCard {
-                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                KProgressRing(progress = null, modifier = Modifier.size(18.dp), thickness = 2.dp)
                 StatusText(stringResource(R.string.cutout_processing))
             }
             is CutoutStatus.Failed -> Failed(shown.reason, onRemoveBackground)
@@ -95,17 +97,8 @@ fun ModelDownloadCard(label: String, progress: Float?, modifier: Modifier = Modi
     StatusCard(
         modifier = modifier,
         footer = {
-            val trackColor = MaterialTheme.colorScheme.surfaceVariant
-            if (progress == null) {
-                LinearProgressIndicator(Modifier.fillMaxWidth(), trackColor = trackColor, strokeCap = StrokeCap.Round)
-            } else {
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier.fillMaxWidth(),
-                    trackColor = trackColor,
-                    strokeCap = StrokeCap.Round,
-                )
-            }
+            // 받는 동안 막대가 액체처럼 출렁이며 차오른다.
+            KProgressBar(progress = progress, thickness = PROGRESS_THICKNESS, wave = true)
         },
     ) {
         StatusIcon(Icons.Outlined.CloudDownload, MaterialTheme.colorScheme.primary)
@@ -135,7 +128,12 @@ private fun Failed(reason: CutoutFailure, onRetry: () -> Unit) {
         } else {
             StatusIcon(Icons.Outlined.ErrorOutline, MaterialTheme.colorScheme.error)
             StatusText(stringResource(message), Modifier.weight(1f))
-            TextButton(onClick = onRetry) { Text(stringResource(R.string.cutout_retry)) }
+            KButton(
+                text = stringResource(R.string.cutout_retry),
+                onClick = onRetry,
+                modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                variant = KVariant.Text,
+            )
         }
     }
 }
@@ -177,3 +175,4 @@ private fun StatusText(text: String, modifier: Modifier = Modifier) {
 }
 
 private const val PERCENT = 100
+private val PROGRESS_THICKNESS = 4.dp
