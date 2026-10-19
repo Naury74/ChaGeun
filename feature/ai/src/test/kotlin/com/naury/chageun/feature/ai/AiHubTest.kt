@@ -383,7 +383,16 @@ class AiHubTest {
     @Test
     @Config(qualifiers = ScreenshotDevices.PHONE_KO)
     @GraphicsMode(GraphicsMode.Mode.NATIVE)
-    fun screenshot_conversation_ko() {
+    fun screenshot_conversation_ko() = captureConversation("ai_conversation_phone_ko")
+
+    @Test
+    @Config(qualifiers = ScreenshotDevices.PHONE_DARK)
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
+    fun screenshot_conversation_dark() = captureConversation("ai_conversation_phone_dark")
+
+    private fun captureConversation(name: String) {
+        // 답을 기다리는 점이 계속 튀므로 시계를 멈추고 정해진 만큼만 흘려 늘 같은 순간에 찍는다.
+        composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             AppFrame {
                 val state = AiHubUiState(
@@ -395,7 +404,9 @@ class AiHubTest {
                 AiHubScreen(uiState = state, promptText = aiPromptText(facts, ""), actions = AiHubActions())
             }
         }
-        composeRule.captureScreen("ai_conversation_phone_ko")
+        // 말풍선이 떠오르고 맨 아래로 따라가는 스크롤이 끝난 뒤에 찍는다.
+        composeRule.mainClock.advanceTimeBy(SETTLE_MS)
+        composeRule.captureScreen(name)
     }
 
     @Test
@@ -444,3 +455,5 @@ class AiHubTest {
         composeRule.captureScreen("ai_tablet")
     }
 }
+
+private const val SETTLE_MS = 1_500L

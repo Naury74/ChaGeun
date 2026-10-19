@@ -1,5 +1,6 @@
 package com.naury.chageun.feature.ai
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,12 +10,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.ai.SharedRecord
 import com.naury.chageun.core.model.MaintenanceItem
@@ -34,6 +37,7 @@ import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.labelRes
+import com.naury.kinetica.ui.KVariant
 
 /**
  * 기획 9.3 보낼 정보 확인. 무엇이 함께 가고 무엇이 빠지는지, 실제로 보낼 글 전체를 보여 준다.
@@ -98,13 +102,18 @@ internal fun ContextPreview(
             ListRow(Icons.Filled.Lock, stringResource(R.string.ai_excluded_location), tone = critical)
         }
         if (promptText != null) {
-            TextButton(onClick = { isTextVisible = !isTextVisible }) {
-                Text(stringResource(if (isTextVisible) R.string.ai_hide_text else R.string.ai_show_text))
-            }
-            if (isTextVisible) {
-                Surface(
+            ChageunButton(
+                text = stringResource(if (isTextVisible) R.string.ai_hide_text else R.string.ai_show_text),
+                onClick = { isTextVisible = !isTextVisible },
+                variant = KVariant.Text,
+                trailingIcon = if (isTextVisible) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+            )
+            AnimatedVisibility(isTextVisible) {
+                // 시트 판 위에 놓인 색 칸이라 그림자 없이 색만 칠한다.
+                ChageunCard(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant,
+                    inset = true,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(

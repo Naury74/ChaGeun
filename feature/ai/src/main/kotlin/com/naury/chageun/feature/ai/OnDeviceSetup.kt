@@ -1,14 +1,12 @@
 package com.naury.chageun.feature.ai
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -18,21 +16,13 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.WifiOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -41,19 +31,20 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KLoadingStyle
+import com.naury.kinetica.ui.KProgressBar
+import com.naury.kinetica.ui.KVariant
 /**
  * 차근 AI를 처음 쓸 때 보여 주는 준비 카드. 무엇을 받는지와 좋은 점을 먼저 알리고, 사용자가 눌러야 내려받는다.
  * 받는 동안에는 진행률을, 실패하면 다시 시도를 보여 주고, 준비가 끝나면 이 카드 대신 추천 질문이 나온다.
  */
 @Composable
 internal fun OnDeviceSetupCard(state: OnDeviceState, onDownload: () -> Unit, onUseWeb: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    ChageunCard(shape = RoundedCornerShape(28.dp), modifier = Modifier.fillMaxWidth()) {
         Column(
             Modifier.padding(ChageunTheme.spacing.lg),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
@@ -134,9 +125,10 @@ private fun Checking() {
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         modifier = Modifier.padding(top = ChageunTheme.spacing.xs),
     ) {
-        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+        val checking = stringResource(R.string.ai_destination_on_device_checking)
+        KLoadingIndicator(style = KLoadingStyle.Dots, color = AiAccent, size = CHECKING_SIZE, label = checking)
         Text(
-            stringResource(R.string.ai_destination_on_device_checking),
+            checking,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -157,15 +149,8 @@ private fun Downloading(progress: Float?) {
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
         )
-        val shown by animateFloatAsState(progress ?: 0f, label = "ai-setup-progress")
-        val barModifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 6.dp)
-        if (progress != null) {
-            LinearProgressIndicator(progress = { shown }, modifier = barModifier, strokeCap = StrokeCap.Round)
-        } else {
-            LinearProgressIndicator(modifier = barModifier, strokeCap = StrokeCap.Round)
-        }
+        // 진행률을 모르면 빛 한 줄기가 흐르고, 알면 용수철처럼 따라 찬다.
+        KProgressBar(progress = progress, color = AiAccent)
         Text(
             stringResource(R.string.ai_setup_keep_open),
             style = MaterialTheme.typography.bodySmall,
@@ -182,26 +167,22 @@ private fun Actions(hasFailed: Boolean, onDownload: () -> Unit, onUseWeb: () -> 
             style = MaterialTheme.typography.bodySmall,
             color = if (hasFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Button(
-            onClick = onDownload,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = Color.White),
-            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 52.dp)
-                .background(AiGradient, CircleShape),
-        ) {
-            Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-            Text(
-                stringResource(if (hasFailed) R.string.ai_setup_retry else R.string.ai_setup_download),
-                modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
-                fontWeight = FontWeight.SemiBold,
+        AiAccentColors {
+            ChageunButton(
+                text = stringResource(if (hasFailed) R.string.ai_setup_retry else R.string.ai_setup_download),
+                onClick = onDownload,
+                icon = Icons.Filled.Download,
+                fullWidth = true,
             )
         }
-        TextButton(onClick = onUseWeb, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.ai_setup_use_web))
-        }
+        ChageunButton(
+            text = stringResource(R.string.ai_setup_use_web),
+            onClick = onUseWeb,
+            variant = KVariant.Text,
+            fullWidth = true,
+        )
     }
 }
 
 private const val PERCENT = 100
+private val CHECKING_SIZE = 24.dp
