@@ -2,7 +2,6 @@ package com.naury.chageun.feature.account
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToDrive
 import androidx.compose.material.icons.filled.FolderZip
@@ -67,7 +66,7 @@ fun RestoreStartScreen(
         modifier = modifier,
         navigationIcon = { BackButton(onBack) },
     ) { padding ->
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             Text(
                 stringResource(R.string.restore_start_body),
                 style = MaterialTheme.typography.bodyMedium,

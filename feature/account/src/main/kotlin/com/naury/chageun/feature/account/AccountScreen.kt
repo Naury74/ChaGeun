@@ -147,7 +147,7 @@ fun AccountScreen(
         navigationIcon = { BackButton(onBack) },
     ) { padding ->
         val user = uiState.user
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             when {
                 uiState.isLoading -> Unit
                 user == null -> AccountStart(

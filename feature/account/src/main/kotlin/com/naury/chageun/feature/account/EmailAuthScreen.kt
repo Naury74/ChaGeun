@@ -104,7 +104,7 @@ fun EmailAuthScreen(uiState: EmailAuthUiState, actions: EmailAuthActions, modifi
         modifier = modifier,
         navigationIcon = { BackButton(actions.onBack) },
     ) { padding ->
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             SegmentedControl(
                 options = listOf(
                     stringResource(R.string.account_mode_sign_in),

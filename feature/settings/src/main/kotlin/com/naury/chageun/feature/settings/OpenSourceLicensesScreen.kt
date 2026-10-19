@@ -28,11 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.kinetica.ui.KLoadingIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -67,20 +69,25 @@ fun OpenSourceLicensesScreen(libraries: List<OpenSourceLibrary>?, onBack: () -> 
         onBack = { if (selected != null) selectedId = null else onBack() },
         modifier = modifier,
     ) { padding ->
+        // 위 막대 높이는 스크롤 안쪽 여백으로 줘서 목록이 막대 뒤로 지나가게 한다.
+        val top = padding.calculateTopPadding()
+        val bottom = ChageunTheme.spacing.sm + LocalBottomBarPadding.current
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(horizontal = ChageunTheme.spacing.gutter),
         ) {
             when {
-                libraries == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                libraries == null -> Box(
+                    Modifier.fillMaxSize().padding(top = top),
+                    contentAlignment = Alignment.Center,
+                ) {
                     KLoadingIndicator()
                 }
-                selected != null -> LicenseDetail(selected)
+                selected != null -> LicenseDetail(selected, top, bottom)
                 else -> LazyColumn(
                     modifier = Modifier.widthIn(max = CONTENT_MAX_WIDTH),
-                    contentPadding = PaddingValues(vertical = ChageunTheme.spacing.sm),
+                    contentPadding = PaddingValues(top = top + ChageunTheme.spacing.sm, bottom = bottom),
                 ) {
                     items(libraries, key = { it.id }) { library ->
                         LibraryRow(library, onClick = { selectedId = library.id })
@@ -110,12 +117,12 @@ private fun LibraryRow(library: OpenSourceLibrary, onClick: () -> Unit) {
 }
 
 @Composable
-private fun LicenseDetail(library: OpenSourceLibrary) {
+private fun LicenseDetail(library: OpenSourceLibrary, top: Dp, bottom: Dp) {
     Column(
         Modifier
             .widthIn(max = CONTENT_MAX_WIDTH)
             .verticalScroll(rememberScrollState())
-            .padding(vertical = ChageunTheme.spacing.sm),
+            .padding(top = top + ChageunTheme.spacing.sm, bottom = bottom),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
         Text(

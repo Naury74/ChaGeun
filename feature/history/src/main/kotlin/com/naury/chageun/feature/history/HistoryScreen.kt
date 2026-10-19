@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -158,14 +159,18 @@ fun HistoryRoute(
                 uiState.selected != null
         },
     ) { padding ->
-        Column(Modifier.padding(padding)) {
+        val slot = toggleSlot(isTwoPane, isThreePane, uiState.selected != null, view)
+        val isPhoneList = slot == ToggleSlot.InList
+        val barTop = padding.calculateTopPadding()
+        val listTop = if (isPhoneList) barTop else 0.dp
+        Column(Modifier.padding(top = barTop - listTop)) {
             val shownView = view
             if (shownView == null) {
                 // 고른 보기를 읽기 전에 목록을 잠깐 보였다가 달력으로 바뀌지 않게 비워 둔다.
                 Box(Modifier.fillMaxSize())
                 return@Column
             }
-            if (isTwoPane || uiState.selected == null) {
+            val toggle = @Composable {
                 HistoryViewToggle(
                     view = shownView,
                     onChange = { next ->
@@ -177,6 +182,7 @@ fun HistoryRoute(
                         .widthIn(max = TOGGLE_MAX_WIDTH),
                 )
             }
+            if (slot == ToggleSlot.AboveList) toggle()
             HistoryScreen(
                 uiState = uiState,
                 isTwoPane = isTwoPane,
@@ -210,6 +216,8 @@ fun HistoryRoute(
                 photoEdits = photoEdits,
                 soundEdits = soundEdits(soundRecorder, viewModel.sounds),
                 soundNotice = soundNotice,
+                contentTop = listTop,
+                listHeader = toggle.takeIf { isPhoneList },
             )
         }
     }
@@ -237,6 +245,25 @@ fun HistoryRoute(
             CheckFormHost(isExpanded, onDismiss = stopEditing, editing = editing)
         TimelineEventType.Maintenance, TimelineEventType.Mileage, null -> Unit
     }
+}
+
+/** 목록·달력 전환을 둘 자리. 휴대폰 한 칸에서 상세를 열면 상세가 화면을 채우므로 숨긴다. */
+private enum class ToggleSlot { Hidden, AboveList, InList }
+
+/**
+ * 휴대폰의 기록 목록은 위 막대 뒤로 지나가도록 막대 높이를 목록 안쪽 여백으로 주고, 전환도 목록과 함께 올라간다.
+ * 달력과 여러 칸 배치는 칸마다 스크롤이 따로라 막대 아래에서 시작하고 전환은 그 위에 고정한다.
+ */
+private fun toggleSlot(
+    isTwoPane: Boolean,
+    isThreePane: Boolean,
+    hasSelection: Boolean,
+    view: HistoryView?,
+): ToggleSlot = when {
+    isTwoPane -> ToggleSlot.AboveList
+    hasSelection -> ToggleSlot.Hidden
+    isThreePane || view != HistoryView.List -> ToggleSlot.AboveList
+    else -> ToggleSlot.InList
 }
 
 /** 정비 기록은 정비 입력 창으로, 나머지는 이 화면의 주유·점검 입력 창으로 고친다. */
@@ -390,6 +417,10 @@ fun HistoryScreen(
     photoEdits: AttachmentPhotoEdits = AttachmentPhotoEdits(),
     soundEdits: SoundAttachmentEdits = SoundAttachmentEdits(),
     soundNotice: SoundNotice? = null,
+    /** 위 막대 높이. 휴대폰 목록은 막대 뒤로 지나가도록 목록 안쪽 여백으로 준다. */
+    contentTop: Dp = 0.dp,
+    /** 휴대폰 목록 맨 위에서 목록과 함께 스크롤되는 머리글. */
+    listHeader: (@Composable () -> Unit)? = null,
 ) {
     val sounds = SoundsState(uiState.sounds, soundNotice, soundEdits)
     val attachments =
@@ -405,7 +436,11 @@ fun HistoryScreen(
             photoEdits.onSharePdf,
         )
     if (uiState.isLoading) {
-        TimelineSkeleton(modifier)
+        // 읽는 동안에는 스크롤할 것이 없으므로 막대 아래에서 시작한다.
+        Column(modifier.padding(top = contentTop)) {
+            listHeader?.invoke()
+            TimelineSkeleton()
+        }
         return
     }
     val detail = uiState.detail
@@ -465,6 +500,8 @@ fun HistoryScreen(
                 listState = timelineState,
                 showFilters = !isThreePane,
                 recordActions = TimelineRecordActions(onEdit = onEditRecord, onAskAi = onAskAi, onDelete = onDelete),
+                contentTop = contentTop,
+                header = listHeader,
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)
