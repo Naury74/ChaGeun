@@ -228,8 +228,10 @@ private fun HomeContent(
     val showAd = LocalAdsEnabled.current
     val showsAi = LocalFeatureFlags.current.aiShareEnabled
     val panes: List<HomePane> = when {
-        isTabletop -> listOf({ order -> summaryPane(state, actions, order, showsActions = false) }, { order ->
-            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
+        isTabletop -> listOf({ order ->
+            summaryPane(state, actions, order, showsAi = false, showsActions = false)
+        }, { order ->
+            // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼과 AI 질문을 여기 맨 위에 둔다.
             val index = order.next()
             item(key = "hero-actions") {
                 HomeHeroActions(
@@ -240,9 +242,10 @@ private fun HomeContent(
                         .padding(horizontal = ChageunTheme.spacing.gutter),
                 )
             }
+            askAi(actions, showsAi, order)
             attentionPane(state, actions, order)
+            recentPane(state, actions, order, showAd)
             missingPane(state, actions, order)
-            recentPane(state, actions, order, showAd, showsAi)
         })
         else -> homePanes(state, paneCount, actions, showAd, showsAi)
     }
@@ -286,23 +289,25 @@ private fun homePanes(
     showAd: Boolean,
     showsAi: Boolean,
 ): List<HomePane> = when (paneCount) {
+    // 할 일(주의·예정·일정)과 기록을 먼저 보이고, 항목이 많은 "정보가 필요해요"는 맨 아래에 둔다.
+    // 무엇이 부족한지는 상태 요약 카드가 이미 첫 화면에서 알려 준다.
     SINGLE_PANE -> listOf({ order ->
-        summaryPane(state, actions, order)
+        summaryPane(state, actions, order, showsAi)
         attentionPane(state, actions, order)
+        recentPane(state, actions, order, showAd)
         missingPane(state, actions, order)
-        recentPane(state, actions, order, showAd, showsAi)
     })
-    TWO_PANES -> listOf({ order -> summaryPane(state, actions, order, isSideBySide = true) }, { order ->
+    TWO_PANES -> listOf({ order -> summaryPane(state, actions, order, showsAi, isSideBySide = true) }, { order ->
         attentionPane(state, actions, order)
+        recentPane(state, actions, order, showAd)
         missingPane(state, actions, order)
-        recentPane(state, actions, order, showAd, showsAi)
     })
     else -> listOf(
-        { order -> summaryPane(state, actions, order, isSideBySide = true) },
+        { order -> summaryPane(state, actions, order, showsAi, isSideBySide = true) },
         { order -> attentionPane(state, actions, order) },
         { order ->
+            recentPane(state, actions, order, showAd)
             missingPane(state, actions, order)
-            recentPane(state, actions, order, showAd, showsAi)
         },
     )
 }
@@ -323,11 +328,13 @@ private fun LazyListScope.summaryPane(
     state: HomeUiState.Content,
     actions: HomeActions,
     order: AppearOrder,
+    showsAi: Boolean,
     isSideBySide: Boolean = false,
     showsActions: Boolean = true,
 ) {
     // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다. 하늘은 화면 끝까지 닿아 떠오르지 않고 그대로 둔다.
     item(key = "hero") { HomeHero(state, actions, isSideBySide, showsActions) }
+    askAi(actions, showsAi, order)
     homeItem("health", order) { modifier ->
         VehicleStatusSummary(
             health = state.overview.health,
@@ -401,12 +408,16 @@ private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeA
     homeItem("missing-list", order) { modifier -> MissingInfoCard(state.missingInfo, actions.onOpenItem, modifier) }
 }
 
+private fun LazyListScope.askAi(actions: HomeActions, showsAi: Boolean, order: AppearOrder) {
+    if (!showsAi) return
+    homeItem("ai", order) { modifier -> AskAiBar(actions.onAskAi, modifier) }
+}
+
 private fun LazyListScope.recentPane(
     state: HomeUiState.Content,
     actions: HomeActions,
     order: AppearOrder,
     showAd: Boolean,
-    showsAi: Boolean,
 ) {
     if (state.upcomingEvents.isNotEmpty()) {
         homeItem("schedule", order) { modifier ->
@@ -422,9 +433,6 @@ private fun LazyListScope.recentPane(
     if (showAd) homeItem("ad", order) { modifier -> NativeAdSlot(modifier) }
     homeItem("recent", order) { modifier ->
         RecentRecords(records = state.recentRecords, onOpenHistory = actions.onOpenHistory, modifier = modifier)
-    }
-    if (showsAi) {
-        homeItem("ai", order) { modifier -> AiQuestionCard(actions.onAskAi, modifier) }
     }
 }
 

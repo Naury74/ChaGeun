@@ -43,7 +43,7 @@
     <string name="home_recent_add">첫 기록 추가</string>
     <string name="home_recent_won">%1$s원</string>
     <string name="home_ai_title">내 차에 대해 물어보세요</string>
-    <string name="home_ai_body">내 차 상태를 ChatGPT·Claude·Gemini에 보내 편하게 물어볼 수 있어요.</string>
+    <string name="home_ai_body">엔진오일·검사·비용까지 내 차 기록으로 답해요</string>
     <string name="home_brand">차근</string>
     <string name="home_open_settings">설정</string>
     <string name="home_inspection_title">자동차 검사</string>

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -16,6 +17,7 @@ import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.naury.chageun.core.designsystem.theme.ChageunSpacing
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.Gutters
+import com.naury.kinetica.ui.LocalKineticaReducedMotion
 
 /** Screenshot 크기별 Robolectric qualifier. 글자가 실제로 그려지도록 `@GraphicsMode(NATIVE)`와 함께 쓴다. */
 object ScreenshotDevices {
@@ -66,7 +68,7 @@ const val SKY_COLOR_TOLERANCE = 0.015f
 const val SHADOW_COLOR_TOLERANCE = SKY_COLOR_TOLERANCE
 
 /**
- * ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다.
+ * ChageunRoot가 제공하는 테마와 창 Surface. 기본 글자·아이콘 색이 실제 앱과 같아진다. Kinetica 움직임은 줄인 상태로 그린다.
  * 앱은 창 폭에 따라 여백을 넓히므로, 넓은 창을 찍을 때는 그 폭의 [spacing]을 넘긴다.
  */
 @Composable
@@ -74,7 +76,10 @@ fun AppFrame(spacing: ChageunSpacing = Gutters.Compact, content: @Composable () 
     val view = LocalView.current
     SideEffect { frameView = view }
     ChageunTheme(spacing = spacing) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
+        // 도는 빛·차례 등장 같은 Kinetica 움직임은 실제 시간으로 돌아 찍는 순간마다 달라진다. 멈춘 모습으로 찍는다.
+        CompositionLocalProvider(LocalKineticaReducedMotion provides true) {
+            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { content() }
+        }
     }
 }
 
