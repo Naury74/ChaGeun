@@ -67,12 +67,12 @@ fun CutoutStatusPanel(
             null -> Spacer(Modifier)
             // Hero의 다른 내용과 같이 왼쪽에 맞춘다.
             CutoutStatus.Idle -> Row(Modifier.fillMaxWidth()) {
-                KButton(
+                // Hero 하늘 위에서는 글래스, 그 밖에서는 글자 버튼이다.
+                HeroGlassButton(
                     text = stringResource(R.string.cutout_remove_background),
                     onClick = onRemoveBackground,
-                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                    variant = KVariant.Text,
                     icon = Icons.Outlined.AutoFixHigh,
+                    outside = KVariant.Text,
                 )
             }
             is CutoutStatus.DownloadingModel -> ModelDownloadCard(
