@@ -35,6 +35,11 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
+        <!-- 테스트 광고에 붙는 네이티브 광고 검사 팝업을 끈다. 광고가 로드될 때마다 창이 하나씩 쌓이고 스크롤 내내
+             광고 위치를 따라 다시 배치돼 디버그·staging 빌드가 끊겼다. 실제 광고에는 영향이 없다. -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.NATIVE_AD_DEBUGGER_ENABLED"
+            android:value="false" />
 
         <activity
             android:name=".MainActivity"
