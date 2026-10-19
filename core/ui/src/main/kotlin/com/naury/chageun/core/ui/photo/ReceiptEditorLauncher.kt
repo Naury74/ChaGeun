@@ -19,6 +19,8 @@ import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.ui.R
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.framekit.android.output.FrameKitOutputs
+import com.naury.framekit.android.result.FrameKitResult
+import com.naury.framekit.scanner.DocumentScanContract
 import com.naury.framekit.ui.image.contract.ImageEditorContract
 import java.io.File
 import java.time.LocalDate
@@ -29,16 +31,18 @@ import kotlinx.coroutines.withContext
 /**
  * 영수증을 찍거나 고쳐 첨부하고, 첨부한 사진을 PDF로 묶어 보내는 손잡이. [rememberReceiptEditorLauncher]로 만든다.
  *
- * 편집기는 문서 보정을 맨 앞에 두고 열어, 영수증을 찍으면 네 모서리를 찾아 반듯하게 펴 주는 제안이 바로 뜬다.
+ * 영수증을 찍을 때는 문서 스캐너가 테두리를 찾아 자동으로 찍고 반듯하게 편 쪽을 바로 첨부한다.
+ * 고른 사진을 고칠 때는 편집기가 문서 보정을 맨 앞에 두고 열린다.
  */
 @Stable
 class ReceiptEditorLauncher internal constructor(
+    private val openScanner: (Int, String?) -> Unit,
     private val openEditor: (ReceiptSource, Int, String?) -> Unit,
     private val openPdf: (List<String>, LocalDate) -> Unit,
 ) {
-    /** 카메라로 영수증을 찍은 뒤 편집한다. 편집기 안에서 [maxItems]장까지 더 찍거나 고를 수 있다. */
+    /** 카메라로 영수증을 [maxItems]쪽까지 이어 찍어 펴서 첨부한다. 앱 안 카메라를 거부하면 카메라 앱으로 한 장을 찍는다. */
     fun scan(maxItems: Int, tag: String? = null) {
-        if (maxItems > 0) openEditor(ReceiptSource.Capture, maxItems, tag)
+        if (maxItems > 0) openScanner(maxItems, tag)
     }
 
     /** 시스템 Photo Picker로 [maxItems]장까지 고르게 한 뒤 편집한다. */
@@ -71,7 +75,7 @@ fun rememberReceiptEditorLauncher(onEdited: (EditedPhotos) -> Unit): ReceiptEdit
     val fileNameFormat = stringResource(R.string.receipt_pdf_file_name)
     LaunchedEffect(appContext) { withContext(Dispatchers.IO) { ReceiptShareFiles.cleanStale(appContext) } }
 
-    val editLauncher = rememberLauncherForActivityResult(ImageEditorContract()) { result ->
+    val onResult: (FrameKitResult) -> Unit = { result ->
         val tag = pendingTag
         pendingTag = null
         scope.launch {
@@ -82,6 +86,8 @@ fun rememberReceiptEditorLauncher(onEdited: (EditedPhotos) -> Unit): ReceiptEdit
             }
         }
     }
+    val editLauncher = rememberLauncherForActivityResult(ImageEditorContract(), onResult)
+    val scanLauncher = rememberLauncherForActivityResult(DocumentScanContract(), onResult)
     val pdfLauncher = rememberLauncherForActivityResult(ImageEditorContract()) { result ->
         val name = pendingPdfName ?: fileNameFormat.format(LocalDate.now().toString())
         pendingPdfName = null
@@ -92,13 +98,16 @@ fun rememberReceiptEditorLauncher(onEdited: (EditedPhotos) -> Unit): ReceiptEdit
     }
     val ui = photoEditUi(MaterialTheme.colorScheme, stringResource(R.string.photo_edit_locale_tag))
     val latestUi by rememberUpdatedState(ui)
-    return remember(editLauncher, pdfLauncher) {
+    return remember(editLauncher, scanLauncher, pdfLauncher) {
         ReceiptEditorLauncher(
+            openScanner = { maxItems, tag ->
+                pendingTag = tag
+                context.launchReceiptEditor { scanLauncher.launch(receiptScanRequest(maxItems, latestUi)) }
+            },
             openEditor = { source, maxItems, tag ->
                 pendingTag = tag
-                val tools = if (source == ReceiptSource.Capture) ReceiptTools.SCAN else ReceiptTools.ATTACH
                 context.launchReceiptEditor {
-                    editLauncher.launch(receiptEditRequest(source, maxItems, tools, latestUi))
+                    editLauncher.launch(receiptEditRequest(source, maxItems, ReceiptTools.ATTACH, latestUi))
                 }
             },
             openPdf = { paths, date ->

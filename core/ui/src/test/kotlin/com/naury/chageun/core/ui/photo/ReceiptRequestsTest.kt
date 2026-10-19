@@ -3,6 +3,7 @@ package com.naury.chageun.core.ui.photo
 import com.google.common.truth.Truth.assertThat
 import com.naury.framekit.android.input.EditorInput
 import com.naury.framekit.android.input.MediaKind
+import com.naury.framekit.core.document.ScanMode
 import com.naury.framekit.core.pdf.PdfPageSize
 import com.naury.framekit.core.validation.ValidationResult
 import com.naury.framekit.image.export.ImageFormat
@@ -19,10 +20,21 @@ class ReceiptRequestsTest {
     private val ui = EditorUiConfig()
 
     @Test
-    fun scan_opensCamera_withDocumentToolFirst_andNoDecorationTools() {
-        val request = receiptEditRequest(ReceiptSource.Capture, 10, ReceiptTools.SCAN, ui)
+    fun scan_opensDocumentScanner_upToAttachableCount_inOriginalColor() {
+        val request = receiptScanRequest(10, ui)
+        val capped = receiptScanRequest(500, ui)
 
-        assertThat(request.input).isEqualTo(EditorInput.Capture(MediaKind.IMAGE))
+        assertThat(request.maxPages).isEqualTo(10)
+        assertThat(capped.maxPages).isEqualTo(MAX_EDIT_ITEMS)
+        assertThat(request.autoCapture).isTrue()
+        assertThat(request.scanMode).isEqualTo(ScanMode.COLOR)
+        assertThat(request.validate()).isEqualTo(ValidationResult.Valid)
+    }
+
+    @Test
+    fun scanTools_keepDocumentFirst_andNoDecorationTools() {
+        val request = receiptEditRequest(ReceiptSource.Pick(10), 10, ReceiptTools.SCAN, ui)
+
         assertThat(request.config.enabledTools.toList()).containsExactly(
             ImageTool.DOCUMENT,
             ImageTool.CROP,
@@ -44,7 +56,7 @@ class ReceiptRequestsTest {
 
     @Test
     fun receiptExport_isJpeg_upToHighQualityEdge_withoutLocation() {
-        val export = receiptEditRequest(ReceiptSource.Capture, 1, ReceiptTools.SCAN, ui).export
+        val export = receiptEditRequest(ReceiptSource.Pick(1), 1, ReceiptTools.ATTACH, ui).export
 
         assertThat(export.format).isEqualTo(ImageFormat.JPEG)
         assertThat(export.maxWidth).isEqualTo(PhotoFiles.MAX_EDIT_EDGE_PX)
