@@ -52,6 +52,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.model.TimelineItem
@@ -113,7 +114,11 @@ internal fun TimelineContent(
     LazyColumn(
         modifier = modifier,
         state = listState,
-        contentPadding = PaddingValues(top = ChageunTheme.spacing.sm, bottom = FAB_CLEARANCE),
+        contentPadding = PaddingValues(
+            top = ChageunTheme.spacing.sm,
+            bottom =
+            FAB_CLEARANCE + LocalBottomBarPadding.current,
+        ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
         // 세 칸 배치에서는 왼쪽 Pane이 검색과 필터를 맡는다.

@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_BYTES
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.ui.formatDate
@@ -49,7 +50,12 @@ internal fun AlbumGrid(
         columns = GridCells.Adaptive(THUMBNAIL_MIN_SIZES[uiState.gridStep.coerceIn(THUMBNAIL_MIN_SIZES.indices)]),
         state = state,
         modifier = modifier.pinchSteps(actions.onZoomGrid),
-        contentPadding = PaddingValues(start = gutter, end = gutter, bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(
+            start = gutter,
+            end = gutter,
+            bottom =
+            ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
+        ),
         horizontalArrangement = Arrangement.spacedBy(GRID_GAP),
         verticalArrangement = Arrangement.spacedBy(GRID_GAP),
     ) {

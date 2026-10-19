@@ -1,6 +1,7 @@
 package com.naury.chageun.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -9,10 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldLayout
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -35,6 +33,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.ads.LocalAdsEnabled
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -73,6 +73,8 @@ import com.naury.kinetica.ui.KNavTransitions
 import com.naury.kinetica.ui.KNavigationRail
 import com.naury.kinetica.ui.KTab
 import com.naury.kinetica.ui.KTabBar
+import com.naury.kinetica.ui.KineticaScaffold
+import com.naury.kinetica.ui.KineticaTheme
 import com.naury.kinetica.ui.kTransform
 import com.naury.kinetica.ui.rememberKNavTransition
 import java.time.LocalDate
@@ -216,123 +218,127 @@ fun ChageunApp(
     val selectedTab = TopLevelDestination.entries.indexOfFirst { it.route == currentTopLevel }.coerceAtLeast(0)
     val push = rememberKNavTransition(KNavTransitions.Push)
     val fade = rememberKNavTransition(KNavTransitions.FadeThrough)
-    Surface(color = MaterialTheme.colorScheme.background) {
-        NavigationSuiteScaffoldLayout(
-            navigationSuite = {
-                ChageunNavigationSuite(suiteType, tabs, selectedTab) { navigateTo(TopLevelDestination.entries[it]) }
-            },
-            navigationSuiteType = suiteType,
-        ) {
-            NavDisplay(
-                backStack = backStack,
-                onBack = { backStack.removeLastOrNull() },
-                // 탭을 바꾸면 스택이 탭 화면 하나로 바뀌므로 겹쳐 밀지 않고 옅게 바꾸고, 그 위에 연 화면은 iOS처럼 옆에서 밀어 넣는다.
-                // 뒤로 가기 제스처 동안에는 손가락을 따라 되감긴다.
-                transitionSpec = { kTransform(if (backStack.size <= 1) fade else push, forward = true) },
-                popTransitionSpec = { kTransform(push, forward = false) },
-                predictivePopTransitionSpec = { kTransform(push, forward = false) },
-                entryDecorators = listOf(
-                    rememberSaveableStateHolderNavEntryDecorator(),
-                    rememberViewModelStoreNavEntryDecorator(),
-                    remember { topInsetDecorator() },
-                ),
-                entryProvider = entryProvider {
-                    TopLevelDestination.entries.forEach { destination ->
-                        // 홈은 Hero의 하늘 바탕을 상태 표시줄 뒤까지 그리고, 상단 인셋은 화면 안에서 비운다.
-                        val metadata = if (destination ==
-                            TopLevelDestination.Home
-                        ) {
-                            DRAWS_BEHIND_STATUS_BAR
-                        } else {
-                            emptyMap()
+    ChageunShell(
+        suiteType = suiteType,
+        tabs = tabs,
+        selectedTab = selectedTab,
+        onSelectTab = { navigateTo(TopLevelDestination.entries[it]) },
+        overlays = {
+            // 입력 시트도 스캐폴드 안에서 띄워야 뒤 화면을 블러로 비춘다.
+            recordingItem?.let { item ->
+                RecordServiceHost(
+                    item = item,
+                    isExpanded = isExpanded,
+                    onDismiss = {
+                        recordingItem = null
+                        editingServiceId = null
+                        recordingDate = null
+                    },
+                    editingRecordId = editingServiceId,
+                    sessionKey = recordSession,
+                    initialDate = recordingDate,
+                )
+            }
+            if (isUpdatingMileage) {
+                MileageUpdateHost(
+                    isExpanded = isExpanded,
+                    onDismiss = { isUpdatingMileage = false },
+                    sessionKey = mileageSession,
+                )
+            }
+        },
+    ) {
+        NavDisplay(
+            backStack = backStack,
+            onBack = { backStack.removeLastOrNull() },
+            // 탭을 바꾸면 스택이 탭 화면 하나로 바뀌므로 겹쳐 밀지 않고 옅게 바꾸고, 그 위에 연 화면은 iOS처럼 옆에서 밀어 넣는다.
+            // 뒤로 가기 제스처 동안에는 손가락을 따라 되감긴다.
+            transitionSpec = { kTransform(if (backStack.size <= 1) fade else push, forward = true) },
+            popTransitionSpec = { kTransform(push, forward = false) },
+            predictivePopTransitionSpec = { kTransform(push, forward = false) },
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+                remember { topInsetDecorator() },
+            ),
+            entryProvider = entryProvider {
+                TopLevelDestination.entries.forEach { destination ->
+                    // 홈은 Hero의 하늘 바탕을 상태 표시줄 뒤까지 그리고, 상단 인셋은 화면 안에서 비운다.
+                    val metadata = if (destination ==
+                        TopLevelDestination.Home
+                    ) {
+                        DRAWS_BEHIND_STATUS_BAR
+                    } else {
+                        emptyMap()
+                    }
+                    entry(destination.route, metadata = metadata) {
+                        WithoutAds(hidden = adFreeDestination == destination) {
+                            destinationContent(destination, actions)
                         }
-                        entry(destination.route, metadata = metadata) {
-                            WithoutAds(hidden = adFreeDestination == destination) {
-                                destinationContent(destination, actions)
+                    }
+                }
+                entry(SettingsRoute) {
+                    SettingsRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
+                        onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
+                        onOpenServiceNotice = { backStack.add(ServiceNoticeRoute) },
+                        onOpenAccount = { backStack.add(AccountRoute) },
+                        onOpenDriveBackup = { backStack.add(DriveBackupRoute) },
+                    )
+                }
+                entry(DriveBackupRoute) {
+                    DriveBackupScreenRoute(onBack = { backStack.removeLastOrNull() })
+                }
+                entry(AccountRoute) {
+                    AccountScreenRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onOpenEmail = { backStack.add(AccountEmailRoute) },
+                        onOpenDeleteAccount = { backStack.add(AccountDeleteRoute) },
+                    )
+                }
+                entry(AccountDeleteRoute) {
+                    DeleteAccountRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onDeleted = { backStack.remove(AccountDeleteRoute) },
+                    )
+                }
+                entry(AccountEmailRoute) {
+                    // 로그인이 끝나면 계정 화면으로 돌아가 로그인한 상태를 보여 준다.
+                    EmailAuthRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        onCompleted = { backStack.remove(AccountEmailRoute) },
+                    )
+                }
+                entry(OpenSourceLicensesRoute) {
+                    OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
+                }
+                // 앨범의 사진 보기는 검은 바탕을 상태 표시줄 뒤까지 그린다. 그리드는 화면 안에서 상단 인셋을 비운다.
+                entry<AlbumRoute>(metadata = DRAWS_BEHIND_STATUS_BAR) { route ->
+                    AlbumScreenRoute(
+                        onBack = { backStack.removeLastOrNull() },
+                        focusPhotoId = route.focusPhotoId,
+                        onOpenCalendar = actions.onOpenCalendar,
+                        onImmersiveChange = { isImmersive = it },
+                    )
+                }
+                entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
+                entry(ServiceNoticeRoute) { ServiceNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
+                entry<AiRoute> { route ->
+                    AiHubRoute(
+                        focusItem = route.focusItem?.let { name ->
+                            MaintenanceItem.entries.firstOrNull { it.name == name }
+                        },
+                        onBack = { backStack.removeLastOrNull() },
+                        focusRecord = route.focusRecord?.let { encoded ->
+                            TimelineEventType.entries.firstOrNull {
+                                it.name == encoded.substringBefore(':')
                             }
-                        }
-                    }
-                    entry(SettingsRoute) {
-                        SettingsRoute(
-                            onBack = { backStack.removeLastOrNull() },
-                            onOpenLicenses = { backStack.add(OpenSourceLicensesRoute) },
-                            onOpenPrivacy = { backStack.add(PrivacyNoticeRoute) },
-                            onOpenServiceNotice = { backStack.add(ServiceNoticeRoute) },
-                            onOpenAccount = { backStack.add(AccountRoute) },
-                            onOpenDriveBackup = { backStack.add(DriveBackupRoute) },
-                        )
-                    }
-                    entry(DriveBackupRoute) { DriveBackupScreenRoute(onBack = { backStack.removeLastOrNull() }) }
-                    entry(AccountRoute) {
-                        AccountScreenRoute(
-                            onBack = { backStack.removeLastOrNull() },
-                            onOpenEmail = { backStack.add(AccountEmailRoute) },
-                            onOpenDeleteAccount = { backStack.add(AccountDeleteRoute) },
-                        )
-                    }
-                    entry(AccountDeleteRoute) {
-                        DeleteAccountRoute(
-                            onBack = { backStack.removeLastOrNull() },
-                            onDeleted = { backStack.remove(AccountDeleteRoute) },
-                        )
-                    }
-                    entry(AccountEmailRoute) {
-                        // 로그인이 끝나면 계정 화면으로 돌아가 로그인한 상태를 보여 준다.
-                        EmailAuthRoute(
-                            onBack = { backStack.removeLastOrNull() },
-                            onCompleted = { backStack.remove(AccountEmailRoute) },
-                        )
-                    }
-                    entry(OpenSourceLicensesRoute) {
-                        OpenSourceLicensesRoute(R.raw.aboutlibraries, onBack = { backStack.removeLastOrNull() })
-                    }
-                    // 앨범의 사진 보기는 검은 바탕을 상태 표시줄 뒤까지 그린다. 그리드는 화면 안에서 상단 인셋을 비운다.
-                    entry<AlbumRoute>(metadata = DRAWS_BEHIND_STATUS_BAR) { route ->
-                        AlbumScreenRoute(
-                            onBack = { backStack.removeLastOrNull() },
-                            focusPhotoId = route.focusPhotoId,
-                            onOpenCalendar = actions.onOpenCalendar,
-                            onImmersiveChange = { isImmersive = it },
-                        )
-                    }
-                    entry(PrivacyNoticeRoute) { PrivacyNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
-                    entry(ServiceNoticeRoute) { ServiceNoticeScreen(onBack = { backStack.removeLastOrNull() }) }
-                    entry<AiRoute> { route ->
-                        AiHubRoute(
-                            focusItem = route.focusItem?.let { name ->
-                                MaintenanceItem.entries.firstOrNull { it.name == name }
-                            },
-                            onBack = { backStack.removeLastOrNull() },
-                            focusRecord = route.focusRecord?.let { encoded ->
-                                TimelineEventType.entries.firstOrNull { it.name == encoded.substringBefore(':') }
-                                    ?.let { type -> RecordRef(type, encoded.substringAfter(':')) }
-                            },
-                        )
-                    }
-                },
-            )
-        }
-    }
-
-    recordingItem?.let { item ->
-        RecordServiceHost(
-            item = item,
-            isExpanded = isExpanded,
-            onDismiss = {
-                recordingItem = null
-                editingServiceId = null
-                recordingDate = null
+                                ?.let { type -> RecordRef(type, encoded.substringAfter(':')) }
+                        },
+                    )
+                }
             },
-            editingRecordId = editingServiceId,
-            sessionKey = recordSession,
-            initialDate = recordingDate,
-        )
-    }
-    if (isUpdatingMileage) {
-        MileageUpdateHost(
-            isExpanded = isExpanded,
-            onDismiss = { isUpdatingMileage = false },
-            sessionKey = mileageSession,
         )
     }
 }
@@ -434,23 +440,44 @@ private fun MutableList<NavKey>.popToTopLevel() {
     while (size > 1) removeAt(lastIndex)
 }
 
+/** 화면 아래 떠 있는 탭 바를 쓰는 배치인지. 그 밖의 배치(레일, 서랍)는 왼쪽 세로 레일로 그린다. */
+private fun NavigationSuiteType.isBottomBar(): Boolean = this == NavigationSuiteType.NavigationBar ||
+    this == NavigationSuiteType.ShortNavigationBarCompact ||
+    this == NavigationSuiteType.ShortNavigationBarMedium
+
 /**
- * 탭 이동 막대. 폰에서는 Kinetica 떠 있는 탭 바(고른 탭으로 표시가 늘어났다 줄며 옮겨 감), 넓은 화면에서는 세로 레일이다.
- * 사진 보기처럼 화면 전체를 쓰는 동안([NavigationSuiteType.None])에는 그리지 않는다.
+ * 앱 골격. 탭 바, 시트, 대화상자, 메뉴, 토스트는 글래스로 뒤 화면 전체를 블러로 비추고, 목록과 카드는 차근 단색 그대로다.
+ * 스캐폴드 안에서 그리므로 시스템 창 블러가 꺼진 기기에서도 블러가 보인다. [overlays]의 입력 시트도 같은 이유로 안에서 띄운다.
  */
 @Composable
-private fun ChageunNavigationSuite(
-    type: NavigationSuiteType,
+private fun ChageunShell(
+    suiteType: NavigationSuiteType,
     tabs: List<KTab>,
-    selected: Int,
-    onSelect: (Int) -> Unit,
+    selectedTab: Int,
+    onSelectTab: (Int) -> Unit,
+    overlays: @Composable () -> Unit,
+    content: @Composable () -> Unit,
 ) {
-    when (type) {
-        NavigationSuiteType.None -> Unit
-        NavigationSuiteType.NavigationBar,
-        NavigationSuiteType.ShortNavigationBarCompact,
-        NavigationSuiteType.ShortNavigationBarMedium,
-        -> KTabBar(tabs, selected, onSelect, Modifier.fillMaxWidth())
-        else -> KNavigationRail(tabs, selected, onSelect, Modifier.fillMaxHeight())
+    val isBar = suiteType.isBottomBar()
+    KineticaScaffold(
+        surface = ChageunGlass.chrome,
+        contentSurface = KineticaTheme.surface,
+        // 상태 표시줄 아이콘은 앱 테마에 맞춰 ChageunRoot가 정한다.
+        systemBarIcons = false,
+        bottomBar = { if (isBar) KTabBar(tabs, selectedTab, onSelectTab, Modifier.fillMaxWidth()) },
+    ) { scaffoldPadding ->
+        // 목록은 탭 바 뒤까지 그려 탭 바 너머로 비치게 하고, 끝 여백만 탭 바 높이만큼 둔다.
+        CompositionLocalProvider(LocalBottomBarPadding provides scaffoldPadding.calculateBottomPadding()) {
+            // 레일 칸은 늘 같은 자리에 두어, 접고 펼 때 화면 상태가 처음부터 다시 만들어지지 않게 한다.
+            Row(Modifier.fillMaxSize()) {
+                Box {
+                    if (!isBar && suiteType != NavigationSuiteType.None) {
+                        KNavigationRail(tabs, selectedTab, onSelectTab, Modifier.fillMaxHeight())
+                    }
+                }
+                Box(Modifier.weight(1f)) { content() }
+            }
+            overlays()
+        }
     }
 }

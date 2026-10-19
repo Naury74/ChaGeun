@@ -19,6 +19,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
@@ -71,7 +73,8 @@ fun ManageRoute(
             onRecordService = onRecordService,
             onEditRule = { editingItem = it },
             onAskAi = onAskAi,
-            modifier = Modifier.padding(padding),
+            // 목록이 위 막대 뒤까지 올라가 글래스 너머로 비치도록 위 여백은 목록 안쪽 여백으로 준다.
+            contentTop = padding.calculateTopPadding(),
         )
     }
     editingItem?.let { item -> RuleEditorHost(item = item, onDismiss = { editingItem = null }) }
@@ -94,9 +97,12 @@ fun ManageScreen(
     /** [isTwoPane]보다 우선한다. 왼쪽에 상태·분류 필터 Pane을 더한다. */
     isThreePane: Boolean = false,
     onCategorySelected: (MaintenanceCategory?) -> Unit = {},
+    /** 위 막대 높이. 휴대폰 목록은 막대 뒤로 지나가도록 목록 안쪽 여백으로 주고, 그 밖의 배치는 바깥 여백으로 둔다. */
+    contentTop: Dp = 0.dp,
 ) {
+    val padded = modifier.padding(top = contentTop)
     if (uiState.isLoading) {
-        ManageSkeleton(modifier)
+        ManageSkeleton(padded)
         return
     }
     val detail = uiState.detail
@@ -121,7 +127,7 @@ fun ManageScreen(
             }
         }
     }
-    val list = @Composable { listModifier: Modifier, showFilters: Boolean ->
+    val list = @Composable { listModifier: Modifier, showFilters: Boolean, listTop: Dp ->
         ManageList(
             uiState = uiState,
             onFilterSelected = onFilterSelected,
@@ -133,6 +139,7 @@ fun ManageScreen(
             modifier = listModifier,
             gridState = gridState,
             showFilters = showFilters,
+            contentTop = listTop,
         )
     }
     when {
@@ -143,27 +150,27 @@ fun ManageScreen(
                 supporting = {
                     ManageFilterPane(uiState, onFilterSelected, onCategorySelected, Modifier.fillMaxSize())
                 },
-                list = { list(Modifier.fillMaxSize(), false) },
+                list = { list(Modifier.fillMaxSize(), false, 0.dp) },
                 detail = { detailPane(it, Modifier.fillMaxSize()) },
                 emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
-                modifier = modifier,
+                modifier = padded,
             )
         }
         isTwoPane -> {
             BackHandler(enabled = detail != null) { onItemSelected(null) }
             AdaptiveListDetail(
                 selected = detail,
-                list = { list(Modifier.fillMaxSize(), true) },
+                list = { list(Modifier.fillMaxSize(), true, 0.dp) },
                 detail = { detailPane(it, Modifier.fillMaxSize()) },
                 emptyDetail = { DetailPlaceholder(Modifier.fillMaxSize()) },
-                modifier = modifier,
+                modifier = padded,
             )
         }
         detail != null -> {
             BackHandler { onItemSelected(null) }
-            detailPane(detail, modifier.fillMaxSize())
+            detailPane(detail, padded.fillMaxSize())
         }
-        else -> list(modifier.fillMaxSize(), true)
+        else -> list(modifier.fillMaxSize(), true, contentTop)
     }
 }
 

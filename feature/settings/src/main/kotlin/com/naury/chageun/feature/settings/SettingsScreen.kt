@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.ads.LocalAdConsent
 import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.weather.KoreaRegionListInfo
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.model.UserSettings
@@ -187,7 +188,7 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = ChageunTheme.spacing.gutter)
-                .padding(bottom = ChageunTheme.spacing.lg),
+                .padding(bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
         ) {
             Column(

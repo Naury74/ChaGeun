@@ -44,6 +44,7 @@ import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
 import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.analytics.HomeAction
@@ -266,7 +267,7 @@ private fun HomeContent(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
                             top = if (index == 0 || isTabletop) 0.dp else statusBarTop,
-                            bottom = spacing.lg,
+                            bottom = spacing.lg + LocalBottomBarPadding.current,
                         ),
                         verticalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) { pane(AppearOrder()) }

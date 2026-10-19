@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
@@ -38,6 +39,7 @@ import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceState
@@ -68,6 +70,7 @@ internal fun ManageList(
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
     showFilters: Boolean = true,
+    contentTop: Dp = 0.dp,
 ) {
     val gutter = ChageunTheme.spacing.gutter
     val showAd = LocalAdsEnabled.current
@@ -78,7 +81,12 @@ internal fun ManageList(
         columns = GridCells.Adaptive(CARD_MIN_WIDTH),
         modifier = modifier,
         state = gridState,
-        contentPadding = PaddingValues(start = gutter, end = gutter, bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(
+            start = gutter,
+            end = gutter,
+            top = contentTop,
+            bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
+        ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {

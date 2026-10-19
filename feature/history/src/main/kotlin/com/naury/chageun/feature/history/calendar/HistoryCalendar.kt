@@ -34,6 +34,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.CalendarMonth
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.ui.CardGroup
@@ -143,7 +144,7 @@ private fun PhoneCalendar(parts: CalendarParts, modifier: Modifier) {
 private fun CalendarLazyColumn(modifier: Modifier, content: LazyListScope.() -> Unit) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         content = content,
     )
@@ -202,7 +203,7 @@ private fun CalendarSidePane(parts: CalendarParts, modifier: Modifier = Modifier
             .padding(
                 start = ChageunTheme.spacing.gutter,
                 top = ChageunTheme.spacing.sm,
-                bottom = ChageunTheme.spacing.lg,
+                bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
             ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {

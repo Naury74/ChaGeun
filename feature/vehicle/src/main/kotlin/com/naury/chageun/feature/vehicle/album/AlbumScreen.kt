@@ -49,6 +49,7 @@ import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.album.MAX_ALBUM_PHOTOS_PER_ADD
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.model.AlbumPhoto
@@ -327,6 +328,7 @@ fun AlbumScreen(
     stagger: KStaggerState? = null,
 ) {
     val isViewerOnly = !isTwoPane && uiState.selected != null
+    val bottomBar = LocalBottomBarPadding.current
     Box(modifier) {
         AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState, stagger)
         if (!isViewerOnly) {
@@ -335,7 +337,14 @@ fun AlbumScreen(
                 actions,
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+                    // 탭 바가 보이면 그 위로, 숨었으면 내비게이션 바 위로 띄운다. 탭 바 높이에는 내비게이션 바가 이미 들어 있다.
+                    .then(
+                        if (bottomBar > 0.dp) {
+                            Modifier.padding(bottom = bottomBar)
+                        } else {
+                            Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                        },
+                    ),
             )
         }
     }

@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.MileageSource
@@ -91,7 +92,12 @@ internal fun RecordDetailPane(
     val isMileage = detail is RecordDetail.Mileage
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.sm),
+        contentPadding = PaddingValues(
+            start = ChageunTheme.spacing.gutter,
+            end = ChageunTheme.spacing.gutter,
+            top = ChageunTheme.spacing.sm,
+            bottom = ChageunTheme.spacing.sm + LocalBottomBarPadding.current,
+        ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
         item(key = "header") {

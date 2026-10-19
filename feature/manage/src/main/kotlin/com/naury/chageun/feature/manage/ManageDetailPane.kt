@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.chageun.core.model.Confidence
 import com.naury.chageun.core.model.MaintenanceItem
@@ -75,7 +76,12 @@ internal fun ManageDetailPane(
     val showsAi = LocalFeatureFlags.current.aiShareEnabled
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = gutter, vertical = ChageunTheme.spacing.sm),
+        contentPadding = PaddingValues(
+            start = gutter,
+            end = gutter,
+            top = ChageunTheme.spacing.sm,
+            bottom = ChageunTheme.spacing.sm + LocalBottomBarPadding.current,
+        ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
         item(key = "header") {

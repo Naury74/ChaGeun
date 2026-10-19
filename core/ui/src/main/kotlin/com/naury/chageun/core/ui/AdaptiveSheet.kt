@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.kinetica.ui.KDialog
 import com.naury.kinetica.ui.KSheet
 import kotlin.math.roundToInt
@@ -59,6 +60,7 @@ fun AdaptiveSheet(
     if (isExpanded) {
         KDialog(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = { visible = false },
             onDismissed = { latestOnDismiss() },
             appearScale = CARD_START_SCALE,
@@ -67,6 +69,7 @@ fun AdaptiveSheet(
     } else {
         KSheet(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = { visible = false },
             onDismissed = { latestOnDismiss() },
             content = body,

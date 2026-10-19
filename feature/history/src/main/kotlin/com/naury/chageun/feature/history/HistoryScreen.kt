@@ -32,6 +32,7 @@ import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
 import com.naury.chageun.core.domain.analytics.CalendarItemKind
@@ -479,6 +480,8 @@ fun HistoryScreen(
                 variant = KVariant.Tonal,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
+                    // 아래에 떠 있는 탭 바 위로 띄운다.
+                    .padding(bottom = LocalBottomBarPadding.current)
                     .padding(ChageunTheme.spacing.gutter),
             )
         }

@@ -1,6 +1,7 @@
 package com.naury.chageun.core.designsystem.component
 
 import androidx.compose.runtime.Composable
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.kinetica.ui.KStatus
 import com.naury.kinetica.ui.KToaster
 import com.naury.kinetica.ui.KToasterState
@@ -19,8 +20,8 @@ object ChageunToasts {
     fun error(message: String): Long = state.show(message, KStatus.Error)
 }
 
-/** [ChageunToasts]를 그리는 자리. 앱 루트에 한 번만 둔다. */
+/** [ChageunToasts]를 그리는 자리. 앱 루트에 한 번만 둔다. 토스트는 뒤가 비치는 글래스다. */
 @Composable
 fun ChageunToastHost() {
-    KToaster(ChageunToasts.state)
+    KToaster(ChageunToasts.state, surface = ChageunGlass.chrome)
 }

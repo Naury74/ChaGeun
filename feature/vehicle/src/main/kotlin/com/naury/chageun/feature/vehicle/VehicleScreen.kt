@@ -62,12 +62,14 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.model.MileageEntry
 import com.naury.chageun.core.model.MileageSource
@@ -158,7 +160,8 @@ fun VehicleRoute(
             ),
             onEditVehicle = { isEditing = true },
             onOpenAlbum = onOpenAlbum,
-            modifier = Modifier.padding(padding),
+            // 목록이 위 막대 뒤까지 올라가 글래스 너머로 비치도록 위 여백은 목록 안쪽 여백으로 준다.
+            contentTop = padding.calculateTopPadding(),
             showInspection = showInspection,
             onInspectionShown = onInspectionShown,
             isThreePane = isThreePane,
@@ -191,10 +194,14 @@ fun VehicleScreen(
     showInspection: Boolean = false,
     onInspectionShown: () -> Unit = {},
     isThreePane: Boolean = false,
+    /** 위 막대 높이. 목록이 막대 뒤로 지나가도록 목록 안쪽 여백으로 준다. */
+    contentTop: Dp = 0.dp,
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { KLoadingIndicator() }
+        Box(modifier.fillMaxSize().padding(top = contentTop), contentAlignment = Alignment.Center) {
+            KLoadingIndicator()
+        }
         return
     }
     val spacing = ChageunTheme.spacing
@@ -234,7 +241,7 @@ fun VehicleScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = if (index == panes.lastIndex) recordsState else rememberLazyListState(),
-                contentPadding = PaddingValues(bottom = spacing.lg),
+                contentPadding = PaddingValues(top = contentTop, bottom = spacing.lg + LocalBottomBarPadding.current),
                 verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 content = pane,
             )
