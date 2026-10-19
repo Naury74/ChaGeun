@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.framekit)
     // 영수증 PDF에 검색·복사되는 글자 층을 넣는다. 기기 안(:framekit_ocr 프로세스)에서만 인식한다.
     implementation(libs.framekit.ocr)
+    // 대화상자와 입력 시트. 차근 테마가 Kinetica 테마를 함께 감싸므로 색과 모양이 앱과 같다.
+    implementation(libs.kinetica.ui)
     api(libs.androidx.compose.material.icons.extended)
 
     testImplementation(projects.core.uiTesting)

@@ -25,17 +25,19 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 
 /** [ChageunDialog] 버튼의 강조 단계. */
 enum class DialogActionStyle {
@@ -97,6 +99,7 @@ fun ChageunDialog(
         dismissible = dismissible,
         horizontalPadding = ChageunTheme.spacing.lg,
     ) {
+        Spacer(Modifier.height(HEADER_TOP_GAP))
         Column(
             Modifier
                 .weight(1f, fill = false)
@@ -179,33 +182,23 @@ fun DialogInfoCard(modifier: Modifier = Modifier, title: String? = null, content
     }
 }
 
-/** 대화상자 버튼. 날짜 선택 창처럼 버튼을 가로로 놓는 곳에서도 쓴다. */
+/** 대화상자 버튼. 누르면 젤리처럼 눌린다. 날짜 선택 창처럼 버튼을 가로로 놓는 곳에서도 쓴다. */
 @Composable
 internal fun DialogButton(action: DialogAction, modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val critical = ChageunTheme.colors.critical
-    val (container, content) = when (action.style) {
-        DialogActionStyle.Primary -> colors.primary to colors.onPrimary
-        DialogActionStyle.Destructive -> critical.container to critical.content
-        DialogActionStyle.Secondary -> Color.Transparent to colors.primary
+    val (variant, tone) = when (action.style) {
+        DialogActionStyle.Primary -> KVariant.Filled to KTone.Accent
+        DialogActionStyle.Destructive -> KVariant.Tonal to KTone.Destructive
+        DialogActionStyle.Secondary -> KVariant.Text to KTone.Accent
     }
-    Box(
-        modifier
-            .heightIn(min = BUTTON_HEIGHT)
-            .clip(CircleShape)
-            .background(if (action.enabled) container else colors.onSurface.copy(alpha = DISABLED_FILL_ALPHA))
-            .pressable(onClick = action.onClick, enabled = action.enabled)
-            .padding(horizontal = ChageunTheme.spacing.md, vertical = ChageunTheme.spacing.sm),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            action.label,
-            color = if (action.enabled) content else colors.onSurface.copy(alpha = DISABLED_TEXT_ALPHA),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (action.style == DialogActionStyle.Secondary) FontWeight.Medium else FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-    }
+    KButton(
+        text = action.label,
+        onClick = action.onClick,
+        modifier = modifier,
+        variant = variant,
+        tone = tone,
+        size = KButtonSize.Large,
+        enabled = action.enabled,
+    )
 }
 
 @Composable
@@ -254,7 +247,8 @@ private fun OptionRow(option: DialogOption) {
 private fun defaultTone(): ToneColors =
     ToneColors(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
 
-private val BUTTON_HEIGHT = 52.dp
+// 시트 손잡이와 아이콘·제목 사이. 카드에서는 위 여백과 합쳐 예전 카드와 비슷한 높이가 된다.
+private val HEADER_TOP_GAP = 4.dp
 private val ICON_CIRCLE = 56.dp
 private val ICON_SIZE = 28.dp
 private val OPTION_HEIGHT = 56.dp
@@ -262,5 +256,3 @@ private val OPTION_ICON = 36.dp
 
 // 행 왼쪽 여백(16) + 아이콘(36) + 간격(12). 구분선을 글자 시작에 맞춘다.
 private val OPTION_TEXT_START = 64.dp
-private const val DISABLED_FILL_ALPHA = 0.08f
-private const val DISABLED_TEXT_ALPHA = 0.38f
