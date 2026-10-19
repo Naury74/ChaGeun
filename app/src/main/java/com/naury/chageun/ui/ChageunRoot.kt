@@ -79,6 +79,22 @@ private fun SystemBarIcons(darkTheme: Boolean) {
 }
 
 /**
+ * 상태 표시줄·내비게이션 바 아이콘을 앱 테마 밝기에 맞춘다. enableEdgeToEdge는 시스템 다크 모드만 보므로,
+ * 시스템은 라이트인데 앱에서 다크를 고르면 검은 바탕에 검은 아이콘이 남는다.
+ */
+@Composable
+private fun SystemBarIcons(darkTheme: Boolean) {
+    val view = LocalView.current
+    LaunchedEffect(darkTheme) {
+        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
+}
+
+/**
  * 온보딩 중 "백업에서 복원하기"로 들어가는 화면. ZIP 파일이나 내 Google 드라이브에서 복원하며,
  * 복원으로 차량이 생기면 AppEntry가 Main으로 바뀐다. 로그인은 필요 없다.
  */
