@@ -2,21 +2,14 @@ package com.naury.chageun.feature.account
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToDrive
 import androidx.compose.material.icons.filled.FolderZip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,47 +53,45 @@ fun RestoreStartScreen(
     modifier: Modifier = Modifier,
     onNoticeShown: () -> Unit = {},
 ) {
-    val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { backupNoticeMessage(it) }
     LaunchedEffect(uiState.notice) {
-        if (noticeText != null) {
-            snackbar.showSnackbar(noticeText)
+        val notice = uiState.notice
+        if (notice != null && noticeText != null) {
+            showBackupNotice(notice, noticeText)
             onNoticeShown()
         }
     }
-    Box(modifier.fillMaxSize()) {
-        LargeTitleScaffold(
-            title = stringResource(R.string.account_restore_mode_title),
-            navigationIcon = { BackButton(onBack) },
-        ) { padding ->
-            CenteredColumn(Modifier.padding(padding)) {
-                Text(
-                    stringResource(R.string.restore_start_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+    LargeTitleScaffold(
+        title = stringResource(R.string.account_restore_mode_title),
+        modifier = modifier,
+        navigationIcon = { BackButton(onBack) },
+    ) { padding ->
+        CenteredColumn(top = padding.calculateTopPadding()) {
+            Text(
+                stringResource(R.string.restore_start_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            CardGroup(title = null, modifier = Modifier.appearIn(1)) {
+                ListRow(
+                    icon = Icons.Filled.FolderZip,
+                    title = stringResource(R.string.restore_start_file),
+                    body = stringResource(R.string.restore_start_file_body),
+                    tone = ChageunTheme.colors.good,
+                    onClick = onPickFile,
+                    enabled = !uiState.isWorking,
                 )
-                CardGroup(title = null) {
-                    ListRow(
-                        icon = Icons.Filled.FolderZip,
-                        title = stringResource(R.string.restore_start_file),
-                        body = stringResource(R.string.restore_start_file_body),
-                        tone = ChageunTheme.colors.good,
-                        onClick = onPickFile,
-                        enabled = !uiState.isWorking,
-                    )
-                    GroupDivider()
-                    ListRow(
-                        icon = Icons.Filled.AddToDrive,
-                        title = stringResource(R.string.restore_start_drive),
-                        body = stringResource(R.string.restore_start_drive_body),
-                        tone = ChageunTheme.colors.upcoming,
-                        onClick = onOpenDrive,
-                        enabled = !uiState.isWorking,
-                    )
-                }
+                GroupDivider()
+                ListRow(
+                    icon = Icons.Filled.AddToDrive,
+                    title = stringResource(R.string.restore_start_drive),
+                    body = stringResource(R.string.restore_start_drive_body),
+                    tone = ChageunTheme.colors.upcoming,
+                    onClick = onOpenDrive,
+                    enabled = !uiState.isWorking,
+                )
             }
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 

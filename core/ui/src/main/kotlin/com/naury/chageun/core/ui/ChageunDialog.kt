@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
@@ -36,6 +35,7 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.kinetica.ui.KButton
 import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KDivider
 import com.naury.kinetica.ui.KTone
 import com.naury.kinetica.ui.KVariant
 
@@ -151,10 +151,7 @@ fun ChageunOptionDialog(
         ) {
             options.forEachIndexed { index, option ->
                 if (index > 0) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = if (option.icon != null) OPTION_TEXT_START else 16.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
+                    KDivider(startInset = if (option.icon != null) OPTION_TEXT_START else 16.dp)
                 }
                 OptionRow(option)
             }

@@ -1,7 +1,6 @@
 package com.naury.chageun.core.ui.photo
 
 import android.content.Context
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.ui.R
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.framekit.android.output.FrameKitOutputs
@@ -133,7 +133,7 @@ private fun Context.showPdfOutcome(outcome: ReceiptPdfOutcome, shareTitle: Strin
     }
 }
 
-private fun Context.toast(message: Int) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+private fun Context.toast(message: Int) = ChageunToasts.error(getString(message))
 
 private fun photoResultHandler(context: Context) = PhotoEditResultHandler(
     stage = { uri, _ -> PhotoFiles.copyIn(context, uri) },

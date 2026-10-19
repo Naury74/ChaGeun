@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.kinetica.ui.KDialog
 import com.naury.kinetica.ui.KSheet
 import com.naury.kinetica.ui.rememberKWindowLayout
@@ -57,6 +58,7 @@ internal fun DialogFrame(
     if (rememberKWindowLayout().isCompact) {
         KSheet(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = request,
             title = paneTitle,
             onDismissed = { latestOnDismiss() },
@@ -66,6 +68,7 @@ internal fun DialogFrame(
     } else {
         KDialog(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = request,
             modifier = Modifier.fillMaxWidth(),
             title = paneTitle,

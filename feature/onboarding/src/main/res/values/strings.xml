@@ -40,7 +40,12 @@
     <string name="onboarding_intro_feature_due">Know when each part is due</string>
     <string name="onboarding_intro_feature_remind">Get reminded before it\'s too late</string>
     <string name="onboarding_intro_feature_ai">Ask your favorite AI about your car</string>
-    <string name="onboarding_step_progress">%1$d/%2$d</string>
+    <string name="onboarding_step_name_plate">Plate</string>
+    <string name="onboarding_step_name_vehicle">Car details</string>
+    <string name="onboarding_step_name_photo">Photo</string>
+    <string name="onboarding_step_name_mileage">Mileage</string>
+    <string name="onboarding_step_name_maintenance">Past service</string>
+    <string name="onboarding_step_name_notifications">Notifications</string>
     <string name="onboarding_plate_placeholder_short">123가 4567</string>
     <string name="onboarding_plate_field">Plate number</string>
     <string name="onboarding_mileage_field">Current mileage</string>

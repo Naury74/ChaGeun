@@ -21,17 +21,14 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarViewMonth
 import androidx.compose.material.icons.filled.CalendarViewWeek
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -49,6 +46,8 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.CalendarMonth
 import com.naury.chageun.core.ui.currentLocale
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -190,24 +189,21 @@ internal fun CalendarModeBar(
     val target = if (mode == CalendarMode.Month) CalendarMode.Week else CalendarMode.Month
     Box(modifier.fillMaxWidth()) {
         if (showHandle) DragHandle(mode, onSetMode, Modifier.align(Alignment.Center))
-        TextButton(
+        KButton(
+            stringResource(
+                if (target ==
+                    CalendarMode.Week
+                ) {
+                    R.string.calendar_week_view
+                } else {
+                    R.string.calendar_month_view
+                },
+            ),
             onClick = { onSetMode(target) },
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-        ) {
-            Icon(
-                if (target == CalendarMode.Week) Icons.Filled.CalendarViewWeek else Icons.Filled.CalendarViewMonth,
-                contentDescription = null,
-                modifier = Modifier.size(MODE_ICON_SIZE),
-            )
-            Text(
-                stringResource(
-                    if (target == CalendarMode.Week) R.string.calendar_week_view else R.string.calendar_month_view,
-                ),
-                modifier = Modifier.padding(start = ChageunTheme.spacing.xs),
-            )
-        }
+            variant = KVariant.Text,
+            icon = if (target == CalendarMode.Week) Icons.Filled.CalendarViewWeek else Icons.Filled.CalendarViewMonth,
+            modifier = Modifier.align(Alignment.CenterEnd),
+        )
     }
 }
 
@@ -255,6 +251,5 @@ private val HANDLE_TOUCH_WIDTH = 72.dp
 private val HANDLE_WIDTH = 32.dp
 private val HANDLE_HEIGHT = 4.dp
 private val HANDLE_DRAG_THRESHOLD = 24.dp
-private val MODE_ICON_SIZE = 18.dp
 private const val HANDLE_ALPHA = 0.4f
 private const val SLIDE_DIVISOR = 4

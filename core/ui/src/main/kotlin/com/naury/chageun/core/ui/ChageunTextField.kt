@@ -1,45 +1,29 @@
 package com.naury.chageun.core.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
-import com.naury.chageun.core.designsystem.motion.motionSpec
-import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.kinetica.ui.KTextField
 
 /**
- * 차근의 입력 칸. 테두리 없는 둥근 회색 칸 안에 이름이 있고, 입력하는 동안에만 대표 색 테두리가 생긴다.
- * 오류일 때는 테두리와 아래 안내 글이 위험 색으로 바뀌고, TalkBack은 [supportingText]를 오류 설명으로 읽는다.
+ * 차근의 입력 칸. Kinetica 입력란이라 초점이 오면 이름이 위로 떠오르고 대표 색 테두리가 부드럽게 나타나며,
+ * 글자가 있으면 지우기 버튼이 나온다. 오류가 생기면 테두리가 위험 색으로 바뀌며 한 번 흔들리고, 아래 안내 글이
+ * 위험 색으로 바뀐다. TalkBack은 [supportingText]를 오류 설명으로 읽는다.
  *
- * Material `TextField`와 같은 [BasicTextField]·DecorationBox 구성이라 이름이 올라가는 동작, 접두·접미어,
- * 키보드 옵션은 그대로다. 바탕만 입력 칸 영역에 그려 아래 안내 글은 칸 밖에 놓인다.
+ * [label] 없이 [placeholder]만 주면 그 글을 이름 자리에 둔다. 빈 칸에도 무엇을 넣는지 보이고, 초점이 오면 위로 비킨다.
+ * [modifier]는 입력란과 안내 글을 감싼 바깥 묶음에 붙는다.
+ *
+ * @param textStyle 예전 호출과 맞추려고 남겨 둔 값이다. 글자 모양은 Kinetica 입력란을 따른다.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("UnusedParameter") // textStyle은 기존 호출 코드를 그대로 두려고 받기만 한다.
 @Composable
 fun ChageunTextField(
     value: String,
@@ -60,93 +44,29 @@ fun ChageunTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val focused by interaction.collectIsFocusedAsState()
-    val colors = textFieldColors()
-    val textColor = when {
-        !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-    val errorDescription = supportingText ?: stringResource(R.string.field_error_default)
-    CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = modifier
-                .semantics { if (isError) error(errorDescription) }
-                .defaultMinSize(minWidth = TextFieldDefaults.MinWidth, minHeight = TextFieldDefaults.MinHeight),
-            enabled = enabled,
-            textStyle = textStyle.merge(TextStyle(color = textColor)),
-            cursorBrush = SolidColor(
-                if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-            ),
-            visualTransformation = visualTransformation,
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
-            interactionSource = interaction,
-            singleLine = singleLine,
-            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
-            minLines = minLines,
-        ) { innerTextField ->
-            TextFieldDefaults.DecorationBox(
-                value = value,
-                innerTextField = innerTextField,
-                enabled = enabled,
-                singleLine = singleLine,
-                visualTransformation = visualTransformation,
-                interactionSource = interaction,
-                isError = isError,
-                label = label?.let { { Text(it) } },
-                placeholder = placeholder?.let { { Text(it) } },
-                leadingIcon = leadingIcon,
-                trailingIcon = trailingIcon,
-                suffix = suffix?.let { { Text(it) } },
-                supportingText = supportingText?.let { { Text(it) } },
-                colors = colors,
-                container = { FieldContainer(focused = focused, isError = isError) },
-            )
-        }
-    }
-}
-
-/** 칸 바탕. 초점이 오면 대표 색, 오류면 위험 색 테두리를 짧게 바꿔 그린다. */
-@Composable
-private fun FieldContainer(focused: Boolean, isError: Boolean) {
-    val shape = MaterialTheme.shapes.medium
-    val border by animateColorAsState(
-        targetValue = when {
-            isError -> MaterialTheme.colorScheme.error
-            focused -> MaterialTheme.colorScheme.primary
-            else -> Color.Transparent
-        },
-        animationSpec = motionSpec(),
-        label = "field-border",
-    )
-    Box(
-        Modifier
-            .background(ChageunTheme.colors.inputFill, shape)
-            .border(if (focused) FOCUSED_BORDER else BORDER, border, shape),
+    val errorText = if (isError) supportingText ?: stringResource(R.string.field_error_default) else null
+    KTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = label ?: placeholder.orEmpty(),
+        modifier = modifier,
+        error = errorText,
+        keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
+        keyboardActions = keyboardActions,
+        enabled = enabled,
+        singleLine = singleLine,
+        placeholder = placeholder.takeIf { label != null },
+        supportingText = supportingText.takeIf { !isError },
+        leadingIcon = leadingIcon?.let { { MutedIcon(it) } },
+        trailingIcon = trailingIcon?.let { { MutedIcon(it) } },
+        minLines = minLines,
+        suffix = suffix,
     )
 }
 
+/** Material 아이콘은 Kinetica 글자 색을 모르므로 칸 안 아이콘을 보조 글자 색으로 맞춘다. */
 @Composable
-private fun textFieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor = Color.Transparent,
-    unfocusedContainerColor = Color.Transparent,
-    disabledContainerColor = Color.Transparent,
-    errorContainerColor = Color.Transparent,
-    focusedLabelColor = MaterialTheme.colorScheme.primary,
-    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    focusedSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unfocusedSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    focusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    focusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    focusedSuffixColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unfocusedSuffixColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
-
-private val BORDER = 1.dp
-private val FOCUSED_BORDER = 1.5.dp
-private const val DISABLED_ALPHA = 0.38f
+private fun MutedIcon(icon: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant, content = icon)
+}

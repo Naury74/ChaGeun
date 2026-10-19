@@ -2,12 +2,6 @@ package com.naury.chageun.feature.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -24,25 +17,37 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.kinetica.ui.KAlert
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KStatus
+import com.naury.kinetica.ui.KStepIndicator
+import com.naury.kinetica.ui.KStepStyle
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KTransitionContent
+import com.naury.kinetica.ui.KTransitions
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.shake
 
 @Composable
 fun OnboardingRoute(onRestoreFromBackup: () -> Unit = {}, viewModel: OnboardingViewModel = hiltViewModel()) {
@@ -58,8 +63,6 @@ fun OnboardingScreen(
     onRestoreFromBackup: () -> Unit = {},
 ) {
     BackHandler(enabled = uiState.canGoBack) { onAction(OnboardingAction.Back) }
-    val slide = motionSpec<androidx.compose.ui.unit.IntOffset>()
-    val fade = motionSpec<Float>()
 
     Column(
         modifier = modifier
@@ -70,19 +73,15 @@ fun OnboardingScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         StepTopBar(uiState, onBack = { onAction(OnboardingAction.Back) })
-        AnimatedContent(
+        // 앞 단계로 돌아가면 같은 전환을 거꾸로 재생해 왔던 방향으로 밀려 나간다.
+        KTransitionContent(
             targetState = uiState.step,
-            transitionSpec = {
-                val forward = targetState.ordinal > initialState.ordinal
-                val direction = if (forward) SlideDirection.Start else SlideDirection.End
-                (slideIntoContainer(direction, slide) + fadeIn(fade))
-                    .togetherWith(slideOutOfContainer(direction, slide) + fadeOut(fade))
-            },
+            transition = KTransitions.SharedAxisX,
+            isForward = { from, to -> to.ordinal > from.ordinal },
             modifier = Modifier
                 .weight(1f)
                 .widthIn(max = CONTENT_MAX_WIDTH)
                 .fillMaxWidth(),
-            label = "onboarding-step",
         ) { step ->
             Column(
                 modifier = Modifier
@@ -101,10 +100,10 @@ fun OnboardingScreen(
                     OnboardingStep.Notifications -> NotificationsStep()
                 }
                 if (uiState.hasSaveFailed) {
-                    Text(
-                        stringResource(R.string.onboarding_save_failed),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
+                    KAlert(
+                        message = stringResource(R.string.onboarding_save_failed),
+                        status = KStatus.Error,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     )
                 }
             }
@@ -125,9 +124,7 @@ fun OnboardingScreen(
 @Composable
 private fun StepTopBar(uiState: OnboardingUiState, onBack: () -> Unit) {
     if (uiState.step == OnboardingStep.Intro) return
-    val index = uiState.step.ordinal
-    val total = OnboardingStep.entries.size - 1
-    val progress by animateFloatAsState(index / total.toFloat(), motionSpec(), label = "onboarding-progress")
+    val stepNames = OnboardingStep.entries.drop(1).map { stringResource(it.nameRes) }
     Row(
         modifier = Modifier
             .widthIn(max = CONTENT_MAX_WIDTH)
@@ -136,20 +133,20 @@ private fun StepTopBar(uiState: OnboardingUiState, onBack: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
-        IconButton(onClick = onBack, enabled = uiState.canGoBack) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.onboarding_back))
-        }
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .weight(1f)
-                .height(6.dp),
-            drawStopIndicator = {},
+        KIconButton(
+            Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.onboarding_back),
+            onClick = onBack,
+            enabled = uiState.canGoBack,
+            variant = KVariant.Text,
+            tone = KTone.Neutral,
         )
-        Text(
-            stringResource(R.string.onboarding_step_progress, index, total),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // 소개 화면은 단계에 넣지 않으므로 차량 번호가 첫 단계(0)다.
+        KStepIndicator(
+            steps = stepNames,
+            current = uiState.step.ordinal - 1,
+            style = KStepStyle.Bar,
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -183,30 +180,31 @@ private fun BottomActions(
         OnboardingStep.Notifications -> R.string.onboarding_notifications_allow to optInToNotifications
     }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        Button(
+        // 저장하는 동안에는 버튼 안에서 링이 돌고 누를 수 없다.
+        KButton(
+            text = stringResource(labelRes),
             onClick = onPrimary,
-            enabled = !uiState.isSaving,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = CTA_HEIGHT),
-        ) {
-            Text(stringResource(labelRes), style = MaterialTheme.typography.titleMedium)
-        }
+            size = KButtonSize.Large,
+            fullWidth = true,
+            loading = uiState.isSaving,
+        )
         // 새 휴대폰으로 바꾼 사람은 차량을 다시 입력하지 않고 클라우드 백업에서 시작한다.
         if (uiState.step == OnboardingStep.Intro) {
-            TextButton(onClick = onRestoreFromBackup, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.onboarding_restore_from_backup))
-            }
+            KButton(
+                text = stringResource(R.string.onboarding_restore_from_backup),
+                onClick = onRestoreFromBackup,
+                variant = KVariant.Text,
+                fullWidth = true,
+            )
         }
         if (uiState.step == OnboardingStep.Notifications) {
-            TextButton(
+            KButton(
+                text = stringResource(R.string.onboarding_notifications_later),
                 onClick = { onAction(OnboardingAction.Finish) },
+                variant = KVariant.Text,
                 enabled = !uiState.isSaving,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.onboarding_notifications_later))
-            }
+                fullWidth = true,
+            )
         }
     }
 }
@@ -230,6 +228,26 @@ internal fun StepHeader(@StringRes titleRes: Int, @StringRes bodyRes: Int?) {
     Spacer(Modifier.height(ChageunTheme.spacing.xs))
 }
 
+/** 단계 표시에 쓰는 짧은 이름. TalkBack은 "6단계 중 2단계, 차 정보"처럼 읽는다. */
+private val OnboardingStep.nameRes: Int
+    get() = when (this) {
+        // 소개는 단계 표시에 넣지 않아 이름이 쓰이지 않는다.
+        OnboardingStep.Intro, OnboardingStep.Plate -> R.string.onboarding_step_name_plate
+        OnboardingStep.VehicleInfo -> R.string.onboarding_step_name_vehicle
+        OnboardingStep.Photo -> R.string.onboarding_step_name_photo
+        OnboardingStep.Mileage -> R.string.onboarding_step_name_mileage
+        OnboardingStep.QuickMaintenance -> R.string.onboarding_step_name_maintenance
+        OnboardingStep.Notifications -> R.string.onboarding_step_name_notifications
+    }
+
+/** 입력 칸에 오류가 새로 생길 때마다 좌우로 한 번 흔든다. 오류 문구와 색은 따로 보여 준다. */
+@Composable
+internal fun Modifier.shakeOnError(error: FieldError?): Modifier {
+    var count by remember { mutableIntStateOf(0) }
+    LaunchedEffect(error) { if (error != null) count++ }
+    return shake(count)
+}
+
 @Composable
 internal fun ErrorText(error: FieldError) {
     Text(
@@ -251,4 +269,3 @@ private val FieldError.messageRes: Int
     }
 
 private val CONTENT_MAX_WIDTH = 560.dp
-private val CTA_HEIGHT = 56.dp

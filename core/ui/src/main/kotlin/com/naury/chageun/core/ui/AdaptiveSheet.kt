@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -24,6 +23,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.naury.chageun.core.designsystem.component.ChageunCard
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.kinetica.ui.KDialog
 import com.naury.kinetica.ui.KSheet
 import kotlin.math.roundToInt
@@ -59,6 +60,7 @@ fun AdaptiveSheet(
     if (isExpanded) {
         KDialog(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = { visible = false },
             onDismissed = { latestOnDismiss() },
             appearScale = CARD_START_SCALE,
@@ -67,6 +69,7 @@ fun AdaptiveSheet(
     } else {
         KSheet(
             visible = visible,
+            surface = ChageunGlass.chrome,
             onDismissRequest = { visible = false },
             onDismissed = { latestOnDismiss() },
             content = body,
@@ -96,14 +99,16 @@ private fun HingeSideDialog(hinge: Hinge, onDismiss: () -> Unit, content: @Compo
         ) {
             Layout(
                 content = {
-                    Surface(
-                        shape = MaterialTheme.shapes.extraLarge,
+                    // 따로 띄운 창이라 비칠 화면이 없어 글래스 대신 떠 있는 단색 판으로 그린다.
+                    ChageunCard(
                         // 바깥을 누르면 닫히지만 창 안을 누른 것은 닫기로 이어지지 않게 막는다.
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             onClick = {},
                         ),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        popup = true,
                     ) { content() }
                 },
             ) { measurables, constraints ->

@@ -4,12 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -29,12 +25,8 @@ import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.FuelField
 import com.naury.chageun.core.model.MileageSource
@@ -74,6 +67,11 @@ import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.feature.history.form.labelRes
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 
 @Composable
 internal fun RecordDetailPane(
@@ -94,18 +92,24 @@ internal fun RecordDetailPane(
     val isMileage = detail is RecordDetail.Mileage
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.sm),
+        contentPadding = PaddingValues(
+            start = ChageunTheme.spacing.gutter,
+            end = ChageunTheme.spacing.gutter,
+            top = ChageunTheme.spacing.sm,
+            bottom = ChageunTheme.spacing.sm + LocalBottomBarPadding.current,
+        ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
         item(key = "header") {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 onBack?.let {
-                    IconButton(onClick = it) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.history_back),
-                        )
-                    }
+                    KIconButton(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.history_back),
+                        onClick = it,
+                        variant = KVariant.Text,
+                        tone = KTone.Neutral,
+                    )
                 }
                 DetailIcon(detail)
                 Text(
@@ -171,54 +175,54 @@ internal fun RecordDetailPane(
             item(key = "sounds") { SoundSection(state, detail.ref, soundPlayer) }
         }
         item(key = "actions") {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-                modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
-            ) {
+            ButtonPair(Modifier.padding(top = ChageunTheme.spacing.sm)) {
                 if (!isMileage) {
-                    FilledTonalButton(
+                    KButton(
+                        stringResource(R.string.history_edit),
                         onClick = { onEdit(detail) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                    ) {
-                        Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                        Text(stringResource(R.string.history_edit))
-                    }
+                        variant = KVariant.Tonal,
+                        size = KButtonSize.Large,
+                        icon = Icons.Filled.Edit,
+                        fullWidth = true,
+                    )
                 }
-                OutlinedButton(
+                KButton(
+                    stringResource(R.string.history_delete),
                     onClick = { isConfirmingDelete = true },
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) {
-                    Icon(Icons.Filled.DeleteOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                    Text(stringResource(R.string.history_delete))
-                }
+                    variant = KVariant.Outlined,
+                    tone = KTone.Destructive,
+                    size = KButtonSize.Large,
+                    icon = Icons.Filled.DeleteOutline,
+                    fullWidth = true,
+                )
             }
         }
     }
     if (isConfirmingDelete) {
-        ChageunDialog(
-            title = stringResource(R.string.history_delete_title),
-            message = stringResource(R.string.history_delete_body),
-            icon = Icons.Filled.DeleteOutline,
-            tone = ChageunTheme.colors.critical,
+        DeleteRecordDialog(
+            onConfirm = {
+                isConfirmingDelete = false
+                onDelete(detail.ref)
+            },
             onDismiss = { isConfirmingDelete = false },
-            actions = listOf(
-                DialogAction(stringResource(R.string.history_delete), DialogActionStyle.Destructive) {
-                    isConfirmingDelete = false
-                    onDelete(detail.ref)
-                },
-                DialogAction(stringResource(R.string.history_cancel), DialogActionStyle.Secondary) {
-                    isConfirmingDelete = false
-                },
-            ),
         )
     }
+}
+
+/** 기록 삭제 확인. 상세의 삭제 버튼과 목록에서 길게 눌러 고른 삭제가 같은 창을 쓴다. */
+@Composable
+internal fun DeleteRecordDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    ChageunDialog(
+        title = stringResource(R.string.history_delete_title),
+        message = stringResource(R.string.history_delete_body),
+        icon = Icons.Filled.DeleteOutline,
+        tone = ChageunTheme.colors.critical,
+        onDismiss = onDismiss,
+        actions = listOf(
+            DialogAction(stringResource(R.string.history_delete), DialogActionStyle.Destructive, onClick = onConfirm),
+            DialogAction(stringResource(R.string.history_cancel), DialogActionStyle.Secondary, onClick = onDismiss),
+        ),
+    )
 }
 
 internal data class AttachmentsState(

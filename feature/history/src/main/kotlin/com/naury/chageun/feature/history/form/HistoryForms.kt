@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -17,10 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocalGasStation
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,7 +52,11 @@ import com.naury.chageun.core.ui.formatLitres
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.feature.history.ButtonPair
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 
 @Composable
@@ -331,17 +332,22 @@ private fun FormColumn(
         FormHeader(icon, tone, stringResource(titleRes))
         content()
         if (hasSaveFailed) ErrorText(R.string.form_save_failed)
-        Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-            TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.history_cancel))
-            }
-            Button(
+        ButtonPair {
+            KButton(
+                stringResource(R.string.history_cancel),
+                onClick = onCancel,
+                variant = KVariant.Text,
+                size = KButtonSize.Large,
+                fullWidth = true,
+            )
+            // 저장하는 동안은 폭을 그대로 둔 채 링이 돌고 다시 누를 수 없다.
+            KButton(
+                stringResource(R.string.form_save),
                 onClick = onSave,
-                enabled = !isSaving,
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) { Text(stringResource(R.string.form_save)) }
+                loading = isSaving,
+                size = KButtonSize.Large,
+                fullWidth = true,
+            )
         }
     }
 }

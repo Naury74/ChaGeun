@@ -5,24 +5,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +35,9 @@ import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.R
 import com.naury.chageun.core.ui.ToggleListRow
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KVariant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -93,15 +88,13 @@ fun VehiclePhotoConfirmSheet(
                 }
             }
             onEdit?.let {
-                OutlinedButton(onClick = it, modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget)) {
-                    Icon(
-                        Icons.Outlined.Edit,
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                    )
-                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-                    Text(stringResource(R.string.photo_edit_action))
-                }
+                KButton(
+                    text = stringResource(R.string.photo_edit_action),
+                    onClick = it,
+                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                    variant = KVariant.Outlined,
+                    icon = Icons.Outlined.Edit,
+                )
             }
             CardGroup(null) {
                 ToggleListRow(
@@ -114,15 +107,19 @@ fun VehiclePhotoConfirmSheet(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.vehicle_photo_confirm_cancel))
-                }
-                Button(
+                KButton(
+                    text = stringResource(R.string.vehicle_photo_confirm_cancel),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    variant = KVariant.Text,
+                    size = KButtonSize.Large,
+                )
+                KButton(
+                    text = stringResource(R.string.vehicle_photo_confirm_apply),
                     onClick = { onApply(removeBackground) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.vehicle_photo_confirm_apply)) }
+                    modifier = Modifier.weight(1f),
+                    size = KButtonSize.Large,
+                )
             }
         }
     }

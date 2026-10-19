@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunToastHost
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.ThemeMode
 import com.naury.chageun.core.notification.DeepLink
@@ -57,6 +58,7 @@ fun ChageunRoot(
                 }
             }
         }
+        ChageunToastHost()
     }
 }
 

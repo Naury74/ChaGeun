@@ -147,7 +147,6 @@
     <string name="weather_location_current_with_area">Current location (%1$s)</string>
     <string name="weather_location_current_missing">Current location (not found)</string>
     <string name="weather_region_search">Search by district or neighborhood (in Korean)</string>
-    <string name="weather_region_search_clear">Clear search</string>
     <string name="weather_region_recent">Recently chosen</string>
     <string name="weather_region_provinces">Provinces and cities</string>
     <string name="weather_region_whole">All of %1$s</string>

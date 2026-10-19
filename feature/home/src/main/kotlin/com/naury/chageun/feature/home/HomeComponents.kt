@@ -12,13 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,12 +29,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.naury.chageun.core.designsystem.component.PressStyle
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.component.icon
-import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.motion.ChageunMotion
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -58,6 +55,8 @@ import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.core.ui.usedFraction
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.kClickable
 import kotlin.math.absoluteValue
 
 @Composable
@@ -68,7 +67,7 @@ internal fun VehicleStatusSummary(
     modifier: Modifier = Modifier,
 ) {
     val tone = health.level.tone
-    Surface(
+    ChageunCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = tone.colors.container,
@@ -109,10 +108,9 @@ internal fun MaintenanceStatusCard(
     modifier: Modifier = Modifier,
 ) {
     val tone = status.state.tone.colors
-    Surface(
+    ChageunCard(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.md),
@@ -146,20 +144,25 @@ internal fun MaintenanceStatusCard(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                OutlinedButton(
+                ChageunButton(
+                    stringResource(R.string.home_open_detail),
                     onClick = { onOpenDetail(status.item) },
-                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.home_open_detail)) }
-                Button(
+                    variant = KVariant.Outlined,
+                    fullWidth = true,
+                    shape = MaterialTheme.shapes.medium,
+                )
+                ChageunButton(
+                    stringResource(R.string.home_record_service),
                     onClick = { onRecordService(status.item) },
-                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.home_record_service)) }
+                    fullWidth = true,
+                    shape = MaterialTheme.shapes.medium,
+                )
             }
         }
     }
@@ -191,40 +194,35 @@ internal fun MissingInfoCard(
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(false) }
     val shown = if (isExpanded) statuses else statuses.take(MISSING_PREVIEW)
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(motionSpec(ChageunMotion.MEDIUM_MS)),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(Modifier.padding(vertical = ChageunTheme.spacing.xs)) {
             shown.forEach { status ->
                 MissingInfoRow(status, onOpenDetail, Modifier.padding(horizontal = ChageunTheme.spacing.md))
             }
             if (statuses.size > MISSING_PREVIEW) {
-                TextButton(
+                ChageunButton(
+                    if (isExpanded) {
+                        stringResource(R.string.home_missing_less)
+                    } else {
+                        pluralStringResource(
+                            R.plurals.home_missing_more,
+                            statuses.size - MISSING_PREVIEW,
+                            statuses.size - MISSING_PREVIEW,
+                        )
+                    },
                     onClick = { isExpanded = !isExpanded },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = ChageunTheme.spacing.xs),
-                ) {
-                    Text(
-                        if (isExpanded) {
-                            stringResource(R.string.home_missing_less)
-                        } else {
-                            pluralStringResource(
-                                R.plurals.home_missing_more,
-                                statuses.size - MISSING_PREVIEW,
-                                statuses.size - MISSING_PREVIEW,
-                            )
-                        },
-                    )
-                    Icon(
-                        if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = null,
-                    )
-                }
+                        .padding(horizontal = ChageunTheme.spacing.xs)
+                        .minimumInteractiveComponentSize(),
+                    variant = KVariant.Text,
+                    trailingIcon = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -238,11 +236,12 @@ internal fun MissingInfoRow(
     onOpenDetail: (MaintenanceItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val shape = MaterialTheme.shapes.medium
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .pressable(onClick = { onOpenDetail(status.item) }, style = PressStyle.Highlight)
+            .clip(shape)
+            .kClickable(shape) { onOpenDetail(status.item) }
             .padding(vertical = ChageunTheme.spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
@@ -283,12 +282,11 @@ internal fun InspectionStatusCard(status: InspectionStatus, onOpen: () -> Unit, 
     val days = status.daysLeft ?: return
     val count = days.absoluteValue.toInt()
     val tone = if (status.state == InspectionState.Overdue) StatusTone.Critical else StatusTone.Upcoming
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
-            .pressable(onClick = onOpen),
+            .pressableCard(MaterialTheme.shapes.large, onOpen),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
     ) {
         Column(
             modifier = Modifier.padding(ChageunTheme.spacing.md),

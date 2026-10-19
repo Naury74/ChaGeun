@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +45,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.motion.motionSpec
@@ -54,6 +52,10 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.feature.vehicle.R
+import com.naury.kinetica.ui.GlassStyles
+import com.naury.kinetica.ui.SurfaceStyle
+import com.naury.kinetica.ui.SurfaceStyles
+import com.naury.kinetica.ui.kSurface
 import java.time.LocalDate
 
 /** 사진 위에 떠 있는 위쪽 줄. 뒤로 버튼은 한 칸 화면에서만 두고, 몇 번째 사진인지는 늘 가운데에 둔다. */
@@ -67,10 +69,14 @@ internal fun ViewerTopBar(index: Int, count: Int, onBack: (() -> Unit)?, modifie
         onBack?.let {
             FilledIconButton(
                 onClick = it,
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = GLASS, contentColor = Color.White),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                ),
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .size(ChageunTheme.spacing.minTouchTarget),
+                    .size(ChageunTheme.spacing.minTouchTarget)
+                    .kSurface(VIEWER_PILL, CircleShape),
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.album_back))
             }
@@ -82,7 +88,7 @@ internal fun ViewerTopBar(index: Int, count: Int, onBack: (() -> Unit)?, modifie
             color = Color.White,
             modifier = Modifier
                 .align(Alignment.Center)
-                .background(GLASS, CircleShape)
+                .kSurface(VIEWER_PILL, CircleShape)
                 .padding(horizontal = ChageunTheme.spacing.sm, vertical = ChageunTheme.spacing.xxs + 2.dp)
                 .semantics { contentDescription = description },
         )
@@ -139,7 +145,7 @@ internal fun PhotoDateChip(date: LocalDate, onOpenCalendar: ((LocalDate) -> Unit
     Box(modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget).then(clickable), Alignment.CenterStart) {
         Row(
             Modifier
-                .background(GLASS, CircleShape)
+                .kSurface(VIEWER_PILL, CircleShape)
                 .padding(
                     start = ChageunTheme.spacing.sm - 2.dp,
                     end = if (onOpenCalendar != null) ChageunTheme.spacing.xs else ChageunTheme.spacing.sm,
@@ -236,8 +242,7 @@ private fun ViewerAction(
         Box(
             Modifier
                 .size(ACTION_CIRCLE)
-                .background(GLASS, CircleShape)
-                .border(Dp.Hairline, Color.White.copy(alpha = EDGE_ALPHA), CircleShape),
+                .kSurface(VIEWER_PILL, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = null, tint = tint)
@@ -246,9 +251,20 @@ private fun ViewerAction(
     }
 }
 
-/** 흐린 사진 배경 위에 뜨는 버튼 바탕. 밝은 사진 위에서도 흰 아이콘이 읽히도록 검정을 반쯤 깐다. */
-internal val GLASS = Color.Black.copy(alpha = 0.38f)
-private const val EDGE_ALPHA = 0.14f
+/**
+ * 사진·영상 위에 뜨는 작은 버튼과 알약. 블러 없는 어두운 유리(LiteGlassDark)라 영상 위에서도 비용이 단색과 같다.
+ * 밝은 사진 위에서도 흰 글자가 읽히도록 채움은 검정을 반쯤 깐다.
+ */
+internal val VIEWER_PILL: SurfaceStyle =
+    (SurfaceStyles.LiteGlassDark as SurfaceStyle.Solid).copy(color = Color.Black.copy(alpha = 0.38f))
+
+/**
+ * 아래 조작 막대. 흐린 사진 바탕과 옆 사진을 블러로 비추는 화면 폭 글래스(BarGlassDark).
+ * 바탕이 이미 어둡게 깔려 있어 기본 막대보다 옅게 덮어도 흰 글자가 읽히고, 사진 색이 막대에 은은하게 남는다.
+ */
+internal val VIEWER_BAR: SurfaceStyle = SurfaceStyle.Glass(
+    GlassStyles.BarDark.copy(tint = Color(0xFF141416).copy(alpha = 0.6f)),
+)
 private const val BADGE_START_SCALE = 0.8f
 private val ACTION_MIN_WIDTH = 72.dp
 private val ACTION_CIRCLE = 48.dp

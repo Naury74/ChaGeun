@@ -16,11 +16,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,6 +38,9 @@ import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.formatDate
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KVariant
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -73,19 +74,23 @@ internal fun AdvancedFilterSheet(
             PeriodSection(draft, update, onPickRange = { isPickingRange = true })
             CostSection(draft, update)
             AttachmentToggles(draft, update)
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = { update(AdvancedFilter()) }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.history_filter_reset))
-                }
-                Button(
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.history_filter_reset),
+                    onClick = { update(AdvancedFilter()) },
+                    variant = KVariant.Text,
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
+                KButton(
+                    stringResource(R.string.history_filter_apply),
                     onClick = {
                         onApply(draft)
                         onDismiss()
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.history_filter_apply)) }
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
             }
         }
     }
