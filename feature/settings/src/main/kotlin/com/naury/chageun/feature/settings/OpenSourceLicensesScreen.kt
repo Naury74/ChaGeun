@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +33,7 @@ import com.mikepenz.aboutlibraries.Libs
 import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.kinetica.ui.KLoadingIndicator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -75,7 +75,7 @@ fun OpenSourceLicensesScreen(libraries: List<OpenSourceLibrary>?, onBack: () -> 
         ) {
             when {
                 libraries == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    KLoadingIndicator()
                 }
                 selected != null -> LicenseDetail(selected)
                 else -> LazyColumn(

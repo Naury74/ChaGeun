@@ -1,8 +1,5 @@
 package com.naury.chageun.feature.onboarding
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -23,16 +22,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
@@ -52,8 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.ChoicePill
-import com.naury.chageun.core.designsystem.motion.ChageunMotion
-import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.chageun.core.model.FuelType
@@ -63,6 +56,13 @@ import com.naury.chageun.core.ui.VehicleInfoField
 import com.naury.chageun.core.ui.VehicleInfoFields
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
+import com.naury.kinetica.core.scene.AppearEffect
+import com.naury.kinetica.core.scene.AppearKind
+import com.naury.kinetica.core.scene.NodeEffects
+import com.naury.kinetica.render.kineticaEffects
+import com.naury.kinetica.ui.jellyPress
+import com.naury.kinetica.ui.kClickable
+import com.naury.kinetica.ui.staggerIn
 
 @Composable
 internal fun IntroStep() {
@@ -76,12 +76,15 @@ internal fun IntroStep() {
             withStyle(SpanStyle(color = primary)) { append(emphasis) }
         },
         style = MaterialTheme.typography.displaySmall,
-        modifier = Modifier.padding(top = ChageunTheme.spacing.lg),
+        modifier = Modifier
+            .staggerIn(0, delayMs = INTRO_STAGGER_MS)
+            .padding(top = ChageunTheme.spacing.lg),
     )
     Image(
         painter = painterResource(UiR.drawable.vehicle_silhouette_suv),
         contentDescription = null,
         modifier = Modifier
+            .kineticaEffects(IntroHeroAppear)
             .fillMaxWidth()
             .aspectRatio(INTRO_IMAGE_RATIO)
             .padding(horizontal = ChageunTheme.spacing.lg),
@@ -90,6 +93,7 @@ internal fun IntroStep() {
         stringResource(R.string.onboarding_intro_body),
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.staggerIn(1, delayMs = INTRO_STAGGER_MS),
     )
     val colors = ChageunTheme.colors
     listOf(
@@ -97,28 +101,16 @@ internal fun IntroStep() {
         Triple(Icons.Filled.NotificationsActive, colors.good, R.string.onboarding_intro_feature_remind),
         Triple(Icons.Filled.AutoAwesome, colors.ai, R.string.onboarding_intro_feature_ai),
     ).forEachIndexed { index, (icon, tone, textRes) ->
-        StaggeredReveal(index) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
-            ) {
-                ItemIconBadge(icon, tone, size = 40.dp)
-                Text(stringResource(textRes), style = MaterialTheme.typography.titleSmall)
-            }
+        // 머리글과 그림이 자리 잡은 뒤 기능 줄이 하나씩 떠오른다.
+        Row(
+            modifier = Modifier.staggerIn(index + INTRO_FEATURE_FIRST, delayMs = INTRO_STAGGER_MS),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+        ) {
+            ItemIconBadge(icon, tone, size = 40.dp)
+            Text(stringResource(textRes), style = MaterialTheme.typography.titleSmall)
         }
     }
-}
-
-/** 처음 그릴 때 아래에서 살짝 올라오며 나타난다. [index]만큼 늦게 시작해 순서대로 읽힌다. */
-@Composable
-private fun StaggeredReveal(index: Int, content: @Composable () -> Unit) {
-    var visible by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { visible = true }
-    val delay = ChageunMotion.MEDIUM_MS + index * ChageunMotion.STAGGER_MS
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(motionSpec(delayMs = delay)) + slideInVertically(motionSpec(delayMs = delay)) { it / 2 },
-    ) { content() }
 }
 
 @Composable
@@ -133,7 +125,9 @@ internal fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
             2.dp,
             if (error != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         ),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .shakeOnError(error)
+            .fillMaxWidth(),
     ) {
         Box(Modifier.padding(vertical = 20.dp, horizontal = 16.dp), contentAlignment = Alignment.Center) {
             val plateLabel = stringResource(R.string.onboarding_plate_field)
@@ -162,9 +156,20 @@ internal fun PlateStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
         }
     }
     error?.let { ErrorText(it) }
-    TextButton(onClick = { onAction(OnboardingAction.SkipPlate) }) {
-        Text(stringResource(R.string.onboarding_plate_skip))
-    }
+    // 문구가 길어 큰 글자에서 한 줄짜리 KButton에 다 들어가지 않는다. 줄을 바꾸는 글자 버튼으로 둔다.
+    val linkShape = MaterialTheme.shapes.small
+    Text(
+        stringResource(R.string.onboarding_plate_skip),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier
+            .jellyPress()
+            .clip(linkShape)
+            .kClickable(linkShape) { onAction(OnboardingAction.SkipPlate) }
+            .heightIn(min = LINK_MIN_HEIGHT)
+            .wrapContentHeight(Alignment.CenterVertically)
+            .padding(horizontal = ChageunTheme.spacing.sm),
+    )
 }
 
 @Composable
@@ -224,6 +229,7 @@ internal fun MileageStep(uiState: OnboardingUiState, onAction: (OnboardingAction
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             modifier = Modifier
+                .shakeOnError(error)
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .semantics { contentDescription = mileageLabel },
@@ -284,4 +290,10 @@ private class MileageTransformation(private val unit: String, private val unitSt
 }
 
 private const val UNDERLINE_WIDTH = 0.7f
+private val LINK_MIN_HEIGHT = 48.dp
+private const val INTRO_STAGGER_MS = 90
+private const val INTRO_FEATURE_FIRST = 3
+
+/** 소개 그림은 첫 글이 뜬 뒤 살짝 크게 시작해 제자리로 줄며 나타난다. */
+private val IntroHeroAppear = NodeEffects(appear = AppearEffect(AppearKind.Zoom, durationMs = 600L, delayMs = 120L))
 private const val INTRO_IMAGE_RATIO = 360f / 160f
