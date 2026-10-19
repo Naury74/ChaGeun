@@ -21,10 +21,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceItem
-import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.labelRes
+import com.naury.kinetica.ui.KTextField
 
 @Composable
 internal fun QuickMaintenanceStep(uiState: OnboardingUiState, onAction: (OnboardingAction) -> Unit) {
@@ -82,12 +82,11 @@ private fun QuickServiceCard(
                         placeholder = stringResource(R.string.onboarding_quick_pick_date),
                         onDateSelected = { onAction(OnboardingAction.QuickServiceDateSelected(item, it)) },
                     )
-                    ChageunTextField(
+                    KTextField(
                         value = input.mileage,
                         onValueChange = { onAction(OnboardingAction.QuickServiceMileageChanged(item, it)) },
                         label = stringResource(R.string.onboarding_quick_mileage),
                         suffix = stringResource(R.string.onboarding_mileage_unit),
-                        singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done,

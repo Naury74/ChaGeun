@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,13 +19,10 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -37,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.CardGroup
@@ -102,47 +99,45 @@ fun DriveBackupScreen(
     onBackupNoticeShown: () -> Unit = {},
     isRestoreMode: Boolean = false,
 ) {
-    val snackbar = remember { SnackbarHostState() }
     val failureText = stringResource(R.string.drive_connect_failed)
     LaunchedEffect(connection.hasFailed) {
         if (connection.hasFailed) {
-            snackbar.showSnackbar(failureText)
+            ChageunToasts.error(failureText)
             onConnectionFailureShown()
         }
     }
     val noticeText = backup.notice?.let { backupNoticeMessage(it) }
     LaunchedEffect(backup.notice) {
-        if (noticeText != null) {
-            snackbar.showSnackbar(noticeText)
+        val notice = backup.notice
+        if (notice != null && noticeText != null) {
+            showBackupNotice(notice, noticeText)
             onBackupNoticeShown()
         }
     }
-    Box(modifier.fillMaxSize()) {
-        LargeTitleScaffold(
-            title = stringResource(if (isRestoreMode) R.string.account_restore_mode_title else R.string.drive_title),
-            navigationIcon = { BackButton(onBack) },
-        ) { padding ->
-            CenteredColumn(Modifier.padding(padding)) {
-                when {
-                    !connection.isConnected -> DriveIntro(isConnecting = connection.isConnecting, onConnect = onConnect)
-                    isRestoreMode -> RestorePicker(backup, actions, onStartFresh = onBack)
-                    else -> {
-                        CloudBackupSection(backup, actions)
-                        CardGroup(title = null) {
-                            ListRow(
-                                icon = Icons.Filled.LinkOff,
-                                title = stringResource(R.string.drive_disconnect),
-                                body = stringResource(R.string.drive_disconnect_body),
-                                onClick = onDisconnect,
-                                enabled = !backup.isWorking,
-                                trailing = {},
-                            )
-                        }
+    LargeTitleScaffold(
+        title = stringResource(if (isRestoreMode) R.string.account_restore_mode_title else R.string.drive_title),
+        modifier = modifier,
+        navigationIcon = { BackButton(onBack) },
+    ) { padding ->
+        CenteredColumn(Modifier.padding(padding)) {
+            when {
+                !connection.isConnected -> DriveIntro(isConnecting = connection.isConnecting, onConnect = onConnect)
+                isRestoreMode -> RestorePicker(backup, actions, onStartFresh = onBack)
+                else -> {
+                    CloudBackupSection(backup, actions)
+                    CardGroup(title = null) {
+                        ListRow(
+                            icon = Icons.Filled.LinkOff,
+                            title = stringResource(R.string.drive_disconnect),
+                            body = stringResource(R.string.drive_disconnect_body),
+                            onClick = onDisconnect,
+                            enabled = !backup.isWorking,
+                            trailing = {},
+                        )
                     }
                 }
             }
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -152,6 +147,7 @@ private fun ColumnScope.DriveIntro(isConnecting: Boolean, onConnect: () -> Unit)
     val tone = ChageunTheme.colors.good
     Box(
         Modifier
+            .appearIn(0)
             .size(72.dp)
             .background(tone.container, CircleShape)
             .align(Alignment.CenterHorizontally),
@@ -168,7 +164,7 @@ private fun ColumnScope.DriveIntro(isConnecting: Boolean, onConnect: () -> Unit)
             .fillMaxWidth()
             .semantics { heading() },
     )
-    CardGroup(title = null) {
+    CardGroup(title = null, modifier = Modifier.appearIn(1)) {
         ListRow(Icons.Filled.FolderOff, stringResource(R.string.drive_intro_hidden_folder), tone = tone)
         GroupDivider()
         ListRow(Icons.Filled.Lock, stringResource(R.string.drive_intro_private), tone = ChageunTheme.colors.upcoming)
@@ -180,6 +176,7 @@ private fun ColumnScope.DriveIntro(isConnecting: Boolean, onConnect: () -> Unit)
         enabled = true,
         isBusy = isConnecting,
         label = stringResource(R.string.drive_connect),
+        modifier = Modifier.appearIn(2),
     )
     Text(
         stringResource(R.string.drive_intro_zip_hint),

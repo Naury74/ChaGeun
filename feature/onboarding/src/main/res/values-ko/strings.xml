@@ -40,7 +40,12 @@
     <string name="onboarding_intro_feature_due">교체 시기를 알아서 계산해요</string>
     <string name="onboarding_intro_feature_remind">놓치기 전에 알려드려요</string>
     <string name="onboarding_intro_feature_ai">내 차 정보로 AI에게 물어봐요</string>
-    <string name="onboarding_step_progress">%1$d/%2$d</string>
+    <string name="onboarding_step_name_plate">차량 번호</string>
+    <string name="onboarding_step_name_vehicle">차 정보</string>
+    <string name="onboarding_step_name_photo">사진</string>
+    <string name="onboarding_step_name_mileage">주행거리</string>
+    <string name="onboarding_step_name_maintenance">지난 정비</string>
+    <string name="onboarding_step_name_notifications">알림</string>
     <string name="onboarding_plate_placeholder_short">123가 4567</string>
     <string name="onboarding_plate_field">차량번호</string>
     <string name="onboarding_mileage_field">현재 주행거리</string>

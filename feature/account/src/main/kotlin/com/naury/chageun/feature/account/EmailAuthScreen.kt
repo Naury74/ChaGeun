@@ -1,7 +1,9 @@
 package com.naury.chageun.feature.account
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
@@ -9,39 +11,24 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.MarkEmailRead
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentType
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.intl.LocaleList
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
@@ -49,10 +36,16 @@ import com.naury.chageun.core.designsystem.component.SegmentedControl
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.ChageunDialog
 import com.naury.chageun.core.ui.ChageunLinks
-import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.DialogAction
 import com.naury.chageun.core.ui.DialogActionStyle
 import com.naury.chageun.core.ui.openUriSafely
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KCheckbox
+import com.naury.kinetica.ui.KPasswordField
+import com.naury.kinetica.ui.KTextField
+import com.naury.kinetica.ui.KVariant
+import kotlinx.coroutines.delay
 
 @Composable
 fun EmailAuthRoute(onBack: () -> Unit, onCompleted: () -> Unit, viewModel: EmailAuthViewModel = hiltViewModel()) {
@@ -60,7 +53,11 @@ fun EmailAuthRoute(onBack: () -> Unit, onCompleted: () -> Unit, viewModel: Email
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     LaunchedEffect(uiState.isCompleted) {
-        if (uiState.isCompleted) onCompleted()
+        if (uiState.isCompleted) {
+            // 버튼이 체크 표시로 바뀌는 걸 보고 넘어가도록 잠깐 기다린다.
+            delay(SUCCESS_HOLD_MS)
+            onCompleted()
+        }
     }
     EmailAuthScreen(
         uiState = uiState,
@@ -116,25 +113,24 @@ fun EmailAuthScreen(uiState: EmailAuthUiState, actions: EmailAuthActions, modifi
                 selectedIndex = EmailAuthMode.entries.indexOf(uiState.mode),
                 onSelect = { actions.onModeSelected(EmailAuthMode.entries[it]) },
             )
-            ChageunTextField(
+            KTextField(
                 value = uiState.email,
                 onValueChange = actions.onEmailChange,
                 label = stringResource(R.string.account_email_label),
-                singleLine = true,
-                isError = uiState.showFieldErrors && uiState.isEmailInvalid,
-                supportingText = stringResource(R.string.account_error_email_invalid)
+                error = stringResource(R.string.account_error_email_invalid)
                     .takeIf { uiState.showFieldErrors && uiState.isEmailInvalid },
                 keyboardOptions = EmailKeyboard.copy(imeAction = ImeAction.Next),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentType = ContentType.EmailAddress },
+                // KTextField는 modifier를 입력란 바깥 묶음에 붙여 이메일 자동 채우기 종류를 입력란에 달 수 없다.
+                // 비밀번호 칸의 자동 채우기 종류는 KPasswordField가 단다.
+                modifier = Modifier.fillMaxWidth(),
             )
             PasswordField(
                 value = uiState.password,
                 onValueChange = actions.onPasswordChange,
                 label = stringResource(R.string.account_password_label),
-                contentType = if (uiState.isSignUp) ContentType.NewPassword else ContentType.Password,
-                isError = uiState.showFieldErrors && uiState.isPasswordWeak,
+                isNewPassword = uiState.isSignUp,
+                error = stringResource(R.string.account_password_hint)
+                    .takeIf { uiState.showFieldErrors && uiState.isPasswordWeak },
                 supporting = if (uiState.isSignUp) stringResource(R.string.account_password_hint) else null,
                 imeAction = if (uiState.isSignUp) ImeAction.Next else ImeAction.Done,
                 onDone = {
@@ -145,27 +141,23 @@ fun EmailAuthScreen(uiState: EmailAuthUiState, actions: EmailAuthActions, modifi
             if (uiState.isSignUp) {
                 SignUpFields(uiState, actions, onDone = { focusManager.clearFocus() })
             }
-            uiState.error?.let { error ->
-                Text(
-                    authErrorMessage(error),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                )
-            }
-            Button(onClick = actions.onSubmit, enabled = uiState.canSubmit || uiState.isBusy, modifier = ButtonHeight) {
-                ButtonContent(
-                    stringResource(
-                        if (uiState.isSignUp) R.string.account_submit_sign_up else R.string.account_submit_sign_in,
-                    ),
-                    isBusy = uiState.isBusy,
-                )
-            }
+            uiState.error?.let { AccountErrorAlert(authErrorMessage(it)) }
+            AccountPrimaryButton(
+                text = stringResource(
+                    if (uiState.isSignUp) R.string.account_submit_sign_up else R.string.account_submit_sign_in,
+                ),
+                onClick = actions.onSubmit,
+                enabled = uiState.canSubmit || uiState.isBusy || uiState.isCompleted,
+                loading = uiState.isBusy,
+                success = uiState.isCompleted,
+            )
             if (!uiState.isSignUp) {
-                TextButton(
+                KButton(
+                    text = stringResource(R.string.account_forgot_password),
                     onClick = actions.onForgotPassword,
+                    variant = KVariant.Text,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                ) { Text(stringResource(R.string.account_forgot_password)) }
+                )
             }
         }
     }
@@ -178,13 +170,10 @@ private fun SignUpFields(uiState: EmailAuthUiState, actions: EmailAuthActions, o
         value = uiState.passwordConfirm,
         onValueChange = actions.onPasswordConfirmChange,
         label = stringResource(R.string.account_password_confirm_label),
-        contentType = ContentType.NewPassword,
-        isError = uiState.showFieldErrors && uiState.isConfirmMismatch,
-        supporting = if (uiState.showFieldErrors && uiState.isConfirmMismatch) {
-            stringResource(R.string.account_error_password_mismatch)
-        } else {
-            null
-        },
+        isNewPassword = true,
+        error = stringResource(R.string.account_error_password_mismatch)
+            .takeIf { uiState.showFieldErrors && uiState.isConfirmMismatch },
+        supporting = null,
         imeAction = ImeAction.Done,
         onDone = onDone,
     )
@@ -195,42 +184,42 @@ private fun SignUpFields(uiState: EmailAuthUiState, actions: EmailAuthActions, o
     )
 }
 
+/**
+ * 눈 아이콘으로 보이고 숨기는 비밀번호 칸. 앱의 비밀번호 규칙(8자 이상, 글자와 숫자)이 Kinetica 강도 막대·체크리스트 기준과
+ * 달라서 둘 다 끄고, 규칙은 [supporting] 문구로 알린다. 자동 채우기 종류는 [isNewPassword]로 정한다.
+ */
 @Composable
 internal fun PasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    contentType: ContentType,
-    isError: Boolean,
+    isNewPassword: Boolean,
+    error: String?,
     supporting: String?,
     imeAction: ImeAction,
     onDone: () -> Unit,
 ) {
-    var isVisible by rememberSaveable { mutableStateOf(false) }
-    ChageunTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = label,
-        singleLine = true,
-        isError = isError,
-        supportingText = supporting,
-        visualTransformation = if (isVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = imeAction),
-        keyboardActions = KeyboardActions(onDone = { onDone() }),
-        trailingIcon = {
-            IconButton(onClick = { isVisible = !isVisible }) {
-                Icon(
-                    if (isVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = stringResource(
-                        if (isVisible) R.string.account_password_hide else R.string.account_password_show,
-                    ),
-                )
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics { this.contentType = contentType },
-    )
+    Column(Modifier.fillMaxWidth()) {
+        KPasswordField(
+            value = value,
+            onValueChange = onValueChange,
+            label = label,
+            showStrength = false,
+            newPassword = isNewPassword,
+            error = error,
+            imeAction = imeAction,
+            keyboardActions = KeyboardActions(onDone = { onDone() }),
+        )
+        // 오류가 보일 때는 같은 자리에 오류 문구가 나오므로 안내는 숨긴다.
+        if (supporting != null && error == null) {
+            Text(
+                supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = ChageunTheme.spacing.md, vertical = ChageunTheme.spacing.xxs),
+            )
+        }
+    }
 }
 
 @Composable
@@ -239,17 +228,24 @@ private fun PrivacyAgreement(checked: Boolean, onCheckedChange: (Boolean) -> Uni
         Row(
             Modifier
                 .weight(1f)
-                .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+                .clip(MaterialTheme.shapes.small)
+                .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange)
+                .heightIn(min = TOUCH_MIN),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Checkbox(checked = checked, onCheckedChange = null)
+            KCheckbox(checked = checked, onCheckedChange = null)
             Text(
                 stringResource(R.string.account_privacy_agree),
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(start = ChageunTheme.spacing.xs),
             )
         }
-        TextButton(onClick = onOpenPrivacyPolicy) { Text(stringResource(R.string.account_privacy_view)) }
+        KButton(
+            text = stringResource(R.string.account_privacy_view),
+            onClick = onOpenPrivacyPolicy,
+            variant = KVariant.Text,
+            size = KButtonSize.Small,
+        )
     }
 }
 
@@ -287,14 +283,12 @@ private fun PasswordResetDialog(
             null
         } else {
             {
-                ChageunTextField(
+                KTextField(
                     value = state.email,
                     onValueChange = onEmailChange,
                     label = stringResource(R.string.account_email_label),
-                    singleLine = true,
-                    isError = state.error != null,
-                    supportingText = state.error?.let { authErrorMessage(it) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Send),
+                    error = state.error?.let { authErrorMessage(it) },
+                    keyboardOptions = EmailKeyboard.copy(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { onSend() }),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -309,3 +303,6 @@ private val EmailKeyboard = KeyboardOptions(
     autoCorrectEnabled = false,
     hintLocales = LocaleList(Locale("en")),
 )
+
+private const val SUCCESS_HOLD_MS = 700L
+private val TOUCH_MIN = 48.dp

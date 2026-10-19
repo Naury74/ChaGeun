@@ -3,7 +3,6 @@ package com.naury.chageun.feature.account
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudUpload
@@ -11,8 +10,6 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SettingsBackupRestore
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.backup.ImportPreview
 import com.naury.chageun.core.domain.backup.LocalDataSummary
@@ -35,6 +33,12 @@ import com.naury.chageun.core.ui.DialogInfoCard
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ToggleListRow
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KLoadingStyle
+import com.naury.kinetica.ui.KStatus
+import com.naury.kinetica.ui.KStepIndicator
+import com.naury.kinetica.ui.KStepStyle
+import com.naury.kinetica.ui.KVariant
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -72,7 +76,7 @@ internal fun CloudBackupSection(state: CloudBackupUiState, actions: CloudBackupA
             onClick = actions.onBackUpNow,
             enabled = !state.isWorking,
             trailing = if (state.isBackingUp) {
-                { CircularProgressIndicator(Modifier.size(PROGRESS_SIZE), strokeWidth = 2.dp) }
+                { KLoadingIndicator(size = ROW_LOADING_SIZE, style = KLoadingStyle.Dots) }
             } else {
                 null
             },
@@ -110,7 +114,7 @@ internal fun CloudBackupSection(state: CloudBackupUiState, actions: CloudBackupA
 internal fun RestorePicker(state: CloudBackupUiState, actions: CloudBackupActions, onStartFresh: () -> Unit) {
     when {
         !state.isLoaded -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(Modifier.size(PROGRESS_SIZE * 2))
+            KLoadingIndicator(size = LOADING_SIZE)
         }
         state.backups.isEmpty() -> {
             CardGroup(title = null) {
@@ -120,9 +124,11 @@ internal fun RestorePicker(state: CloudBackupUiState, actions: CloudBackupAction
                     body = stringResource(R.string.account_restore_empty_body),
                 )
             }
-            OutlinedButton(onClick = onStartFresh, modifier = ButtonHeight) {
-                Text(stringResource(R.string.account_restore_start_fresh))
-            }
+            AccountPrimaryButton(
+                text = stringResource(R.string.account_restore_start_fresh),
+                onClick = onStartFresh,
+                variant = KVariant.Tonal,
+            )
         }
         else -> CardGroup(stringResource(R.string.account_restore_pick)) {
             state.backups.forEachIndexed { index, backup ->
@@ -181,8 +187,8 @@ internal fun CloudBackupDialogs(state: CloudBackupUiState, actions: CloudBackupA
         )
     }
     when (val step = state.restore) {
-        is RestoreStep.Downloading -> ProgressDialog(stringResource(R.string.account_restore_downloading))
-        is RestoreStep.Restoring -> ProgressDialog(stringResource(R.string.account_restore_restoring))
+        is RestoreStep.Downloading -> ProgressDialog(stringResource(R.string.account_restore_downloading), step = 0)
+        is RestoreStep.Restoring -> ProgressDialog(stringResource(R.string.account_restore_restoring), step = 1)
         is RestoreStep.Confirming -> RestoreConfirmDialog(
             preview = step.preview,
             onConfirm = actions.onConfirmRestore,
@@ -214,15 +220,30 @@ internal fun RestoreConfirmDialog(preview: ImportPreview.Ready, onConfirm: () ->
     }
 }
 
-/** 내려받기·교체 중에는 닫을 수 없다. 교체가 반쯤 된 상태로 화면을 떠나지 않게 한다. */
+/**
+ * 내려받기·교체 중에는 닫을 수 없다. 교체가 반쯤 된 상태로 화면을 떠나지 않게 한다.
+ * 드라이브 복원은 내려받기([step] 0)와 교체(1) 두 단계라 단계 막대로 어디까지 왔는지 보여 준다.
+ * 파일 복원은 교체 한 단계뿐이라 [step]을 넘기지 않는다.
+ */
 @Composable
-internal fun ProgressDialog(message: String) {
+internal fun ProgressDialog(message: String, step: Int? = null) {
     ChageunDialog(title = message, onDismiss = {}, actions = emptyList(), dismissible = false) {
-        CircularProgressIndicator(
-            Modifier
-                .align(Alignment.CenterHorizontally)
-                .size(PROGRESS_SIZE * 2),
+        KLoadingIndicator(
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            size = LOADING_SIZE,
+            label = message,
         )
+        if (step != null) {
+            KStepIndicator(
+                steps = listOf(
+                    stringResource(R.string.account_restore_step_download),
+                    stringResource(R.string.account_restore_step_replace),
+                ),
+                current = step,
+                style = KStepStyle.Bar,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
 
@@ -272,4 +293,14 @@ internal fun backupNoticeMessage(notice: BackupNotice): String = stringResource(
     },
 )
 
-private val PROGRESS_SIZE = 20.dp
+private val ROW_LOADING_SIZE = 28.dp
+private val LOADING_SIZE = 48.dp
+
+/** 백업·복원·삭제가 끝나면 성공, 실패하면 오류 토스트를 띄운다. 새 버전 백업 안내는 경고다. */
+internal fun showBackupNotice(notice: BackupNotice, text: String) {
+    when (notice) {
+        BackupNotice.BackedUp, BackupNotice.Restored, BackupNotice.Deleted -> ChageunToasts.success(text)
+        BackupNotice.NeedsUpdate -> ChageunToasts.show(text, KStatus.Warning)
+        BackupNotice.RestoreFailed, is BackupNotice.Failed -> ChageunToasts.error(text)
+    }
+}
