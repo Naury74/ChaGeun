@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import com.naury.kinetica.ui.KineticaTheme
 
 private val LightColorScheme = lightColorScheme(
     primary = LightTokens.Primary,
@@ -80,8 +81,17 @@ fun ChageunTheme(
             colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
             typography = ChageunTypography,
             shapes = ChageunShapes,
-            content = content,
-        )
+        ) {
+            // Kinetica 컴포넌트(대화상자·시트·세그먼트·스위치)도 차근 색과 글꼴을 쓰게 한다. MaterialTheme 안쪽에 두어야
+            // 일반 clickable의 누름 표시가 Material 물결 대신 모양에 맞춘 옅은 덮개가 된다.
+            KineticaTheme(
+                darkTheme = darkTheme,
+                surface = kineticaSurface(darkTheme),
+                colors = kineticaColors(darkTheme),
+                textStyle = ChageunTypography.bodyLarge,
+                content = content,
+            )
+        }
     }
 }
 

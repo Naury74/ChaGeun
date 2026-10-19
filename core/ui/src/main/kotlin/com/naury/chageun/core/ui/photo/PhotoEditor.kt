@@ -27,7 +27,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -64,6 +63,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.naury.chageun.core.designsystem.component.ChageunSwitch
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.R
@@ -308,7 +308,7 @@ private fun EditorControls(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Switch(checked = highQuality, onCheckedChange = null)
+                ChageunSwitch(checked = highQuality, onCheckedChange = null)
             }
         }
     }

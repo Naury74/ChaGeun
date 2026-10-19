@@ -1,5 +1,6 @@
 package com.naury.chageun.ui
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -39,6 +42,7 @@ fun ChageunRoot(
         ThemeMode.Dark -> true
     }
     val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
+    SystemBarIcons(darkTheme)
 
     ChageunTheme(darkTheme = darkTheme, spacing = spacingFor(windowSizeClass)) {
         // 화면 바탕은 background, 카드와 Hero는 surface를 써서 바탕과 구분한다.
@@ -52,6 +56,22 @@ fun ChageunRoot(
                     ChageunApp(deepLink = deepLink, onDeepLinkHandled = onDeepLinkHandled)
                 }
             }
+        }
+    }
+}
+
+/**
+ * 상태 표시줄·내비게이션 바 아이콘을 앱 테마 밝기에 맞춘다. enableEdgeToEdge는 시스템 다크 모드만 보므로,
+ * 시스템은 라이트인데 앱에서 다크를 고르면 검은 바탕에 검은 아이콘이 남는다.
+ */
+@Composable
+private fun SystemBarIcons(darkTheme: Boolean) {
+    val view = LocalView.current
+    LaunchedEffect(darkTheme) {
+        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+        WindowCompat.getInsetsController(window, view).apply {
+            isAppearanceLightStatusBars = !darkTheme
+            isAppearanceLightNavigationBars = !darkTheme
         }
     }
 }

@@ -1,74 +1,35 @@
 package com.naury.chageun.core.ui
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.dismiss
-import androidx.compose.ui.semantics.paneTitle
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
-import com.naury.chageun.core.designsystem.motion.ChageunMotion
-import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
-import kotlinx.coroutines.launch
+import com.naury.kinetica.ui.KDialog
+import com.naury.kinetica.ui.KSheet
+import com.naury.kinetica.ui.rememberKWindowLayout
 
 /**
- * [ChageunDialog]와 날짜 선택 창이 함께 쓰는 틀. 폰에서는 아래에서 올라오는 시트, 넓은 창에서는 가운데 카드다.
+ * [ChageunDialog]와 날짜·지역 선택 창이 함께 쓰는 틀. 폰에서는 아래에서 올라오는 Kinetica 시트(뒤 화면이 조금 물러나고
+ * 손잡이나 내용을 끌어 닫음), 가로 600dp 이상 창에서는 가운데 카드다. 열린 채 접거나 펴면 그 자리에서 모양이 바뀐다.
  *
- * 시스템 Dialog 창 안에 그리므로 TalkBack 초점이 창 안에 머물고, 테스트에서도 `isDialog()`로 찾을 수 있다.
- * [content]에는 닫는 애니메이션을 시작하는 함수를 넘긴다. 높이는 화면에서 상태 표시줄과 위 여백을 뺀 만큼으로
- * 제한하므로, 안쪽에서 `weight(1f, fill = false)`로 남은 높이를 나눠 쓴다.
+ * 별도 Dialog 창에 그리므로 TalkBack 초점이 창 안에 머물고, 테스트에서도 `isDialog()`로 찾을 수 있다.
+ * [content]에는 닫는 애니메이션을 시작하는 함수를 넘기고, 애니메이션이 끝나면 [onDismiss]를 부른다. 높이는 화면에서
+ * 상태 표시줄과 위 여백을 뺀 만큼으로 제한하므로, 안쪽에서 `weight(1f, fill = false)`로 남은 높이를 나눠 쓴다.
+ *
+ * @param horizontalPadding 판 가장자리에서 내용까지의 여백. 판이 기본으로 두는 24dp보다 작으면 그만큼 내용을 넓힌다.
  */
 @Composable
 internal fun DialogFrame(
@@ -78,157 +39,61 @@ internal fun DialogFrame(
     horizontalPadding: Dp,
     content: @Composable ColumnScope.(close: () -> Unit) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
-    val reduceMotion = rememberReduceMotion()
-    // 0은 닫힘, 1은 열림. 시트 위치, 배경 어둡기, 카드 크기가 모두 이 값을 따른다.
-    val progress = remember { Animatable(if (reduceMotion) 1f else 0f) }
-    // 손으로 끌어 내린 거리(px). 놓았을 때 충분히 내렸으면 닫고, 아니면 제자리로 돌아간다.
-    val drag = remember { Animatable(0f) }
-    var isClosing by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { progress.animateTo(1f, spring(OPEN_DAMPING, Spring.StiffnessMediumLow)) }
-    val close: () -> Unit = {
-        if (!isClosing) {
-            isClosing = true
-            scope.launch {
-                if (!reduceMotion) progress.animateTo(0f, tween(ChageunMotion.SHORT_MS, easing = FastOutSlowInEasing))
-                onDismiss()
-            }
+    var visible by remember { mutableStateOf(true) }
+    val latestOnDismiss by rememberUpdatedState(onDismiss)
+    val close: () -> Unit = { visible = false }
+    val request: () -> Unit = { if (dismissible) close() }
+    val body: @Composable ColumnScope.() -> Unit = {
+        // 별도 창에서는 Material Surface가 없어 글자 색이 검정으로 돌아가므로 판 위 글자 색을 다시 정한다.
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            Column(
+                Modifier
+                    .weight(1f, fill = false)
+                    .bleed(PanelPadding - horizontalPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) { content(close) }
         }
     }
-    Dialog(
-        onDismissRequest = { if (dismissible) close() },
-        properties = DialogProperties(
-            dismissOnBackPress = dismissible,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-        ),
-    ) {
-        // 시스템 기본 어둡게 하기는 애니메이션이 없어 끄고, 직접 그린 배경을 시트와 함께 움직인다.
-        val view = LocalView.current
-        SideEffect { (view.parent as? DialogWindowProvider)?.window?.setDimAmount(0f) }
-        val closeLabel = stringResource(R.string.dialog_close)
-        val paneModifier = Modifier.semantics {
-            this.paneTitle = paneTitle
-            if (dismissible) {
-                dismiss(closeLabel) {
-                    close()
-                    true
-                }
-            }
-        }
-        BoxWithConstraints(Modifier.fillMaxSize()) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { alpha = progress.value }
-                    .background(Color.Black.copy(alpha = SCRIM_ALPHA))
-                    // 바깥 누르기는 손가락으로 닫는 방법이다. TalkBack에서는 창의 닫기 동작과 뒤로 가기로 닫는다.
-                    .pointerInput(dismissible) { if (dismissible) detectTapGestures { close() } },
-            )
-            if (maxWidth >= WIDE_BREAKPOINT) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.safeDrawing.union(WindowInsets.ime))
-                        .padding(CARD_MARGIN),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        paneModifier
-                            .widthIn(max = CARD_MAX_WIDTH)
-                            .graphicsLayer {
-                                val scale = CARD_START_SCALE + (1f - CARD_START_SCALE) * progress.value
-                                scaleX = scale
-                                scaleY = scale
-                                alpha = progress.value
-                            }
-                            .shadow(SHADOW, MaterialTheme.shapes.extraLarge)
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .blockClicks()
-                            .padding(horizontal = horizontalPadding)
-                            .padding(top = CARD_TOP_PADDING, bottom = BOTTOM_PADDING),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) { content(close) }
-                }
-            } else {
-                val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-                val density = LocalDensity.current
-                Column(
-                    paneModifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .heightIn(max = maxHeight - statusBar - SHEET_TOP_GAP)
-                        .graphicsLayer {
-                            // 열릴 때는 아래에서 올라오고, 끄는 동안은 손가락을 따라 내려간다.
-                            translationY = (1f - progress.value) * size.height + drag.value
-                        }
-                        .shadow(SHADOW, SheetShape)
-                        .clip(SheetShape)
-                        .background(MaterialTheme.colorScheme.surface)
-                        .blockClicks()
-                        .draggable(
-                            enabled = dismissible,
-                            orientation = Orientation.Vertical,
-                            state = rememberDraggableState { delta ->
-                                scope.launch { drag.snapTo((drag.value + delta).coerceAtLeast(0f)) }
-                            },
-                            onDragStopped = { velocity ->
-                                val threshold = with(density) { DISMISS_DRAG.toPx() }
-                                if (drag.value > threshold || velocity > DISMISS_VELOCITY) {
-                                    close()
-                                } else {
-                                    drag.animateTo(0f, spring(dampingRatio = RETURN_DAMPING))
-                                }
-                            },
-                        )
-                        // 키보드가 올라오면 시트 안쪽이 그만큼 줄어 입력 칸과 버튼이 키보드 위에 남는다.
-                        .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-                        .padding(horizontal = horizontalPadding)
-                        .padding(top = HANDLE_TOP_PADDING, bottom = BOTTOM_PADDING),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    // 끌어서 닫을 수 있다는 손잡이. 같은 동작은 TalkBack의 닫기 동작으로도 할 수 있어 읽지 않는다.
-                    Box(
-                        Modifier
-                            .width(HANDLE_WIDTH)
-                            .height(HANDLE_HEIGHT)
-                            .background(
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = HANDLE_ALPHA),
-                                CircleShape,
-                            ),
-                    )
-                    Spacer(Modifier.height(HANDLE_GAP))
-                    content(close)
-                }
-            }
-        }
+    if (rememberKWindowLayout().isCompact) {
+        KSheet(
+            visible = visible,
+            onDismissRequest = request,
+            title = paneTitle,
+            onDismissed = { latestOnDismiss() },
+            dragToDismiss = dismissible,
+            content = body,
+        )
+    } else {
+        KDialog(
+            visible = visible,
+            onDismissRequest = request,
+            modifier = Modifier.fillMaxWidth(),
+            title = paneTitle,
+            onDismissed = { latestOnDismiss() },
+            appearScale = CARD_START_SCALE,
+            content = body,
+        )
     }
 }
 
-/**
- * 창 안을 누른 것이 바깥 배경의 닫기로 이어지지 않게 막는다. clickable을 쓰면 창 전체가 TalkBack에서
- * 하나의 버튼으로 묶이므로 semantics 없이 누름만 받는다.
- */
-private fun Modifier.blockClicks(): Modifier = pointerInput(Unit) { detectTapGestures {} }
+/** 판의 좌우 여백을 [amount]만큼 덜어 내용을 판 가장자리 쪽으로 넓힌다. 0 이하면 그대로 둔다. */
+internal fun Modifier.bleed(amount: Dp): Modifier = if (amount <= 0.dp) {
+    this
+} else {
+    layout { measurable, constraints ->
+        val extra = (amount * 2).roundToPx()
+        val wider = if (constraints.hasBoundedWidth) {
+            constraints.copy(minWidth = constraints.minWidth + extra, maxWidth = constraints.maxWidth + extra)
+        } else {
+            constraints
+        }
+        val placeable = measurable.measure(wider)
+        layout((placeable.width - extra).coerceAtLeast(0), placeable.height) { placeable.place(-amount.roundToPx(), 0) }
+    }
+}
 
-private val SheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
-private val WIDE_BREAKPOINT = 600.dp
-private val CARD_MAX_WIDTH = 440.dp
-private val CARD_MARGIN = 24.dp
-private val CARD_TOP_PADDING = 28.dp
-private val HANDLE_TOP_PADDING = 10.dp
-private val BOTTOM_PADDING = 20.dp
-private val HANDLE_WIDTH = 36.dp
-private val HANDLE_HEIGHT = 5.dp
-private val HANDLE_GAP = 18.dp
-private val SHEET_TOP_GAP = 48.dp
-private val SHADOW = 24.dp
-private val DISMISS_DRAG = 96.dp
-private const val DISMISS_VELOCITY = 1800f
-private const val SCRIM_ALPHA = 0.45f
-private const val HANDLE_ALPHA = 0.35f
+/** Kinetica 시트와 카드가 내용 둘레에 두는 기본 여백. */
+internal val PanelPadding = 24.dp
+
+// 누른 자리에서 튀어나오기보다 거의 제 크기로 나타나게 한다. 예전 차근 카드와 같은 값이다.
 private const val CARD_START_SCALE = 0.94f
-private const val OPEN_DAMPING = 0.86f
-private const val RETURN_DAMPING = 0.8f
