@@ -1,5 +1,8 @@
 package com.naury.chageun.feature.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +21,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -43,8 +53,8 @@ import com.naury.chageun.core.ui.upcomingEventStatus
 import com.naury.chageun.core.ui.upcomingEventTitle
 import com.naury.kinetica.ui.KVariant
 import com.naury.kinetica.ui.glowBorder
-import com.naury.kinetica.ui.sparkle
 import java.time.LocalDate
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun MileagePromptCard(onUpdate: () -> Unit, modifier: Modifier = Modifier) {
@@ -124,12 +134,20 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
 internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
     val ai = ChageunTheme.colors.ai
     val shape = MaterialTheme.shapes.large
-    // Apple Intelligence처럼 가장자리를 따라 색이 천천히 돈다. 번짐이 잘리지 않게 카드 바깥 여백 안에서 그린다.
+    // 홈을 열면 Apple Intelligence처럼 가장자리를 따라 색이 몇 바퀴 돌다가 옅어지고, 같은 색의 멈춘 테두리만 남는다.
+    // 계속 돌리면 매 프레임 화면이 바뀌어 위에 떠 있는 글래스 탭 바가 블러를 다시 하느라 끊긴다.
+    var glowing by rememberSaveable { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(AI_GLOW_MS)
+        glowing = false
+    }
+    val glow by animateFloatAsState(if (glowing) AI_GLOW_INTENSITY else 0f, tween(AI_GLOW_FADE_MS), label = "ai-glow")
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .pressableCard(shape, onAskAi)
-            .glowBorder(shape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = AI_GLOW_INTENSITY),
+            .glowBorder(shape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = glow),
+        border = BorderStroke(AI_BORDER_WIDTH, Brush.linearGradient(AiBorderColors)),
         shape = shape,
         color = ai.container,
         contentColor = ai.content,
@@ -142,7 +160,6 @@ internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) 
             Box(
                 Modifier
                     .size(44.dp)
-                    .sparkle(color = ai.content, count = AI_SPARKLES, starSize = AI_SPARKLE_SIZE)
                     .background(ai.content, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
@@ -213,5 +230,11 @@ private fun TextAction(text: String, onClick: () -> Unit) {
 private val AI_GLOW_WIDTH = 2.dp
 private val AI_GLOW_BLUR = 10.dp
 private const val AI_GLOW_INTENSITY = 0.85f
-private const val AI_SPARKLES = 4
-private val AI_SPARKLE_SIZE = 8.dp
+private val AI_BORDER_WIDTH = 1.5.dp
+
+// 빛이 도는 시간과 옅어지는 시간. 두어 바퀴 돌고 멈춘다.
+private const val AI_GLOW_MS = 6_000L
+private const val AI_GLOW_FADE_MS = 1_200
+
+// 빛이 멈춘 뒤에도 AI 입구임을 알 수 있게 남기는 테두리 색. 빛과 같은 파랑·보라·분홍 계열이다.
+private val AiBorderColors = listOf(Color(0xFF4F7DF3), Color(0xFF9B72CB), Color(0xFFD96570))

@@ -71,9 +71,6 @@ import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
 import com.naury.kinetica.ui.KSurface
 import com.naury.kinetica.ui.RollingText
-import com.naury.kinetica.ui.glassBackdrop
-import com.naury.kinetica.ui.motionTilt
-import com.naury.kinetica.ui.rememberGlassBackdrop
 
 /**
  * Hero 바탕 하늘의 색을 바꿀 때 쓴다. [top]은 맨 위 하늘색, [glow]는 오른쪽 위의 햇빛 번짐이다.
@@ -116,12 +113,10 @@ fun VehicleHeroSection(
     sky: HeroSky? = null,
     skyOverlay: (@Composable () -> Unit)? = null,
 ) {
-    val backdrop = rememberGlassBackdrop()
     val skyTop = sky?.top ?: ChageunTheme.colors.heroSky
-    val glass = remember(backdrop, skyTop) { HeroGlass(heroGlassSurface(skyTop), backdrop) }
+    val glass = remember(skyTop) { HeroGlass(heroGlassSurface(skyTop)) }
     Box(modifier.fillMaxWidth()) {
-        // 하늘과 날씨 장식만 기록해 요약 카드와 버튼이 그 위에서 블러로 비추게 한다. 차 사진과 글자는 기록하지 않는다.
-        Box(Modifier.matchParentSize().glassBackdrop(backdrop).skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
+        Box(Modifier.matchParentSize().skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
             skyOverlay?.invoke()
         }
         CompositionLocalProvider(LocalHeroGlass provides glass) {
@@ -229,7 +224,6 @@ private fun HeroStatsCard(stats: List<HeroStat>, footnote: String?) {
             .padding(top = ChageunTheme.spacing.xs),
         shape = MaterialTheme.shapes.large,
         surface = glass.surface,
-        backdrop = glass.backdrop,
     ) {
         CompositionLocalProvider(LocalContentColor provides ink) { HeroStatsContent(stats, footnote, ink) }
     }
@@ -360,8 +354,6 @@ private fun HeroImage(photoPath: String?, bodyType: VehicleBodyType) {
     }
     AnimatedContent(
         targetState = visual,
-        // 기기를 기울이면 차가 살짝 따라 기운다. 투명한 바탕에 빛 번짐이 보이지 않게 반사는 끈다.
-        modifier = Modifier.motionTilt(HERO_TILT_DEGREES, shine = 0f),
         transitionSpec = { fadeIn(fade) togetherWith fadeOut(fade) using SizeTransform(clip = false) },
         contentAlignment = Alignment.Center,
         label = "hero-image",
@@ -521,7 +513,6 @@ private const val SECONDARY_ALPHA = 0.7f
 private val STAT_VALUE_SIZE = 20.sp
 private val STAT_VALUE_MIN_SIZE = 12.sp
 private const val STAT_VALUE_STEP = 1f
-private const val HERO_TILT_DEGREES = 4f
 
 private val PREVIEW_STATS = listOf(
     HeroStat("Mileage", "42,180", "km"),
