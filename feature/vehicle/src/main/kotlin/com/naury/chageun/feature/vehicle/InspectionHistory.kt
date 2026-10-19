@@ -8,10 +8,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,19 +43,15 @@ internal fun InspectionHistory(history: List<InspectionRecord>) {
         )
         InspectionRecordRow(latest, emphasized = true)
         if (past.isEmpty()) return@Column
-        TextButton(onClick = { isExpanded = !isExpanded }) {
-            Text(
-                if (isExpanded) {
-                    stringResource(R.string.vehicle_inspection_past_hide)
-                } else {
-                    pluralStringResource(R.plurals.vehicle_inspection_past_show, past.size, past.size)
-                },
-            )
-            Icon(
-                if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = null,
-            )
-        }
+        TextAction(
+            if (isExpanded) {
+                stringResource(R.string.vehicle_inspection_past_hide)
+            } else {
+                pluralStringResource(R.plurals.vehicle_inspection_past_show, past.size, past.size)
+            },
+            onClick = { isExpanded = !isExpanded },
+            trailingIcon = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+        )
         if (isExpanded) past.forEach { InspectionRecordRow(it, emphasized = false) }
     }
 }

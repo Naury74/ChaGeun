@@ -4,22 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +38,7 @@ import com.naury.chageun.core.model.Kilometers
 import com.naury.chageun.core.ui.ChageunDatePickerDialog
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.chageun.core.ui.formatDate
+import com.naury.kinetica.ui.KVariant
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -80,14 +76,14 @@ internal fun InspectionCard(
             if (schedule == null) {
                 Text(stringResource(R.string.vehicle_inspection_empty), style = MaterialTheme.typography.bodyMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    FilledTonalButton(onClick = { isPickerOpen = true }) {
-                        Icon(Icons.Filled.Event, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                        Text(stringResource(R.string.vehicle_inspection_add))
-                    }
-                    TextButton(onClick = { isCompleting = true }) {
-                        Text(stringResource(R.string.vehicle_inspection_complete))
-                    }
+                    ActionButton(
+                        stringResource(R.string.vehicle_inspection_add),
+                        onClick = { isPickerOpen = true },
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                        variant = KVariant.Tonal,
+                        icon = Icons.Filled.Event,
+                    )
+                    TextAction(stringResource(R.string.vehicle_inspection_complete), { isCompleting = true })
                 }
             } else {
                 Column(Modifier.semantics(mergeDescendants = true) {}) {
@@ -104,17 +100,15 @@ internal fun InspectionCard(
                     )
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    FilledTonalButton(onClick = { isCompleting = true }) {
-                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                        Text(stringResource(R.string.vehicle_inspection_complete))
-                    }
-                    TextButton(onClick = { isPickerOpen = true }) {
-                        Text(stringResource(R.string.vehicle_inspection_change))
-                    }
-                    TextButton(onClick = { onDateSelected(null) }) {
-                        Text(stringResource(R.string.vehicle_inspection_clear))
-                    }
+                    ActionButton(
+                        stringResource(R.string.vehicle_inspection_complete),
+                        onClick = { isCompleting = true },
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                        variant = KVariant.Tonal,
+                        icon = Icons.Filled.Check,
+                    )
+                    TextAction(stringResource(R.string.vehicle_inspection_change), { isPickerOpen = true })
+                    TextAction(stringResource(R.string.vehicle_inspection_clear), { onDateSelected(null) })
                 }
             }
             InspectionHistory(history)

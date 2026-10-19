@@ -2,17 +2,12 @@ package com.naury.chageun.feature.vehicle
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.Event
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +15,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
@@ -34,6 +28,7 @@ import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.QuickDateField
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.labelRes
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 
 data class InspectionCompletion(
@@ -89,11 +84,14 @@ internal fun CompleteInspectionDialog(
             }
         }
         FormLabel(stringResource(R.string.vehicle_inspection_complete_next))
-        OutlinedButton(onClick = { isPickingNextDue = true }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.Event, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(ChageunTheme.spacing.xs))
-            Text(formatDate(nextDue))
-        }
+        ActionButton(
+            formatDate(nextDue),
+            onClick = { isPickingNextDue = true },
+            modifier = Modifier.minimumInteractiveComponentSize(),
+            variant = KVariant.Outlined,
+            icon = Icons.Filled.Event,
+            fullWidth = true,
+        )
         Text(
             stringResource(R.string.vehicle_inspection_complete_next_hint),
             style = MaterialTheme.typography.bodySmall,
