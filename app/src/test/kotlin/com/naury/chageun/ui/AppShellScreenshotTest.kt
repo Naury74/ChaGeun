@@ -58,6 +58,8 @@ class AppShellScreenshotTest {
     val composeRule = createComposeRule()
 
     private fun capture(name: String, hinge: Hinge? = null) {
+        // 시계를 멈추고 정해진 만큼만 흘린다. AI 카드 빛처럼 도는 효과가 어느 컴퓨터에서 찍어도 같은 순간에 찍힌다.
+        composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             val windowSizeClass = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
             AppFrame(spacingFor(windowSizeClass)) {
@@ -71,9 +73,9 @@ class AppShellScreenshotTest {
                 }
             }
         }
-        // 레일 선택 표시가 옮겨 가고 홈 카드가 차례로 떠오르는 애니메이션이 끝난 뒤에 찍어야 기준 이미지가 매번 같다.
-        composeRule.mainClock.advanceTimeBy(SETTLE_MS)
+        // 레일 선택 표시가 옮겨 가고 홈 카드가 차례로 떠오르는 애니메이션이 끝난 뒤에 찍는다.
         composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeBy(SETTLE_MS)
         composeRule.captureScreen(name)
     }
 
