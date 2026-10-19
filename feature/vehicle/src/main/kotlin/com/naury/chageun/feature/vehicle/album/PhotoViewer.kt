@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -63,6 +64,10 @@ import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.rememberFileImage
+import com.naury.kinetica.ui.GlassBackdrop
+import com.naury.kinetica.ui.glassBackdrop
+import com.naury.kinetica.ui.kSurface
+import com.naury.kinetica.ui.rememberGlassBackdrop
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -109,30 +114,34 @@ internal fun PhotoViewer(
     var topBarHeight by remember { mutableIntStateOf(0) }
     var bottomBarHeight by remember { mutableIntStateOf(0) }
     val frame = animateCardFrame(chrome.isShown, topBarHeight, bottomBarHeight, isPeeking = photos.size > 1)
+    val backdrop = rememberGlassBackdrop()
     ChageunTheme(darkTheme = true, spacing = ChageunTheme.spacing) {
         Box(modifier.background(Color.Black).clipToBounds()) {
-            BlurredBackdrop(current, Modifier.graphicsLayer { alpha = 1f - dismiss.progress })
-            HorizontalPager(
-                state = pager,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(dismiss.modifier),
-                contentPadding = PaddingValues(horizontal = frame.peek),
-                pageSpacing = PAGE_GAP,
-                key = { photos[it].id },
-            ) { page ->
-                // 확대는 지금 사진에만 걸린다. 옆 사진은 넘겨 오는 동안 늘 원래 크기로 보인다.
-                val idle = remember { PhotoZoomState() }
-                ViewerPage(
-                    photo = photos[page],
-                    frame = frame.card,
-                    pageOffset = { (pager.currentPage - page) + pager.currentPageOffsetFraction },
-                    zoom = if (page == pager.currentPage) zoom else idle,
-                    isCurrent = page == pager.currentPage,
-                    showInfo = page == pager.currentPage && chrome.isShown,
-                    info = { PhotoInfoOverlay(photos[page], actions) },
-                    onTap = chrome.toggle,
-                )
+            // 흐린 바탕과 사진 넘김 영역을 기록해 아래 조작 막대가 그 위에서 블러로 비추게 한다. 막대 자신은 기록 밖에 둔다.
+            Box(Modifier.fillMaxSize().glassBackdrop(backdrop)) {
+                BlurredBackdrop(current, Modifier.graphicsLayer { alpha = 1f - dismiss.progress })
+                HorizontalPager(
+                    state = pager,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(dismiss.modifier),
+                    contentPadding = PaddingValues(horizontal = frame.peek),
+                    pageSpacing = PAGE_GAP,
+                    key = { photos[it].id },
+                ) { page ->
+                    // 확대는 지금 사진에만 걸린다. 옆 사진은 넘겨 오는 동안 늘 원래 크기로 보인다.
+                    val idle = remember { PhotoZoomState() }
+                    ViewerPage(
+                        photo = photos[page],
+                        frame = frame.card,
+                        pageOffset = { (pager.currentPage - page) + pager.currentPageOffsetFraction },
+                        zoom = if (page == pager.currentPage) zoom else idle,
+                        isCurrent = page == pager.currentPage,
+                        showInfo = page == pager.currentPage && chrome.isShown,
+                        info = { PhotoInfoOverlay(photos[page], actions) },
+                        onTap = chrome.toggle,
+                    )
+                }
             }
             val chromeAlpha = Modifier.graphicsLayer { alpha = 1f - dismiss.progress * 2f }
             AnimatedVisibility(
@@ -172,6 +181,7 @@ internal fun PhotoViewer(
                     index = pager.currentPage,
                     actions = actions,
                     onJump = { scope.launch { pager.animateScrollToPage(it) } },
+                    backdrop = backdrop,
                     modifier = Modifier.onSizeChanged { bottomBarHeight = it.height },
                 )
             }
@@ -219,11 +229,13 @@ private fun ViewerBottomBar(
     index: Int,
     actions: AlbumActions,
     onJump: (Int) -> Unit,
+    backdrop: GlassBackdrop,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier
             .fillMaxWidth()
+            .kSurface(VIEWER_BAR, RectangleShape, backdrop)
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
             .padding(top = ChageunTheme.spacing.xs, bottom = ChageunTheme.spacing.sm),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
