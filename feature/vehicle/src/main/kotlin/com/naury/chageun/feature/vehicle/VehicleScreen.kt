@@ -12,11 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,7 +24,6 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Campaign
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EditNote
@@ -43,15 +39,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.Style
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -105,6 +97,10 @@ import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
 import com.naury.chageun.feature.vehicle.album.VideoDurationBadge
 import com.naury.chageun.feature.vehicle.edit.VehicleEditHost
+import com.naury.kinetica.ui.KFilterChip
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 import java.io.File
 import java.time.LocalDate
 import kotlinx.coroutines.launch
@@ -197,7 +193,7 @@ fun VehicleScreen(
 ) {
     val state = uiState as? VehicleUiState.Content
     if (state == null) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { KLoadingIndicator() }
         return
     }
     val spacing = ChageunTheme.spacing
@@ -343,7 +339,7 @@ private fun Hero(
                 )
             }
         },
-        stats = listOf(mileageHeroStat(current?.mileage?.value), inspectionHeroStat(state.inspection)),
+        stats = listOf(mileageHeroStat(rollingMileage(current?.mileage?.value)), inspectionHeroStat(state.inspection)),
         // 큰 제목 아래에서 시작하므로 하늘이 위에서 서서히 나타나게 한다.
         skyFromTop = false,
         // 옆 칸과 나란히 놓이면 하늘 바탕이 칸 끝에서 끊겨 보이지 않게 흐린다.
@@ -356,10 +352,13 @@ private fun Hero(
                     horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                     verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 ) {
-                    FilledTonalButton(onClick = onUpdateMileage) {
-                        ButtonIcon(Icons.Filled.Speed)
-                        Text(stringResource(R.string.vehicle_update_mileage))
-                    }
+                    ActionButton(
+                        stringResource(R.string.vehicle_update_mileage),
+                        onClick = onUpdateMileage,
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                        variant = KVariant.Tonal,
+                        icon = Icons.Filled.Speed,
+                    )
                     PhotoButtons(state, photoActions)
                 }
                 if (state.isPhotoImportFailed) {
@@ -376,34 +375,25 @@ private fun Hero(
 
 @Composable
 private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoActions) {
-    OutlinedButton(onClick = actions.onPick) {
-        ButtonIcon(Icons.Filled.AddAPhoto)
-        Text(stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change))
-    }
+    ActionButton(
+        stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change),
+        onClick = actions.onPick,
+        modifier = Modifier.minimumInteractiveComponentSize(),
+        variant = KVariant.Outlined,
+        icon = Icons.Filled.AddAPhoto,
+    )
     if (state.photoPath != null) {
         // 사진을 넣은 뒤에도 원본과 배경을 지운 모습을 바로 바꿔 볼 수 있다.
-        FilterChip(
+        KFilterChip(
+            stringResource(R.string.vehicle_photo_background_toggle),
             selected = state.isBackgroundRemovalEnabled,
-            onClick = { actions.onBackgroundRemovalChanged(!state.isBackgroundRemovalEnabled) },
-            label = { Text(stringResource(R.string.vehicle_photo_background_toggle)) },
-            leadingIcon = if (state.isBackgroundRemovalEnabled) {
-                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-            } else {
-                null
-            },
-            modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+            onSelectedChange = actions.onBackgroundRemovalChanged,
+            variant = KVariant.Outlined,
+            minTouchTarget = true,
         )
-        actions.onEdit?.let {
-            TextButton(onClick = it) { Text(stringResource(R.string.vehicle_photo_edit)) }
-        }
-        TextButton(onClick = actions.onRemove) { Text(stringResource(R.string.vehicle_photo_remove)) }
+        actions.onEdit?.let { TextAction(stringResource(R.string.vehicle_photo_edit), it) }
+        TextAction(stringResource(R.string.vehicle_photo_remove), actions.onRemove, tone = KTone.Destructive)
     }
-}
-
-@Composable
-private fun ButtonIcon(icon: ImageVector) {
-    Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
-    Spacer(Modifier.width(ChageunTheme.spacing.xs))
 }
 
 @Composable
@@ -528,20 +518,16 @@ private fun MileageLog(log: List<MileageEntry>) {
         }
         if (log.size > MILEAGE_PREVIEW) {
             GroupDivider()
-            TextButton(
+            TextAction(
+                if (isExpanded) {
+                    stringResource(R.string.vehicle_mileage_show_less)
+                } else {
+                    stringResource(R.string.vehicle_mileage_show_all, log.size)
+                },
                 onClick = { isExpanded = !isExpanded },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = ChageunTheme.spacing.xs),
-            ) {
-                Text(
-                    if (isExpanded) {
-                        stringResource(R.string.vehicle_mileage_show_less)
-                    } else {
-                        stringResource(R.string.vehicle_mileage_show_all, log.size)
-                    },
-                )
-            }
+                modifier = Modifier.padding(horizontal = ChageunTheme.spacing.xs),
+                fullWidth = true,
+            )
         }
     }
 }

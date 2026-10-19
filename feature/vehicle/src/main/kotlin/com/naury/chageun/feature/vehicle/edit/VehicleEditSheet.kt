@@ -15,11 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +36,12 @@ import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.VehicleInfoField
 import com.naury.chageun.core.ui.VehicleInfoFields
+import com.naury.chageun.feature.vehicle.ActionButton
 import com.naury.chageun.feature.vehicle.R
+import com.naury.chageun.feature.vehicle.TextAction
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 
 /** Compact 창에서는 Bottom Sheet, 그 외에는 너비를 제한한 Dialog로 띄운다. 저장하면 스스로 닫힌다. */
@@ -88,7 +90,7 @@ data class VehicleEditActions(
 fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions, modifier: Modifier = Modifier) {
     if (!uiState.isLoaded) {
         Box(modifier.fillMaxWidth().padding(ChageunTheme.spacing.xl), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            KLoadingIndicator()
         }
         return
     }
@@ -139,16 +141,25 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
         }
         PlateSection(uiState, actions)
         Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-            TextButton(onClick = actions.onDismiss, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.vehicle_edit_cancel))
-            }
-            Button(
-                onClick = actions.onSave,
-                enabled = !uiState.isSaving,
+            ActionButton(
+                stringResource(R.string.vehicle_edit_cancel),
+                onClick = actions.onDismiss,
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) { Text(stringResource(R.string.vehicle_edit_save)) }
+                variant = KVariant.Text,
+                fullWidth = true,
+            )
+            // 저장하는 동안 버튼 안에서 링이 돌고, 그동안은 다시 누를 수 없다.
+            ActionButton(
+                stringResource(R.string.vehicle_edit_save),
+                onClick = actions.onSave,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                loading = uiState.isSaving,
+                fullWidth = true,
+            )
         }
     }
 }
@@ -169,9 +180,7 @@ private fun FirstRegistrationSection(date: LocalDate?, onChanged: (LocalDate?) -
             modifier = Modifier.weight(1f),
         )
         if (date != null) {
-            TextButton(onClick = { onChanged(null) }) {
-                Text(stringResource(R.string.vehicle_edit_first_registration_clear))
-            }
+            TextAction(stringResource(R.string.vehicle_edit_first_registration_clear), { onChanged(null) })
         }
     }
 }
@@ -187,7 +196,7 @@ private fun PlateSection(uiState: VehicleEditUiState, actions: VehicleEditAction
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = actions.onKeepPlate) { Text(stringResource(R.string.vehicle_edit_plate_undo)) }
+            TextAction(stringResource(R.string.vehicle_edit_plate_undo), actions.onKeepPlate)
         }
         return
     }
@@ -204,7 +213,11 @@ private fun PlateSection(uiState: VehicleEditUiState, actions: VehicleEditAction
         modifier = Modifier.fillMaxWidth(),
     )
     if (uiState.currentPlateMasked != null) {
-        TextButton(onClick = actions.onRemovePlate) { Text(stringResource(R.string.vehicle_edit_plate_remove)) }
+        TextAction(
+            stringResource(R.string.vehicle_edit_plate_remove),
+            actions.onRemovePlate,
+            tone = KTone.Destructive,
+        )
     }
 }
 

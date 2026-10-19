@@ -5,24 +5,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -43,6 +37,10 @@ import com.naury.chageun.core.ui.QuickPick
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
+import com.naury.kinetica.ui.KAssistChip
+import com.naury.kinetica.ui.KLoadingIndicator
+import com.naury.kinetica.ui.KLoadingStyle
+import com.naury.kinetica.ui.KVariant
 
 /** Home과 My car가 하나의 진입점을 공유하도록 앱 셸에서 띄운다. */
 @Composable
@@ -54,7 +52,13 @@ fun MileageUpdateHost(
     viewModel: MileageUpdateViewModel = hiltViewModel(key = "mileage-update-$sessionKey"),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(uiState.isSaved) { if (uiState.isSaved) onDismiss() }
+    val savedMessage = stringResource(R.string.home_mileage_saved)
+    LaunchedEffect(uiState.isSaved) {
+        if (!uiState.isSaved) return@LaunchedEffect
+        // 시트가 닫히면 저장됐는지 알 수 없으므로 위에서 짧게 알려 준다.
+        ChageunToasts.success(savedMessage)
+        onDismiss()
+    }
     // 편집기에서 계기판 숫자 부분만 남기도록 잘라 내면 더 잘 읽힌다.
     val photoInput = rememberPhotoInputState()
     PhotoInput(photoInput, maxItems = 1, onPhotos = { uris, _ -> uris.firstOrNull()?.let(viewModel::readDashboard) })
@@ -128,23 +132,36 @@ internal fun MileageUpdateContent(
                         stringResource(R.string.home_mileage_lower, formatNumber(lowerThan.value)),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    Button(onClick = onConfirmCorrection, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.home_mileage_save_correction))
-                    }
+                    ActionButton(
+                        stringResource(R.string.home_mileage_save_correction),
+                        onClick = onConfirmCorrection,
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                        loading = uiState.isSaving,
+                        fullWidth = true,
+                    )
                 }
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.home_cancel))
-                }
-                Button(
-                    onClick = onSave,
-                    enabled = !uiState.isSaving,
+                ActionButton(
+                    stringResource(R.string.home_cancel),
+                    onClick = onDismiss,
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.home_save)) }
+                    variant = KVariant.Text,
+                    fullWidth = true,
+                )
+                // 저장하는 동안 버튼 폭은 그대로 두고 안에서 링이 돈다. 그동안은 다시 누를 수 없다.
+                ActionButton(
+                    stringResource(R.string.home_save),
+                    onClick = onSave,
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                    loading = uiState.isSaving,
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -160,7 +177,7 @@ private fun DashboardRead(
 ) {
     when (state) {
         DashboardReadState.Reading -> Row(verticalAlignment = Alignment.CenterVertically) {
-            CircularProgressIndicator(Modifier.size(DASHBOARD_PROGRESS_SIZE), strokeWidth = 2.dp)
+            KLoadingIndicator(style = KLoadingStyle.Orbit, size = DASHBOARD_PROGRESS_SIZE)
             Text(
                 stringResource(R.string.home_dashboard_reading),
                 style = MaterialTheme.typography.bodyMedium,
@@ -175,11 +192,11 @@ private fun DashboardRead(
             if (state.others.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
                     (listOf(state.best) + state.others).forEach { candidate ->
-                        AssistChip(
+                        KAssistChip(
+                            stringResource(R.string.home_mileage_value, formatNumber(candidate.value)),
                             onClick = { onPick(candidate.value.toString()) },
-                            label = {
-                                Text(stringResource(R.string.home_mileage_value, formatNumber(candidate.value)))
-                            },
+                            modifier = Modifier.minimumInteractiveComponentSize(),
+                            variant = KVariant.Outlined,
                         )
                     }
                 }
@@ -206,7 +223,12 @@ private fun DashboardRead(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onRetry) { Text(stringResource(R.string.home_dashboard_retry)) }
+            ActionButton(
+                stringResource(R.string.home_dashboard_retry),
+                onClick = onRetry,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+                variant = KVariant.Text,
+            )
         }
         DashboardReadState.Unavailable -> Text(
             stringResource(R.string.home_dashboard_unavailable),
@@ -217,17 +239,18 @@ private fun DashboardRead(
     }
     // 읽거나 모델을 내려받는 동안에는 다른 사진을 고르지 않게 한다.
     if (state != DashboardReadState.Reading && state !is DashboardReadState.DownloadingModel) {
-        OutlinedButton(onClick = onRead, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Filled.PhotoCamera, contentDescription = null, modifier = Modifier.size(18.dp))
-            Text(
-                stringResource(R.string.home_dashboard_button),
-                modifier = Modifier.padding(start = ChageunTheme.spacing.xs),
-            )
-        }
+        ActionButton(
+            stringResource(R.string.home_dashboard_button),
+            onClick = onRead,
+            modifier = Modifier.minimumInteractiveComponentSize(),
+            variant = KVariant.Outlined,
+            icon = Icons.Filled.PhotoCamera,
+            fullWidth = true,
+        )
     }
 }
 
 /** 마지막 기록 이후 흔히 달리는 거리. 칩을 누르면 마지막 값에 더한 주행거리가 채워진다. */
 private val MILEAGE_STEPS = listOf(100L, 300L, 500L, 1_000L)
 
-private val DASHBOARD_PROGRESS_SIZE = 18.dp
+private val DASHBOARD_PROGRESS_SIZE = 20.dp

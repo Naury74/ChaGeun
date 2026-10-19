@@ -16,7 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.StatusBadge
-import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.UpcomingEvent
@@ -41,6 +40,9 @@ import com.naury.chageun.core.ui.timelineTitle
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.core.ui.upcomingEventStatus
 import com.naury.chageun.core.ui.upcomingEventTitle
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.glowBorder
+import com.naury.kinetica.ui.sparkle
 import java.time.LocalDate
 
 @Composable
@@ -48,7 +50,7 @@ internal fun MileagePromptCard(onUpdate: () -> Unit, modifier: Modifier = Modifi
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .pressable(onClick = onUpdate),
+            .pressableCard(MaterialTheme.shapes.large, onUpdate),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
@@ -77,9 +79,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                     .weight(1f)
                     .semantics { heading() },
             )
-            if (records.isNotEmpty()) {
-                TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.home_recent_all)) }
-            }
+            if (records.isNotEmpty()) TextAction(stringResource(R.string.home_recent_all), onOpenHistory)
         }
         if (records.isEmpty()) {
             Text(
@@ -87,7 +87,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.home_recent_add)) }
+            TextAction(stringResource(R.string.home_recent_add), onOpenHistory)
         }
         records.forEach { record ->
             Row(
@@ -122,11 +122,14 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
 @Composable
 internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
     val ai = ChageunTheme.colors.ai
+    val shape = MaterialTheme.shapes.large
+    // Apple Intelligence처럼 가장자리를 따라 색이 천천히 돈다. 번짐이 잘리지 않게 카드 바깥 여백 안에서 그린다.
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .pressable(onClick = onAskAi),
-        shape = MaterialTheme.shapes.large,
+            .pressableCard(shape, onAskAi)
+            .glowBorder(shape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = AI_GLOW_INTENSITY),
+        shape = shape,
         color = ai.container,
         contentColor = ai.content,
     ) {
@@ -138,6 +141,7 @@ internal fun AiQuestionCard(onAskAi: () -> Unit, modifier: Modifier = Modifier) 
             Box(
                 Modifier
                     .size(44.dp)
+                    .sparkle(color = ai.content, count = AI_SPARKLES, starSize = AI_SPARKLE_SIZE)
                     .background(ai.content, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
@@ -169,7 +173,7 @@ internal fun UpcomingScheduleCard(
                     .weight(1f)
                     .semantics { heading() },
             )
-            TextButton(onClick = { onOpenCalendar(today) }) { Text(stringResource(R.string.home_schedule_calendar)) }
+            TextAction(stringResource(R.string.home_schedule_calendar)) { onOpenCalendar(today) }
         }
         Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
             Column {
@@ -193,3 +197,20 @@ internal fun UpcomingScheduleCard(
         }
     }
 }
+
+/** 머리글 끝이나 빈 목록 아래에 놓는 글자 버튼. 눈에 보이는 크기는 작아도 누르는 영역은 48dp를 지킨다. */
+@Composable
+private fun TextAction(text: String, onClick: () -> Unit) {
+    ActionButton(
+        text,
+        onClick = onClick,
+        modifier = Modifier.minimumInteractiveComponentSize(),
+        variant = KVariant.Text,
+    )
+}
+
+private val AI_GLOW_WIDTH = 2.dp
+private val AI_GLOW_BLUR = 10.dp
+private const val AI_GLOW_INTENSITY = 0.85f
+private const val AI_SPARKLES = 4
+private val AI_SPARKLE_SIZE = 8.dp

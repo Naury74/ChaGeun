@@ -1,30 +1,21 @@
 package com.naury.chageun.feature.vehicle.album
 
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,7 +27,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -50,10 +40,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.motionSpec
-import com.naury.chageun.core.designsystem.motion.rememberReduceMotion
 import com.naury.chageun.core.model.AlbumPhoto
 import com.naury.chageun.core.ui.rememberFileImage
 import com.naury.chageun.feature.vehicle.R
+import com.naury.kinetica.core.scene.NodeEffects
+import com.naury.kinetica.core.scene.PressEffect
+import com.naury.kinetica.core.scene.PressKind
+import com.naury.kinetica.render.kineticaEffects
+import com.naury.kinetica.ui.KSelectionBadge
 
 /** 여러 장 고르기에서 칸의 상태. 고르는 중이 아니면 [None]이다. */
 internal enum class PickState { None, Unpicked, Picked }
@@ -75,14 +69,7 @@ internal fun AlbumThumbnail(
     val description = mediaDescription(photo)
     val haptics = LocalHapticFeedback.current
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
     val focused by interaction.collectIsFocusedAsState()
-    val reduceMotion = rememberReduceMotion()
-    val pressScale by animateFloatAsState(
-        if (pressed && !reduceMotion) PRESSED_SCALE else 1f,
-        spring(dampingRatio = PRESS_DAMPING, stiffness = Spring.StiffnessMediumLow),
-        label = "thumbnail-press",
-    )
     // 고른 사진은 iOS 사진 앱처럼 안쪽으로 살짝 줄어 고르지 않은 사진과 구분된다.
     val pickedScale by animateFloatAsState(
         if (pick == PickState.Picked) PICKED_SCALE else 1f,
@@ -95,10 +82,7 @@ internal fun AlbumThumbnail(
     Box(
         modifier
             .aspectRatio(1f)
-            .graphicsLayer {
-                scaleX = pressScale
-                scaleY = pressScale
-            }
+            .kineticaEffects(TILE_PRESS, SHAPE)
             .clip(SHAPE)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .combinedClickable(
@@ -163,35 +147,15 @@ internal fun AlbumThumbnail(
             }
         }
         if (pick != PickState.None) {
-            PickMark(pick == PickState.Picked, Modifier.align(Alignment.TopEnd).padding(6.dp))
-        }
-    }
-}
-
-@Composable
-private fun PickMark(isPicked: Boolean, modifier: Modifier = Modifier) {
-    if (isPicked) {
-        Box(
-            modifier
-                .size(MARK_SIZE)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
-                .border(MARK_BORDER, Color.White, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(14.dp),
+            // 칸 전체가 눌리므로 표시는 누를 수 없게 두고, 골랐는지만 썸네일 이름 뒤에 붙여 읽힌다.
+            KSelectionBadge(
+                selected = pick == PickState.Picked,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(6.dp),
+                size = MARK_SIZE,
             )
         }
-    } else {
-        Box(
-            modifier
-                .size(MARK_SIZE)
-                .background(Color.Black.copy(alpha = MARK_FILL_ALPHA), CircleShape)
-                .border(MARK_BORDER, Color.White, CircleShape),
-        )
     }
 }
 
@@ -230,10 +194,9 @@ private val SHAPE = RoundedCornerShape(CORNER_PERCENT)
 private val RING_WIDTH = 3.dp
 private val RING_GAP = 2.dp
 private val MARK_SIZE = 22.dp
-private val MARK_BORDER = 1.5.dp
-private const val MARK_FILL_ALPHA = 0.2f
-private const val PRESSED_SCALE = 0.95f
-private const val PRESS_DAMPING = 0.55f
+
+// 누르는 동안 칸이 살짝 작아졌다가 튕기듯 돌아온다. 사진 위라 어둡게나 물결은 쓰지 않는다.
+private val TILE_PRESS = NodeEffects(press = listOf(PressEffect(PressKind.Scale, amount = 0.95)))
 private const val PICKED_SCALE = 0.86f
 private const val PINCH_OUT = 1.25f
 private const val PINCH_IN = 0.8f
