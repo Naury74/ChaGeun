@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -169,7 +170,10 @@ private fun HeroContent(
                     color = subtitleColor,
                 )
             }
-            HeroImage(photoPath, bodyType)
+            // 펼친 폴더블·태블릿에서 그림이 화면 폭만큼 커지면 상태·할 일이 첫 화면 밖으로 밀리므로 폭을 제한한다.
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(Modifier.widthIn(max = HERO_IMAGE_MAX_WIDTH)) { HeroImage(photoPath, bodyType) }
+            }
             photoStatus?.invoke()
             if (stats.isNotEmpty()) HeroStatsCard(stats, footnote)
             action?.invoke()
@@ -495,6 +499,7 @@ private const val CUTOUT_WIDTH_FRACTION = 1f
 private const val CUTOUT_ASPECT_RATIO = 2f
 private const val HERO_IMAGE_WIDTH_FRACTION = 0.85f
 private const val HERO_IMAGE_ASPECT_RATIO = 360f / 160f
+private val HERO_IMAGE_MAX_WIDTH = 520.dp
 
 // 하늘색은 Hero 위쪽 절반에서 화면 배경으로 다 바뀐다. 아래의 요약 카드 주변은 화면 배경과 같아진다.
 private const val SKY_END = 0.62f
