@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
@@ -27,7 +26,6 @@ import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -71,6 +69,7 @@ import com.naury.chageun.core.ui.upcomingEventConfidence
 import com.naury.chageun.core.ui.upcomingEventStatus
 import com.naury.chageun.core.ui.upcomingEventTitle
 import com.naury.chageun.feature.history.R
+import com.naury.chageun.feature.history.WrappingTextButton
 import java.time.YearMonth
 
 /**
@@ -372,24 +371,15 @@ internal fun RecordPhotoMark(size: Dp, modifier: Modifier = Modifier) {
 
 @Composable
 private fun AddOnDayButton(onClick: () -> Unit) {
-    TextButton(
+    WrappingTextButton(
+        stringResource(R.string.calendar_add_on_day),
+        Icons.Filled.Add,
         onClick = onClick,
-        modifier = Modifier
-            .agendaPadding()
-            .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(ADD_ICON_SIZE))
-            Text(
-                stringResource(R.string.calendar_add_on_day),
-                modifier = Modifier.padding(start = ChageunTheme.spacing.xs),
-            )
-        }
-    }
+        modifier = Modifier.agendaPadding(),
+    )
 }
 
 private val PHOTO_SIZE = 88.dp
-private val ADD_ICON_SIZE = 18.dp
 private val RECEIPT_MARK_SIZE = 24.dp
 private const val RECEIPT_ICON_RATIO = 0.7f
 private val PLAY_MARK_SIZE = 32.dp

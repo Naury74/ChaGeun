@@ -9,9 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -19,13 +17,13 @@ import androidx.compose.ui.res.stringResource
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineEventType
 import com.naury.chageun.core.ui.CardGroup
-import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.SelectableListRow
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
+import com.naury.kinetica.ui.KSearchBar
 
 /**
  * 세 칸 배치의 왼쪽 Pane. 타임라인 위에 있던 검색·종류 필터·고급 필터를 옮겨 와, 조건을 바꿔도 타임라인과
@@ -50,12 +48,13 @@ internal fun HistoryFilterPane(
             ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {
-        ChageunTextField(
-            value = uiState.keyword,
-            onValueChange = onKeywordChanged,
+        // 좁은 칸이라 '취소'가 밀려 들어오면 입력란이 너무 줄어든다. 지우기 버튼만 둔다.
+        KSearchBar(
+            query = uiState.keyword,
+            onQueryChange = onKeywordChanged,
+            onSearch = onKeywordChanged,
             placeholder = stringResource(R.string.history_search_hint),
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            singleLine = true,
+            showCancel = false,
             modifier = Modifier.fillMaxWidth(),
         )
         CardGroup(title = stringResource(R.string.history_pane_type)) {

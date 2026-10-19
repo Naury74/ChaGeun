@@ -7,25 +7,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DocumentScanner
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.PictureAsPdf
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +43,10 @@ import com.naury.chageun.core.model.Attachment
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.ui.rememberFileImage
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.jellyPress
 
 /**
  * 첨부 사진을 사진 편집기로 고치는 동작. 편집기는 화면 배치와 상관없는 자리에서 열어야 하므로 밖에서 받는다.
@@ -104,14 +102,16 @@ internal fun AttachmentSection(
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = onDismissFailure) { Text(stringResource(R.string.attachment_close)) }
+                KButton(stringResource(R.string.attachment_close), onClick = onDismissFailure, variant = KVariant.Text)
             }
         }
-        OutlinedButton(
+        KButton(
+            stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD),
             onClick = onAdd,
+            variant = KVariant.Outlined,
             enabled = remaining > 0,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(stringResource(R.string.attachment_add, MAX_ATTACHMENTS_PER_RECORD)) }
+            fullWidth = true,
+        )
         onScan?.let {
             AttachmentActionButton(
                 Icons.Outlined.DocumentScanner,
@@ -155,11 +155,7 @@ internal fun AttachmentSection(
 
 @Composable
 private fun AttachmentActionButton(icon: ImageVector, label: String, onClick: () -> Unit, enabled: Boolean = true) {
-    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-        Text(label)
-    }
+    WrappingTextButton(label, icon, onClick, Modifier.fillMaxWidth(), enabled = enabled)
 }
 
 @Composable
@@ -167,6 +163,7 @@ private fun Thumbnail(attachment: Attachment, onClick: () -> Unit) {
     val image by rememberFileImage(attachment.thumbnailPath)
     Box(
         modifier = Modifier
+            .jellyPress()
             .size(THUMBNAIL_SIZE)
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -208,9 +205,16 @@ private fun AttachmentViewer(
                     }
                 }
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    onEdit?.let { TextButton(onClick = it) { Text(stringResource(R.string.attachment_edit)) } }
-                    TextButton(onClick = onDelete) { Text(stringResource(R.string.history_delete)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.attachment_close)) }
+                    onEdit?.let {
+                        KButton(stringResource(R.string.attachment_edit), onClick = it, variant = KVariant.Text)
+                    }
+                    KButton(
+                        stringResource(R.string.history_delete),
+                        onClick = onDelete,
+                        variant = KVariant.Text,
+                        tone = KTone.Destructive,
+                    )
+                    KButton(stringResource(R.string.attachment_close), onClick = onDismiss, variant = KVariant.Text)
                 }
             }
         }

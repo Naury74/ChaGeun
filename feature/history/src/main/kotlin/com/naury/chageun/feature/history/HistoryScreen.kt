@@ -1,6 +1,7 @@
 package com.naury.chageun.feature.history
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -10,11 +11,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +42,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
+import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.ui.AdaptiveListDetail
 import com.naury.chageun.core.ui.ChageunOptionDialog
 import com.naury.chageun.core.ui.DialogOption
@@ -70,6 +67,11 @@ import com.naury.chageun.feature.history.calendar.HistoryCalendarViewModel
 import com.naury.chageun.feature.history.calendar.closingDetailOnMove
 import com.naury.chageun.feature.history.form.CheckFormHost
 import com.naury.chageun.feature.history.form.FuelFormHost
+import com.naury.kinetica.ui.KExtendedFab
+import com.naury.kinetica.ui.KSkeletonLeading
+import com.naury.kinetica.ui.KSkeletonListItem
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.rememberFabExpanded
 import java.io.File
 import java.time.LocalDate
 import java.time.temporal.WeekFields
@@ -135,6 +137,10 @@ fun HistoryRoute(
         editingType = null
         editingId = null
     }
+    val startEditing = { ref: RecordRef ->
+        editingType = ref.type
+        editingId = ref.id
+    }
     val itemLabels = MaintenanceItem.entries.associateWith { stringResource(it.labelRes) }
     // 목록 검색과 같이, 현지화된 항목 이름에 검색어가 들어 있으면 그 항목의 정비 기록도 찾는다.
     val matchingItems = { keyword: String ->
@@ -179,13 +185,10 @@ fun HistoryRoute(
                 onSelect = viewModel::select,
                 onDelete = viewModel::delete,
                 onEdit = { detail ->
-                    if (detail is RecordDetail.Maintenance) {
-                        onEditService(detail.item, detail.ref.id)
-                    } else {
-                        editingType = detail.ref.type
-                        editingId = detail.ref.id
-                    }
+                    openEditor(detail.ref, (detail as? RecordDetail.Maintenance)?.item, onEditService, startEditing)
                 },
+                // 목록에서 길게 눌러 고친 기록도 상세의 수정과 같은 입력 창을 연다.
+                onEditRecord = { item -> openEditor(item.ref, item.maintenanceItem, onEditService, startEditing) },
                 onAdd = {
                     addDate = null
                     dialog = AddDialog.Chooser
@@ -233,6 +236,16 @@ fun HistoryRoute(
             CheckFormHost(isExpanded, onDismiss = stopEditing, editing = editing)
         TimelineEventType.Maintenance, TimelineEventType.Mileage, null -> Unit
     }
+}
+
+/** 정비 기록은 정비 입력 창으로, 나머지는 이 화면의 주유·점검 입력 창으로 고친다. */
+private fun openEditor(
+    ref: RecordRef,
+    item: MaintenanceItem?,
+    onEditService: (MaintenanceItem, String) -> Unit,
+    startEditing: (RecordRef) -> Unit,
+) {
+    if (ref.type == TimelineEventType.Maintenance && item != null) onEditService(item, ref.id) else startEditing(ref)
 }
 
 private fun receiptPhotoEdits(editor: ReceiptEditorLauncher, remaining: Int) = AttachmentPhotoEdits(
@@ -365,6 +378,8 @@ fun HistoryScreen(
     onOpenAdvancedFilter: () -> Unit = {},
     onClearAdvancedFilter: () -> Unit = {},
     onEdit: (RecordDetail) -> Unit = {},
+    /** 목록 카드를 길게 눌러 고칠 때. null이면 메뉴에 수정을 두지 않는다. */
+    onEditRecord: ((TimelineItem) -> Unit)? = null,
     onLoadMore: () -> Unit = {},
     onAskAi: ((RecordRef) -> Unit)? = null,
     /** [isTwoPane]보다 우선한다. 왼쪽에 검색·필터 Pane을 더한다. */
@@ -389,7 +404,7 @@ fun HistoryScreen(
             photoEdits.onSharePdf,
         )
     if (uiState.isLoading) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        TimelineSkeleton(modifier)
         return
     }
     val detail = uiState.detail
@@ -448,18 +463,20 @@ fun HistoryScreen(
                 onLoadMore = onLoadMore,
                 listState = timelineState,
                 showFilters = !isThreePane,
+                recordActions = TimelineRecordActions(onEdit = onEditRecord, onAskAi = onAskAi, onDelete = onDelete),
                 modifier = Modifier
                     .fillMaxHeight()
                     .widthIn(max = TIMELINE_MAX_WIDTH)
                     .align(Alignment.TopCenter),
             )
-            ExtendedFloatingActionButton(
+            // 목록을 내리면 아이콘만 남기고 접혀 기록을 덜 가린다. 접혀도 TalkBack은 글자를 읽는다.
+            KExtendedFab(
+                text = stringResource(R.string.history_add),
+                icon = Icons.Filled.Add,
                 onClick = onAdd,
-                // M3 확장 FAB은 글자를 읽지 않고 아이콘 설명을 버튼 이름으로 쓴다.
-                icon = { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.history_add)) },
-                text = { Text(stringResource(R.string.history_add)) },
-                // 다른 주요 버튼(Tonal)과 같은 색을 써서 다크 모드에서도 같은 무게로 보이게 한다.
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                expanded = rememberFabExpanded(timelineState),
+                // 다른 주요 버튼(Tonal)과 같은 무게로 보이게 한다. 옅은 톤 아래에는 판 색을 먼저 깔아 목록이 비치지 않는다.
+                variant = KVariant.Tonal,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(ChageunTheme.spacing.gutter),
@@ -505,6 +522,19 @@ fun HistoryScreen(
     }
 }
 
+/** 기록을 읽는 동안 카드 자리를 미리 그려 둔다. 불러온 뒤 목록이 갑자기 튀어나오지 않는다. */
+@Composable
+private fun TimelineSkeleton(modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+    ) {
+        repeat(SKELETON_ROWS) { KSkeletonListItem(leading = KSkeletonLeading.Avatar, trailing = true) }
+    }
+}
+
 @Composable
 private fun AddRecordChooser(onPick: (AddDialog) -> Unit, onDismiss: () -> Unit) {
     val choices = listOf(
@@ -537,3 +567,5 @@ private fun MaintenanceItemPicker(onPick: (MaintenanceItem) -> Unit, onDismiss: 
 private val TIMELINE_MAX_WIDTH = 720.dp
 
 private val TOGGLE_MAX_WIDTH = 360.dp
+
+private const val SKELETON_ROWS = 6
