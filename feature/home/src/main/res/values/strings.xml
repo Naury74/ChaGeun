@@ -37,6 +37,7 @@
     <string name="home_mileage_prompt_body">It keeps maintenance timing accurate.</string>
     <string name="home_unit_km">km</string>
     <string name="home_save">Save</string>
+    <string name="home_mileage_saved">Mileage saved</string>
     <string name="home_cancel">Cancel</string>
     <string name="home_section_recent">Recent records</string>
     <string name="home_recent_all">All records</string>

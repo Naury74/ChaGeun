@@ -2,38 +2,37 @@ package com.naury.chageun.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -71,6 +70,9 @@ import com.naury.chageun.core.ui.photo.VehiclePhotoConfirmSheet
 import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.rememberKStaggerState
+import com.naury.kinetica.ui.skeleton
 import java.time.LocalDate
 
 @Composable
@@ -206,9 +208,7 @@ fun HomeScreen(
     hinge: Hinge? = currentSeparatingHinge(),
 ) {
     when (uiState) {
-        HomeUiState.Loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
+        HomeUiState.Loading -> HomeLoadingSkeleton(modifier)
         is HomeUiState.Content -> HomeContent(uiState, paneCount, actions, hinge, modifier)
     }
 }
@@ -226,18 +226,29 @@ private fun HomeContent(
     val isTabletop = hinge != null && !hinge.isVertical
     val showAd = LocalAdsEnabled.current
     val showsAi = LocalFeatureFlags.current.aiShareEnabled
-    val panes: List<LazyListScope.() -> Unit> = when {
-        isTabletop -> listOf({ summaryPane(state, actions, showsActions = false) }, {
+    val panes: List<HomePane> = when {
+        isTabletop -> listOf({ order -> summaryPane(state, actions, order, showsActions = false) }, { order ->
             // 탁자에 놓으면 아래 칸이 손에 닿으므로 자주 누르는 버튼을 여기 맨 위에 둔다.
+            val index = order.next()
             item(key = "hero-actions") {
-                HomeHeroActions(state, actions, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
+                HomeHeroActions(
+                    state,
+                    actions,
+                    Modifier
+                        .homeAppear(index)
+                        .padding(horizontal = ChageunTheme.spacing.gutter),
+                )
             }
-            attentionPane(state, actions)
-            missingPane(state, actions)
-            recentPane(state, actions, showAd, showsAi)
+            attentionPane(state, actions, order)
+            missingPane(state, actions, order)
+            recentPane(state, actions, order, showAd, showsAi)
         })
         else -> homePanes(state, paneCount, actions, showAd, showsAi)
     }
+    // 카드가 차례로 떠오르는 건 홈을 처음 열 때 한 번뿐이다. 다른 탭에 다녀오면 바로 그린다.
+    var hasAppeared by rememberSaveable { mutableStateOf(false) }
+    val playsAppear = remember { !hasAppeared }
+    LaunchedEffect(Unit) { hasAppeared = true }
     HingeAwarePanes(
         weights = List(panes.size) { 1f },
         modifier = modifier.fillMaxSize(),
@@ -247,18 +258,25 @@ private fun HomeContent(
         // 홈은 상태 표시줄 뒤까지 그린다. 첫 칸은 Hero 안에서, 옆에 나란한 칸은 여기서 상단 인셋을 비운다.
         val statusBarTop = WindowInsets.safeDrawing.only(WindowInsetsSides.Top).asPaddingValues().calculateTopPadding()
         panes.forEachIndexed { index, pane ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = if (index == 0 || isTabletop) 0.dp else statusBarTop,
-                    bottom = spacing.lg,
-                ),
-                verticalArrangement = Arrangement.spacedBy(spacing.sm),
-                content = pane,
-            )
+            key(index) {
+                val stagger = rememberKStaggerState()
+                CompositionLocalProvider(LocalHomeStagger provides stagger.takeIf { playsAppear }) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            top = if (index == 0 || isTabletop) 0.dp else statusBarTop,
+                            bottom = spacing.lg,
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+                    ) { pane(AppearOrder()) }
+                }
+            }
         }
     }
 }
+
+/** 홈 칸 하나에 놓을 항목들. [AppearOrder]로 위에서부터 떠오르는 순서를 매긴다. */
+private typealias HomePane = LazyListScope.(AppearOrder) -> Unit
 
 private fun homePanes(
     state: HomeUiState.Content,
@@ -266,64 +284,81 @@ private fun homePanes(
     actions: HomeActions,
     showAd: Boolean,
     showsAi: Boolean,
-): List<LazyListScope.() -> Unit> = when (paneCount) {
-    SINGLE_PANE -> listOf({
-        summaryPane(state, actions)
-        attentionPane(state, actions)
-        missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
+): List<HomePane> = when (paneCount) {
+    SINGLE_PANE -> listOf({ order ->
+        summaryPane(state, actions, order)
+        attentionPane(state, actions, order)
+        missingPane(state, actions, order)
+        recentPane(state, actions, order, showAd, showsAi)
     })
-    TWO_PANES -> listOf({ summaryPane(state, actions, isSideBySide = true) }, {
-        attentionPane(state, actions)
-        missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
+    TWO_PANES -> listOf({ order -> summaryPane(state, actions, order, isSideBySide = true) }, { order ->
+        attentionPane(state, actions, order)
+        missingPane(state, actions, order)
+        recentPane(state, actions, order, showAd, showsAi)
     })
-    else -> listOf({ summaryPane(state, actions, isSideBySide = true) }, { attentionPane(state, actions) }, {
-        missingPane(state, actions)
-        recentPane(state, actions, showAd, showsAi)
-    })
+    else -> listOf(
+        { order -> summaryPane(state, actions, order, isSideBySide = true) },
+        { order -> attentionPane(state, actions, order) },
+        { order ->
+            missingPane(state, actions, order)
+            recentPane(state, actions, order, showAd, showsAi)
+        },
+    )
+}
+
+/** 좌우 여백을 두고 [AppearOrder] 순서대로 떠오르는 항목 하나. */
+private fun LazyListScope.homeItem(key: String, order: AppearOrder, content: @Composable (Modifier) -> Unit) {
+    val index = order.next()
+    item(key = key) {
+        content(
+            Modifier
+                .homeAppear(index)
+                .padding(horizontal = ChageunTheme.spacing.gutter),
+        )
+    }
 }
 
 private fun LazyListScope.summaryPane(
     state: HomeUiState.Content,
     actions: HomeActions,
+    order: AppearOrder,
     isSideBySide: Boolean = false,
     showsActions: Boolean = true,
 ) {
-    // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다.
+    // 인사말 줄도 Hero의 하늘 바탕 위에 놓아 바탕이 끊기지 않게 한다. 하늘은 화면 끝까지 닿아 떠오르지 않고 그대로 둔다.
     item(key = "hero") { HomeHero(state, actions, isSideBySide, showsActions) }
-    item(key = "health") {
+    homeItem("health", order) { modifier ->
         VehicleStatusSummary(
             health = state.overview.health,
             goodCount = state.goodCount,
             attentionCount = state.attentionCount,
-            modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+            modifier = modifier,
         )
     }
     if (state.needsMileageUpdate) {
-        item(key = "mileage-prompt") {
-            MileagePromptCard(actions.onUpdateMileage, Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
-        }
+        homeItem("mileage-prompt", order) { modifier -> MileagePromptCard(actions.onUpdateMileage, modifier) }
     }
 }
 
-private fun LazyListScope.attentionPane(state: HomeUiState.Content, actions: HomeActions) {
+private fun LazyListScope.attentionPane(state: HomeUiState.Content, actions: HomeActions, order: AppearOrder) {
     val inspection = state.overview.inspection
     statusSection(
         "attention",
         R.string.home_section_attention,
         state.needsAttention,
-        state.overview.rules,
         actions,
+        order,
         inspection.takeIf { it.state == InspectionState.Overdue },
+        state.overview.rules,
     )
     statusSection(
         "upcoming",
         R.string.home_section_upcoming,
         state.upcoming,
-        state.overview.rules,
         actions,
+        order,
         inspection.takeIf { it.state == InspectionState.DueSoon },
+        state.overview.rules,
     )
 }
 
@@ -331,81 +366,92 @@ private fun LazyListScope.statusSection(
     key: String,
     titleRes: Int,
     statuses: List<MaintenanceStatus>,
-    rules: Map<MaintenanceItem, MaintenanceRule>,
     actions: HomeActions,
+    order: AppearOrder,
     inspection: InspectionStatus?,
+    rules: Map<MaintenanceItem, MaintenanceRule>,
 ) {
     if (statuses.isEmpty() && inspection == null) return
     val onRecordService = actions.onRecordService
-    item(key = "$key-title") {
-        SectionTitle(stringResource(titleRes), Modifier.padding(horizontal = ChageunTheme.spacing.gutter))
-    }
+    homeItem("$key-title", order) { modifier -> SectionTitle(stringResource(titleRes), modifier) }
     if (inspection != null) {
-        item(key = "$key-inspection") {
-            InspectionStatusCard(
-                inspection,
-                actions.onOpenInspection,
-                Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+        homeItem("$key-inspection", order) { modifier ->
+            InspectionStatusCard(inspection, actions.onOpenInspection, modifier)
+        }
+    }
+    statuses.forEach { status ->
+        homeItem("$key-${status.item}", order) { modifier ->
+            MaintenanceStatusCard(
+                status = status,
+                rule = rules[status.item],
+                onRecordService = onRecordService,
+                onOpenDetail = actions.onOpenItem,
+                modifier = modifier,
             )
         }
     }
-    items(statuses, key = { "$key-${it.item}" }) { status ->
-        MaintenanceStatusCard(
-            status = status,
-            rule = rules[status.item],
-            onRecordService = onRecordService,
-            onOpenDetail = actions.onOpenItem,
-            modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
-        )
-    }
 }
 
-private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeActions) {
+private fun LazyListScope.missingPane(state: HomeUiState.Content, actions: HomeActions, order: AppearOrder) {
     if (state.missingInfo.isEmpty()) return
-    item(key = "missing-title") {
-        SectionTitle(
-            stringResource(R.string.home_section_missing),
-            Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
-        )
+    homeItem("missing-title", order) { modifier ->
+        SectionTitle(stringResource(R.string.home_section_missing), modifier)
     }
-    item(key = "missing-list") {
-        MissingInfoCard(
-            state.missingInfo,
-            actions.onOpenItem,
-            Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
-        )
-    }
+    homeItem("missing-list", order) { modifier -> MissingInfoCard(state.missingInfo, actions.onOpenItem, modifier) }
 }
 
 private fun LazyListScope.recentPane(
     state: HomeUiState.Content,
     actions: HomeActions,
+    order: AppearOrder,
     showAd: Boolean,
     showsAi: Boolean,
 ) {
     if (state.upcomingEvents.isNotEmpty()) {
-        item(key = "schedule") {
+        homeItem("schedule", order) { modifier ->
             UpcomingScheduleCard(
                 events = state.upcomingEvents,
                 today = state.today,
                 onOpenCalendar = actions.onOpenCalendar,
-                modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
+                modifier = modifier,
             )
         }
     }
     // 기획서 UI 6.1: 다가오는 관리 다음, 최근 기록 앞에 한 칸만 둔다. 광고를 쓰지 않으면 목록 간격도 남기지 않는다.
-    if (showAd) item(key = "ad") { NativeAdSlot(Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
-    item(key = "recent") {
-        RecentRecords(
-            records = state.recentRecords,
-            onOpenHistory = actions.onOpenHistory,
-            modifier = Modifier.padding(horizontal = ChageunTheme.spacing.gutter),
-        )
+    if (showAd) homeItem("ad", order) { modifier -> NativeAdSlot(modifier) }
+    homeItem("recent", order) { modifier ->
+        RecentRecords(records = state.recentRecords, onOpenHistory = actions.onOpenHistory, modifier = modifier)
     }
     if (showsAi) {
-        item(key = "ai") { AiQuestionCard(actions.onAskAi, Modifier.padding(horizontal = ChageunTheme.spacing.gutter)) }
+        homeItem("ai", order) { modifier -> AiQuestionCard(actions.onAskAi, modifier) }
     }
 }
+
+/** 홈을 읽는 동안 Hero와 카드 자리를 회색 블록으로 잡아 둔다. 다 읽으면 카드가 그 자리에 떠오른다. */
+@Composable
+private fun HomeLoadingSkeleton(modifier: Modifier) {
+    val spacing = ChageunTheme.spacing
+    val shape = MaterialTheme.shapes.large
+    Column(
+        modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+            .padding(horizontal = spacing.gutter, vertical = spacing.md),
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
+    ) {
+        SKELETON_HEIGHTS.forEach { height ->
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(height)
+                    .skeleton(visible = true, shape = shape),
+            )
+        }
+    }
+}
+
+// Hero 사진, 상태 요약, 카드 두 장의 대략적인 높이.
+private val SKELETON_HEIGHTS = listOf(280.dp, 72.dp, 148.dp, 148.dp)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -463,7 +509,7 @@ private fun HomeHero(
             )
         },
         stats = listOf(
-            mileageHeroStat(mileage?.mileage?.value),
+            mileageHeroStat(rollingMileage(mileage?.mileage?.value)),
             inspectionHeroStat(state.overview.inspection),
             HeroStat(
                 label = stringResource(R.string.home_stat_recent),
@@ -491,18 +537,22 @@ private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, mo
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
-        FilledTonalButton(onClick = actions.onUpdateMileage) {
-            Icon(Icons.Filled.Speed, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(ChageunTheme.spacing.xs))
-            Text(stringResource(R.string.home_mileage_update))
-        }
+        ActionButton(
+            stringResource(R.string.home_mileage_update),
+            onClick = actions.onUpdateMileage,
+            modifier = Modifier.minimumInteractiveComponentSize(),
+            variant = KVariant.Tonal,
+            icon = Icons.Filled.Speed,
+        )
         // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
         if (state.photoPath == null && actions.onAddPhoto != null) {
-            OutlinedButton(onClick = actions.onAddPhoto) {
-                Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(stringResource(R.string.home_add_photo))
-            }
+            ActionButton(
+                stringResource(R.string.home_add_photo),
+                onClick = actions.onAddPhoto,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+                variant = KVariant.Outlined,
+                icon = Icons.Filled.AddAPhoto,
+            )
         }
     }
 }
