@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -42,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
-import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
@@ -53,6 +51,7 @@ import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.MaintenanceRule
 import com.naury.chageun.core.model.MaintenanceStatus
 import com.naury.chageun.core.ui.CutoutStatusPanel
+import com.naury.chageun.core.ui.HeroGlassButton
 import com.naury.chageun.core.ui.HeroStat
 import com.naury.chageun.core.ui.Hinge
 import com.naury.chageun.core.ui.HingeAwarePanes
@@ -538,21 +537,19 @@ private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, mo
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
-        ChageunButton(
+        // 날씨 하늘이 움직이는 동안 글래스마다 블러를 다시 하므로, 요약 카드 말고는 이 두 버튼만 글래스로 둔다.
+        HeroGlassButton(
             stringResource(R.string.home_mileage_update),
             onClick = actions.onUpdateMileage,
-            modifier = Modifier.minimumInteractiveComponentSize(),
-            variant = KVariant.Tonal,
             icon = Icons.Filled.Speed,
         )
         // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
         if (state.photoPath == null && actions.onAddPhoto != null) {
-            ChageunButton(
+            HeroGlassButton(
                 stringResource(R.string.home_add_photo),
                 onClick = actions.onAddPhoto,
-                modifier = Modifier.minimumInteractiveComponentSize(),
-                variant = KVariant.Outlined,
                 icon = Icons.Filled.AddAPhoto,
+                outside = KVariant.Outlined,
             )
         }
     }

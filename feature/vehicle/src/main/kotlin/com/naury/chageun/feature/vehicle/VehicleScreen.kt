@@ -43,7 +43,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -65,7 +64,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
@@ -75,6 +73,7 @@ import com.naury.chageun.core.model.RegistrationMode
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.CutoutStatusPanel
 import com.naury.chageun.core.ui.GroupDivider
+import com.naury.chageun.core.ui.HeroGlassButton
 import com.naury.chageun.core.ui.HingeAwarePanes
 import com.naury.chageun.core.ui.InfoListRow
 import com.naury.chageun.core.ui.ListRow
@@ -353,11 +352,9 @@ private fun Hero(
                     horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                     verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 ) {
-                    ChageunButton(
+                    HeroGlassButton(
                         stringResource(R.string.vehicle_update_mileage),
                         onClick = onUpdateMileage,
-                        modifier = Modifier.minimumInteractiveComponentSize(),
-                        variant = KVariant.Tonal,
                         icon = Icons.Filled.Speed,
                     )
                     PhotoButtons(state, photoActions)
@@ -376,12 +373,11 @@ private fun Hero(
 
 @Composable
 private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoActions) {
-    ChageunButton(
+    HeroGlassButton(
         stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change),
         onClick = actions.onPick,
-        modifier = Modifier.minimumInteractiveComponentSize(),
-        variant = KVariant.Outlined,
         icon = Icons.Filled.AddAPhoto,
+        outside = KVariant.Outlined,
     )
     if (state.photoPath != null) {
         // 사진을 넣은 뒤에도 원본과 배경을 지운 모습을 바로 바꿔 볼 수 있다.

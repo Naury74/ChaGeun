@@ -19,10 +19,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,8 +69,11 @@ import androidx.compose.ui.unit.sp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.NumericTextStyles
+import com.naury.kinetica.ui.KSurface
 import com.naury.kinetica.ui.RollingText
+import com.naury.kinetica.ui.glassBackdrop
 import com.naury.kinetica.ui.motionTilt
+import com.naury.kinetica.ui.rememberGlassBackdrop
 
 /**
  * Hero 바탕 하늘의 색을 바꿀 때 쓴다. [top]은 맨 위 하늘색, [glow]는 오른쪽 위의 햇빛 번짐이다.
@@ -113,20 +116,29 @@ fun VehicleHeroSection(
     sky: HeroSky? = null,
     skyOverlay: (@Composable () -> Unit)? = null,
 ) {
-    Box(modifier.fillMaxWidth().skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
-        if (skyOverlay != null) Box(Modifier.matchParentSize()) { skyOverlay() }
-        HeroContent(
-            title = title,
-            subtitle = subtitle,
-            subtitleColor = sky?.secondaryText?.takeIf { it.isSpecified } ?: MaterialTheme.colorScheme.onSurfaceVariant,
-            stats = stats,
-            footnote = footnote,
-            photoPath = photoPath,
-            bodyType = bodyType,
-            header = header,
-            photoStatus = photoStatus,
-            action = action,
-        )
+    val backdrop = rememberGlassBackdrop()
+    val skyTop = sky?.top ?: ChageunTheme.colors.heroSky
+    val glass = remember(backdrop, skyTop) { HeroGlass(heroGlassSurface(skyTop), backdrop) }
+    Box(modifier.fillMaxWidth()) {
+        // 하늘과 날씨 장식만 기록해 요약 카드와 버튼이 그 위에서 블러로 비추게 한다. 차 사진과 글자는 기록하지 않는다.
+        Box(Modifier.matchParentSize().glassBackdrop(backdrop).skyBackdrop(skyFromTop, skyFadesAtEnd, sky)) {
+            skyOverlay?.invoke()
+        }
+        CompositionLocalProvider(LocalHeroGlass provides glass) {
+            HeroContent(
+                title = title,
+                subtitle = subtitle,
+                subtitleColor =
+                sky?.secondaryText?.takeIf { it.isSpecified } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                stats = stats,
+                footnote = footnote,
+                photoPath = photoPath,
+                bodyType = bodyType,
+                header = header,
+                photoStatus = photoStatus,
+                action = action,
+            )
+        }
     }
 }
 
@@ -206,40 +218,47 @@ private fun Modifier.skyBackdrop(fromTop: Boolean, fadesAtEnd: Boolean, custom: 
     }
 }
 
+/** 하늘을 블러로 비추는 요약 카드. 블러가 없는 Android 11 이하에서는 글래스의 fallback 색으로 칠해진다. */
 @Composable
 private fun HeroStatsCard(stats: List<HeroStat>, footnote: String?) {
-    val colors = ChageunTheme.colors
-    Surface(
-        shape = MaterialTheme.shapes.large,
-        color = colors.heroCard,
-        contentColor = colors.onHeroCard,
+    val glass = checkNotNull(LocalHeroGlass.current)
+    val ink = glass.surface.contentColor
+    KSurface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = ChageunTheme.spacing.xs),
+        shape = MaterialTheme.shapes.large,
+        surface = glass.surface,
+        backdrop = glass.backdrop,
     ) {
-        Column(
-            Modifier.padding(vertical = ChageunTheme.spacing.md),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                stats.forEachIndexed { index, stat ->
-                    if (index > 0) {
-                        VerticalDivider(
-                            color = colors.onHeroCard.copy(alpha = DIVIDER_ALPHA),
-                            modifier = Modifier.padding(vertical = ChageunTheme.spacing.xxs),
-                        )
-                    }
-                    HeroStatCell(stat, Modifier.weight(1f))
+        CompositionLocalProvider(LocalContentColor provides ink) { HeroStatsContent(stats, footnote, ink) }
+    }
+}
+
+@Composable
+private fun HeroStatsContent(stats: List<HeroStat>, footnote: String?, ink: Color) {
+    Column(
+        Modifier.padding(vertical = ChageunTheme.spacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            stats.forEachIndexed { index, stat ->
+                if (index > 0) {
+                    VerticalDivider(
+                        color = ink.copy(alpha = DIVIDER_ALPHA),
+                        modifier = Modifier.padding(vertical = ChageunTheme.spacing.xxs),
+                    )
                 }
+                HeroStatCell(stat, Modifier.weight(1f))
             }
-            footnote?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colors.onHeroCard.copy(alpha = SECONDARY_ALPHA),
-                    modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
-                )
-            }
+        }
+        footnote?.let {
+            Text(
+                it,
+                style = MaterialTheme.typography.labelSmall,
+                color = ink.copy(alpha = SECONDARY_ALPHA),
+                modifier = Modifier.padding(top = ChageunTheme.spacing.sm),
+            )
         }
     }
 }
