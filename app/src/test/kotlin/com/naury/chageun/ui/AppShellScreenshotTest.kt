@@ -73,7 +73,7 @@ class AppShellScreenshotTest {
                 }
             }
         }
-        // 레일 선택 표시가 옮겨 가고 홈 카드가 차례로 떠오르는 애니메이션이 끝난 뒤에 찍는다.
+        // 레일 선택 표시, 홈 카드 차례 등장, 몇 초 돌다 멈추는 AI 카드 빛이 모두 끝난 뒤에 찍는다.
         composeRule.waitForIdle()
         composeRule.mainClock.advanceTimeBy(SETTLE_MS)
         composeRule.captureScreen(name)
@@ -174,4 +174,4 @@ private val HOME = HomeUiState.Content(
     today = TODAY,
 )
 
-private const val SETTLE_MS = 2_000L
+private const val SETTLE_MS = 8_000L
