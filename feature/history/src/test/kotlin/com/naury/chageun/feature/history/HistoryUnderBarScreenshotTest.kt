@@ -92,6 +92,8 @@ class HistoryUnderBarScreenshotTest {
     fun scrolled() {
         show()
         composeRule.onRoot().performTouchInput { swipeUp() }
+        // 스크롤로 새로 들어온 카드의 차례 등장이 끝난 뒤에 찍어야 기준 이미지가 매번 같다.
+        composeRule.mainClock.advanceTimeBy(APPEAR_SETTLE_MS)
         composeRule.waitForIdle()
         composeRule.captureScreen("history_under_bar_scrolled")
     }
@@ -100,3 +102,5 @@ class HistoryUnderBarScreenshotTest {
         const val ROWS_PER_MONTH = 6
     }
 }
+
+private const val APPEAR_SETTLE_MS = 2_000L
