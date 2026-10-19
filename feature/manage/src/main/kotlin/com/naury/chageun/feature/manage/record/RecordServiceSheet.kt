@@ -5,29 +5,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.StatusTone
@@ -61,7 +51,12 @@ import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.tone
+import com.naury.chageun.feature.manage.ButtonPair
 import com.naury.chageun.feature.manage.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KFilterChip
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 
 /**
@@ -188,17 +183,22 @@ fun RecordServiceContent(uiState: RecordServiceUiState, actions: RecordServiceAc
             Text(stringResource(R.string.record_save_failed), color = MaterialTheme.colorScheme.error)
         }
         if (uiState.lowerMileageWarning == null && uiState.odometerPrompt == null) {
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = actions.onDismiss, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.record_cancel))
-                }
-                Button(
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.record_cancel),
+                    onClick = actions.onDismiss,
+                    variant = KVariant.Text,
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
+                // 저장하는 동안은 폭을 그대로 둔 채 링이 돌고 다시 누를 수 없다.
+                KButton(
+                    stringResource(R.string.record_save),
                     onClick = actions.onSave,
-                    enabled = !uiState.isSaving,
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.record_save)) }
+                    loading = uiState.isSaving,
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -223,15 +223,11 @@ private fun AlsoReplacedPicker(
         ) {
             candidates.forEach { candidate ->
                 val isSelected = candidate in selected
-                FilterChip(
+                KFilterChip(
+                    label = stringResource(candidate.labelRes),
                     selected = isSelected,
-                    onClick = { onToggle(candidate) },
-                    label = { Text(stringResource(candidate.labelRes)) },
-                    leadingIcon = if (isSelected) {
-                        { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    } else {
-                        null
-                    },
+                    onSelectedChange = { onToggle(candidate) },
+                    minTouchTarget = true,
                 )
             }
         }
@@ -281,14 +277,7 @@ private fun SavedContent(itemName: String, saved: SavedResult, onDone: () -> Uni
                 textAlign = TextAlign.Center,
             )
         }
-        Button(
-            onClick = onDone,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-        ) {
-            Text(stringResource(R.string.record_done))
-        }
+        KButton(stringResource(R.string.record_done), onClick = onDone, size = KButtonSize.Large, fullWidth = true)
     }
 }
 
@@ -318,13 +307,18 @@ private fun LowerMileageWarning(itemName: String, previousKm: String, actions: R
                 stringResource(R.string.record_lower_mileage_body, itemName, previousKm),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = actions.onEditLowerMileage, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.record_lower_mileage_edit))
-                }
-                Button(onClick = actions.onConfirmLowerMileage, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.record_lower_mileage_save))
-                }
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.record_lower_mileage_edit),
+                    onClick = actions.onEditLowerMileage,
+                    variant = KVariant.Text,
+                    fullWidth = true,
+                )
+                KButton(
+                    stringResource(R.string.record_lower_mileage_save),
+                    onClick = actions.onConfirmLowerMileage,
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -347,13 +341,18 @@ private fun OdometerPrompt(currentKm: String, enteredKm: String, onDecide: (Bool
                 stringResource(R.string.record_odometer_body, currentKm, entered),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = { onDecide(false) }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.record_odometer_keep))
-                }
-                Button(onClick = { onDecide(true) }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.record_odometer_update))
-                }
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.record_odometer_keep),
+                    onClick = { onDecide(false) },
+                    variant = KVariant.Text,
+                    fullWidth = true,
+                )
+                KButton(
+                    stringResource(R.string.record_odometer_update),
+                    onClick = { onDecide(true) },
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -395,16 +394,13 @@ private fun MoreFields(uiState: RecordServiceUiState, actions: RecordServiceActi
 @Composable
 private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit, onEdit: (() -> Unit)?) {
     if (count == 0) {
-        OutlinedButton(
+        KButton(
+            stringResource(R.string.record_photos_add),
             onClick = onPick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-        ) {
-            Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(ChageunTheme.spacing.xs))
-            Text(stringResource(R.string.record_photos_add))
-        }
+            variant = KVariant.Outlined,
+            icon = Icons.Filled.AddAPhoto,
+            fullWidth = true,
+        )
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Photo, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -415,15 +411,17 @@ private fun PhotoPicker(count: Int, onPick: () -> Unit, onClear: () -> Unit, onE
                     .weight(1f)
                     .padding(start = ChageunTheme.spacing.xs),
             )
-            TextButton(onClick = onPick) { Text(stringResource(R.string.record_photos_change)) }
-            TextButton(onClick = onClear) { Text(stringResource(R.string.record_photos_clear)) }
+            KButton(stringResource(R.string.record_photos_change), onClick = onPick, variant = KVariant.Text)
+            KButton(stringResource(R.string.record_photos_clear), onClick = onClear, variant = KVariant.Text)
         }
         onEdit?.let {
-            TextButton(onClick = it, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(stringResource(R.string.record_photos_edit))
-            }
+            KButton(
+                stringResource(R.string.record_photos_edit),
+                onClick = it,
+                variant = KVariant.Text,
+                icon = Icons.Outlined.Edit,
+                fullWidth = true,
+            )
         }
     }
     Text(

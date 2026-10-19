@@ -1,11 +1,11 @@
 package com.naury.chageun.feature.manage
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,12 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
+import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.MaintenanceCategory
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.ui.AdaptiveListDetail
@@ -30,6 +30,8 @@ import com.naury.chageun.core.ui.ThreePaneListDetail
 import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.isListDetailTwoPane
 import com.naury.chageun.feature.manage.rule.RuleEditorHost
+import com.naury.kinetica.ui.KSkeletonLeading
+import com.naury.kinetica.ui.KSkeletonListItem
 
 @Composable
 fun ManageRoute(
@@ -94,7 +96,7 @@ fun ManageScreen(
     onCategorySelected: (MaintenanceCategory?) -> Unit = {},
 ) {
     if (uiState.isLoading) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        ManageSkeleton(modifier)
         return
     }
     val detail = uiState.detail
@@ -164,3 +166,18 @@ fun ManageScreen(
         else -> list(modifier.fillMaxSize(), true)
     }
 }
+
+/** 항목을 읽는 동안 카드 자리를 미리 그려 둔다. 불러온 뒤 목록이 갑자기 튀어나오지 않는다. */
+@Composable
+private fun ManageSkeleton(modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(horizontal = ChageunTheme.spacing.gutter),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
+    ) {
+        repeat(SKELETON_ROWS) { KSkeletonListItem(leading = KSkeletonLeading.Thumbnail, lines = 3) }
+    }
+}
+
+private const val SKELETON_ROWS = 5

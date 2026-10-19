@@ -2,25 +2,24 @@ package com.naury.chageun.feature.manage.rule
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -30,14 +29,21 @@ import com.naury.chageun.core.domain.maintenance.RuleEditError
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RuleSource
 import com.naury.chageun.core.ui.FormHeader
-import com.naury.chageun.core.ui.NumberInputField
+import com.naury.chageun.core.ui.GroupedNumberTransformation
 import com.naury.chageun.core.ui.QuickPick
 import com.naury.chageun.core.ui.ToggleListRow
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.icon
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.tone
+import com.naury.chageun.feature.manage.ButtonPair
 import com.naury.chageun.feature.manage.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KChipRow
+import com.naury.kinetica.ui.KFilterChip
+import com.naury.kinetica.ui.KTextField
+import com.naury.kinetica.ui.KVariant
 
 @Composable
 internal fun RuleEditorHost(item: MaintenanceItem, onDismiss: () -> Unit) {
@@ -92,14 +98,14 @@ internal fun RuleEditorContent(
                 onCheckedChange = onEnabledChanged,
             )
         }
-        NumberInputField(
+        IntervalField(
             value = uiState.intervalKm,
             onValueChange = onIntervalKmChanged,
             label = stringResource(R.string.rule_interval_km),
             unit = stringResource(R.string.rule_unit_km),
             picks = KM_PICKS.map { QuickPick(stringResource(R.string.rule_km_pick, formatNumber(it)), it.toString()) },
         )
-        NumberInputField(
+        IntervalField(
             value = uiState.intervalMonths,
             onValueChange = onIntervalMonthsChanged,
             label = stringResource(R.string.rule_interval_months),
@@ -121,19 +127,66 @@ internal fun RuleEditorContent(
             )
         }
         if (uiState.source != RuleSource.Generic) {
-            TextButton(onClick = onReset, enabled = !uiState.isSaving) { Text(stringResource(R.string.rule_reset)) }
+            KButton(
+                stringResource(R.string.rule_reset),
+                onClick = onReset,
+                variant = KVariant.Text,
+                enabled = !uiState.isSaving,
+            )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-            TextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.record_cancel))
-            }
-            Button(
+        ButtonPair {
+            KButton(
+                stringResource(R.string.record_cancel),
+                onClick = onDismiss,
+                variant = KVariant.Text,
+                size = KButtonSize.Large,
+                fullWidth = true,
+            )
+            // 저장하는 동안은 폭을 그대로 둔 채 링이 돌고 다시 누를 수 없다.
+            KButton(
+                stringResource(R.string.record_save),
                 onClick = onSave,
-                enabled = !uiState.isSaving && !uiState.isLoading,
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) { Text(stringResource(R.string.record_save)) }
+                loading = uiState.isSaving,
+                enabled = !uiState.isLoading,
+                size = KButtonSize.Large,
+                fullWidth = true,
+            )
+        }
+    }
+}
+
+/**
+ * 교체 주기 입력란과 자주 쓰는 값 칩. 칩을 누르면 입력란이 채워지고, 칩에 없는 값만 직접 입력한다.
+ * 비워 두면 그 기준(거리나 기간)은 쓰지 않으므로 −/+ 스테퍼 대신 비울 수 있는 입력란으로 둔다.
+ */
+@Composable
+private fun IntervalField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    unit: String,
+    picks: List<QuickPick>,
+) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
+        KTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = label,
+            suffix = unit,
+            visualTransformation = GroupedNumberTransformation,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        // 칩마다 48dp 누름 영역을 두므로 그림자 여유는 따로 두지 않는다.
+        KChipRow(fadeEdges = true, shadowRoom = false) {
+            picks.forEach { pick ->
+                KFilterChip(
+                    label = pick.label,
+                    selected = value == pick.value,
+                    onSelectedChange = { onValueChange(pick.value) },
+                    minTouchTarget = true,
+                )
+            }
         }
     }
 }

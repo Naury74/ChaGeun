@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -19,11 +18,7 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,7 +46,6 @@ import com.naury.chageun.core.ui.LabeledListRow
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.LocalFeatureFlags
 import com.naury.chageun.core.ui.MaintenanceItemIcon
-import com.naury.chageun.core.ui.MaintenanceProgressBar
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.core.ui.labelRes
@@ -59,6 +53,12 @@ import com.naury.chageun.core.ui.missingInputText
 import com.naury.chageun.core.ui.remainingText
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.core.ui.usedFraction
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KProgressBar
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 
 @Composable
 internal fun ManageDetailPane(
@@ -84,12 +84,13 @@ internal fun ManageDetailPane(
                 horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
             ) {
                 onBack?.let {
-                    IconButton(onClick = it) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.manage_back),
-                        )
-                    }
+                    KIconButton(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.manage_back),
+                        onClick = it,
+                        variant = KVariant.Text,
+                        tone = KTone.Neutral,
+                    )
                 }
                 MaintenanceItemIcon(status.item, size = 52.dp)
                 Text(
@@ -104,19 +105,20 @@ internal fun ManageDetailPane(
         }
         item(key = "remaining") { RemainingCard(detail) }
         item(key = "actions") {
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                OutlinedButton(
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.rule_edit_action),
                     onClick = { onEditRule(status.item) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.rule_edit_action)) }
-                Button(
+                    variant = KVariant.Outlined,
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
+                KButton(
+                    stringResource(R.string.record_action),
                     onClick = { onRecordService(status.item) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.record_action)) }
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
             }
         }
         item(key = "basis") { BasisSection(detail) }
@@ -151,7 +153,16 @@ private fun RemainingCard(detail: ManageDetail) {
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         ) {
             headline?.let { Text(it, style = NumericTextStyles.Title) }
-            usedFraction(status, detail.rule)?.let { MaintenanceProgressBar(it, status.state.tone.colors.content) }
+            usedFraction(status, detail.rule)?.let { fraction ->
+                // 곧 바꿀 때가 됐거나 지난 항목은 막대 끝이 출렁여 남은 여유가 거의 없음을 보여 준다.
+                val isPressing = status.state == MaintenanceState.Due || status.state == MaintenanceState.Overdue
+                KProgressBar(
+                    fraction,
+                    color = status.state.tone.colors.content,
+                    thickness = DETAIL_PROGRESS_THICKNESS,
+                    wave = isPressing,
+                )
+            }
         }
     }
 }
@@ -266,6 +277,9 @@ internal fun DetailPlaceholder(modifier: Modifier = Modifier) {
         )
     }
 }
+
+// 물결은 10dp 이상일 때 또렷하다.
+private val DETAIL_PROGRESS_THICKNESS = 12.dp
 
 private val RuleSource.labelRes: Int
     get() = when (this) {
