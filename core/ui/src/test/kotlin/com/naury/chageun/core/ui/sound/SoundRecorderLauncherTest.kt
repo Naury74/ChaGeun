@@ -11,6 +11,7 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.framekit.android.input.EditorInput
 import com.naury.framekit.android.input.MediaKind
@@ -25,12 +26,12 @@ import com.naury.framekit.ui.audioeditor.contract.RecordMode
 import com.naury.framekit.ui.config.ThemeMode
 import java.io.File
 import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLooper
-import org.robolectric.shadows.ShadowToast
 
 /** 녹음 화면은 Robolectric에서 띄울 수 없으므로 결과 registry를 바꿔 요청과 결과 처리만 확인한다. */
 @RunWith(RobolectricTestRunner::class)
@@ -40,6 +41,9 @@ class SoundRecorderLauncherTest {
     val composeRule = createComposeRule()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+
+    @Before
+    fun clearToasts() = ChageunToasts.state.dismissAll()
     private val requests = mutableListOf<Any?>()
     private var lastRequestCode = -1
     private val registry = object : ActivityResultRegistry() {
@@ -146,9 +150,9 @@ class SoundRecorderLauncherTest {
         }
         composeRule.waitUntil(TIMEOUT_MS) {
             ShadowLooper.idleMainLooper()
-            ShadowToast.getTextOfLatestToast() != null
+            ChageunToasts.state.messages.isNotEmpty()
         }
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("This sound file can't be edited. Try another one.")
+        assertThat(ChageunToasts.state.messages).contains("This sound file can't be edited. Try another one.")
     }
 
     @Test

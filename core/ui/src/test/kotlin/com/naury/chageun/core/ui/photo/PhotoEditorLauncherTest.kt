@@ -15,6 +15,7 @@ import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.framekit.EditorChooser
 import com.naury.framekit.FrameKitRequest
@@ -30,13 +31,13 @@ import com.naury.framekit.ui.image.contract.ImageEditorRequest
 import com.naury.framekit.ui.motion.contract.MotionEditorRequest
 import com.naury.framekit.ui.video.contract.VideoEditorRequest
 import java.io.File
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowLooper
-import org.robolectric.shadows.ShadowToast
 
 /** 편집 화면은 Robolectric에서 띄울 수 없으므로 결과 registry를 바꿔 요청과 결과 처리만 확인한다. */
 @RunWith(RobolectricTestRunner::class)
@@ -46,6 +47,9 @@ class PhotoEditorLauncherTest {
     val composeRule = createComposeRule()
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+
+    @Before
+    fun clearToasts() = ChageunToasts.state.dismissAll()
     private val requests = mutableListOf<Any?>()
     private var lastRequestCode = -1
     private val registry = object : ActivityResultRegistry() {
@@ -172,15 +176,15 @@ class PhotoEditorLauncherTest {
         }
         composeRule.waitUntil(TIMEOUT_MS) {
             ShadowLooper.idleMainLooper()
-            ShadowToast.getTextOfLatestToast() != null
+            ChageunToasts.state.messages.isNotEmpty()
         }
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("This photo can't be edited. Try another one.")
+        assertThat(ChageunToasts.state.messages).contains("This photo can't be edited. Try another one.")
 
         composeRule.runOnIdle { launcher.pickAndEdit(maxItems = 1) }
         composeRule.runOnIdle { registry.dispatchResult(lastRequestCode, FrameKitResult.Cancelled) }
         composeRule.waitForIdle()
         assertThat(edited).isEmpty()
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(1)
+        assertThat(ChageunToasts.state.messages).hasSize(1)
     }
 
     @Test

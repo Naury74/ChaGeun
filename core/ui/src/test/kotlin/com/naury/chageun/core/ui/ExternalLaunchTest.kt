@@ -5,23 +5,27 @@ import android.content.Context
 import androidx.compose.ui.platform.UriHandler
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import com.naury.chageun.core.designsystem.component.ChageunToasts
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLooper
-import org.robolectric.shadows.ShadowToast
 
 @RunWith(RobolectricTestRunner::class)
 class ExternalLaunchTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    @Before
+    fun clearToasts() = ChageunToasts.state.dismissAll()
+
     @Test
     fun missingActivity_showsNotice_insteadOfCrashing() {
         context.launchExternal { throw ActivityNotFoundException("no document picker") }
         ShadowLooper.idleMainLooper()
 
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("No app on this device can open this.")
+        assertThat(ChageunToasts.state.messages).containsExactly("No app on this device can open this.")
     }
 
     @Test
@@ -33,7 +37,7 @@ class ExternalLaunchTest {
         handler.openUriSafely(context, "https://www.car.go.kr")
         ShadowLooper.idleMainLooper()
 
-        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo("No app on this device can open this.")
+        assertThat(ChageunToasts.state.messages).containsExactly("No app on this device can open this.")
     }
 
     @Test
@@ -43,6 +47,6 @@ class ExternalLaunchTest {
         context.launchExternal { launched = true }
 
         assertThat(launched).isTrue()
-        assertThat(ShadowToast.shownToastCount()).isEqualTo(0)
+        assertThat(ChageunToasts.state.messages).isEmpty()
     }
 }
