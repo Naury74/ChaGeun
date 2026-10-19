@@ -45,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -63,7 +64,6 @@ import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.WatermarkText
 import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
-import com.naury.chageun.feature.vehicle.ActionButton
 import com.naury.chageun.feature.vehicle.R
 import com.naury.kinetica.ui.KEmptyState
 import com.naury.kinetica.ui.KIconButton
@@ -366,7 +366,7 @@ private fun AlbumBody(
                     )
                 },
                 action = {
-                    ActionButton(
+                    ChageunButton(
                         stringResource(R.string.album_add),
                         onClick = actions.onAdd,
                         modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),

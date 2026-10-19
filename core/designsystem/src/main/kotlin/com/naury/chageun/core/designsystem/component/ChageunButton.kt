@@ -1,4 +1,4 @@
-package com.naury.chageun.feature.vehicle
+package com.naury.chageun.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -31,7 +31,7 @@ import com.naury.kinetica.ui.jellyPress
  * 그때는 같은 모양과 색의 표면에 줄을 바꿔 이름을 다 보여 준다. 누를 때 출렁이는 것도 같다.
  */
 @Composable
-internal fun ActionButton(
+fun ChageunButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

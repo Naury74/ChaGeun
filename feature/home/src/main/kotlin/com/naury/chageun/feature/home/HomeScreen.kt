@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.ads.LocalAdsEnabled
 import com.naury.chageun.core.ads.NativeAdSlot
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
 import com.naury.chageun.core.domain.analytics.AnalyticsTracker
@@ -509,7 +510,7 @@ private fun HomeHero(
             )
         },
         stats = listOf(
-            mileageHeroStat(rollingMileage(mileage?.mileage?.value)),
+            mileageHeroStat(mileage?.mileage?.value),
             inspectionHeroStat(state.overview.inspection),
             HeroStat(
                 label = stringResource(R.string.home_stat_recent),
@@ -537,7 +538,7 @@ private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, mo
         horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
     ) {
-        ActionButton(
+        ChageunButton(
             stringResource(R.string.home_mileage_update),
             onClick = actions.onUpdateMileage,
             modifier = Modifier.minimumInteractiveComponentSize(),
@@ -546,7 +547,7 @@ private fun HomeHeroActions(state: HomeUiState.Content, actions: HomeActions, mo
         )
         // 실루엣은 내 차가 아니므로 사진이 없을 때만 바꿀 수 있다고 알린다.
         if (state.photoPath == null && actions.onAddPhoto != null) {
-            ActionButton(
+            ChageunButton(
                 stringResource(R.string.home_add_photo),
                 onClick = actions.onAddPhoto,
                 modifier = Modifier.minimumInteractiveComponentSize(),

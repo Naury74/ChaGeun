@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.FuelType
 import com.naury.chageun.core.ui.AdaptiveSheet
@@ -36,7 +37,6 @@ import com.naury.chageun.core.ui.NumberInputField
 import com.naury.chageun.core.ui.PastDateField
 import com.naury.chageun.core.ui.VehicleInfoField
 import com.naury.chageun.core.ui.VehicleInfoFields
-import com.naury.chageun.feature.vehicle.ActionButton
 import com.naury.chageun.feature.vehicle.R
 import com.naury.chageun.feature.vehicle.TextAction
 import com.naury.kinetica.ui.KLoadingIndicator
@@ -141,7 +141,7 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
         }
         PlateSection(uiState, actions)
         Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-            ActionButton(
+            ChageunButton(
                 stringResource(R.string.vehicle_edit_cancel),
                 onClick = actions.onDismiss,
                 modifier = Modifier
@@ -151,7 +151,7 @@ fun VehicleEditContent(uiState: VehicleEditUiState, actions: VehicleEditActions,
                 fullWidth = true,
             )
             // 저장하는 동안 버튼 안에서 링이 돌고, 그동안은 다시 누를 수 없다.
-            ActionButton(
+            ChageunButton(
                 stringResource(R.string.vehicle_edit_save),
                 onClick = actions.onSave,
                 modifier = Modifier

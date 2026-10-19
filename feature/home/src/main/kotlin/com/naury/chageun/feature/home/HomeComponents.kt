@@ -30,6 +30,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
@@ -144,7 +145,7 @@ internal fun MaintenanceStatusCard(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                ActionButton(
+                ChageunButton(
                     stringResource(R.string.home_open_detail),
                     onClick = { onOpenDetail(status.item) },
                     modifier = Modifier
@@ -154,7 +155,7 @@ internal fun MaintenanceStatusCard(
                     fullWidth = true,
                     shape = MaterialTheme.shapes.medium,
                 )
-                ActionButton(
+                ChageunButton(
                     stringResource(R.string.home_record_service),
                     onClick = { onRecordService(status.item) },
                     modifier = Modifier
@@ -206,7 +207,7 @@ internal fun MissingInfoCard(
                 MissingInfoRow(status, onOpenDetail, Modifier.padding(horizontal = ChageunTheme.spacing.md))
             }
             if (statuses.size > MISSING_PREVIEW) {
-                ActionButton(
+                ChageunButton(
                     if (isExpanded) {
                         stringResource(R.string.home_missing_less)
                     } else {

@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.ChoicePill
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.vehicle.CompleteInspectionUseCase
@@ -84,7 +85,7 @@ internal fun CompleteInspectionDialog(
             }
         }
         FormLabel(stringResource(R.string.vehicle_inspection_complete_next))
-        ActionButton(
+        ChageunButton(
             formatDate(nextDue),
             onClick = { isPickingNextDue = true },
             modifier = Modifier.minimumInteractiveComponentSize(),

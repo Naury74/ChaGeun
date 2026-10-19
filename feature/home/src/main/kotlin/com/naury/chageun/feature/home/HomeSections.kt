@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
@@ -201,7 +202,7 @@ internal fun UpcomingScheduleCard(
 /** 머리글 끝이나 빈 목록 아래에 놓는 글자 버튼. 눈에 보이는 크기는 작아도 누르는 영역은 48dp를 지킨다. */
 @Composable
 private fun TextAction(text: String, onClick: () -> Unit) {
-    ActionButton(
+    ChageunButton(
         text,
         onClick = onClick,
         modifier = Modifier.minimumInteractiveComponentSize(),

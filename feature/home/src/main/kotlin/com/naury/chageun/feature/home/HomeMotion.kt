@@ -5,12 +5,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import com.naury.kinetica.presets.EffectPresets
-import com.naury.kinetica.render.animateNumberAsState
 import com.naury.kinetica.render.kineticaEffects
 import com.naury.kinetica.ui.KStaggerState
 import com.naury.kinetica.ui.kClickable
 import com.naury.kinetica.ui.staggerIn
-import kotlin.math.roundToLong
 
 /** 칸 하나 안에서 항목이 떠오르는 순서. 목록을 만들 때 위에서부터 0, 1, 2…를 나눠 준다. */
 internal class AppearOrder {
@@ -42,7 +40,3 @@ internal fun Modifier.pressableCard(shape: Shape, onClick: () -> Unit): Modifier
     .kClickable(shape, onClick = onClick)
 
 private val CardPress = EffectPresets.card.copy(appear = null)
-
-/** 주행거리가 바뀌면 이전 값에서 새 값까지 숫자가 올라가며 바뀐다. 처음 그릴 때는 바로 보여 준다. */
-@Composable
-internal fun rollingMileage(km: Long?): Long? = km?.let { animateNumberAsState(it.toDouble()).value.roundToLong() }

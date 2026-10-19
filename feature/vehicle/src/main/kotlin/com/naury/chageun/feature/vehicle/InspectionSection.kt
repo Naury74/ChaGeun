@@ -28,6 +28,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.chageun.core.model.InspectionRecord
@@ -76,7 +77,7 @@ internal fun InspectionCard(
             if (schedule == null) {
                 Text(stringResource(R.string.vehicle_inspection_empty), style = MaterialTheme.typography.bodyMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    ActionButton(
+                    ChageunButton(
                         stringResource(R.string.vehicle_inspection_add),
                         onClick = { isPickerOpen = true },
                         modifier = Modifier.minimumInteractiveComponentSize(),
@@ -100,7 +101,7 @@ internal fun InspectionCard(
                     )
                 }
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                    ActionButton(
+                    ChageunButton(
                         stringResource(R.string.vehicle_inspection_complete),
                         onClick = { isCompleting = true },
                         modifier = Modifier.minimumInteractiveComponentSize(),

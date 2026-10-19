@@ -65,6 +65,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
@@ -339,7 +340,7 @@ private fun Hero(
                 )
             }
         },
-        stats = listOf(mileageHeroStat(rollingMileage(current?.mileage?.value)), inspectionHeroStat(state.inspection)),
+        stats = listOf(mileageHeroStat(current?.mileage?.value), inspectionHeroStat(state.inspection)),
         // 큰 제목 아래에서 시작하므로 하늘이 위에서 서서히 나타나게 한다.
         skyFromTop = false,
         // 옆 칸과 나란히 놓이면 하늘 바탕이 칸 끝에서 끊겨 보이지 않게 흐린다.
@@ -352,7 +353,7 @@ private fun Hero(
                     horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                     verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
                 ) {
-                    ActionButton(
+                    ChageunButton(
                         stringResource(R.string.vehicle_update_mileage),
                         onClick = onUpdateMileage,
                         modifier = Modifier.minimumInteractiveComponentSize(),
@@ -375,7 +376,7 @@ private fun Hero(
 
 @Composable
 private fun PhotoButtons(state: VehicleUiState.Content, actions: VehiclePhotoActions) {
-    ActionButton(
+    ChageunButton(
         stringResource(if (state.photoPath == null) R.string.vehicle_photo_add else R.string.vehicle_photo_change),
         onClick = actions.onPick,
         modifier = Modifier.minimumInteractiveComponentSize(),

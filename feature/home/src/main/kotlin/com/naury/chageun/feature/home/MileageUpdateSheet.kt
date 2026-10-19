@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunButton
 import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.StatusTone
 import com.naury.chageun.core.designsystem.component.colors
@@ -132,7 +133,7 @@ internal fun MileageUpdateContent(
                         stringResource(R.string.home_mileage_lower, formatNumber(lowerThan.value)),
                         style = MaterialTheme.typography.bodyMedium,
                     )
-                    ActionButton(
+                    ChageunButton(
                         stringResource(R.string.home_mileage_save_correction),
                         onClick = onConfirmCorrection,
                         modifier = Modifier.minimumInteractiveComponentSize(),
@@ -143,7 +144,7 @@ internal fun MileageUpdateContent(
             }
         } else {
             Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                ActionButton(
+                ChageunButton(
                     stringResource(R.string.home_cancel),
                     onClick = onDismiss,
                     modifier = Modifier
@@ -153,7 +154,7 @@ internal fun MileageUpdateContent(
                     fullWidth = true,
                 )
                 // 저장하는 동안 버튼 폭은 그대로 두고 안에서 링이 돈다. 그동안은 다시 누를 수 없다.
-                ActionButton(
+                ChageunButton(
                     stringResource(R.string.home_save),
                     onClick = onSave,
                     modifier = Modifier
@@ -223,7 +224,7 @@ private fun DashboardRead(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f),
             )
-            ActionButton(
+            ChageunButton(
                 stringResource(R.string.home_dashboard_retry),
                 onClick = onRetry,
                 modifier = Modifier.minimumInteractiveComponentSize(),
@@ -239,7 +240,7 @@ private fun DashboardRead(
     }
     // 읽거나 모델을 내려받는 동안에는 다른 사진을 고르지 않게 한다.
     if (state != DashboardReadState.Reading && state !is DashboardReadState.DownloadingModel) {
-        ActionButton(
+        ChageunButton(
             stringResource(R.string.home_dashboard_button),
             onClick = onRead,
             modifier = Modifier.minimumInteractiveComponentSize(),
