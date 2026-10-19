@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +29,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusBadge
 import com.naury.chageun.core.designsystem.component.colors
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
@@ -149,9 +149,8 @@ internal fun ManageDetailPane(
 private fun RemainingCard(detail: ManageDetail) {
     val status = detail.status
     val headline = if (status.state == MaintenanceState.Unknown) missingInputText(status) else remainingText(status)
-    Surface(
+    ChageunCard(
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(

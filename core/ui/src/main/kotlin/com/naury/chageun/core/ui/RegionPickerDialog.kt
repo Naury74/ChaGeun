@@ -22,7 +22,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -56,6 +55,7 @@ import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.weather.KoreaRegionCatalog
 import com.naury.chageun.core.model.KoreaArea
+import com.naury.kinetica.ui.KDivider
 import com.naury.kinetica.ui.KIconButton
 import com.naury.kinetica.ui.KLoadingIndicator
 import com.naury.kinetica.ui.KTone
@@ -259,10 +259,7 @@ private fun RegionList(
     ) {
         itemsIndexed(rows, key = { _, row -> row.key }) { index, row ->
             if (index > 0 && row !is RegionRow.Header && rows[index - 1] !is RegionRow.Header) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = ChageunTheme.spacing.md),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
+                KDivider(startInset = ChageunTheme.spacing.md)
             }
             when (row) {
                 is RegionRow.Header -> RegionHeaderRow(stringResource(row.textRes))

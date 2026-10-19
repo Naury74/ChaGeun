@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.compositionLocalOf
@@ -26,6 +25,7 @@ import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
+import com.naury.chageun.core.designsystem.component.ChageunCard
 
 /** 광고 노출 자격(기획서 17.3)을 만족할 때만 true. MainActivity가 [AdGate] 결과로 제공한다. */
 val LocalAdsEnabled = compositionLocalOf { false }
@@ -56,11 +56,7 @@ fun NativeAdSlot(modifier: Modifier = Modifier) {
     val ad = nativeAd ?: return
     val contentColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val subtleColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-    ) {
+    ChageunCard(modifier.fillMaxWidth()) {
         AndroidView(
             factory = {
                 (LayoutInflater.from(it).inflate(R.layout.native_ad_card, null) as NativeAdView).apply {

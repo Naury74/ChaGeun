@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,16 +24,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +45,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.ai.SharedRecord
@@ -71,6 +66,11 @@ import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.isListDetailThreePane
 import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.core.ui.launchExternal
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.LocalKineticaColors
 
 @Composable
 fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: RecordRef? = null) {
@@ -154,9 +154,13 @@ fun AiHubScreen(
         title = stringResource(R.string.ai_title),
         modifier = modifier,
         navigationIcon = {
-            IconButton(onClick = actions.onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ai_back))
-            }
+            KIconButton(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.ai_back),
+                onClick = actions.onBack,
+                variant = KVariant.Text,
+                tone = KTone.Neutral,
+            )
         },
     ) { padding ->
         val isTabletop = hinge != null && !hinge.isVertical
@@ -307,27 +311,21 @@ private fun QuestionSection(uiState: AiHubUiState, actions: AiHubActions) {
 private fun ProviderButtons(promptText: String?, actions: AiHubActions) {
     val ai = ChageunTheme.colors.ai
     Text(stringResource(R.string.ai_send_with), style = MaterialTheme.typography.titleMedium)
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-    ) {
-        AiProvider.entries.forEach { provider ->
-            FilledTonalButton(
-                onClick = { actions.onShare(provider) },
-                enabled = promptText != null,
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = ai.container,
-                    contentColor = ai.content,
-                ),
-                modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.Send,
-                    contentDescription = null,
-                    modifier = Modifier.size(ICON_SIZE),
+    // 보낼 곳 버튼은 AI 보라색 톤 버튼으로 칠한다.
+    CompositionLocalProvider(LocalKineticaColors provides LocalKineticaColors.current.copy(accent = ai.content)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
+        ) {
+            AiProvider.entries.forEach { provider ->
+                KButton(
+                    text = provider.label ?: stringResource(R.string.ai_other_app),
+                    onClick = { actions.onShare(provider) },
+                    enabled = promptText != null,
+                    variant = KVariant.Tonal,
+                    icon = Icons.AutoMirrored.Filled.Send,
+                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
                 )
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(provider.label ?: stringResource(R.string.ai_other_app))
             }
         }
     }
@@ -415,16 +413,17 @@ private fun ContextPreview(
         ListRow(Icons.Filled.Lock, stringResource(R.string.ai_excluded_location), tone = critical)
         if (promptText != null) {
             GroupDivider()
-            TextButton(
+            ChageunButton(
+                text = stringResource(if (isTextVisible) R.string.ai_hide_text else R.string.ai_show_text),
                 onClick = { isTextVisible = !isTextVisible },
+                variant = KVariant.Text,
                 modifier = Modifier.padding(horizontal = ChageunTheme.spacing.xs),
-            ) {
-                Text(stringResource(if (isTextVisible) R.string.ai_hide_text else R.string.ai_show_text))
-            }
+            )
             if (isTextVisible) {
-                Surface(
+                ChageunCard(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surfaceVariant,
+                    inset = true,
                     modifier = Modifier.padding(
                         start = ChageunTheme.spacing.md,
                         end = ChageunTheme.spacing.md,
@@ -479,5 +478,4 @@ private const val SINGLE_PANE = 1
 private const val TWO_PANES = 2
 private const val THREE_PANES = 3
 
-private val ICON_SIZE = 20.dp
 private val PANE_MAX_WIDTH = 600.dp

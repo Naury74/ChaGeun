@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,11 +46,12 @@ val StatusTone.colors: ToneColors
 @Composable
 fun StatusBadge(tone: StatusTone, label: String, modifier: Modifier = Modifier) {
     val colors = tone.colors
-    Surface(
+    ChageunCard(
         modifier = modifier.clearAndSetSemantics { contentDescription = label },
         shape = MaterialTheme.shapes.small,
         color = colors.container,
         contentColor = colors.content,
+        inset = true,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
@@ -68,7 +68,7 @@ fun StatusBadge(tone: StatusTone, label: String, modifier: Modifier = Modifier) 
 @Composable
 private fun StatusBadgePreview() {
     ChageunTheme {
-        Surface {
+        ChageunCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusTone.entries.forEach { StatusBadge(tone = it, label = it.name) }
             }
@@ -80,7 +80,7 @@ private fun StatusBadgePreview() {
 @Composable
 private fun StatusBadgeDarkPreview() {
     ChageunTheme(darkTheme = true) {
-        Surface {
+        ChageunCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 StatusTone.entries.forEach { StatusBadge(tone = it, label = it.name) }
             }

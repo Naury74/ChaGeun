@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
@@ -29,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
 import com.naury.chageun.core.model.InspectionRecord
@@ -56,7 +56,7 @@ internal fun InspectionCard(
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
     var isCompleting by rememberSaveable { mutableStateOf(false) }
     val schedule = status.schedule
-    Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.large) {
+    ChageunCard(shape = MaterialTheme.shapes.large) {
         Column(
             Modifier
                 .fillMaxWidth()

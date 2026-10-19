@@ -1,7 +1,7 @@
 package com.naury.chageun.core.designsystem.component
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.kinetica.ui.KChipGroup
 import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.jellyPress
 import com.naury.kinetica.ui.kSelectable
 
 /**
@@ -90,18 +90,18 @@ fun ChoiceCard(
         motionSpec(),
         "card-bg",
     )
-    Surface(
-        modifier = modifier.kSelectable(
-            selected = selected,
-            shape = MaterialTheme.shapes.medium,
-            role = Role.RadioButton,
-        ) {
-            if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
-            onClick()
-        },
-        shape = MaterialTheme.shapes.medium,
+    val shape = MaterialTheme.shapes.medium
+    ChageunCard(
+        modifier = modifier
+            .jellyPress()
+            .kSelectable(selected = selected, shape = shape, role = Role.RadioButton) {
+                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onClick()
+            }
+            // 판보다 바깥에 두어야 테두리가 판 색 위에 그려진다.
+            .border(if (selected) 2.dp else 1.dp, if (selected) colors.primary else colors.outlineVariant, shape),
+        shape = shape,
         color = container,
-        border = BorderStroke(if (selected) 2.dp else 1.dp, if (selected) colors.primary else colors.outlineVariant),
     ) {
         Column(
             modifier = Modifier.padding(vertical = 14.dp, horizontal = 8.dp),

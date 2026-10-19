@@ -11,7 +11,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.domain.maintenance.RuleEditError
 import com.naury.chageun.core.model.MaintenanceItem
@@ -54,7 +54,7 @@ internal fun RuleEditorHost(item: MaintenanceItem, onDismiss: () -> Unit) {
     LaunchedEffect(uiState.isDone) { if (uiState.isDone) onDismiss() }
 
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.widthIn(max = 560.dp)) {
+        ChageunCard(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.widthIn(max = 560.dp), popup = true) {
             RuleEditorContent(
                 uiState = uiState,
                 onIntervalKmChanged = viewModel::onIntervalKmChanged,
@@ -89,7 +89,11 @@ internal fun RuleEditorContent(
             uiState.item.category.tone(),
             stringResource(R.string.rule_title, stringResource(uiState.item.labelRes)),
         )
-        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        ChageunCard(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            inset = true,
+        ) {
             ToggleListRow(
                 icon = Icons.Filled.NotificationsActive,
                 title = stringResource(R.string.rule_enabled),

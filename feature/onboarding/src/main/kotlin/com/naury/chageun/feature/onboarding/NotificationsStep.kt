@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.OilBarrel
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.ItemIconBadge
 import com.naury.kinetica.core.scene.AppearEffect
@@ -66,9 +66,8 @@ internal fun NotificationsStep() {
         Triple(Icons.Filled.FactCheck, colors.critical, R.string.onboarding_notify_example_inspection),
         Triple(Icons.Filled.Speed, colors.unknown, R.string.onboarding_notify_example_mileage),
     ).forEachIndexed { index, (icon, tone, textRes) ->
-        Surface(
+        ChageunCard(
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface,
             modifier = Modifier
                 .staggerIn(index + 1, delayMs = EXAMPLE_STAGGER_MS)
                 .fillMaxWidth(),

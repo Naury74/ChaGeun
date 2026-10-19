@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.component.SegmentedControl
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.analytics.AnalyticsEvent
@@ -476,8 +477,9 @@ fun HistoryScreen(
                 icon = Icons.Filled.Add,
                 onClick = onAdd,
                 expanded = rememberFabExpanded(timelineState),
-                // 다른 주요 버튼(Tonal)과 같은 무게로 보이게 한다. 옅은 톤 아래에는 판 색을 먼저 깔아 목록이 비치지 않는다.
-                variant = KVariant.Tonal,
+                // 아래 탭 바와 같은 글래스로 띄워, 지나가는 목록이 흐리게 비친다.
+                variant = KVariant.Glass,
+                surface = ChageunGlass.chrome,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     // 아래에 떠 있는 탭 바 위로 띄운다.

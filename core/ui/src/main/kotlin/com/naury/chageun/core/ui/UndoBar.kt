@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +34,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.kinetica.ui.KButton
@@ -97,15 +97,14 @@ private fun UndoBarContent(
     remaining: () -> Float,
 ) {
     val spacing = ChageunTheme.spacing
-    Surface(
+    // 사진 위에도 뜨므로 글래스 대신 반대 색 단색 판에 Kinetica 그림자를 드리운다.
+    ChageunCard(
         modifier = Modifier
             .padding(horizontal = spacing.gutter, vertical = spacing.sm)
             .widthIn(max = MAX_WIDTH)
             .fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.inverseSurface,
         contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        shadowElevation = ELEVATION,
     ) {
         Row(
             modifier = Modifier
@@ -169,6 +168,5 @@ const val UNDO_BAR_MILLIS = 6_000L
 
 private val MAX_WIDTH = 480.dp
 private val ICON_SIZE = 20.dp
-private val ELEVATION = 6.dp
 private val RING_SIZE = 22.dp
 private val RING_THICKNESS = 2.5.dp
