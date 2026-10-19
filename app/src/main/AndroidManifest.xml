@@ -4,6 +4,10 @@
 
     <!-- 기록에 차 소리를 녹음해 붙인다. FrameKit 녹음 화면은 이 선언이 있을 때만 녹음 버튼을 보이고, 처음 누를 때 권한을 묻는다. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- 영수증을 찍을 때 FrameKit 문서 스캐너가 앱 안 카메라로 테두리를 찾아 자동으로 찍는다. 처음 열 때 권한을 묻고,
+         거부하면 기기 카메라 앱으로 한 장을 찍는다. 카메라가 없는 기기도 설치할 수 있게 필수 기능으로 두지 않는다. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".ChageunApplication"

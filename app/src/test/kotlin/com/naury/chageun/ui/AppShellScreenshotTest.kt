@@ -71,6 +71,9 @@ class AppShellScreenshotTest {
                 }
             }
         }
+        // 레일 선택 표시가 옮겨 가고 홈 카드가 차례로 떠오르는 애니메이션이 끝난 뒤에 찍어야 기준 이미지가 매번 같다.
+        composeRule.mainClock.advanceTimeBy(SETTLE_MS)
+        composeRule.waitForIdle()
         composeRule.captureScreen(name)
     }
 
@@ -168,3 +171,5 @@ private val HOME = HomeUiState.Content(
     ),
     today = TODAY,
 )
+
+private const val SETTLE_MS = 2_000L

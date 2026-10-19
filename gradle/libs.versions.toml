@@ -21,7 +21,7 @@ googleServices = "4.5.0"
 firebaseCrashlyticsPlugin = "3.0.8"
 androidxSplashscreen = "1.2.0"
 # 사진 편집기. 버전은 여기 한 곳에서만 올린다.
-framekit = "1.0.0-alpha02"
+framekit = "1.0.0-alpha08"
 # 대화상자·시트·세그먼트·스위치 같은 공통 컴포넌트. FrameKit 편집 화면도 같은 키트로 그리므로 FrameKit이 요구하는 버전 이상으로 둔다.
 kinetica = "1.0.0-alpha05"
 # 앨범 동영상 재생. FrameKit이 쓰는 Media3와 버전을 맞춰야 한 앱에 두 버전이 섞이지 않는다.
