@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -119,7 +118,7 @@ fun DriveBackupScreen(
         modifier = modifier,
         navigationIcon = { BackButton(onBack) },
     ) { padding ->
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             when {
                 !connection.isConnected -> DriveIntro(isConnecting = connection.isConnecting, onConnect = onConnect)
                 isRestoreMode -> RestorePicker(backup, actions, onStartFresh = onBack)

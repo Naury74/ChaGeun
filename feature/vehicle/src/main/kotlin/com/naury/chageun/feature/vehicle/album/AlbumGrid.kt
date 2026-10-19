@@ -21,6 +21,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
@@ -44,6 +45,8 @@ internal fun AlbumGrid(
     modifier: Modifier = Modifier,
     state: LazyGridState = rememberLazyGridState(),
     stagger: KStaggerState? = null,
+    /** 위 막대 높이. 사진이 막대 뒤로 지나가도록 안쪽 여백으로 준다. */
+    contentTop: Dp = 0.dp,
 ) {
     val gutter = ChageunTheme.spacing.gutter
     LazyVerticalGrid(
@@ -52,9 +55,9 @@ internal fun AlbumGrid(
         modifier = modifier.pinchSteps(actions.onZoomGrid),
         contentPadding = PaddingValues(
             start = gutter,
+            top = contentTop,
             end = gutter,
-            bottom =
-            ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
+            bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
         ),
         horizontalArrangement = Arrangement.spacedBy(GRID_GAP),
         verticalArrangement = Arrangement.spacedBy(GRID_GAP),

@@ -1,6 +1,5 @@
 package com.naury.chageun.feature.account
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.AddToDrive
@@ -60,7 +59,7 @@ fun DeleteAccountScreen(
         modifier = modifier,
         navigationIcon = { BackButton(onBack) },
     ) { padding ->
-        CenteredColumn(Modifier.padding(padding)) {
+        CenteredColumn(top = padding.calculateTopPadding()) {
             CardGroup(stringResource(R.string.account_delete_removed)) {
                 ListRow(
                     icon = Icons.Filled.AccountCircle,

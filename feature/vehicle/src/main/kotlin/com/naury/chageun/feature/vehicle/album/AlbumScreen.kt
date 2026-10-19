@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -175,7 +176,15 @@ fun AlbumRoute(
                 },
             ),
         ) { padding ->
-            AlbumScreen(uiState, isTwoPane, actions, Modifier.padding(padding), gridState, stagger)
+            // 그리드가 위 막대 뒤로 지나가며 글래스에 비치도록 막대 높이는 그리드 안쪽 여백으로 준다.
+            AlbumScreen(
+                uiState,
+                isTwoPane,
+                actions,
+                gridState = gridState,
+                stagger = stagger,
+                contentTop = padding.calculateTopPadding(),
+            )
         }
     }
 
@@ -326,11 +335,13 @@ fun AlbumScreen(
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
     stagger: KStaggerState? = null,
+    /** 위 막대 높이. 그리드는 안쪽 여백으로, 빈 화면과 두 칸 배치는 바깥 여백으로 둔다. */
+    contentTop: Dp = 0.dp,
 ) {
     val isViewerOnly = !isTwoPane && uiState.selected != null
     val bottomBar = LocalBottomBarPadding.current
     Box(modifier) {
-        AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState, stagger)
+        AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState, stagger, contentTop)
         if (!isViewerOnly) {
             AlbumUndoBar(
                 uiState.undo,
@@ -358,11 +369,13 @@ private fun AlbumBody(
     modifier: Modifier,
     gridState: LazyGridState,
     stagger: KStaggerState?,
+    contentTop: Dp,
 ) {
     val selected = uiState.selected
+    val padded = modifier.padding(top = contentTop)
     when {
         uiState.isLoading -> Unit
-        uiState.days.isEmpty() -> Box(modifier, contentAlignment = Alignment.TopCenter) {
+        uiState.days.isEmpty() -> Box(padded, contentAlignment = Alignment.TopCenter) {
             KEmptyState(
                 title = stringResource(R.string.album_empty_title),
                 message = stringResource(R.string.album_empty_body),
@@ -404,14 +417,14 @@ private fun AlbumBody(
                     )
                 },
                 emptyDetail = {},
-                modifier = modifier,
+                modifier = padded,
             )
         }
         selected != null -> {
             BackHandler { actions.onSelect(null) }
-            PhotoViewer(uiState, selected, actions, immersive = true, modifier = modifier.fillMaxSize())
+            PhotoViewer(uiState, selected, actions, immersive = true, modifier = padded.fillMaxSize())
         }
-        else -> AlbumGrid(uiState, actions, modifier.fillMaxSize(), gridState, stagger)
+        else -> AlbumGrid(uiState, actions, modifier.fillMaxSize(), gridState, stagger, contentTop)
     }
 }
 

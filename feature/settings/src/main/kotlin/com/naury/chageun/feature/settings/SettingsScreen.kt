@@ -185,8 +185,9 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
+                // 위 막대 높이를 스크롤 안쪽에 둬야 내용이 막대 뒤로 지나가며 글래스에 비친다.
+                .padding(top = padding.calculateTopPadding())
                 .padding(horizontal = ChageunTheme.spacing.gutter)
                 .padding(bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),

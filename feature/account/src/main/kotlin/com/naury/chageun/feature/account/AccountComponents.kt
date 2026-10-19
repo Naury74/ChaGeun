@@ -35,8 +35,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.auth.AuthError
 import com.naury.kinetica.ui.KAlert
 import com.naury.kinetica.ui.KButton
@@ -67,9 +69,16 @@ internal fun BackButton(onBack: () -> Unit) {
     )
 }
 
-/** 스크롤되는 가운데 정렬 열. 키보드가 올라와도 입력 칸까지 스크롤할 수 있다. */
+/**
+ * 스크롤되는 가운데 정렬 열. 키보드가 올라와도 입력 칸까지 스크롤할 수 있다.
+ * [top]에는 위 막대 높이를 준다. 스크롤 안쪽 여백으로 둬야 내용이 막대 뒤로 지나가며 글래스에 비친다.
+ */
 @Composable
-internal fun CenteredColumn(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+internal fun CenteredColumn(
+    modifier: Modifier = Modifier,
+    top: Dp = 0.dp,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Box(
         modifier
             .fillMaxSize()
@@ -80,6 +89,8 @@ internal fun CenteredColumn(modifier: Modifier = Modifier, content: @Composable 
             Modifier
                 .widthIn(max = ACCOUNT_CONTENT_MAX_WIDTH)
                 .fillMaxWidth()
+                .padding(top = top)
+                .padding(bottom = LocalBottomBarPadding.current)
                 .padding(horizontal = ChageunTheme.spacing.gutter, vertical = ChageunTheme.spacing.md),
             verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
             content = content,
