@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.formatDate
 import com.naury.chageun.core.ui.formatNumber
@@ -50,9 +50,8 @@ internal fun MileageTrendCard(trend: MileageTrend, modifier: Modifier = Modifier
         ),
         average,
     ).joinToString(" ")
-    Surface(
+    ChageunCard(
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
         modifier = modifier
             .fillMaxWidth()
             .clearAndSetSemantics { contentDescription = summary },

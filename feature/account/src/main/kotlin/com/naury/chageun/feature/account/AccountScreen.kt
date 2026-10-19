@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -23,18 +22,13 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.VerifiedUser
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.component.PressStyle
 import com.naury.chageun.core.designsystem.component.pressable
@@ -65,6 +60,9 @@ import com.naury.chageun.core.ui.GroupDivider
 import com.naury.chageun.core.ui.ListRow
 import com.naury.chageun.core.ui.ProfileAvatar
 import com.naury.chageun.core.ui.openUriSafely
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KStatus
+import com.naury.kinetica.ui.KVariant
 
 @Composable
 fun AccountRoute(
@@ -135,51 +133,59 @@ fun AccountScreen(
     onStartOver: () -> Unit = {},
     onEditName: () -> Unit = {},
 ) {
-    val snackbar = remember { SnackbarHostState() }
     val noticeText = uiState.notice?.let { noticeMessage(it) }
     LaunchedEffect(uiState.notice) {
-        if (noticeText != null) {
-            snackbar.showSnackbar(noticeText)
+        val notice = uiState.notice
+        if (notice != null && noticeText != null) {
+            showAccountNotice(notice, noticeText)
             onNoticeShown()
         }
     }
-    Box(modifier.fillMaxSize()) {
-        LargeTitleScaffold(
-            title = stringResource(R.string.account_title),
-            navigationIcon = { BackButton(onBack) },
-        ) { padding ->
-            val user = uiState.user
-            CenteredColumn(Modifier.padding(padding)) {
-                when {
-                    uiState.isLoading -> Unit
-                    user == null -> AccountStart(
-                        isGoogleConfigured = uiState.isGoogleConfigured,
-                        isBusy = uiState.isBusy,
-                        onContinueWithGoogle = onContinueWithGoogle,
-                        onContinueWithEmail = onContinueWithEmail,
-                        onOpenPrivacyPolicy = onOpenPrivacyPolicy,
-                    )
-                    // 이메일 인증을 마쳐야 가입이 끝난다. 그 전에는 인증 안내만 보여 준다(ADR-006).
-                    user.needsEmailVerification -> VerifyEmail(
-                        email = user.email.orEmpty(),
-                        isBusy = uiState.isBusy,
-                        onCheckVerification = onCheckVerification,
-                        onResendVerification = onResendVerification,
-                        onStartOver = onStartOver,
-                        onSignOut = onSignOut,
-                    )
-                    else -> AccountHome(
-                        user = user,
-                        photoPath = uiState.photoPath,
-                        isBusy = uiState.isBusy,
-                        onSignOut = onSignOut,
-                        onDeleteAccount = onDeleteAccount,
-                        onEditName = onEditName,
-                    )
-                }
+    LargeTitleScaffold(
+        title = stringResource(R.string.account_title),
+        modifier = modifier,
+        navigationIcon = { BackButton(onBack) },
+    ) { padding ->
+        val user = uiState.user
+        CenteredColumn(top = padding.calculateTopPadding()) {
+            when {
+                uiState.isLoading -> Unit
+                user == null -> AccountStart(
+                    isGoogleConfigured = uiState.isGoogleConfigured,
+                    isBusy = uiState.isBusy,
+                    onContinueWithGoogle = onContinueWithGoogle,
+                    onContinueWithEmail = onContinueWithEmail,
+                    onOpenPrivacyPolicy = onOpenPrivacyPolicy,
+                )
+                // 이메일 인증을 마쳐야 가입이 끝난다. 그 전에는 인증 안내만 보여 준다(ADR-006).
+                user.needsEmailVerification -> VerifyEmail(
+                    email = user.email.orEmpty(),
+                    isBusy = uiState.isBusy,
+                    onCheckVerification = onCheckVerification,
+                    onResendVerification = onResendVerification,
+                    onStartOver = onStartOver,
+                    onSignOut = onSignOut,
+                )
+                else -> AccountHome(
+                    user = user,
+                    photoPath = uiState.photoPath,
+                    isBusy = uiState.isBusy,
+                    onSignOut = onSignOut,
+                    onDeleteAccount = onDeleteAccount,
+                    onEditName = onEditName,
+                )
             }
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+/** 완료는 성공, 실패는 오류 토스트로 띄운다. 인증 메일 안내처럼 결과가 아닌 알림은 보통 토스트다. */
+private fun showAccountNotice(notice: AccountNotice, text: String) {
+    when (notice) {
+        is AccountNotice.Failed -> ChageunToasts.error(text)
+        AccountNotice.Verified -> ChageunToasts.success(text)
+        AccountNotice.VerificationSent -> ChageunToasts.show(text, KStatus.Info)
+        AccountNotice.NotVerifiedYet -> ChageunToasts.show(text, KStatus.Warning)
     }
 }
 
@@ -193,7 +199,9 @@ private fun ColumnScope.AccountStart(
     onOpenPrivacyPolicy: () -> Unit,
 ) {
     Column(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .appearIn(0)
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
     ) {
@@ -219,7 +227,7 @@ private fun ColumnScope.AccountStart(
             modifier = Modifier.semantics { heading() },
         )
     }
-    CardGroup(title = null) {
+    CardGroup(title = null, modifier = Modifier.appearIn(1)) {
         ListRow(
             Icons.Filled.Mail,
             stringResource(R.string.account_benefit_backup),
@@ -234,7 +242,12 @@ private fun ColumnScope.AccountStart(
         GroupDivider()
         ListRow(Icons.Filled.Security, stringResource(R.string.account_benefit_optional))
     }
-    GoogleButton(onClick = onContinueWithGoogle, enabled = isGoogleConfigured, isBusy = isBusy)
+    GoogleButton(
+        onClick = onContinueWithGoogle,
+        enabled = isGoogleConfigured,
+        isBusy = isBusy,
+        modifier = Modifier.appearIn(2),
+    )
     if (!isGoogleConfigured) {
         Text(
             stringResource(R.string.account_google_unavailable),
@@ -242,13 +255,19 @@ private fun ColumnScope.AccountStart(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    Button(onClick = onContinueWithEmail, enabled = !isBusy, modifier = ButtonHeight) {
-        Icon(Icons.Filled.Mail, contentDescription = null, modifier = Modifier.size(20.dp))
-        Text(stringResource(R.string.account_continue_email), Modifier.padding(start = ChageunTheme.spacing.sm))
-    }
-    TextButton(onClick = onOpenPrivacyPolicy, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-        Text(stringResource(R.string.account_privacy_policy))
-    }
+    AccountPrimaryButton(
+        text = stringResource(R.string.account_continue_email),
+        onClick = onContinueWithEmail,
+        enabled = !isBusy,
+        icon = Icons.Filled.Mail,
+        modifier = Modifier.appearIn(2),
+    )
+    KButton(
+        text = stringResource(R.string.account_privacy_policy),
+        onClick = onOpenPrivacyPolicy,
+        variant = KVariant.Text,
+        modifier = Modifier.align(Alignment.CenterHorizontally),
+    )
 }
 
 /** AC04. 인증 메일의 링크를 누르고 돌아와 확인을 눌러야 가입이 끝난다. */
@@ -264,6 +283,7 @@ private fun ColumnScope.VerifyEmail(
     val tone = ChageunTheme.colors.upcoming
     Box(
         Modifier
+            .appearIn(0)
             .size(HERO_ICON_BOX)
             .background(tone.container, CircleShape)
             .align(Alignment.CenterHorizontally),
@@ -292,10 +312,12 @@ private fun ColumnScope.VerifyEmail(
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth(),
     )
-    Button(onClick = onCheckVerification, enabled = !isBusy, modifier = ButtonHeight) {
-        ButtonContent(stringResource(R.string.account_verify_check), isBusy = isBusy)
-    }
-    CardGroup(title = null) {
+    AccountPrimaryButton(
+        text = stringResource(R.string.account_verify_check),
+        onClick = onCheckVerification,
+        loading = isBusy,
+    )
+    CardGroup(title = null, modifier = Modifier.appearIn(1)) {
         ListRow(
             Icons.Filled.Refresh,
             stringResource(R.string.account_verify_resend),
@@ -331,7 +353,7 @@ private fun AccountHome(
     onEditName: () -> Unit,
 ) {
     ProfileHeader(user, photoPath, onEditName)
-    CardGroup(title = null) {
+    CardGroup(title = null, modifier = Modifier.appearIn(1)) {
         ListRow(
             Icons.AutoMirrored.Filled.Logout,
             stringResource(R.string.account_sign_out),
@@ -356,7 +378,9 @@ private fun AccountHome(
 private fun ProfileHeader(user: AuthUser, photoPath: String?, onEditName: () -> Unit) {
     val name = user.profileName
     Column(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .appearIn(0)
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xxs),
     ) {

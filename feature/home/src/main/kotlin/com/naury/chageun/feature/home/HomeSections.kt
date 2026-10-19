@@ -1,7 +1,9 @@
 package com.naury.chageun.feature.home
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,10 +17,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -33,8 +39,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunCard
 import com.naury.chageun.core.designsystem.component.StatusBadge
-import com.naury.chageun.core.designsystem.component.pressable
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.UpcomingEvent
@@ -50,14 +57,17 @@ import com.naury.chageun.core.ui.timelineTitle
 import com.naury.chageun.core.ui.tone
 import com.naury.chageun.core.ui.upcomingEventStatus
 import com.naury.chageun.core.ui.upcomingEventTitle
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.glowBorder
 import java.time.LocalDate
+import kotlinx.coroutines.delay
 
 @Composable
 internal fun MileagePromptCard(onUpdate: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
-            .pressable(onClick = onUpdate),
+            .pressableCard(MaterialTheme.shapes.large, onUpdate),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
@@ -86,9 +96,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                     .weight(1f)
                     .semantics { heading() },
             )
-            if (records.isNotEmpty()) {
-                TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.home_recent_all)) }
-            }
+            if (records.isNotEmpty()) TextAction(stringResource(R.string.home_recent_all), onOpenHistory)
         }
         if (records.isEmpty()) {
             Text(
@@ -96,7 +104,7 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.home_recent_add)) }
+            TextAction(stringResource(R.string.home_recent_add), onOpenHistory)
         }
         records.forEach { record ->
             Row(
@@ -134,13 +142,22 @@ internal fun RecentRecords(records: List<TimelineItem>, onOpenHistory: () -> Uni
  */
 @Composable
 internal fun AskAiBar(onAskAi: () -> Unit, modifier: Modifier = Modifier) {
-    Surface(
+    // 홈을 열면 Apple Intelligence처럼 가장자리를 따라 색이 몇 바퀴 돌다가 옅어지고, 그라데이션 테두리만 남는다.
+    // 계속 돌리면 매 프레임 화면이 바뀌어 위에 떠 있는 글래스 탭 바가 블러를 다시 하느라 끊긴다.
+    var glowing by rememberSaveable { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        delay(AI_GLOW_MS)
+        glowing = false
+    }
+    val glow by animateFloatAsState(if (glowing) AI_GLOW_INTENSITY else 0f, tween(AI_GLOW_FADE_MS), label = "ai-glow")
+    ChageunCard(
         modifier = modifier
             .fillMaxWidth()
-            .pressable(onClick = onAskAi),
+            .pressableCard(CircleShape, onAskAi)
+            .glowBorder(CircleShape, width = AI_GLOW_WIDTH, glow = AI_GLOW_BLUR, intensity = glow)
+            // 판보다 바깥에 두어야 그라데이션 테두리가 판 색 위에 그려진다.
+            .border(AI_BORDER_WIDTH, AskAiGradient, CircleShape),
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.5.dp, AskAiGradient),
     ) {
         Row(
             Modifier
@@ -210,9 +227,9 @@ internal fun UpcomingScheduleCard(
                     .weight(1f)
                     .semantics { heading() },
             )
-            TextButton(onClick = { onOpenCalendar(today) }) { Text(stringResource(R.string.home_schedule_calendar)) }
+            TextAction(stringResource(R.string.home_schedule_calendar)) { onOpenCalendar(today) }
         }
-        Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.surface) {
+        ChageunCard(shape = MaterialTheme.shapes.large) {
             Column {
                 events.forEachIndexed { index, event ->
                     if (index > 0) GroupDivider()
@@ -234,3 +251,23 @@ internal fun UpcomingScheduleCard(
         }
     }
 }
+
+/** 머리글 끝이나 빈 목록 아래에 놓는 글자 버튼. 눈에 보이는 크기는 작아도 누르는 영역은 48dp를 지킨다. */
+@Composable
+private fun TextAction(text: String, onClick: () -> Unit) {
+    ChageunButton(
+        text,
+        onClick = onClick,
+        modifier = Modifier.minimumInteractiveComponentSize(),
+        variant = KVariant.Text,
+    )
+}
+
+private val AI_GLOW_WIDTH = 2.dp
+private val AI_GLOW_BLUR = 10.dp
+private const val AI_GLOW_INTENSITY = 0.85f
+private val AI_BORDER_WIDTH = 1.5.dp
+
+// 빛이 도는 시간과 옅어지는 시간. 두어 바퀴 돌고 멈춘다.
+private const val AI_GLOW_MS = 6_000L
+private const val AI_GLOW_FADE_MS = 1_200

@@ -2,20 +2,24 @@ package com.naury.chageun.feature.home
 
 import android.text.format.DateFormat
 import androidx.annotation.ArrayRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +42,10 @@ import com.naury.chageun.core.model.MaintenanceState
 import com.naury.chageun.core.model.TimelineItem
 import com.naury.chageun.core.model.Vehicle
 import com.naury.chageun.core.ui.ProfileAvatar
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.kClickable
 import java.text.NumberFormat
 import java.time.Duration
 import java.time.LocalDate
@@ -111,9 +119,16 @@ internal fun HomeGreetingBar(
             // 버튼 자리를 먼저 잡고 남은 폭을 로고에 준다. 큰 글꼴에서도 버튼이 밀려나지 않는다.
             ChageunBrandTitle(stringResource(R.string.home_brand), Modifier.weight(1f))
             AccountButton(name, avatarPath, onOpenAccount)
-            IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.home_open_settings))
-            }
+            KIconButton(
+                Icons.Filled.Settings,
+                contentDescription = stringResource(R.string.home_open_settings),
+                onClick = onOpenSettings,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+                variant = KVariant.Text,
+                tone = KTone.Neutral,
+                // 하늘 그림 위 글자 색을 그대로 따른다.
+                contentColor = LocalContentColor.current,
+            )
         }
         Column(Modifier.padding(horizontal = spacing.gutter).padding(top = spacing.xs)) {
             Text(
@@ -143,7 +158,15 @@ private fun AccountButton(name: String?, avatarPath: String?, onOpenAccount: () 
     } else {
         stringResource(R.string.home_open_account)
     }
-    IconButton(onClick = onOpenAccount, modifier = Modifier.semantics { contentDescription = description }) {
+    Box(
+        Modifier
+            .minimumInteractiveComponentSize()
+            .size(ACCOUNT_BUTTON_SIZE)
+            .clip(CircleShape)
+            .kClickable(CircleShape, onClick = onOpenAccount)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
         // 로그인하지 않았으면 이름과 사진이 함께 없다. 사진만 남는 경우는 없으므로 이름으로 가른다.
         ProfileAvatar(name = name, photoPath = avatarPath.takeIf { name != null }, size = AVATAR_SIZE)
     }
@@ -180,6 +203,7 @@ private fun todayLabel(today: LocalDate): String {
 }
 
 private val AVATAR_SIZE = 32.dp
+private val ACCOUNT_BUTTON_SIZE = 40.dp
 
 @get:ArrayRes
 private val GreetingSituation.arrayRes: Int

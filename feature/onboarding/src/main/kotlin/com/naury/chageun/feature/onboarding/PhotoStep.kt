@@ -5,19 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.outlined.AutoFixHigh
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -31,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.ui.CardGroup
 import com.naury.chageun.core.ui.ToggleListRow
@@ -39,6 +32,13 @@ import com.naury.chageun.core.ui.photo.PhotoFiles
 import com.naury.chageun.core.ui.photo.PhotoInput
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.core.ui.vehicleBodyTypeOf
+import com.naury.kinetica.core.scene.AppearEffect
+import com.naury.kinetica.core.scene.AppearKind
+import com.naury.kinetica.core.scene.NodeEffects
+import com.naury.kinetica.render.kineticaEffects
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -65,6 +65,7 @@ internal fun PhotoStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
                 contentDescription = stringResource(R.string.onboarding_photo_preview),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
+                    .kineticaEffects(PreviewAppear)
                     .fillMaxWidth()
                     .aspectRatio(PREVIEW_ASPECT_RATIO)
                     .clip(MaterialTheme.shapes.large),
@@ -93,19 +94,21 @@ internal fun PhotoStep(uiState: OnboardingUiState, onAction: (OnboardingAction) 
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-            OutlinedButton(onClick = photoInput::open) {
-                Icon(Icons.Filled.AddAPhoto, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(ChageunTheme.spacing.xs))
-                Text(
-                    stringResource(
-                        if (photo == null) R.string.onboarding_photo_pick else R.string.onboarding_photo_change,
-                    ),
-                )
-            }
+            KButton(
+                text = stringResource(
+                    if (photo == null) R.string.onboarding_photo_pick else R.string.onboarding_photo_change,
+                ),
+                onClick = photoInput::open,
+                variant = KVariant.Tonal,
+                icon = Icons.Filled.AddAPhoto,
+            )
             if (uiState.photoUri != null) {
-                TextButton(onClick = { onAction(OnboardingAction.RemovePhoto) }) {
-                    Text(stringResource(R.string.onboarding_photo_remove))
-                }
+                KButton(
+                    text = stringResource(R.string.onboarding_photo_remove),
+                    onClick = { onAction(OnboardingAction.RemovePhoto) },
+                    variant = KVariant.Text,
+                    tone = KTone.Destructive,
+                )
             }
         }
         Text(
@@ -132,3 +135,6 @@ private fun rememberPreview(uri: String): ImageBitmap? {
 private const val PREVIEW_ASPECT_RATIO = 16f / 10f
 private const val PREVIEW_MAX_EDGE = 1_280
 private const val SILHOUETTE_WIDTH_FRACTION = 0.8f
+
+/** 고른 사진이 실루엣 자리에 튀듯 들어온다. */
+private val PreviewAppear = NodeEffects(appear = AppearEffect(AppearKind.Pop))

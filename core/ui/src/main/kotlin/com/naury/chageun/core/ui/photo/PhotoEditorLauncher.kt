@@ -1,7 +1,6 @@
 package com.naury.chageun.core.ui.photo
 
 import android.content.Context
-import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.StringRes
@@ -18,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.ui.R
 import com.naury.chageun.core.ui.launchExternal
 import com.naury.framekit.FrameKitContract
@@ -191,7 +191,7 @@ private fun rememberEditorLaunchers(onEdited: (EditedPhotos) -> Unit): EditorLau
     }
 }
 
-private fun Context.showNotice(@StringRes message: Int) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+private fun Context.showNotice(@StringRes message: Int) = ChageunToasts.error(getString(message))
 
 private fun <I> Context.launchEditor(launcher: ManagedActivityResultLauncher<I, FrameKitResult>, request: I) {
     PhotoFiles.cleanStale(this)

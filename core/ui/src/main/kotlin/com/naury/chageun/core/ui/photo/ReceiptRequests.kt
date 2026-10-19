@@ -2,11 +2,13 @@ package com.naury.chageun.core.ui.photo
 
 import com.naury.framekit.android.input.EditorInput
 import com.naury.framekit.android.input.MediaKind
+import com.naury.framekit.core.document.ScanMode
 import com.naury.framekit.core.pdf.PdfPageSize
 import com.naury.framekit.image.export.ImageExportConfig
 import com.naury.framekit.image.export.ImageFormat
 import com.naury.framekit.image.export.MetadataPolicy
 import com.naury.framekit.image.export.PdfOptions
+import com.naury.framekit.scanner.DocumentScanRequest
 import com.naury.framekit.ui.config.EditorUiConfig
 import com.naury.framekit.ui.image.contract.ImageEditorConfig
 import com.naury.framekit.ui.image.contract.ImageEditorRequest
@@ -15,9 +17,6 @@ import java.io.File
 
 /** 영수증 편집기에 넘길 사진. */
 internal sealed interface ReceiptSource {
-    /** 시스템 카메라 앱으로 찍은 뒤 바로 편집한다. */
-    data object Capture : ReceiptSource
-
     /** 시스템 Photo Picker로 [maxItems]장까지 고른 뒤 편집한다. */
     data class Pick(val maxItems: Int) : ReceiptSource
 
@@ -30,7 +29,7 @@ internal sealed interface ReceiptSource {
  * 문서 보정은 사진이 문서로 판별될 때만 보이므로 일반 사진을 열어도 빈 도구가 생기지 않는다.
  */
 internal object ReceiptTools {
-    /** 영수증 스캔. 꾸미기 도구(텍스트·스티커·그리기·배경 제거·워터마크)는 숨긴다. */
+    /** 영수증 보정. 꾸미기 도구(텍스트·스티커·그리기·배경 제거·워터마크)는 숨긴다. */
     val SCAN: Set<ImageTool> = linkedSetOf(
         ImageTool.DOCUMENT,
         ImageTool.CROP,
@@ -59,7 +58,6 @@ internal fun receiptEditRequest(
 ): ImageEditorRequest {
     val limit = maxItems.coerceIn(1, MAX_EDIT_ITEMS)
     val input = when (source) {
-        ReceiptSource.Capture -> EditorInput.Capture(MediaKind.IMAGE)
         is ReceiptSource.Pick -> EditorInput.Pick(MediaKind.IMAGE, source.maxItems.coerceIn(1, limit))
         is ReceiptSource.Existing -> EditorInput.FileSource(File(source.path).absolutePath)
     }
@@ -76,6 +74,15 @@ internal fun receiptEditRequest(
         ui = ui,
     )
 }
+
+/**
+ * 영수증 문서 스캔 요청. 글씨가 또렷하게 남도록 원래 색으로 펴고, 첨부할 수 있는 만큼([maxItems]쪽)까지 이어 찍는다.
+ */
+internal fun receiptScanRequest(maxItems: Int, ui: EditorUiConfig): DocumentScanRequest = DocumentScanRequest(
+    maxPages = maxItems.coerceIn(1, minOf(MAX_EDIT_ITEMS, DocumentScanRequest.MAX_PAGES)),
+    scanMode = ScanMode.COLOR,
+    ui = ui,
+)
 
 /**
  * 첨부 사진들을 첨부한 순서대로 한 PDF(A4)로 묶는 요청. 글자 인식 모듈이 있으면 검색·복사되는 글자 층을 넣는다.

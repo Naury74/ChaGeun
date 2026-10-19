@@ -1,6 +1,5 @@
 package com.naury.chageun.feature.vehicle.album
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,9 +9,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -25,7 +26,6 @@ import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.MovieCreation
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,13 +38,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.naury.chageun.core.designsystem.component.ChageunButton
+import com.naury.chageun.core.designsystem.component.ChageunToasts
 import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.domain.album.MAX_ALBUM_PHOTOS_PER_ADD
 import com.naury.chageun.core.domain.album.MAX_ALBUM_VIDEO_DURATION_MS
 import com.naury.chageun.core.model.AlbumPhoto
@@ -53,7 +59,6 @@ import com.naury.chageun.core.ui.ChageunDialog
 import com.naury.chageun.core.ui.ChageunTextField
 import com.naury.chageun.core.ui.DialogAction
 import com.naury.chageun.core.ui.DialogActionStyle
-import com.naury.chageun.core.ui.EmptyState
 import com.naury.chageun.core.ui.FormLabel
 import com.naury.chageun.core.ui.QuickDateField
 import com.naury.chageun.core.ui.isListDetailTwoPane
@@ -62,6 +67,12 @@ import com.naury.chageun.core.ui.photo.WatermarkText
 import com.naury.chageun.core.ui.photo.rememberPhotoEditorLauncher
 import com.naury.chageun.core.ui.photo.rememberPhotoInputState
 import com.naury.chageun.feature.vehicle.R
+import com.naury.kinetica.ui.KEmptyState
+import com.naury.kinetica.ui.KIconButton
+import com.naury.kinetica.ui.KStaggerState
+import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KVariant
+import com.naury.kinetica.ui.rememberKStaggerState
 import java.io.File
 import java.time.LocalDate
 
@@ -102,7 +113,6 @@ fun AlbumRoute(
         includeVideos = true,
         onPickFromGallery = { editor.pickWithChooser(MAX_ALBUM_PHOTOS_PER_ADD, AlbumEditTag.ADD) },
     )
-    val context = LocalContext.current
     val watermarkLabels = rememberWatermarkLabels()
     val watermarkFor: (AlbumPhoto) -> WatermarkText = { photo ->
         albumWatermark(uiState.vehicle, photo.takenOn, uiState.mileageLog, watermarkLabels)
@@ -110,7 +120,7 @@ fun AlbumRoute(
     val slideshowNote = stringResource(R.string.album_slideshow_videos_skipped)
     val makeSlideshow = {
         val photos = uiState.slideshowPhotos()
-        if (uiState.hasPickedVideos) Toast.makeText(context, slideshowNote, Toast.LENGTH_SHORT).show()
+        if (uiState.hasPickedVideos) ChageunToasts.show(slideshowNote)
         val takenOn = slideshowDate(photos, LocalDate.now())
         editor.makeSlideshow(photos.map { File(it.filePath) }, AlbumEditTag.slideshow(takenOn))
         viewModel.picks.clear()
@@ -124,8 +134,9 @@ fun AlbumRoute(
         currentOnImmersiveChange(isImmersive)
         onDispose { currentOnImmersiveChange(false) }
     }
-    // 한 칸 화면에서 사진을 열었다 닫아도 그리드가 보던 자리에 머물게 여기서 기억한다.
+    // 한 칸 화면에서 사진을 열었다 닫아도 그리드가 보던 자리에 머물고, 사진이 다시 떠오르지 않게 여기서 기억한다.
     val gridState = rememberLazyGridState()
+    val stagger = rememberKStaggerState()
     val actions = AlbumActions(
         onSelect = viewModel::select,
         onAdd = photoInput::open,
@@ -165,7 +176,15 @@ fun AlbumRoute(
                 },
             ),
         ) { padding ->
-            AlbumScreen(uiState, isTwoPane, actions, Modifier.padding(padding), gridState)
+            // 그리드가 위 막대 뒤로 지나가며 글래스에 비치도록 막대 높이는 그리드 안쪽 여백으로 준다.
+            AlbumScreen(
+                uiState,
+                isTwoPane,
+                actions,
+                gridState = gridState,
+                stagger = stagger,
+                contentTop = padding.calculateTopPadding(),
+            )
         }
     }
 
@@ -241,13 +260,9 @@ internal fun AlbumListScaffold(
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
         navigationIcon = {
             if (uiState.isPicking) {
-                IconButton(onClick = bar.onClearPicks) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.album_clear_picks))
-                }
+                BarIconButton(Icons.Filled.Close, stringResource(R.string.album_clear_picks), bar.onClearPicks)
             } else {
-                IconButton(onClick = bar.onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.album_back))
-                }
+                BarIconButton(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.album_back), bar.onBack)
             }
         },
         actions = {
@@ -258,9 +273,7 @@ internal fun AlbumListScaffold(
                     onDelete = bar.onDeletePicked,
                 )
             } else {
-                IconButton(onClick = bar.onAdd) {
-                    Icon(Icons.Filled.AddAPhoto, contentDescription = stringResource(R.string.album_add))
-                }
+                BarIconButton(Icons.Filled.AddAPhoto, stringResource(R.string.album_add), bar.onAdd)
             }
         },
         content = content,
@@ -273,17 +286,42 @@ internal fun AlbumListScaffold(
  */
 @Composable
 private fun PickingActions(canMakeSlideshow: Boolean, onMakeSlideshow: () -> Unit, onDelete: () -> Unit) {
-    IconButton(onClick = onMakeSlideshow, enabled = canMakeSlideshow) {
-        Icon(Icons.Filled.MovieCreation, contentDescription = stringResource(R.string.album_make_slideshow))
-    }
-    IconButton(onClick = onDelete) {
-        Icon(
-            Icons.Filled.DeleteOutline,
-            contentDescription = stringResource(R.string.album_delete_picked),
-            tint = MaterialTheme.colorScheme.error,
-        )
-    }
+    BarIconButton(
+        Icons.Filled.MovieCreation,
+        stringResource(R.string.album_make_slideshow),
+        onMakeSlideshow,
+        enabled = canMakeSlideshow,
+    )
+    BarIconButton(
+        Icons.Filled.DeleteOutline,
+        stringResource(R.string.album_delete_picked),
+        onDelete,
+        tone = KTone.Destructive,
+    )
 }
+
+/** 제목 줄의 아이콘 버튼. 바탕 없이 아이콘만 두고 누르는 동안 원 모양으로 옅게 덮인다. */
+@Composable
+private fun BarIconButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    tone: KTone = KTone.Neutral,
+) {
+    KIconButton(
+        icon,
+        description,
+        onClick,
+        variant = KVariant.Text,
+        tone = tone,
+        size = BAR_BUTTON,
+        enabled = enabled,
+        contentColor = if (tone == KTone.Neutral) MaterialTheme.colorScheme.onSurface else Color.Unspecified,
+    )
+}
+
+private val BAR_BUTTON = 48.dp
 
 /**
  * 앨범 본문. 사진을 지운 뒤에는 아래에 되돌리기 막대를 띄운다. 한 칸 화면의 사진 보기는 아래 조작 막대를 피해
@@ -296,17 +334,28 @@ fun AlbumScreen(
     actions: AlbumActions,
     modifier: Modifier = Modifier,
     gridState: LazyGridState = rememberLazyGridState(),
+    stagger: KStaggerState? = null,
+    /** 위 막대 높이. 그리드는 안쪽 여백으로, 빈 화면과 두 칸 배치는 바깥 여백으로 둔다. */
+    contentTop: Dp = 0.dp,
 ) {
     val isViewerOnly = !isTwoPane && uiState.selected != null
+    val bottomBar = LocalBottomBarPadding.current
     Box(modifier) {
-        AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState)
+        AlbumBody(uiState, isTwoPane, actions, Modifier.fillMaxSize(), gridState, stagger, contentTop)
         if (!isViewerOnly) {
             AlbumUndoBar(
                 uiState.undo,
                 actions,
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+                    // 탭 바가 보이면 그 위로, 숨었으면 내비게이션 바 위로 띄운다. 탭 바 높이에는 내비게이션 바가 이미 들어 있다.
+                    .then(
+                        if (bottomBar > 0.dp) {
+                            Modifier.padding(bottom = bottomBar)
+                        } else {
+                            Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
+                        },
+                    ),
             )
         }
     }
@@ -319,24 +368,42 @@ private fun AlbumBody(
     actions: AlbumActions,
     modifier: Modifier,
     gridState: LazyGridState,
+    stagger: KStaggerState?,
+    contentTop: Dp,
 ) {
     val selected = uiState.selected
+    val padded = modifier.padding(top = contentTop)
     when {
         uiState.isLoading -> Unit
-        uiState.days.isEmpty() -> EmptyState(
-            icon = Icons.Filled.PhotoLibrary,
-            title = stringResource(R.string.album_empty_title),
-            body = stringResource(R.string.album_empty_body),
-            actionLabel = stringResource(R.string.album_add),
-            onAction = actions.onAdd,
-            modifier = modifier,
-        )
+        uiState.days.isEmpty() -> Box(padded, contentAlignment = Alignment.TopCenter) {
+            KEmptyState(
+                title = stringResource(R.string.album_empty_title),
+                message = stringResource(R.string.album_empty_body),
+                art = {
+                    Icon(
+                        Icons.Filled.PhotoLibrary,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(EMPTY_ART),
+                    )
+                },
+                action = {
+                    ChageunButton(
+                        stringResource(R.string.album_add),
+                        onClick = actions.onAdd,
+                        modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+                        variant = KVariant.Tonal,
+                        icon = Icons.Filled.AddAPhoto,
+                    )
+                },
+            )
+        }
         isTwoPane -> {
             BackHandler(enabled = selected != null) { actions.onSelect(null) }
             val spacing = ChageunTheme.spacing
             AdaptiveListDetail(
                 selected = selected,
-                list = { AlbumGrid(uiState, actions, Modifier.fillMaxSize(), gridState) },
+                list = { AlbumGrid(uiState, actions, Modifier.fillMaxSize(), gridState, stagger) },
                 detail = {
                     PhotoViewer(
                         uiState,
@@ -350,14 +417,14 @@ private fun AlbumBody(
                     )
                 },
                 emptyDetail = {},
-                modifier = modifier,
+                modifier = padded,
             )
         }
         selected != null -> {
             BackHandler { actions.onSelect(null) }
-            PhotoViewer(uiState, selected, actions, immersive = true, modifier = modifier.fillMaxSize())
+            PhotoViewer(uiState, selected, actions, immersive = true, modifier = padded.fillMaxSize())
         }
-        else -> AlbumGrid(uiState, actions, modifier.fillMaxSize(), gridState)
+        else -> AlbumGrid(uiState, actions, modifier.fillMaxSize(), gridState, stagger, contentTop)
     }
 }
 
@@ -411,6 +478,7 @@ private fun DetailsDialog(photo: AlbumPhoto, onSave: (LocalDate, String) -> Unit
 }
 
 private const val MAX_COMMENT_LENGTH = 300
+private val EMPTY_ART = 56.dp
 
 /** 이보다 적게 고른 사진은 묻지 않고 지운다. 지운 뒤 되돌리기 막대로 되살릴 수 있다. */
 private const val CONFIRM_DELETE_COUNT = 5

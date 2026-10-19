@@ -1,21 +1,17 @@
 package com.naury.chageun.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.NavigationRailItemDefaults
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
+import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntryDecorator
@@ -38,6 +33,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
 import com.naury.chageun.R
 import com.naury.chageun.core.ads.LocalAdsEnabled
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
 import com.naury.chageun.core.model.TimelineEventType
@@ -72,6 +69,14 @@ import com.naury.chageun.navigation.ServiceNoticeRoute
 import com.naury.chageun.navigation.SettingsRoute
 import com.naury.chageun.navigation.TopLevelDestination
 import com.naury.chageun.navigation.TopLevelRoute
+import com.naury.kinetica.ui.KNavTransitions
+import com.naury.kinetica.ui.KNavigationRail
+import com.naury.kinetica.ui.KTab
+import com.naury.kinetica.ui.KTabBar
+import com.naury.kinetica.ui.KineticaScaffold
+import com.naury.kinetica.ui.KineticaTheme
+import com.naury.kinetica.ui.kTransform
+import com.naury.kinetica.ui.rememberKNavTransition
 import java.time.LocalDate
 
 /** feature 모듈끼리 서로 의존하지 않도록 앱 셸이 처리하는 feature 간 액션. */
@@ -206,23 +211,39 @@ fun ChageunApp(
         }
     }
 
-    val itemColors = iosStyleItemColors()
     // 앨범 사진 보기처럼 화면 전체를 쓰는 동안에는 하단 탭 바를 숨긴다.
     var isImmersive by remember { mutableStateOf(false) }
-    NavigationSuiteScaffold(
-        layoutType = navigationSuiteTypeFor(windowSizeClass, isImmersive),
-        navigationSuiteColors = NavigationSuiteDefaults.colors(
-            navigationBarContainerColor = MaterialTheme.colorScheme.surface,
-            navigationRailContainerColor = MaterialTheme.colorScheme.background,
-        ),
-        navigationSuiteItems = {
-            TopLevelDestination.entries.forEach { destination ->
-                item(
-                    selected = destination.route == currentTopLevel,
-                    onClick = { navigateTo(destination) },
-                    icon = { Icon(destination.icon, contentDescription = null) },
-                    label = { Text(stringResource(destination.labelRes)) },
-                    colors = itemColors,
+    val suiteType = navigationSuiteTypeFor(windowSizeClass, isImmersive)
+    val tabs = TopLevelDestination.entries.map { KTab(stringResource(it.labelRes), it.icon) }
+    val selectedTab = TopLevelDestination.entries.indexOfFirst { it.route == currentTopLevel }.coerceAtLeast(0)
+    val push = rememberKNavTransition(KNavTransitions.Push)
+    val fade = rememberKNavTransition(KNavTransitions.FadeThrough)
+    ChageunShell(
+        suiteType = suiteType,
+        tabs = tabs,
+        selectedTab = selectedTab,
+        onSelectTab = { navigateTo(TopLevelDestination.entries[it]) },
+        overlays = {
+            // 입력 시트도 스캐폴드 안에서 띄워야 뒤 화면을 블러로 비춘다.
+            recordingItem?.let { item ->
+                RecordServiceHost(
+                    item = item,
+                    isExpanded = isExpanded,
+                    onDismiss = {
+                        recordingItem = null
+                        editingServiceId = null
+                        recordingDate = null
+                    },
+                    editingRecordId = editingServiceId,
+                    sessionKey = recordSession,
+                    initialDate = recordingDate,
+                )
+            }
+            if (isUpdatingMileage) {
+                MileageUpdateHost(
+                    isExpanded = isExpanded,
+                    onDismiss = { isUpdatingMileage = false },
+                    sessionKey = mileageSession,
                 )
             }
         },
@@ -230,6 +251,11 @@ fun ChageunApp(
         NavDisplay(
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
+            // 탭을 바꾸면 스택이 탭 화면 하나로 바뀌므로 겹쳐 밀지 않고 옅게 바꾸고, 그 위에 연 화면은 iOS처럼 옆에서 밀어 넣는다.
+            // 뒤로 가기 제스처 동안에는 손가락을 따라 되감긴다.
+            transitionSpec = { kTransform(if (backStack.size <= 1) fade else push, forward = true) },
+            popTransitionSpec = { kTransform(push, forward = false) },
+            predictivePopTransitionSpec = { kTransform(push, forward = false) },
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
@@ -238,7 +264,13 @@ fun ChageunApp(
             entryProvider = entryProvider {
                 TopLevelDestination.entries.forEach { destination ->
                     // 홈은 Hero의 하늘 바탕을 상태 표시줄 뒤까지 그리고, 상단 인셋은 화면 안에서 비운다.
-                    val metadata = if (destination == TopLevelDestination.Home) DRAWS_BEHIND_STATUS_BAR else emptyMap()
+                    val metadata = if (destination ==
+                        TopLevelDestination.Home
+                    ) {
+                        DRAWS_BEHIND_STATUS_BAR
+                    } else {
+                        emptyMap()
+                    }
                     entry(destination.route, metadata = metadata) {
                         WithoutAds(hidden = adFreeDestination == destination) {
                             destinationContent(destination, actions)
@@ -255,7 +287,9 @@ fun ChageunApp(
                         onOpenDriveBackup = { backStack.add(DriveBackupRoute) },
                     )
                 }
-                entry(DriveBackupRoute) { DriveBackupScreenRoute(onBack = { backStack.removeLastOrNull() }) }
+                entry(DriveBackupRoute) {
+                    DriveBackupScreenRoute(onBack = { backStack.removeLastOrNull() })
+                }
                 entry(AccountRoute) {
                     AccountScreenRoute(
                         onBack = { backStack.removeLastOrNull() },
@@ -297,34 +331,14 @@ fun ChageunApp(
                         },
                         onBack = { backStack.removeLastOrNull() },
                         focusRecord = route.focusRecord?.let { encoded ->
-                            TimelineEventType.entries.firstOrNull { it.name == encoded.substringBefore(':') }
+                            TimelineEventType.entries.firstOrNull {
+                                it.name == encoded.substringBefore(':')
+                            }
                                 ?.let { type -> RecordRef(type, encoded.substringAfter(':')) }
                         },
                     )
                 }
             },
-        )
-    }
-
-    recordingItem?.let { item ->
-        RecordServiceHost(
-            item = item,
-            isExpanded = isExpanded,
-            onDismiss = {
-                recordingItem = null
-                editingServiceId = null
-                recordingDate = null
-            },
-            editingRecordId = editingServiceId,
-            sessionKey = recordSession,
-            initialDate = recordingDate,
-        )
-    }
-    if (isUpdatingMileage) {
-        MileageUpdateHost(
-            isExpanded = isExpanded,
-            onDismiss = { isUpdatingMileage = false },
-            sessionKey = mileageSession,
         )
     }
 }
@@ -371,28 +385,6 @@ private fun DestinationContent(destination: TopLevelDestination, actions: AppAct
             onInspectionShown = actions.onPendingInspectionHandled,
         )
     }
-}
-
-/** iOS 탭 바처럼 선택 표시 알약 없이 아이콘과 글자 색만으로 현재 탭을 나타낸다. */
-@Composable
-private fun iosStyleItemColors(): NavigationSuiteItemColors {
-    val colors = MaterialTheme.colorScheme
-    return NavigationSuiteDefaults.itemColors(
-        navigationBarItemColors = NavigationBarItemDefaults.colors(
-            indicatorColor = Color.Transparent,
-            selectedIconColor = colors.primary,
-            selectedTextColor = colors.primary,
-            unselectedIconColor = colors.onSurfaceVariant,
-            unselectedTextColor = colors.onSurfaceVariant,
-        ),
-        navigationRailItemColors = NavigationRailItemDefaults.colors(
-            indicatorColor = Color.Transparent,
-            selectedIconColor = colors.primary,
-            selectedTextColor = colors.primary,
-            unselectedIconColor = colors.onSurfaceVariant,
-            unselectedTextColor = colors.onSurfaceVariant,
-        ),
-    )
 }
 
 private val DRAWS_BEHIND_STATUS_BAR = mapOf("drawsBehindStatusBar" to true)
@@ -446,4 +438,46 @@ private fun WithoutAds(hidden: Boolean, content: @Composable () -> Unit) {
 /** 탭 화면 위에 겹쳐 연 화면(앨범, 설정 등)을 모두 닫는다. */
 private fun MutableList<NavKey>.popToTopLevel() {
     while (size > 1) removeAt(lastIndex)
+}
+
+/** 화면 아래 떠 있는 탭 바를 쓰는 배치인지. 그 밖의 배치(레일, 서랍)는 왼쪽 세로 레일로 그린다. */
+private fun NavigationSuiteType.isBottomBar(): Boolean = this == NavigationSuiteType.NavigationBar ||
+    this == NavigationSuiteType.ShortNavigationBarCompact ||
+    this == NavigationSuiteType.ShortNavigationBarMedium
+
+/**
+ * 앱 골격. 탭 바, 시트, 대화상자, 메뉴, 토스트는 글래스로 뒤 화면 전체를 블러로 비추고, 목록과 카드는 차근 단색 그대로다.
+ * 스캐폴드 안에서 그리므로 시스템 창 블러가 꺼진 기기에서도 블러가 보인다. [overlays]의 입력 시트도 같은 이유로 안에서 띄운다.
+ */
+@Composable
+private fun ChageunShell(
+    suiteType: NavigationSuiteType,
+    tabs: List<KTab>,
+    selectedTab: Int,
+    onSelectTab: (Int) -> Unit,
+    overlays: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val isBar = suiteType.isBottomBar()
+    KineticaScaffold(
+        surface = ChageunGlass.chrome,
+        contentSurface = KineticaTheme.surface,
+        // 상태 표시줄 아이콘은 앱 테마에 맞춰 ChageunRoot가 정한다.
+        systemBarIcons = false,
+        bottomBar = { if (isBar) KTabBar(tabs, selectedTab, onSelectTab, Modifier.fillMaxWidth()) },
+    ) { scaffoldPadding ->
+        // 목록은 탭 바 뒤까지 그려 탭 바 너머로 비치게 하고, 끝 여백만 탭 바 높이만큼 둔다.
+        CompositionLocalProvider(LocalBottomBarPadding provides scaffoldPadding.calculateBottomPadding()) {
+            // 레일 칸은 늘 같은 자리에 두어, 접고 펼 때 화면 상태가 처음부터 다시 만들어지지 않게 한다.
+            Row(Modifier.fillMaxSize()) {
+                Box {
+                    if (!isBar && suiteType != NavigationSuiteType.None) {
+                        KNavigationRail(tabs, selectedTab, onSelectTab, Modifier.fillMaxHeight())
+                    }
+                }
+                Box(Modifier.weight(1f)) { content() }
+            }
+            overlays()
+        }
+    }
 }

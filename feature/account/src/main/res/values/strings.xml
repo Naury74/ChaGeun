@@ -86,6 +86,8 @@
     <string name="account_restore_confirm">Restore</string>
     <string name="account_restore_downloading">Downloading backup…</string>
     <string name="account_restore_restoring">Restoring…</string>
+    <string name="account_restore_step_download">Download</string>
+    <string name="account_restore_step_replace">Replace data</string>
     <string name="account_notice_backed_up">Backed up to the cloud.</string>
     <string name="account_notice_restored">Restored from the backup.</string>
     <string name="account_notice_backup_deleted">Backup deleted.</string>

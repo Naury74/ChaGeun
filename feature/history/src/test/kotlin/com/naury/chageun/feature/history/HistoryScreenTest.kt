@@ -368,7 +368,8 @@ class HistoryScreenTest {
         val section = TimelineSection(YearMonth.of(2026, 8), listOf(item), totalWon = 250_000)
         show(HistoryUiState(isLoading = false, sections = listOf(section)))
 
-        composeRule.onNodeWithText("₩250,000 spent").assertIsDisplayed()
+        // 합계는 굴러가는 숫자로 그려 TalkBack 이름(contentDescription)으로 읽는다.
+        composeRule.onNodeWithContentDescription("₩250,000 spent").assertIsDisplayed()
     }
 
     @Test

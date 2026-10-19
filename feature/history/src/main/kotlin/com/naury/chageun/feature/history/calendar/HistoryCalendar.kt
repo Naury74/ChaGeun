@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
+import com.naury.chageun.core.designsystem.theme.LocalBottomBarPadding
 import com.naury.chageun.core.model.CalendarMonth
 import com.naury.chageun.core.model.RecordDetail
 import com.naury.chageun.core.ui.CardGroup
@@ -46,6 +46,7 @@ import com.naury.chageun.core.ui.ThreePaneListDetail
 import com.naury.chageun.core.ui.currentSeparatingHinge
 import com.naury.chageun.core.ui.formatNumber
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KLoadingIndicator
 
 /** 달력 칸들이 함께 쓰는 값. [mode]는 화면 배치에 맞춘 기본값까지 정해진 보기다. */
 private class CalendarParts(
@@ -78,7 +79,7 @@ internal fun HistoryCalendar(
 ) {
     val calendar = state.calendar
     if (state.isLoading || calendar == null) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { KLoadingIndicator() }
         return
     }
     BackHandler(enabled = detail != null) { onCloseDetail() }
@@ -143,7 +144,7 @@ private fun PhoneCalendar(parts: CalendarParts, modifier: Modifier) {
 private fun CalendarLazyColumn(modifier: Modifier, content: LazyListScope.() -> Unit) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
         content = content,
     )
@@ -202,7 +203,7 @@ private fun CalendarSidePane(parts: CalendarParts, modifier: Modifier = Modifier
             .padding(
                 start = ChageunTheme.spacing.gutter,
                 top = ChageunTheme.spacing.sm,
-                bottom = ChageunTheme.spacing.lg,
+                bottom = ChageunTheme.spacing.lg + LocalBottomBarPadding.current,
             ),
         verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
     ) {

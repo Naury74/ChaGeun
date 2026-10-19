@@ -3,16 +3,13 @@ package com.naury.chageun.core.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -22,7 +19,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,11 +41,13 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.naury.chageun.core.designsystem.component.ChoicePill
+import com.naury.chageun.core.designsystem.component.ChoicePillGroup
 import com.naury.chageun.core.designsystem.motion.ChageunMotion
 import com.naury.chageun.core.designsystem.motion.motionSpec
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
 import com.naury.chageun.core.designsystem.theme.ToneColors
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KVariant
 import java.time.LocalDate
 
 /** 시트 맨 위의 아이콘과 제목. 어떤 기록을 남기는지 아이콘으로 먼저 알려 준다. */
@@ -80,7 +78,6 @@ fun FormLabel(text: String, modifier: Modifier = Modifier) {
  * 기록은 대부분 오늘이나 어제 일이므로 두 칩으로 바로 고르고, 그 외 날짜만 달력을 연다.
  * 달력에서 고른 날짜는 세 번째 칩에 표시해 무엇을 골랐는지 계속 보이게 한다.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun QuickDateField(
     date: LocalDate?,
@@ -91,19 +88,29 @@ fun QuickDateField(
     var isPickerOpen by rememberSaveable { mutableStateOf(false) }
     val yesterday = today.minusDays(1)
     val isOther = date != null && date != today && date != yesterday
-    FlowRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-    ) {
-        ChoicePill(stringResource(R.string.date_today), date == today, { onDateSelected(today) })
-        ChoicePill(stringResource(R.string.date_yesterday), date == yesterday, { onDateSelected(yesterday) })
-        ChoicePill(
-            label = if (isOther) formatDate(checkNotNull(date)) else stringResource(R.string.date_other),
-            selected = isOther,
-            onClick = { isPickerOpen = true },
-        )
+    val labels = listOf(
+        stringResource(R.string.date_today),
+        stringResource(R.string.date_yesterday),
+        if (isOther) formatDate(checkNotNull(date)) else stringResource(R.string.date_other),
+    )
+    val selectedIndex = when {
+        date == today -> 0
+        date == yesterday -> 1
+        isOther -> 2
+        else -> null
     }
+    ChoicePillGroup(
+        labels = labels,
+        selectedIndex = selectedIndex,
+        onSelect = { index ->
+            when (index) {
+                0 -> onDateSelected(today)
+                1 -> onDateSelected(yesterday)
+                else -> isPickerOpen = true
+            }
+        },
+        modifier = modifier.fillMaxWidth(),
+    )
     if (isPickerOpen) {
         PastDatePickerDialog(date = date, onDateSelected = onDateSelected, onDismiss = { isPickerOpen = false })
     }
@@ -116,7 +123,6 @@ data class QuickPick(val label: String, val value: String)
  * 숫자 입력란과 자주 쓰는 값 칩. 칩을 누르면 입력란이 채워지고, 칩에 없는 값만 직접 입력한다.
  * 입력란은 숫자만 저장하고 화면에는 천 단위 쉼표를 붙인다.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NumberInputField(
     value: String,
@@ -149,14 +155,12 @@ fun NumberInputField(
         )
         if (picks.isNotEmpty()) {
             // 칩이 줄을 바꾸면 입력란과 멀어져 보이므로 한 줄로 두고 가로로 넘긴다.
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            ) {
-                picks.forEach { pick ->
-                    ChoicePill(pick.label, selected = value == pick.value, onClick = { onValueChange(pick.value) })
-                }
-            }
+            ChoicePillGroup(
+                labels = picks.map { it.label },
+                selectedIndex = picks.indexOfFirst { it.value == value }.takeIf { it >= 0 },
+                onSelect = { onValueChange(picks[it].value) },
+                wrap = false,
+            )
         }
     }
 }
@@ -166,13 +170,13 @@ fun NumberInputField(
 fun OptionalSection(hasValue: Boolean, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     var isOpen by rememberSaveable { mutableStateOf(hasValue) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-        TextButton(onClick = { isOpen = !isOpen }) {
-            Text(stringResource(if (isOpen) R.string.form_fewer_details else R.string.form_more_details))
-            Icon(
-                if (isOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = null,
-            )
-        }
+        KButton(
+            text = stringResource(if (isOpen) R.string.form_fewer_details else R.string.form_more_details),
+            onClick = { isOpen = !isOpen },
+            modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
+            variant = KVariant.Text,
+            trailingIcon = if (isOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+        )
         AnimatedVisibility(visible = isOpen) {
             Column(verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm)) { content() }
         }

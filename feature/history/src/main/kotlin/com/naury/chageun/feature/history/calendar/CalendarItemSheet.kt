@@ -12,11 +12,8 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tune
-import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +30,12 @@ import com.naury.chageun.core.ui.AdaptiveSheet
 import com.naury.chageun.core.ui.FormHeader
 import com.naury.chageun.core.ui.MaintenanceItemIcon
 import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.feature.history.ButtonPair
 import com.naury.chageun.feature.history.R
+import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.KButtonSize
+import com.naury.kinetica.ui.KCheckbox
+import com.naury.kinetica.ui.KVariant
 
 /**
  * 달력에 보일 정비 항목을 여러 개 고르는 시트. 고르는 동안에는 달력을 바꾸지 않고 [적용]을 눌러야 반영한다.
@@ -61,19 +63,23 @@ internal fun CalendarItemSheet(
                     draft = if (checked) draft + item.name else draft - item.name
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs)) {
-                TextButton(onClick = { draft = emptyList() }, modifier = Modifier.weight(1f)) {
-                    Text(stringResource(R.string.history_filter_reset))
-                }
-                Button(
+            ButtonPair {
+                KButton(
+                    stringResource(R.string.history_filter_reset),
+                    onClick = { draft = emptyList() },
+                    variant = KVariant.Text,
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
+                KButton(
+                    stringResource(R.string.history_filter_apply),
                     onClick = {
                         onApply(MaintenanceItem.entries.filter { it.name in draft }.toSet())
                         onDismiss()
                     },
-                    modifier = Modifier
-                        .weight(1f)
-                        .heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                ) { Text(stringResource(R.string.history_filter_apply)) }
+                    size = KButtonSize.Large,
+                    fullWidth = true,
+                )
             }
         }
     }
@@ -96,7 +102,7 @@ private fun ItemRow(item: MaintenanceItem, checked: Boolean, onCheckedChange: (B
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
-        Checkbox(checked = checked, onCheckedChange = null)
+        KCheckbox(checked = checked, onCheckedChange = null)
     }
 }
 
