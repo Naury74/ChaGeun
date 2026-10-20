@@ -2,6 +2,7 @@ package com.naury.chageun.flow
 
 import android.util.Log
 import androidx.annotation.StringRes
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
@@ -23,9 +24,11 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.printToString
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.naury.chageun.MainActivity
@@ -37,6 +40,7 @@ import com.naury.chageun.core.ui.labelRes
 import com.naury.chageun.feature.home.R as HomeR
 import com.naury.chageun.feature.manage.R as ManageR
 import com.naury.chageun.feature.onboarding.R as OnboardingR
+import com.naury.chageun.navigation.TopLevelDestination
 import java.text.NumberFormat
 import java.time.Year
 
@@ -145,8 +149,30 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
         val row = horizontalList and hasAnyDescendant(matcher) and hasAnyAncestor(hasScrollAction())
         if (exists(row)) rule.onAllNodes(row).onFirst().performScrollTo()
         // 스크롤하지 않는 영역(하단 버튼, 내비게이션 바)에 있는 노드는 그대로 둔다.
-        if (exists(matcher and hasAnyAncestor(hasScrollAction()))) node.performScrollTo()
+        if (exists(matcher and hasAnyAncestor(hasScrollAction()))) {
+            node.performScrollTo()
+            liftAboveTabBar(matcher)
+        }
         return node.assertExists()
+    }
+
+    /**
+     * 목록은 아래에 떠 있는 탭 바 뒤까지 이어진다. performScrollTo는 노드를 목록 안에만 들여놓으므로, 노드가 탭 바에
+     * 가려졌으면 그만큼 목록을 더 올린다. 그대로 누르면 터치가 탭 바에 들어가 다른 탭이 열린다.
+     */
+    private fun liftAboveTabBar(matcher: SemanticsMatcher) {
+        val tabs = TopLevelDestination.entries.map { tab(it.labelRes) }.reduce { all, next -> all or next }
+        val barTop = rule.onAllNodes(tabs).fetchSemanticsNodes().minOfOrNull { it.boundsInRoot.top } ?: return
+        val target = rule.onAllNodes(matcher).fetchSemanticsNodes().firstOrNull()?.boundsInRoot ?: return
+        // 레일(넓은 창)이면 탭이 화면 옆에 있어 가리지 않는다.
+        if (target.bottom <= barTop || target.top >= barTop + rule.density.run { TAB_BAR_REACH.toPx() }) return
+        val overlap = target.bottom - barTop + rule.density.run { TAB_BAR_CLEARANCE.toPx() }
+        // 노드를 품은 스크롤 영역 가운데 가장 안쪽(마지막) 것을 올린다.
+        val lists = rule.onAllNodes(hasScrollAction() and hasAnyDescendant(matcher))
+        val count = lists.fetchSemanticsNodes().size
+        if (count == 0) return
+        lists[count - 1].performSemanticsAction(SemanticsActions.ScrollBy) { scrollBy -> scrollBy(0f, overlap) }
+        rule.waitForIdle()
     }
 
     fun click(matcher: SemanticsMatcher) {
@@ -286,6 +312,12 @@ class AppRobot(private val rule: AndroidComposeTestRule<ActivityScenarioRule<Mai
     companion object {
         /** API 26 에뮬레이터는 첫 Compose 화면과 Room 쓰기가 느려 넉넉히 기다린다. */
         const val TIMEOUT_MILLIS = 15_000L
+
+        /** 탭 위쪽에서 이만큼 아래까지가 떠 있는 탭 바다. 이보다 아래에 있는 노드는 탭 바 밖(내비게이션 바)이다. */
+        private val TAB_BAR_REACH = 120.dp
+
+        /** 탭 바 위로 올린 노드와 탭 바 사이에 두는 여유. */
+        private val TAB_BAR_CLEARANCE = 24.dp
         private const val TREE_LOG_TAG = "ChageunScreen"
         const val REGISTER_TIMEOUT_MILLIS = 30_000L
         const val TEST_PLATE = "12가3456"
