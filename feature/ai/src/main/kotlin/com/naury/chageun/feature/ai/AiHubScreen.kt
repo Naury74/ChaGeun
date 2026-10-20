@@ -1,76 +1,74 @@
 package com.naury.chageun.feature.ai
 
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowSizeClass
-import com.naury.chageun.core.designsystem.component.ChageunButton
-import com.naury.chageun.core.designsystem.component.ChageunCard
-import com.naury.chageun.core.designsystem.component.LargeTitleScaffold
+import com.naury.chageun.core.designsystem.theme.ChageunGlass
 import com.naury.chageun.core.designsystem.theme.ChageunTheme
-import com.naury.chageun.core.domain.ai.SharedRecord
 import com.naury.chageun.core.model.MaintenanceItem
 import com.naury.chageun.core.model.RecordRef
-import com.naury.chageun.core.model.TimelineEventType
-import com.naury.chageun.core.ui.CardGroup
-import com.naury.chageun.core.ui.CardSubheader
-import com.naury.chageun.core.ui.ChageunTextField
-import com.naury.chageun.core.ui.GroupDivider
-import com.naury.chageun.core.ui.Hinge
-import com.naury.chageun.core.ui.HingeAwarePanes
-import com.naury.chageun.core.ui.ItemIconBadge
-import com.naury.chageun.core.ui.ListRow
-import com.naury.chageun.core.ui.ToggleListRow
-import com.naury.chageun.core.ui.currentSeparatingHinge
-import com.naury.chageun.core.ui.isListDetailThreePane
-import com.naury.chageun.core.ui.labelRes
+import com.naury.chageun.core.ui.AdaptiveSheet
+import com.naury.chageun.core.ui.isExpandedWidth
 import com.naury.chageun.core.ui.launchExternal
-import com.naury.kinetica.ui.KButton
+import com.naury.kinetica.ui.GlassBackdrop
 import com.naury.kinetica.ui.KIconButton
 import com.naury.kinetica.ui.KTone
+import com.naury.kinetica.ui.KTopAppBar
+import com.naury.kinetica.ui.KTopAppBarState
+import com.naury.kinetica.ui.KTopAppBarVariant
 import com.naury.kinetica.ui.KVariant
-import com.naury.kinetica.ui.LocalKineticaColors
+import com.naury.kinetica.ui.LocalGlassBackdrop
+import com.naury.kinetica.ui.SurfaceStyle
+import com.naury.kinetica.ui.glassBackdrop
+import com.naury.kinetica.ui.rememberGlassBackdrop
+import com.naury.kinetica.ui.rememberKStaggerState
+import com.naury.kinetica.ui.rememberKTopAppBarState
+import com.naury.kinetica.ui.staggerIn
 
 @Composable
 fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: RecordRef? = null) {
@@ -80,402 +78,271 @@ fun AiHubRoute(focusItem: MaintenanceItem?, onBack: () -> Unit, focusRecord: Rec
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val chooserTitle = stringResource(R.string.ai_chooser_title)
     val prompt = uiState.facts?.let { aiPromptText(it, uiState.question) }
-    var installedProviders by remember { mutableStateOf<Set<AiProvider>?>(null) }
-    // 다른 화면에서 AI 앱을 설치하고 돌아와도 바로 반영되도록 돌아올 때마다 다시 확인한다.
-    LifecycleResumeEffect(context) {
-        installedProviders = installedAiProviders(context)
-        onPauseOrDispose {}
+    val onDevicePrompt = uiState.facts?.let { aiPromptText(it, uiState.question, includeFooter = false) }
+    val instruction = stringResource(R.string.ai_on_device_instruction)
+    val reminder = stringResource(R.string.ai_on_device_reminder)
+    val historyLabel = stringResource(R.string.ai_history_label)
+    val destinationName = destinationTitle(uiState.destination)
+    val texts = ExternalTexts(
+        chooserTitle = stringResource(R.string.ai_chooser_title),
+        clipLabel = stringResource(R.string.ai_clip_label),
+        copied = stringResource(R.string.ai_copied, destinationName),
+    )
+    val send = {
+        when {
+            prompt == null || onDevicePrompt == null -> Unit
+            // 작은 모델은 시스템 지시보다 질문 바로 뒤의 당부를 더 잘 따른다.
+            uiState.destination == AiDestination.OnDevice ->
+                viewModel.ask("$onDevicePrompt\n\n$reminder", instruction, historyLabel)
+            viewModel.validateBeforeShare() -> context.launchExternal {
+                openExternally(context, uiState.destination, prompt, texts)
+                viewModel.onShared(uiState.destination)
+            }
+        }
+    }
+    // 추천 질문은 누르면 바로 묻는다. 질문이 상태에 반영돼 보낼 글이 다시 만들어진 다음에 보낸다.
+    var pendingSuggestion by rememberSaveable { mutableStateOf<String?>(null) }
+    val currentSend by rememberUpdatedState(send)
+    LaunchedEffect(pendingSuggestion, uiState.question) {
+        if (pendingSuggestion != null && uiState.question == pendingSuggestion) {
+            pendingSuggestion = null
+            currentSend()
+        }
     }
     AiHubScreen(
         uiState = uiState,
         promptText = prompt,
-        installedProviders = installedProviders,
         actions = AiHubActions(
             onBack = onBack,
             onQuestionChanged = viewModel::onQuestionChanged,
             onIncludeRecordsChanged = viewModel::onIncludeRecordsChanged,
             onIncludeCostsChanged = viewModel::onIncludeCostsChanged,
-            onShare = { provider ->
-                if (viewModel.validateBeforeShare() &&
-                    prompt != null
-                ) {
-                    context.launchExternal {
-                        shareToAi(context, provider, prompt, chooserTitle)
-                        viewModel.onShared(provider)
-                    }
-                }
+            onSelectDestination = viewModel::selectDestination,
+            onSend = send,
+            onAskSuggestion = { text ->
+                viewModel.onQuestionChanged(text)
+                pendingSuggestion = text
             },
+            onStop = viewModel::stopAnswering,
+            onNewChat = viewModel::clearConversation,
+            onDownloadModel = viewModel::downloadModel,
         ),
     )
 }
 
 data class AiHubActions(
-    val onBack: () -> Unit,
-    val onQuestionChanged: (String) -> Unit,
-    val onIncludeRecordsChanged: (Boolean) -> Unit,
-    val onIncludeCostsChanged: (Boolean) -> Unit,
-    val onShare: (AiProvider) -> Unit,
+    val onBack: () -> Unit = {},
+    val onQuestionChanged: (String) -> Unit = {},
+    val onIncludeRecordsChanged: (Boolean) -> Unit = {},
+    val onIncludeCostsChanged: (Boolean) -> Unit = {},
+    val onSelectDestination: (AiDestination) -> Unit = {},
+    val onSend: () -> Unit = {},
+    val onStop: () -> Unit = {},
+    val onNewChat: () -> Unit = {},
+    val onOpenContext: () -> Unit = {},
+    val onDownloadModel: () -> Unit = {},
+    /** 추천 질문을 눌렀을 때. 입력창에 넣고 바로 보낸다. */
+    val onAskSuggestion: (String) -> Unit = {},
 )
 
 /**
- * Expanded 폭부터 질문과 보낼 정보를 나란히, Extra Large 폭부터는 보낼 곳까지 세 칸으로 나눈다.
- * Large 폭은 왼쪽 고정 메뉴가 자리를 차지해 세 칸이면 칸마다 너무 좁다.
- */
-fun aiPaneCount(windowSizeClass: WindowSizeClass): Int = when {
-    isListDetailThreePane(windowSizeClass) -> THREE_PANES
-    windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND) -> TWO_PANES
-    else -> SINGLE_PANE
-}
-
-@Composable
-private fun currentAiPaneCount(hinge: Hinge?): Int {
-    val count = aiPaneCount(currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass)
-    // Book 자세: 한 칸짜리 화면이 접히는 부분을 가로지르지 않게 한다.
-    return if (hinge?.isVertical == true) maxOf(count, TWO_PANES) else count
-}
-
-/**
- * [installedProviders]는 기기에 설치된 AI 앱이다. 세 칸일 때 보낼 곳마다 앱이 바로 열리는지 알려 주는 데 쓴다.
- * null이면 아직 모르므로 상태를 표시하지 않는다.
+ * Gemini처럼 위에는 답할 AI 고르기, 가운데는 인사와 제안 카드(대화가 시작되면 대화), 아래에는 떠 있는 둥근 입력창.
+ * 대화는 위 글래스 바와 아래 입력창 뒤까지 그려 지나가는 글이 블러로 비친다.
+ * 넓은 화면에서도 글 폭이 너무 길어지지 않게 가운데에 모은다. 보낼 정보는 칩을 눌러 시트로 본다.
  */
 @Composable
-fun AiHubScreen(
-    uiState: AiHubUiState,
-    promptText: String?,
-    actions: AiHubActions,
-    modifier: Modifier = Modifier,
-    installedProviders: Set<AiProvider>? = null,
-    hinge: Hinge? = currentSeparatingHinge(),
-    paneCount: Int = currentAiPaneCount(hinge),
-) {
-    LargeTitleScaffold(
-        title = stringResource(R.string.ai_title),
+fun AiHubScreen(uiState: AiHubUiState, promptText: String?, actions: AiHubActions, modifier: Modifier = Modifier) {
+    var isContextOpen by rememberSaveable { mutableStateOf(false) }
+    val screenActions = actions.copy(onOpenContext = { isContextOpen = true })
+    val backdrop = rememberGlassBackdrop()
+    val density = LocalDensity.current
+    var topPx by remember { mutableIntStateOf(0) }
+    var bottomPx by remember { mutableIntStateOf(0) }
+    val listState = rememberLazyListState()
+    val welcomeScroll = rememberScrollState()
+    val hasMessages = uiState.messages.isNotEmpty()
+    val barState = if (hasMessages) rememberKTopAppBarState(listState) else rememberKTopAppBarState(welcomeScroll)
+    val background = MaterialTheme.colorScheme.background
+    Box(modifier.fillMaxSize().background(background)) {
+        val padding = with(density) { PaddingValues(top = topPx.toDp(), bottom = bottomPx.toDp()) }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .glassBackdrop(backdrop)
+                .background(background),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            val contentModifier = Modifier
+                .widthIn(max = CONTENT_MAX_WIDTH)
+                .fillMaxWidth()
+                .padding(horizontal = ChageunTheme.spacing.gutter)
+            if (hasMessages) {
+                Conversation(uiState.messages, listState, padding, contentModifier)
+            } else {
+                Welcome(uiState, actions, welcomeScroll, padding, contentModifier)
+            }
+        }
+        CompositionLocalProvider(LocalGlassBackdrop provides backdrop) {
+            AiTopBar(uiState, actions, barState, Modifier.onSizeChanged { topPx = it.height })
+        }
+        BottomArea(
+            uiState = uiState,
+            actions = screenActions,
+            backdrop = backdrop,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .onSizeChanged { bottomPx = it.height },
+        )
+    }
+    if (isContextOpen) {
+        AdaptiveSheet(isExpanded = isExpandedWidth(), onDismiss = { isContextOpen = false }) {
+            ContextPreview(uiState, promptText, actions)
+        }
+    }
+}
+
+/** 지나가는 대화를 비추는 글래스 바. 맨 위에서는 바탕과 같고 글이 바 아래로 지나가면 블러와 경계선이 나타난다. */
+@Composable
+private fun AiTopBar(uiState: AiHubUiState, actions: AiHubActions, state: KTopAppBarState, modifier: Modifier) {
+    KTopAppBar(
+        title = { DestinationPicker(uiState, actions.onSelectDestination) },
         modifier = modifier,
+        variant = KTopAppBarVariant.CenterAligned,
+        state = state,
         navigationIcon = {
             KIconButton(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.ai_back),
                 onClick = actions.onBack,
+                modifier = Modifier.minimumInteractiveComponentSize(),
                 variant = KVariant.Text,
                 tone = KTone.Neutral,
             )
         },
-    ) { padding ->
-        val isTabletop = hinge != null && !hinge.isVertical
-        if (paneCount == SINGLE_PANE && !isTabletop) {
-            SinglePane(uiState, promptText, actions, Modifier.padding(padding))
-        } else {
-            AiPanes(
-                content = AiPaneContent(uiState, promptText, actions, installedProviders),
-                paneCount = if (isTabletop) TWO_PANES else paneCount,
-                stacked = isTabletop,
-                hinge = hinge,
-                modifier = Modifier.padding(padding),
-            )
-        }
-    }
+        actions = {
+            if (uiState.messages.isNotEmpty()) {
+                KIconButton(
+                    Icons.Filled.AddComment,
+                    contentDescription = stringResource(R.string.ai_new_chat),
+                    onClick = actions.onNewChat,
+                    modifier = Modifier.minimumInteractiveComponentSize(),
+                    variant = KVariant.Text,
+                    tone = KTone.Neutral,
+                )
+            }
+        },
+        surface = SurfaceStyle.Glass(ChageunGlass.bar),
+        // 상태 표시줄은 앱 셸이 이미 비운다.
+        windowInsets = WindowInsets(0),
+    )
 }
-
-@Composable
-private fun SinglePane(uiState: AiHubUiState, promptText: String?, actions: AiHubActions, modifier: Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = ChageunTheme.spacing.gutter)
-            .padding(bottom = ChageunTheme.spacing.lg),
-        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-    ) {
-        AiIntro()
-        QuestionSection(uiState, actions)
-        ContextPreview(uiState, promptText, actions)
-        ProviderButtons(promptText, actions)
-        Disclaimer()
-    }
-}
-
-private data class AiPaneContent(
-    val uiState: AiHubUiState,
-    val promptText: String?,
-    val actions: AiHubActions,
-    val installedProviders: Set<AiProvider>?,
-)
 
 /**
- * 두 칸: 질문과 보낼 곳 | 보낼 정보. 세 칸: 질문 | 보낼 정보 | 보낼 곳과 안내.
- * Tabletop 자세에서는 두 칸을 위아래로 쌓아 접히는 부분 위아래로 나눈다.
- * 칸마다 따로 스크롤하고, 넓은 창에서도 한 칸의 글 폭이 너무 길어지지 않게 가운데에 모은다.
+ * 대화 위에 떠 있는 입력창과 안내 글. 탭 바 없이 화면을 덮으므로 시스템 내비게이션 영역과 키보드를 직접 피한다.
+ * 입력창 아래 안내 글이 지나가는 대화와 겹쳐 읽히지 않도록 아래쪽은 바탕색으로 서서히 덮는다.
  */
 @Composable
-private fun AiPanes(content: AiPaneContent, paneCount: Int, stacked: Boolean, hinge: Hinge?, modifier: Modifier) {
-    val (uiState, promptText, actions) = content
-    HingeAwarePanes(
-        weights = List(paneCount) { 1f },
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .padding(horizontal = ChageunTheme.spacing.gutter),
-        stacked = stacked,
-        hinge = hinge,
-    ) {
-        AiPane(Modifier.testTag(AiHubTags.QUESTION_PANE)) {
-            AiIntro()
-            QuestionSection(uiState, actions)
-            if (paneCount == TWO_PANES) {
-                ProviderButtons(promptText, actions)
-                Disclaimer()
-            }
-        }
-        AiPane(Modifier.testTag(AiHubTags.CONTEXT_PANE)) {
-            // 옆 칸에 여유가 있으니 실제로 보낼 글을 처음부터 펼쳐 둔다.
-            ContextPreview(uiState, promptText, actions, initiallyShowText = true)
-        }
-        if (paneCount == THREE_PANES) {
-            AiPane(Modifier.testTag(AiHubTags.PROVIDER_PANE)) {
-                ProviderList(promptText, content.installedProviders, actions)
-                Disclaimer()
-            }
-        }
-    }
-}
-
-@Composable
-private fun AiPane(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+private fun BottomArea(uiState: AiHubUiState, actions: AiHubActions, backdrop: GlassBackdrop, modifier: Modifier) {
+    val background = MaterialTheme.colorScheme.background
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+        modifier
+            .fillMaxWidth()
+            .drawBehind {
+                val fade = SCRIM_FADE.toPx()
+                drawRect(
+                    Brush.verticalGradient(
+                        listOf(background.copy(alpha = 0f), background),
+                        startY = 0f,
+                        endY = fade,
+                    ),
+                )
+            }
+            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+            .padding(top = ChageunTheme.spacing.xs),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = PANE_MAX_WIDTH)
-                .fillMaxWidth()
-                .padding(bottom = ChageunTheme.spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
-            content = content,
+        val contentModifier = Modifier
+            .widthIn(max = CONTENT_MAX_WIDTH)
+            .fillMaxWidth()
+            .padding(horizontal = ChageunTheme.spacing.gutter)
+        AiComposer(
+            uiState = uiState,
+            actions = actions,
+            backdrop = backdrop,
+            modifier = contentModifier.padding(bottom = ChageunTheme.spacing.sm),
         )
-    }
-}
-
-@Composable
-private fun AiIntro() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.sm),
-    ) {
-        ItemIconBadge(Icons.Filled.AutoAwesome, ChageunTheme.colors.ai, size = 44.dp)
         Text(
-            stringResource(R.string.ai_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
+            stringResource(R.string.ai_disclaimer),
+            style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f),
+            modifier = contentModifier.padding(bottom = ChageunTheme.spacing.sm),
         )
     }
 }
 
 @Composable
-private fun QuestionSection(uiState: AiHubUiState, actions: AiHubActions) {
-    val ai = ChageunTheme.colors.ai
-    CardGroup(stringResource(R.string.ai_pick_question)) {
-        suggestions(uiState.options.focusItem, uiState.facts?.focusRecord).forEachIndexed { index, suggestion ->
-            if (index > 0) GroupDivider()
-            val isSelected = uiState.question == suggestion
-            ListRow(
-                icon = Icons.AutoMirrored.Filled.Chat,
-                title = suggestion,
-                tone = if (isSelected) ai else ChageunTheme.colors.unknown,
-                onClick = { actions.onQuestionChanged(suggestion) },
-                trailing = {
-                    if (isSelected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = ai.content)
-                },
-            )
-        }
-    }
-    ChageunTextField(
-        value = uiState.question,
-        onValueChange = actions.onQuestionChanged,
-        label = stringResource(R.string.ai_question_label),
-        isError = uiState.isQuestionMissing,
-        supportingText = stringResource(R.string.ai_question_required).takeIf { uiState.isQuestionMissing },
-        minLines = 2,
-        modifier = Modifier.fillMaxWidth(),
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ProviderButtons(promptText: String?, actions: AiHubActions) {
-    val ai = ChageunTheme.colors.ai
-    Text(stringResource(R.string.ai_send_with), style = MaterialTheme.typography.titleMedium)
-    // 보낼 곳 버튼은 AI 보라색 톤 버튼으로 칠한다.
-    CompositionLocalProvider(LocalKineticaColors provides LocalKineticaColors.current.copy(accent = ai.content)) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-            verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.xs),
-        ) {
-            AiProvider.entries.forEach { provider ->
-                KButton(
-                    text = provider.label ?: stringResource(R.string.ai_other_app),
-                    onClick = { actions.onShare(provider) },
-                    enabled = promptText != null,
-                    variant = KVariant.Tonal,
-                    icon = Icons.AutoMirrored.Filled.Send,
-                    modifier = Modifier.heightIn(min = ChageunTheme.spacing.minTouchTarget),
-                )
-            }
-        }
-    }
-}
-
-/** 세 칸일 때 보낼 곳 칸. 버튼 대신 목록으로 두고, 앱이 바로 열리는지 공유 시트를 거치는지 함께 알려 준다. */
-@Composable
-private fun ProviderList(promptText: String?, installedProviders: Set<AiProvider>?, actions: AiHubActions) {
-    val ai = ChageunTheme.colors.ai
-    CardGroup(stringResource(R.string.ai_send_with)) {
-        AiProvider.entries.forEachIndexed { index, provider ->
-            if (index > 0) GroupDivider()
-            ListRow(
-                icon = Icons.AutoMirrored.Filled.Send,
-                title = provider.label ?: stringResource(R.string.ai_other_app),
-                body = installedProviders?.let { stringResource(providerStatusRes(provider, it)) },
-                tone = ai,
-                onClick = { actions.onShare(provider) },
-                enabled = promptText != null,
-            )
-        }
-    }
-}
-
-private fun providerStatusRes(provider: AiProvider, installed: Set<AiProvider>): Int = when {
-    provider.packageName == null -> R.string.ai_provider_other
-    provider in installed -> R.string.ai_provider_installed
-    else -> R.string.ai_provider_missing
-}
-
-@Composable
-private fun Disclaimer() {
-    Text(
-        stringResource(R.string.ai_disclaimer),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-}
-
-@Composable
-private fun ContextPreview(
+private fun Welcome(
     uiState: AiHubUiState,
-    promptText: String?,
     actions: AiHubActions,
-    initiallyShowText: Boolean = false,
+    scrollState: ScrollState,
+    padding: PaddingValues,
+    modifier: Modifier,
 ) {
-    // 칸 수가 바뀌면 그 배치의 기본값으로 다시 시작한다.
-    var isTextVisible by rememberSaveable(initiallyShowText) { mutableStateOf(initiallyShowText) }
-    val good = ChageunTheme.colors.good
-    CardGroup(stringResource(R.string.ai_preview_title)) {
-        CardSubheader(stringResource(R.string.ai_included))
-        ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_vehicle), tone = good)
-        ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_mileage), tone = good)
-        ListRow(Icons.Filled.Check, stringResource(R.string.ai_included_maintenance), tone = good)
-        // 기록 상세에서 열었으면 그 기록이 함께 간다는 것을 보낼 정보에 분명히 보여 준다.
-        if (uiState.facts?.focusRecord != null || uiState.options.focusRecord != null) {
-            ListRow(
-                Icons.Filled.Check,
-                stringResource(R.string.ai_included_focus_record),
-                body = stringResource(R.string.ai_included_focus_record_body),
-                tone = good,
-            )
-        }
-        GroupDivider()
-        ToggleListRow(
-            icon = Icons.Filled.History,
-            title = stringResource(R.string.ai_include_records),
-            body = null,
-            checked = uiState.options.includeRecords,
-            onCheckedChange = actions.onIncludeRecordsChanged,
+    Column(
+        modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(padding)
+            .padding(bottom = ChageunTheme.spacing.md),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.md),
+    ) {
+        AiWelcome(
+            vehicleName = uiState.facts?.let { "${it.maker} ${it.model}".trim() },
+            // 모델이 준비되기 전에는 눌러도 보낼 수 없으니 추천 대신 준비 카드를 보여 준다.
+            suggestions = if (uiState.needsOnDeviceSetup) {
+                emptyList()
+            } else {
+                suggestions(uiState.options.focusItem, uiState.facts?.focusRecord)
+            },
+            onSuggestion = actions.onAskSuggestion,
         )
-        ToggleListRow(
-            icon = Icons.Filled.Payments,
-            title = stringResource(R.string.ai_include_costs),
-            body = stringResource(R.string.ai_include_costs_body),
-            checked = uiState.options.includeCosts && uiState.options.includeRecords,
-            onCheckedChange = actions.onIncludeCostsChanged,
-            enabled = uiState.options.includeRecords,
-        )
-        GroupDivider()
-        CardSubheader(stringResource(R.string.ai_excluded))
-        val critical = ChageunTheme.colors.critical
-        ListRow(Icons.Filled.Lock, stringResource(R.string.ai_excluded_plate), tone = critical)
-        ListRow(Icons.Filled.Lock, stringResource(R.string.ai_excluded_owner), tone = critical)
-        ListRow(Icons.Filled.Lock, stringResource(R.string.ai_excluded_location), tone = critical)
-        if (promptText != null) {
-            GroupDivider()
-            ChageunButton(
-                text = stringResource(if (isTextVisible) R.string.ai_hide_text else R.string.ai_show_text),
-                onClick = { isTextVisible = !isTextVisible },
-                variant = KVariant.Text,
-                modifier = Modifier.padding(horizontal = ChageunTheme.spacing.xs),
+        if (uiState.needsOnDeviceSetup) {
+            OnDeviceSetupCard(
+                state = uiState.onDevice,
+                onDownload = actions.onDownloadModel,
+                onUseWeb = { actions.onSelectDestination(AiDestination.ChatGpt) },
             )
-            if (isTextVisible) {
-                ChageunCard(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    inset = true,
-                    modifier = Modifier.padding(
-                        start = ChageunTheme.spacing.md,
-                        end = ChageunTheme.spacing.md,
-                        bottom = ChageunTheme.spacing.md,
-                    ),
-                ) {
-                    Text(
-                        promptText,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(ChageunTheme.spacing.sm),
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
-private fun suggestions(focusItem: MaintenanceItem?, focusRecord: SharedRecord?): List<String> = when {
-    focusRecord != null -> {
-        val recordItem = focusRecord.maintenanceItem
-        listOf(
-            stringResource(R.string.ai_suggestion_record_summary),
-            when {
-                recordItem != null -> stringResource(
-                    R.string.ai_suggestion_record_service,
-                    stringResource(recordItem.labelRes),
-                )
-                focusRecord.type == TimelineEventType.Fuel -> stringResource(R.string.ai_suggestion_record_fuel)
-                else -> stringResource(R.string.ai_suggestion_record_check)
-            },
-        )
+private fun Conversation(
+    messages: List<ChatMessage>,
+    listState: LazyListState,
+    padding: PaddingValues,
+    modifier: Modifier,
+) {
+    // 새 메시지가 붙거나 답이 길어지면 맨 아래를 따라간다.
+    val last = messages.lastOrNull()
+    LaunchedEffect(messages.size, last?.text?.length) {
+        if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
     }
-    focusItem != null -> listOf(stringResource(R.string.ai_suggestion_item, stringResource(focusItem.labelRes)))
-    else ->
-        listOf(
-            stringResource(R.string.ai_suggestion_status),
-            stringResource(R.string.ai_suggestion_oil),
-            stringResource(R.string.ai_suggestion_trip),
-            stringResource(R.string.ai_suggestion_cost),
-        )
+    // 화면 밖으로 나갔다 돌아온 말풍선은 다시 떠오르지 않고, 새로 붙은 말풍선만 아래에서 살짝 떠오른다.
+    val stagger = rememberKStaggerState()
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(ChageunTheme.spacing.lg),
+        contentPadding = PaddingValues(
+            top = padding.calculateTopPadding() + ChageunTheme.spacing.md,
+            bottom = padding.calculateBottomPadding() + ChageunTheme.spacing.md,
+        ),
+    ) {
+        itemsIndexed(messages) { index, message -> ChatBubble(message, Modifier.staggerIn(index, stagger)) }
+    }
 }
 
-/** 칸을 찾는 테스트용 태그. */
-object AiHubTags {
-    const val QUESTION_PANE = "ai_question_pane"
-    const val CONTEXT_PANE = "ai_context_pane"
-    const val PROVIDER_PANE = "ai_provider_pane"
-}
-
-private const val SINGLE_PANE = 1
-private const val TWO_PANES = 2
-private const val THREE_PANES = 3
-
-private val PANE_MAX_WIDTH = 600.dp
+private val CONTENT_MAX_WIDTH = 720.dp
+private val SCRIM_FADE = 28.dp

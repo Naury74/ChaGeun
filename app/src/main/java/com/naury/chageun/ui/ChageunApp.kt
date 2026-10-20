@@ -213,7 +213,8 @@ fun ChageunApp(
 
     // 앨범 사진 보기처럼 화면 전체를 쓰는 동안에는 하단 탭 바를 숨긴다.
     var isImmersive by remember { mutableStateOf(false) }
-    val suiteType = navigationSuiteTypeFor(windowSizeClass, isImmersive)
+    // 사진 보기처럼 화면 전체를 쓰거나 AI 대화처럼 입력창과 답에 집중하는 화면은 탭 바 없이 덮는다.
+    val suiteType = navigationSuiteTypeFor(windowSizeClass, hidesNavigation(isImmersive, backStack.lastOrNull()))
     val tabs = TopLevelDestination.entries.map { KTab(stringResource(it.labelRes), it.icon) }
     val selectedTab = TopLevelDestination.entries.indexOfFirst { it.route == currentTopLevel }.coerceAtLeast(0)
     val push = rememberKNavTransition(KNavTransitions.Push)
@@ -439,6 +440,9 @@ private fun WithoutAds(hidden: Boolean, content: @Composable () -> Unit) {
 private fun MutableList<NavKey>.popToTopLevel() {
     while (size > 1) removeAt(lastIndex)
 }
+
+/** 사진 보기처럼 화면 전체를 쓰는 중이거나, 입력창과 답에 집중해야 하는 AI 대화면 탭 바 없이 화면을 덮는다. */
+private fun hidesNavigation(isImmersive: Boolean, top: NavKey?): Boolean = isImmersive || top is AiRoute
 
 /** 화면 아래 떠 있는 탭 바를 쓰는 배치인지. 그 밖의 배치(레일, 서랍)는 왼쪽 세로 레일로 그린다. */
 private fun NavigationSuiteType.isBottomBar(): Boolean = this == NavigationSuiteType.NavigationBar ||

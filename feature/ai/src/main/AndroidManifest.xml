@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- 사용자의 AI 앱으로 바로 공유하기 위한 패키지 가시성 선언. 없으면 시스템 선택기로 대체한다. -->
+    <!-- 외부 AI를 앱 안 브라우저 탭(Custom Tabs)으로 열 수 있는 브라우저를 찾기 위한 선언. -->
     <queries>
-        <package android:name="com.openai.chatgpt" />
-        <package android:name="com.anthropic.claude" />
-        <package android:name="com.google.android.apps.bard" />
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
     </queries>
 
 </manifest>

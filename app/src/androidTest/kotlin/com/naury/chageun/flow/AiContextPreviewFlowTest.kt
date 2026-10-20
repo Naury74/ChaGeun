@@ -34,6 +34,8 @@ class AiContextPreviewFlowTest {
         val vehicle = robot.registerVehicle(plate = AppRobot.TEST_PLATE)
 
         robot.clickText(HomeR.string.home_ai_title)
+        // 보낼 정보는 입력창의 "보낼 정보" 칩을 눌러 시트로 본다.
+        robot.clickText(AiR.string.ai_context_chip)
         robot.waitForText(robot.text(AiR.string.ai_preview_title))
 
         listOf(
@@ -47,9 +49,10 @@ class AiContextPreviewFlowTest {
             AiR.string.ai_excluded_location,
         ).forEach { robot.bringIntoView(hasText(robot.text(it))) }
 
-        // 한 칸 화면은 전체 글을 접어 두고, 넓은 화면은 처음부터 펼쳐 둔다.
+        // 실제로 보낼 글은 접혀 있다가 펼쳐 볼 수 있다.
         val showText = hasText(robot.text(AiR.string.ai_show_text))
-        if (robot.exists(showText)) robot.click(showText)
+        robot.bringIntoView(showText)
+        robot.click(showText)
 
         val vehicleLine = robot.text(
             AiR.string.ai_prompt_vehicle,
