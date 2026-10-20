@@ -48,9 +48,10 @@ class WeatherRegionFlowTest {
         // 지명은 기기 언어와 상관없이 한국어다. 고른 단계의 이름은 창 제목(누를 수 없음)에도 나오므로 목록 줄만 누른다.
         listOf(PROVINCE, DISTRICT, TOWN).forEach { robot.click(hasText(it) and hasClickAction()) }
 
-        // 날씨 줄은 한 문장으로 읽히도록 내용 설명 하나로 묶여 있다.
+        // 날씨 줄은 한 문장으로 읽히도록 내용 설명 하나로 묶여 있다. 홈 맨 위에 있어서, 화면이 짧은 기기(API 26·27 Pixel 2)에서는
+        // 지역을 고르는 동안 목록이 내려가 그려지지 않으므로 목록을 거슬러 올라가며 찾는다.
         val temperature = FixedWeatherRepository.TEMPERATURE_C.roundToInt().toString()
-        robot.waitFor(
+        robot.waitForScrolling(
             hasContentDescription(TOWN, substring = true) and
                 hasContentDescription(temperature, substring = true) and
                 hasContentDescription(robot.text(HomeR.string.home_weather_condition_rain), substring = true),
